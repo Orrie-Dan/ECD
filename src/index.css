@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand — calm government greens & blues */
+  --color-primary: #1a6b52;
+  --color-primary-dark: #145a44;
+  --color-gov-primary: #006b3f;
+  --color-gov-primary-dark: #005a34;
+  --color-primary-light: #e8f4ef;
+  --color-secondary: #2563a8;
+  --color-secondary-light: #e8f0fa;
+  --color-accent: #c47d1a;
+  --color-accent-light: #fdf4e8;
+
+  /* Surfaces */
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-background: #f4f6f8;
+  --color-background-subtle: #eef1f4;
+
+  /* Text */
+  --color-text: #1c2330;
+  --color-text-secondary: #4a5568;
+  --color-text-muted: #6b7280;
+
+  /* Borders */
+  --color-border: #e2e6eb;
+  --color-border-strong: #cdd3db;
+
+  /* Status */
+  --color-success: #15803d;
+  --color-success-light: #ecfdf3;
+  --color-error: #b42318;
+  --color-error-light: #fef3f2;
+  --color-warning: #b45309;
+  --color-warning-light: #fffbeb;
+
+  /* Typography */
+  --font-sans: "Nunito Sans", system-ui, -apple-system, sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(28 35 48 / 0.04);
+  --shadow-md: 0 4px 12px -2px rgb(28 35 48 / 0.08);
+  --shadow-lg: 0 8px 24px -4px rgb(28 35 48 / 0.1);
+  --shadow-card: 0 2px 8px -2px rgb(28 35 48 / 0.06), 0 0 0 1px rgb(28 35 48 / 0.04);
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 14px;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-text);
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Typography scale */
+.text-display {
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.text-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.text-subheading {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.text-body {
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.text-body-lg {
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.text-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.text-caption {
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Interactive chip / card controls */
+.interactive-chip {
+  transition: all 0.2s ease-out;
+  cursor: pointer;
+}
+
+.interactive-chip:not(:disabled):hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-md);
+}
+
+.interactive-chip:not(:disabled):active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-sm);
+}
+
+.interactive-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Shared input focus ring */
+.input-focus {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-focus:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgb(26 107 82 / 0.12);
+  outline: none;
+}
+
+/* Rwanda-inspired Imigongo-style pattern for login branding panel */
+.login-rw-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M30 0 L45 15 L30 30 L15 15 Z M0 30 L15 45 L30 30 L15 15 Z M30 30 L45 45 L30 60 L15 45 Z M60 30 L45 45 L30 30 L45 15 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-size: 48px 48px;
+}
