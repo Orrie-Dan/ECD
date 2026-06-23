@@ -22,13 +22,27 @@ export const common = {
   today: 'Uyu munsi',
   reset: 'Subiramo',
   clearFilters: 'Siba Akayunguruzo',
+  pagination: {
+    previous: 'Inyuma',
+    next: 'Komeza',
+    showing: 'Byerekanwa {start}–{end} muri {total}',
+    perPage: 'Ku ipaji',
+    perPageLabel: 'Umubare ku ipaji',
+    page: 'Ipaji',
+    of: 'muri',
+    firstPage: 'Ipaji ya mbere',
+    lastPage: 'Ipaji ya nyuma',
+    records: 'inyandiko',
+    goToPage: 'Jya ku ipaji {page}',
+    currentPage: 'Ipaji {page}, muri {total}',
+  },
 } as const
 
 export const messages = {
   childRegistered: 'Umwana yanditswe neza.',
   attendanceRecorded: 'Uwitabire bwabitswe neza.',
   childUpdated: 'Amakuru yahinduwe neza.',
-  formIncomplete: 'Hari amakuru atuzuye. Nyamuneka yuzuza ibisabwa.',
+  formIncomplete: 'Hari amakuru atuzuye. Nyamuneka uzuza ibisabwa.',
   loginFailed: 'Izina cyangwa ijambo banga sibyo.',
   confirmLogout: 'Urashaka gusohoka?',
 } as const
@@ -38,13 +52,13 @@ export const gender = {
   Umukobwa: 'Umukobwa',
 } as const
 
-export const relations = {
-  mama: 'Mama',
-  papa: 'Papa',
-  umuvandimwe: 'Umuvandimwe',
-  umuturanyi: 'Umuturanyi',
-  undi: 'Undi',
-} as const
+export {
+  relations,
+  GUARDIAN_RELATION_OPTIONS,
+  OTHER_RELATION_VALUE,
+  getGuardianRelationLabel,
+  normalizeGuardianRelation,
+} from '@/lib/guardian-relations'
 
 export const location = {
   province: 'Intara',

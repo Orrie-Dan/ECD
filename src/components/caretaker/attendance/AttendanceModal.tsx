@@ -1,8 +1,9 @@
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { FormField, TextInput, RadioGroup } from '@/components/ui/FormField'
+import { FormField, TextInput } from '@/components/ui/FormField'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { caretaker } from '@/locales/rw/caretaker'
-import { common, relations } from '@/locales/rw/common'
+import { common, GUARDIAN_RELATION_OPTIONS, OTHER_RELATION_VALUE } from '@/locales/rw/common'
 import type { BroughtBy, Child } from '@/types'
 
 interface AttendanceModalProps {
@@ -31,11 +32,9 @@ export function AttendanceModal({
   if (!child) return null
 
   const canConfirm =
-    !!broughtBy && (broughtBy !== 'undi' || broughtByOther.trim().length > 0)
+    !!broughtBy && (broughtBy !== OTHER_RELATION_VALUE || broughtByOther.trim().length > 0)
 
-  const relationOptions = Object.entries(relations)
-    .filter(([value]) => value !== 'umuturanyi')
-    .map(([value, label]) => ({ value, label }))
+  const relationOptions = GUARDIAN_RELATION_OPTIONS
 
   return (
     <Modal
@@ -65,15 +64,16 @@ export function AttendanceModal({
       </p>
 
       <FormField label={caretaker.attendance.whoBrought} required>
-        <RadioGroup
-          name="broughtBy"
+        <SearchableSelect
           value={broughtBy}
           onChange={(v) => onBroughtByChange(v as BroughtBy)}
           options={relationOptions}
+          placeholder={caretaker.registration.guardianRelationPlaceholder}
+          aria-label={caretaker.attendance.whoBrought}
         />
       </FormField>
 
-      {broughtBy === 'undi' && (
+      {broughtBy === OTHER_RELATION_VALUE && (
         <div className="mt-5">
           <FormField label={caretaker.attendance.broughtByOther} required>
             <TextInput

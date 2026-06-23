@@ -11,11 +11,14 @@ export interface User {
 export type Gender = 'Umuhungu' | 'Umukobwa'
 
 export type GuardianRelation =
-  | 'mama'
-  | 'papa'
+  | 'umubyeyi_mama'
+  | 'umubyeyi_papa'
+  | 'sekuru_nyirakuru'
+  | 'nyirasenge_marume'
   | 'umuvandimwe'
-  | 'umuturanyi'
-  | 'undi'
+  | 'umubyeyi_urera'
+  | 'umurinzi_wemewe'
+  | 'ikindi'
 
 export type BroughtBy = GuardianRelation
 
@@ -24,9 +27,13 @@ export interface Child {
   fullName: string
   dateOfBirth: string
   gender: Gender
+  specialNeeds?: string
   guardianName: string
   guardianPhone: string
   guardianRelation: GuardianRelation
+  guardian2Name?: string
+  guardian2Phone?: string
+  guardian2Relation?: GuardianRelation
   province: string
   district: string
   sector: string
@@ -45,13 +52,36 @@ export interface AttendanceRecord {
   arrivedAt?: string
 }
 
+export interface PageParams {
+  page: number
+  pageSize: number
+}
+
+export interface PaginatedResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export const DEFAULT_PAGE_SIZE = 10
+
+export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
+
+export type PageSizeOption = (typeof PAGE_SIZE_OPTIONS)[number]
+
 export interface ChildRegistrationForm {
   fullName: string
   dateOfBirth: string
   gender: Gender | ''
+  specialNeeds: string
   guardianName: string
   guardianPhone: string
   guardianRelation: GuardianRelation | ''
+  guardian2Name: string
+  guardian2Phone: string
+  guardian2Relation: GuardianRelation | ''
   province: string
   district: string
   sector: string

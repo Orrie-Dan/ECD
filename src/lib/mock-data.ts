@@ -8,12 +8,16 @@ export const MOCK_CHILDREN: Child[] = [
     gender: 'Umuhungu',
     guardianName: 'Mukamana Alice',
     guardianPhone: '0788123456',
-    guardianRelation: 'mama',
+    guardianRelation: 'umubyeyi_mama',
+    guardian2Name: 'Mukamana Jean',
+    guardian2Phone: '0788998877',
+    guardian2Relation: 'umubyeyi_papa',
+    specialNeeds: 'Imirire mibi — akeneye kwita cyane ku biribwa',
     province: 'Umujyi wa Kigali',
     district: 'Gasabo',
     sector: 'Remera',
     cell: 'Rukiri I',
-    village: 'Umudugudu wa Kabuga',
+    village: 'Kinunga',
     registeredAt: '2025-09-01',
   },
   {
@@ -23,12 +27,12 @@ export const MOCK_CHILDREN: Child[] = [
     gender: 'Umukobwa',
     guardianName: 'Uwase Beatrice',
     guardianPhone: '0789234567',
-    guardianRelation: 'mama',
+    guardianRelation: 'umubyeyi_mama',
     province: 'Umujyi wa Kigali',
     district: 'Gasabo',
     sector: 'Remera',
     cell: 'Rukiri II',
-    village: 'Umudugudu wa Nyamirambo',
+    village: 'Amahoro',
     registeredAt: '2025-08-15',
   },
   {
@@ -38,12 +42,12 @@ export const MOCK_CHILDREN: Child[] = [
     gender: 'Umuhungu',
     guardianName: 'Nshimiyimana Pierre',
     guardianPhone: '0787345678',
-    guardianRelation: 'papa',
+    guardianRelation: 'umubyeyi_papa',
     province: 'Umujyi wa Kigali',
     district: 'Gasabo',
     sector: 'Gatsata',
-    cell: 'Gatsata I',
-    village: 'Umudugudu wa Gatsata',
+    cell: 'Karuruma',
+    village: 'Akamamana',
     registeredAt: '2025-10-20',
   },
   {
@@ -53,12 +57,12 @@ export const MOCK_CHILDREN: Child[] = [
     gender: 'Umukobwa',
     guardianName: 'Ishimwe Grace',
     guardianPhone: '0786456789',
-    guardianRelation: 'mama',
+    guardianRelation: 'umubyeyi_mama',
     province: 'Umujyi wa Kigali',
     district: 'Kicukiro',
     sector: 'Kanombe',
-    cell: 'Kanombe I',
-    village: 'Umudugudu wa Kanombe',
+    cell: 'Kabeza',
+    village: 'Amahoro',
     registeredAt: '2025-07-10',
   },
   {
@@ -68,21 +72,33 @@ export const MOCK_CHILDREN: Child[] = [
     gender: 'Umuhungu',
     guardianName: 'Habimana Eric',
     guardianPhone: '0785567890',
-    guardianRelation: 'papa',
+    guardianRelation: 'umubyeyi_papa',
     province: 'Umujyi wa Kigali',
     district: 'Gasabo',
     sector: 'Remera',
-    cell: 'Amahoro',
-    village: 'Umudugudu wa Kacyiru',
+    cell: 'Rukiri II',
+    village: 'Amahoro',
     registeredAt: '2025-06-01',
   },
 ]
 
-export const MOCK_ATTENDANCE: AttendanceRecord[] = [
-  { id: 'a1', childId: '1', date: new Date().toISOString().split('T')[0], present: true, broughtBy: 'mama', arrivedAt: '2026-06-17T08:15:00' },
-  { id: 'a2', childId: '2', date: new Date().toISOString().split('T')[0], present: true, broughtBy: 'mama', arrivedAt: '2026-06-17T08:18:00' },
-  { id: 'a3', childId: '3', date: new Date().toISOString().split('T')[0], present: false },
-]
+export const MOCK_ATTENDANCE: AttendanceRecord[] = (() => {
+  const today = new Date().toISOString().split('T')[0]
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+  return [
+    { id: 'a1', childId: '1', date: today, present: true, broughtBy: 'umubyeyi_mama', arrivedAt: '2026-06-17T08:15:00' },
+    { id: 'a2', childId: '2', date: today, present: true, broughtBy: 'umubyeyi_mama', arrivedAt: '2026-06-17T08:18:00' },
+    { id: 'a3', childId: '3', date: today, present: false },
+    { id: 'a4', childId: '1', date: yesterdayStr, present: true, broughtBy: 'umubyeyi_papa', arrivedAt: '2026-06-21T08:10:00' },
+    { id: 'a5', childId: '2', date: yesterdayStr, present: true, broughtBy: 'umubyeyi_mama', arrivedAt: '2026-06-21T08:22:00' },
+    { id: 'a6', childId: '3', date: yesterdayStr, present: true, broughtBy: 'umubyeyi_papa', arrivedAt: '2026-06-21T08:30:00' },
+    { id: 'a7', childId: '4', date: yesterdayStr, present: false },
+    { id: 'a8', childId: '5', date: yesterdayStr, present: true, broughtBy: 'umubyeyi_papa', arrivedAt: '2026-06-21T08:45:00' },
+  ]
+})()
 
 export const DISTRICT_STATS = {
   totalChildren: 12450,

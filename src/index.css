@@ -159,6 +159,68 @@ body {
   outline: none;
 }
 
+@keyframes searchable-select-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes searchable-select-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes searchable-select-slide-up-panel {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-100% + 8px)) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-100%) scale(1);
+  }
+}
+
+@keyframes searchable-select-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.searchable-select-backdrop {
+  animation: searchable-select-fade-in 0.18s ease-out;
+}
+
+.searchable-select-panel {
+  transform-origin: top center;
+}
+
+.searchable-select-panel-bottom {
+  animation: searchable-select-slide-down 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.searchable-select-panel-top {
+  transform: translateY(-100%);
+  transform-origin: bottom center;
+  animation: searchable-select-slide-up-panel 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.searchable-select-sheet {
+  animation: searchable-select-sheet-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Rwanda-inspired Imigongo-style pattern for login branding panel */
 .login-rw-pattern {
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M30 0 L45 15 L30 30 L15 15 Z M0 30 L15 45 L30 30 L15 15 Z M30 30 L45 45 L30 60 L15 45 Z M60 30 L45 45 L30 30 L45 15 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");

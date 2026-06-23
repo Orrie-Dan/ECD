@@ -2,9 +2,11 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Pagination } from '@/components/ui/Pagination'
 import { useData } from '@/contexts/AppContext'
+import { usePagination } from '@/hooks/usePagination'
 import { caretaker } from '@/locales/rw/caretaker'
-import { gender, relations, location } from '@/locales/rw/common'
+import { gender, relations, location, getGuardianRelationLabel, normalizeGuardianRelation } from '@/locales/rw/common'
 import { calculateAge, formatDate } from '@/lib/mock-data'
 import { formatArrivalTime, getBroughtByLabel } from '@/lib/attendance-utils'
 
@@ -29,6 +31,7 @@ export function ChildDetailPage() {
 
   const child = children.find((c) => c.id === id)
   const attendance = child ? getChildAttendance(child.id) : []
+  const attendancePagination = usePagination(attendance, { resetDeps: [id] })
 
   if (!child) {
     return (
@@ -89,7 +92,7 @@ export function ChildDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {attendance.map((record) => (
+                    {attendancePagination.items.map((record) => (
                       <tr key={record.id} className="border-b border-border last:border-0">
                         <td className="py-3 pr-4 text-body">{formatDate(record.date)}</td>
                         <td className="py-3 pr-4 text-body font-mono">
@@ -113,6 +116,19 @@ export function ChildDetailPage() {
                 </table>
               </div>
             )}
+            <Pagination
+              page={attendancePagination.page}
+              pageSize={attendancePagination.pageSize}
+              total={attendancePagination.total}
+              totalPages={attendancePagination.totalPages}
+              startIndex={attendancePagination.startIndex}
+              endIndex={attendancePagination.endIndex}
+              hasPrevious={attendancePagination.hasPrevious}
+              hasNext={attendancePagination.hasNext}
+              onPageChange={attendancePagination.setPage}
+              onPageSizeChange={attendancePagination.setPageSize}
+              className="!mt-0"
+            />
           </Card>
         </div>
       ) : (
@@ -123,17 +139,38 @@ export function ChildDetailPage() {
               <DetailRow label="Amazina" value={child.fullName} />
               <DetailRow label="Itariki y'amavuko" value={formatDate(child.dateOfBirth)} />
               <DetailRow label="Igitsina cy'umwana" value={gender[child.gender]} />
+              <DetailRow
+                label={caretaker.registration.specialNeeds}
+                value={child.specialNeeds || caretaker.registration.notProvided}
+              />
               <DetailRow label={caretaker.childDetail.dateRegistered} value={formatDate(child.registeredAt)} />
             </dl>
           </Card>
           <Card padding="lg">
-            <h3 className="text-label text-primary mb-4">Umubyeyi/Umurera</h3>
+            <h3 className="text-label text-primary mb-4">{caretaker.registration.guardian1Section}</h3>
             <dl>
               <DetailRow label="Amazina" value={child.guardianName} />
               <DetailRow label="Telefone" value={child.guardianPhone} />
-              <DetailRow label="Isano" value={relations[child.guardianRelation]} />
+              <DetailRow label="Isano" value={getGuardianRelationLabel(normalizeGuardianRelation(child.guardianRelation) ?? child.guardianRelation)} />
             </dl>
           </Card>
+          {child.guardian2Name && (
+            <Card padding="lg">
+              <h3 className="text-label text-primary mb-4">{caretaker.registration.guardian2Section}</h3>
+              <dl>
+                <DetailRow label="Amazina" value={child.guardian2Name} />
+                <DetailRow label="Telefone" value={child.guardian2Phone ?? ''} />
+                <DetailRow
+                  label="Isano"
+                  value={
+                    child.guardian2Relation
+                      ? getGuardianRelationLabel(normalizeGuardianRelation(child.guardian2Relation) ?? child.guardian2Relation)
+                      : ''
+                  }
+                />
+              </dl>
+            </Card>
+          )}
           <Card padding="lg">
             <h3 className="text-label text-primary mb-4">Aho Atuye</h3>
             <dl>

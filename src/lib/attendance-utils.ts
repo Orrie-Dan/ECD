@@ -1,5 +1,7 @@
 import type { AttendanceRecord, Child } from '@/types'
 import { calculateAge } from '@/lib/mock-data'
+import { OTHER_RELATION_VALUE, normalizeGuardianRelation, getGuardianRelationLabel } from '@/lib/guardian-relations'
+import { applySharedChildFilters, type AttendanceSearchFilters } from '@/lib/child-filters'
 
 export type AttendanceFilter = 'all' | 'present' | 'absent'
 export type AttendanceSort = 'absent-first' | 'name-asc' | 'name-desc' | 'recent-first'
@@ -7,6 +9,30 @@ export type AgeGroupFilter = 'all' | '3-4' | '5-6'
 
 export function getTodayDate(): string {
   return new Date().toISOString().split('T')[0]
+}
+
+export function getYesterdayDate(): string {
+  const date = new Date()
+  date.setDate(date.getDate() - 1)
+  return date.toISOString().split('T')[0]
+}
+
+export function getRecordForDate(
+  attendance: AttendanceRecord[],
+  childId: string,
+  date: string,
+): AttendanceRecord | undefined {
+  return attendance.find((record) => record.childId === childId && record.date === date)
+}
+
+export function isPresentOnDate(
+  attendance: AttendanceRecord[],
+  childId: string,
+  date: string,
+): boolean {
+  return attendance.some(
+    (record) => record.childId === childId && record.date === date && record.present,
+  )
 }
 
 export function formatArrivalTime(iso?: string): string {
@@ -27,8 +53,9 @@ export function getBroughtByLabel(
   relations?: Record<string, string>
 ): string {
   if (!broughtBy) return '—'
-  if (broughtBy === 'undi' && broughtByOther) return broughtByOther
-  return relations?.[broughtBy] ?? broughtBy
+  if ((broughtBy === OTHER_RELATION_VALUE || broughtBy === 'undi') && broughtByOther) return broughtByOther
+  const normalized = normalizeGuardianRelation(broughtBy) ?? broughtBy
+  return relations?.[normalized] ?? getGuardianRelationLabel(normalized)
 }
 
 interface FilterSortParams {
@@ -115,43 +142,60 @@ export function getRecentArrivals(
 export function filterWaitingChildren({
   children,
   todayRecords,
-  search,
-  sort,
-  genderFilter = 'all',
-  ageFilter = 'all',
+  filters,
 }: {
   children: Child[]
   todayRecords: Map<string, AttendanceRecord>
-  search: string
-  sort: AttendanceSort
-  genderFilter?: 'all' | Child['gender']
-  ageFilter?: AgeGroupFilter
+  filters: AttendanceSearchFilters
 }): Child[] {
   let result = children.filter((c) => !todayRecords.get(c.id)?.present)
-
-  if (search.trim()) {
-    const q = search.toLowerCase()
-    result = result.filter((c) => c.fullName.toLowerCase().includes(q))
-  }
-
-  if (genderFilter !== 'all') {
-    result = result.filter((c) => c.gender === genderFilter)
-  }
-
-  if (ageFilter !== 'all') {
-    result = result.filter((c) => getAgeGroup(calculateAge(c.dateOfBirth)) === ageFilter)
-  }
+  result = applySharedChildFilters(result, filters)
 
   result.sort((a, b) => {
-    switch (sort) {
+    switch (filters.sort) {
       case 'name-asc':
         return a.fullName.localeCompare(b.fullName, 'rw')
-      case 'name-desc':
-        return b.fullName.localeCompare(a.fullName, 'rw')
       case 'recent-first':
       case 'absent-first':
       default:
         return a.fullName.localeCompare(b.fullName, 'rw')
+    }
+  })
+
+  return result
+}
+
+export function filterArrivedChildren({
+  children,
+  todayRecords,
+  filters,
+}: {
+  children: Child[]
+  todayRecords: Map<string, AttendanceRecord>
+  filters: AttendanceSearchFilters
+}): RecentArrival[] {
+  const filteredChildren = applySharedChildFilters(
+    children.filter((child) => todayRecords.get(child.id)?.present),
+    filters,
+  )
+
+  let result: RecentArrival[] = filteredChildren.map((child) => ({
+    child,
+    record: todayRecords.get(child.id)!,
+  }))
+
+  result.sort((a, b) => {
+    switch (filters.sort) {
+      case 'name-asc':
+        return a.child.fullName.localeCompare(b.child.fullName, 'rw')
+      case 'recent-first': {
+        const aTime = a.record.arrivedAt ? new Date(a.record.arrivedAt).getTime() : 0
+        const bTime = b.record.arrivedAt ? new Date(b.record.arrivedAt).getTime() : 0
+        return bTime - aTime
+      }
+      case 'absent-first':
+      default:
+        return a.child.fullName.localeCompare(b.child.fullName, 'rw')
     }
   })
 

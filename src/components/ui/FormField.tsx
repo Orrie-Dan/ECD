@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, type SelectHTMLAttributes, type ReactNode } from 'react'
+import { type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react'
 
 interface FormFieldProps {
   label: string
@@ -44,6 +44,19 @@ export function TextInput({ error, className = '', ...props }: TextInputProps) {
   return (
     <input
       className={`${inputBase} ${error ? 'border-error focus:border-error' : ''} ${className}`}
+      {...props}
+    />
+  )
+}
+
+interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  error?: boolean
+}
+
+export function TextArea({ error, className = '', ...props }: TextAreaProps) {
+  return (
+    <textarea
+      className={`${inputBase} min-h-24 py-3 resize-y ${error ? 'border-error focus:border-error' : ''} ${className}`}
       {...props}
     />
   )

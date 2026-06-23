@@ -5,6 +5,8 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { DataTable } from '@/components/ui/EmptyState'
 import { ECD_CENTERS } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
+import { usePagination } from '@/hooks/usePagination'
+import { Pagination } from '@/components/ui/Pagination'
 
 export function CentersPage() {
   const [search, setSearch] = useState('')
@@ -16,6 +18,8 @@ export function CentersPage() {
       (c) => c.name.toLowerCase().includes(q) || c.sector.toLowerCase().includes(q)
     )
   }, [search])
+
+  const pagination = usePagination(filtered, { resetDeps: [search] })
 
   return (
     <DistrictLayout>
@@ -32,7 +36,7 @@ export function CentersPage() {
       />
 
       <DataTable
-        data={filtered}
+        data={pagination.items}
         keyExtractor={(row) => row.id}
         columns={[
           {
@@ -70,6 +74,21 @@ export function CentersPage() {
           },
         ]}
       />
+
+      {pagination.total > 0 && (
+        <Pagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          total={pagination.total}
+          totalPages={pagination.totalPages}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          hasPrevious={pagination.hasPrevious}
+          hasNext={pagination.hasNext}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+        />
+      )}
     </DistrictLayout>
   )
 }
