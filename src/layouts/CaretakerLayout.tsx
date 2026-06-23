@@ -204,7 +204,7 @@ export function CaretakerLayout({ children, pageTitle }: CaretakerLayoutProps) {
           })}
         </nav>
 
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-6xl w-full">
+        <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 lg:p-6 xl:px-8">
           {children}
         </main>
       </div>

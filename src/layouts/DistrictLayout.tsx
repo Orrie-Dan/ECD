@@ -98,7 +98,7 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 max-w-6xl pb-24 lg:pb-6">
+        <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 lg:p-6 xl:px-8 pb-24 lg:pb-6">
           {children}
         </main>
 

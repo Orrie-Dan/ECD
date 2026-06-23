@@ -3,8 +3,8 @@ import type { GuardianRelation } from '@/types'
 export const relations = {
   umubyeyi_mama: 'Umubyeyi (Mama)',
   umubyeyi_papa: 'Umubyeyi (Papa)',
-  sekuru_nyirakuru: 'Sekuru cyangwa Nyirakuru',
-  nyirasenge_marume: 'Nyirasenge cyangwa Marume',
+  sekuru_nyirakuru: 'Sekuru/Nyirakuru',
+  nyirasenge_marume: 'Nyirasenge/Marume',
   umuvandimwe: 'Umuvandimwe',
   umubyeyi_urera: 'Umubyeyi urera umwana utari uwe',
   umurinzi_wemewe: "Umurinzi wemewe n'amategeko",
