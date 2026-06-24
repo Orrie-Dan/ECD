@@ -1,8 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   LogOut,
-  Baby,
   ChevronDown,
+  ArrowLeft,
   User,
   Home,
   Users,
@@ -14,13 +14,17 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
 import { useState, useRef, useEffect } from 'react'
 import { common, messages } from '@/locales/rw/common'
 import { caretaker } from '@/locales/rw/caretaker'
+import ncdaLogo from '@/assets/ncda-logo.png'
 
 interface CaretakerLayoutProps {
   children: React.ReactNode
   pageTitle?: string
+  backTo?: string
+  backLabel?: string
 }
 
 const navItems: {
@@ -54,7 +58,7 @@ function isNavActive(pathname: string, item: (typeof navItems)[number]): boolean
   return pathname === item.path
 }
 
-export function CaretakerLayout({ children, pageTitle }: CaretakerLayoutProps) {
+export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: CaretakerLayoutProps) {
   const { user, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -63,6 +67,8 @@ export function CaretakerLayout({ children, pageTitle }: CaretakerLayoutProps) {
   const profileRef = useRef<HTMLDivElement>(null)
 
   const title = pageTitle ?? getPageTitle(location.pathname)
+  const showBack = Boolean(backTo || backLabel)
+  const resolvedBackLabel = backLabel ?? common.back
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -80,8 +86,14 @@ export function CaretakerLayout({ children, pageTitle }: CaretakerLayoutProps) {
       <aside className="hidden lg:flex flex-col w-56 xl:w-60 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
         <div className="p-4 xl:p-5 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary-light shrink-0">
-              <Baby size={22} className="text-primary" />
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white border border-border shrink-0 overflow-hidden">
+              <img
+                src={ncdaLogo}
+                alt="NCDA"
+                className="w-full h-full object-contain scale-[1.35]"
+                loading="eager"
+                decoding="async"
+              />
             </div>
             <div className="min-w-0">
               <h1 className="text-subheading text-primary leading-tight truncate">{common.appName}</h1>
@@ -127,8 +139,8 @@ export function CaretakerLayout({ children, pageTitle }: CaretakerLayoutProps) {
         {/* Header */}
         <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
           <div className="px-4 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h2 className="text-heading text-text truncate">{title}</h2>
+            <div className="min-w-0 flex items-center gap-2.5">
+              <h2 className="text-heading text-text truncate min-w-0">{title}</h2>
             </div>
 
             <div className="flex items-center gap-3 sm:gap-5 shrink-0">
@@ -205,6 +217,30 @@ export function CaretakerLayout({ children, pageTitle }: CaretakerLayoutProps) {
         </nav>
 
         <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 lg:p-6 xl:px-8">
+          {showBack && (
+            <div className="mb-4 flex justify-start">
+              <Button
+                variant="tertiary"
+                size="sm"
+                icon={<ArrowLeft size={18} />}
+                onClick={() => {
+                  const canGoBack = location.key !== 'default'
+                  if (canGoBack) {
+                    navigate(-1)
+                    return
+                  }
+                  if (backTo) {
+                    navigate(backTo)
+                    return
+                  }
+                  navigate('/caretaker')
+                }}
+                className="shrink-0"
+              >
+                {resolvedBackLabel}
+              </Button>
+            </div>
+          )}
           {children}
         </main>
       </div>

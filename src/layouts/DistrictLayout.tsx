@@ -1,11 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Building2, Map, LogOut, Baby } from 'lucide-react'
+import { LayoutDashboard, Building2, Map, LogOut } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { BottomNav } from '@/components/ui/BottomNav'
 import { useState } from 'react'
 import { common, messages } from '@/locales/rw/common'
 import { district } from '@/locales/rw/district'
+import ncdaLogo from '@/assets/ncda-logo.png'
 
 interface DistrictLayoutProps {
   children: React.ReactNode
@@ -28,8 +29,14 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
       <aside className="hidden lg:flex flex-col w-60 bg-surface border-r border-border shrink-0">
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-primary-light">
-              <Baby size={22} className="text-primary" />
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white border border-border overflow-hidden">
+              <img
+                src={ncdaLogo}
+                alt="NCDA"
+                className="w-full h-full object-contain scale-[1.35]"
+                loading="eager"
+                decoding="async"
+              />
             </div>
             <div>
               <h1 className="text-subheading text-primary leading-tight">{common.appName}</h1>
@@ -80,8 +87,14 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
         <header className="lg:hidden bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
           <div className="px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary-light">
-                <Baby size={18} className="text-primary" />
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-border overflow-hidden">
+                <img
+                  src={ncdaLogo}
+                  alt="NCDA"
+                  className="w-full h-full object-contain scale-[1.35]"
+                  loading="eager"
+                  decoding="async"
+                />
               </div>
               <div>
                 <h1 className="text-body font-bold text-text leading-tight">{common.appName}</h1>

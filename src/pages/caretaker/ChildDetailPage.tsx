@@ -6,7 +6,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { useData } from '@/contexts/AppContext'
 import { usePagination } from '@/hooks/usePagination'
 import { caretaker } from '@/locales/rw/caretaker'
-import { gender, relations, location, getGuardianRelationLabel, normalizeGuardianRelation } from '@/locales/rw/common'
+import { common, gender, relations, location, getGuardianRelationLabel, normalizeGuardianRelation } from '@/locales/rw/common'
 import { calculateAge, formatDate } from '@/lib/mock-data'
 import { formatArrivalTime, getBroughtByLabel } from '@/lib/attendance-utils'
 
@@ -35,7 +35,7 @@ export function ChildDetailPage() {
 
   if (!child) {
     return (
-      <CaretakerLayout pageTitle={caretaker.childDetail.title}>
+      <CaretakerLayout pageTitle={caretaker.childDetail.title} backTo="/caretaker/abana" backLabel={common.back}>
         <EmptyState title="Umwana ntaboneka" description="Uyu mwana ntiboneka mu rutonde" />
       </CaretakerLayout>
     )
@@ -46,7 +46,7 @@ export function ChildDetailPage() {
   const initials = getInitials(child.fullName)
 
   return (
-    <CaretakerLayout pageTitle={child.fullName}>
+    <CaretakerLayout pageTitle={child.fullName} backTo="/caretaker/abana" backLabel={common.back}>
       <div className="flex items-center gap-4 mb-8 p-5 bg-surface rounded-xl border border-border shadow-card max-w-3xl">
         <div
           className={`flex items-center justify-center w-16 h-16 rounded-xl text-xl font-bold shrink-0 ${
@@ -127,7 +127,7 @@ export function ChildDetailPage() {
               hasNext={attendancePagination.hasNext}
               onPageChange={attendancePagination.setPage}
               onPageSizeChange={attendancePagination.setPageSize}
-              className="!mt-0"
+              className="mt-0!"
             />
           </Card>
         </div>
