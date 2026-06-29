@@ -13,7 +13,13 @@ import { AttendanceReportPage } from '@/pages/caretaker/AttendanceReportPage'
 import { SettingsPage } from '@/pages/caretaker/SettingsPage'
 import { DistrictDashboardPage } from '@/pages/district/DashboardPage'
 import { CentersPage } from '@/pages/district/CentersPage'
+import { CenterDetailPage } from '@/pages/district/CenterDetailPage'
+import { DistrictChildrenPage } from '@/pages/district/ChildrenPage'
+import { DistrictChildDetailPage } from '@/pages/district/DistrictChildDetailPage'
+import { DistrictReportsPage } from '@/pages/district/ReportsPage'
 import { GisAnalyticsPage } from '@/pages/district/GisAnalyticsPage'
+import { GukurikiranaPage } from '@/pages/district/GukurikiranaPage'
+import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
 import { useAuth } from '@/contexts/AppContext'
 
 function HomeRoute() {
@@ -48,7 +54,14 @@ export default function App() {
               <Route element={<ProtectedRoute allowedRole="districtOfficer" />}>
                 <Route path="/district" element={<DistrictDashboardPage />} />
                 <Route path="/district/ibigo" element={<CentersPage />} />
+                <Route path="/district/ibigo/:id" element={<CenterDetailPage />} />
+                <Route path="/district/abana" element={<DistrictChildrenPage />} />
+                <Route path="/district/abana/:id" element={<DistrictChildDetailPage />} />
+                <Route path="/district/raporo" element={<DistrictReportsPage />} />
                 <Route path="/district/ikarita" element={<GisAnalyticsPage />} />
+                <Route path="/district/gukurikirana" element={<GukurikiranaPage />} />
+                <Route path="/district/ibikurikiranywa" element={<Navigate to="/district/gukurikirana" replace />} />
+                <Route path="/district/igenamiterere" element={<DistrictSettingsPage />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

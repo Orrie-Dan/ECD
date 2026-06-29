@@ -32,7 +32,7 @@ export function FormField({ label, error, hint, required, children }: FormFieldP
 }
 
 const inputBase = `
-  w-full min-h-10 px-3.5 text-body rounded-lg border border-border bg-surface text-text
+  w-full min-h-11 sm:min-h-10 px-3.5 text-body rounded-lg border border-border bg-surface text-text
   placeholder:text-text-muted input-focus
 `
 

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Clock, User, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { caretaker } from '@/locales/rw/caretaker'
-import { relations } from '@/locales/rw/common'
+import { common, relations } from '@/locales/rw/common'
 import { formatArrivalTime, getBroughtByLabel } from '@/lib/attendance-utils'
 import type { AttendanceRecord, Child } from '@/types'
 
@@ -47,7 +47,7 @@ export function AttendanceViewSheet({ open, child, record, onClose }: Attendance
           <button
             onClick={onClose}
             className="flex items-center justify-center w-10 h-10 rounded-xl text-text-muted hover:bg-background-subtle"
-            aria-label="Funga"
+            aria-label={common.close}
           >
             <X size={22} />
           </button>

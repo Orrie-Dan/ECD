@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react'
+import { common } from '@/locales/rw/common'
 
 interface Step {
   title: string
@@ -14,11 +15,11 @@ export function Stepper({ steps, currentStep }: StepperProps) {
   const progress = ((currentStep - 1) / (steps.length - 1)) * 100
 
   return (
-    <nav aria-label="Intambwe" className="mb-8">
+    <nav aria-label={common.ui.stepper} className="mb-8">
       <div className="bg-surface rounded-xl border border-border shadow-card p-5 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <p className="text-label text-primary">
-            Intambwe {currentStep} <span className="text-text-muted font-normal">/ {steps.length}</span>
+            {common.ui.stepProgress.replace('{current}', String(currentStep)).replace('{total}', String(steps.length))}
           </p>
           <p className="text-caption hidden sm:block">{steps[currentStep - 1]?.title}</p>
         </div>

@@ -55,8 +55,8 @@ const iconSizeClasses: Record<ButtonSize, string> = {
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'min-h-8 px-3.5 text-sm rounded-lg',
-  md: 'min-h-10 px-4 text-body rounded-xl',
+  sm: 'min-h-9 sm:min-h-8 px-3.5 text-sm rounded-lg',
+  md: 'min-h-11 sm:min-h-10 px-4 text-body rounded-xl',
   lg: 'min-h-11 px-5 text-body-lg rounded-xl',
   xl: 'min-h-12 px-6 text-subheading rounded-xl font-bold',
 }

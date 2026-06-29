@@ -1,6 +1,7 @@
 import type { Child, Gender, GuardianRelation } from '@/types'
 import { calculateAge } from '@/lib/mock-data'
 import { getAgeGroup } from '@/lib/attendance-utils'
+import { getProvinceDisplayName } from '@/lib/rwanda-admin'
 
 export type GenderFilter = 'all' | Gender
 export type AgeFilter = 'all' | '3-4' | '5-6'
@@ -139,7 +140,8 @@ export function applySharedChildFilters(children: Child[], filters: SharedChildF
   }
 
   if (filters.province) {
-    result = result.filter((c) => c.province === filters.province)
+    const provinceName = getProvinceDisplayName(filters.province)
+    result = result.filter((c) => c.province === provinceName)
   }
   if (filters.district) {
     result = result.filter((c) => c.district === filters.district)

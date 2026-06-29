@@ -12,7 +12,7 @@ export function GovernmentHeader({ variant = 'default' }: GovernmentHeaderProps)
         <div className="flex items-center gap-3">
           <img
             src={rwandaEmblem}
-            alt="Ikimenyetso cy'Igihugu cya Repubulika y'u Rwanda"
+            alt={auth.login.governmentEmblemAlt}
             className="w-9 h-9 object-contain shrink-0"
             width={36}
             height={36}
@@ -30,7 +30,7 @@ export function GovernmentHeader({ variant = 'default' }: GovernmentHeaderProps)
       <div className="flex justify-center mb-4">
         <img
           src={rwandaEmblem}
-          alt="Ikimenyetso cy'Igihugu cya Repubulika y'u Rwanda"
+          alt={auth.login.governmentEmblemAlt}
           className="w-24 h-24 object-contain"
           width={96}
           height={96}

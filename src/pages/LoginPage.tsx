@@ -17,7 +17,7 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-[#F7F9FC] px-4 py-8 sm:px-5">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-[#F7F9FC] px-4 py-8 sm:px-6 sm:py-12 w-full min-w-0">
       <LoginForm role={role} />
 
       <footer className="mt-8 text-center max-w-md">

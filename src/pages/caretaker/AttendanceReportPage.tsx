@@ -64,7 +64,7 @@ export function AttendanceReportPage() {
 
   return (
     <CaretakerLayout>
-      <p className="text-body-lg text-text-secondary mb-6">
+      <p className="text-body-lg text-text-secondary mb-6 break-words">
         {caretaker.report.subtitle} — <span className="font-semibold text-text">{formattedDate}</span>
         {isToday && (
           <span className="ml-2 inline-flex items-center rounded-full bg-primary-light px-2.5 py-0.5 text-caption font-semibold text-primary">
@@ -165,39 +165,41 @@ export function AttendanceReportPage() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0">
+              <table className="w-full min-w-0 text-left responsive-table-cards">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4">Umwana</th>
-                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4 hidden sm:table-cell">Umubyeyi</th>
-                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4 hidden md:table-cell">
+                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4">{common.labels.child}</th>
+                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4">{common.labels.parent}</th>
+                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
                       {caretaker.children.dateRegistered}
                     </th>
-                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4">Imiterere</th>
-                    <th className="text-caption font-semibold text-text-muted pb-3">Ibyakora</th>
+                    <th className="text-caption font-semibold text-text-muted pb-3 pr-4">{common.labels.status}</th>
+                    <th className="text-caption font-semibold text-text-muted pb-3">{common.labels.actions}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pagination.items.map(({ child, present, record }) => (
                     <tr key={child.id} className="border-b border-border last:border-0">
-                      <td className="py-3 pr-4 text-body font-medium text-text">{child.fullName}</td>
-                      <td className="py-3 pr-4 text-body text-text-secondary hidden sm:table-cell">
+                      <td className="py-3 pr-4 text-body font-medium text-text" data-label={common.labels.child}>
+                        {child.fullName}
+                      </td>
+                      <td className="py-3 pr-4 text-body text-text-secondary" data-label={common.labels.parent}>
                         {child.guardianName}
                       </td>
-                      <td className="py-3 pr-4 text-body text-text-secondary hidden md:table-cell">
+                      <td className="py-3 pr-4 text-body text-text-secondary" data-label={caretaker.children.dateRegistered}>
                         {formatDate(child.registeredAt)}
                       </td>
-                      <td className="py-3 pr-4">
+                      <td className="py-3 pr-4" data-label={common.labels.status}>
                         <span
-                          className={`text-caption font-semibold px-3 py-1 rounded-full ${
+                          className={`text-caption font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
                             present ? 'bg-success-light text-success' : 'bg-background-subtle text-text-muted'
                           }`}
                         >
                           {present ? caretaker.report.presentStatus : caretaker.report.absentStatus}
                         </span>
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 td-actions" data-label="">
                         {present && record ? (
                           <Button
                             variant="tertiary"

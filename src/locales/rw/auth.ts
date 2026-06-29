@@ -4,11 +4,11 @@ export const auth = {
     welcomeSubtitle: 'Hitamo icyiciro cyawe kugira ngo ukomeze muri sisitemu.',
     caretaker: {
       title: 'Umurezi',
-      description: "Abarezi b'ibigo by'incuke",
+      description: "Abarezi b'ibigo bya ECD",
     },
     districtOfficer: {
       title: "Umukozi w'Akarere",
-      description: "Abashinzwe gukurikirana no kugenzura ibigo by'incuke",
+      description: "Abashinzwe gukurikirana no kugenzura ibigo bya ECD",
     },
   },
   login: {
@@ -33,6 +33,7 @@ export const auth = {
     helpMessage:
       "Saba umuyobozi w'ikigo cyangwa w'akarere kugira ngo agufashe kwinjira muri sisitemu.",
     governmentFooterLine1: "© Repubulika y'u Rwanda",
-    governmentFooterLine2: "",
+    governmentFooterLine2: '',
+    governmentEmblemAlt: "Ikimenyetso cy'Igihugu cya Repubulika y'u Rwanda",
   },
 } as const

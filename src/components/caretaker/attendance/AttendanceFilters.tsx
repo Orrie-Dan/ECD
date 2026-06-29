@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import type { AttendanceFilter, AttendanceSort, AgeGroupFilter } from '@/lib/attendance-utils'
 import { caretaker } from '@/locales/rw/caretaker'
+import { common } from '@/locales/rw/common'
 import { SelectInput } from '@/components/ui/FormField'
 
 interface AttendanceFiltersProps {
@@ -61,7 +62,7 @@ export function AttendanceFilters({
 }: AttendanceFiltersProps) {
   return (
     <div className="space-y-3 mb-5">
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" role="group" aria-label="Gushungura">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" role="group" aria-label={common.ui.filtering}>
         {statusFilters.map((f) => (
           <Chip key={f.value} active={filter === f.value} onClick={() => onFilterChange(f.value)}>
             {f.label}
@@ -69,7 +70,7 @@ export function AttendanceFilters({
         ))}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" role="group" aria-label="Imyaka">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1" role="group" aria-label={common.ui.ages}>
         {ageFilters.map((f) => (
           <Chip key={f.value} active={ageGroup === f.value} onClick={() => onAgeGroupChange(f.value)}>
             {f.label}

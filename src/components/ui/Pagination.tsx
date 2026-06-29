@@ -108,7 +108,7 @@ export function Pagination({
                       aria-label={common.pagination.goToPage.replace('{page}', String(pageNumber))}
                       aria-current={pageNumber === page ? 'page' : undefined}
                       className={`
-                        flex items-center justify-center min-w-8 h-8 px-2 rounded-lg text-body font-semibold
+                        flex items-center justify-center min-w-11 h-11 sm:min-w-8 sm:h-8 px-2 rounded-lg text-body font-semibold
                         transition-colors duration-200
                         focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2
                         ${

@@ -4,7 +4,7 @@ import { auth } from '@/locales/rw/auth'
 
 export function RoleSelectionPage() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-[#F3F7F5] px-4 py-8 sm:py-12">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-[#F3F7F5] px-4 py-8 sm:py-12 w-full min-w-0">
       {/* TODO: optional illustration/background element */}
 
       <div className="w-full max-w-[30rem] bg-surface rounded-xl border border-border/80 shadow-md px-5 py-6 sm:px-6 sm:py-7">

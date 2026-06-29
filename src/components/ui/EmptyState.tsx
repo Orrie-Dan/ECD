@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { common } from '@/locales/rw/common'
 
 interface EmptyStateProps {
   icon?: ReactNode
@@ -38,7 +39,7 @@ interface DataTableProps<T> {
   emptyMessage?: string
 }
 
-export function DataTable<T>({ columns, data, keyExtractor, emptyMessage = 'Nta makuru aboneka' }: DataTableProps<T>) {
+export function DataTable<T>({ columns, data, keyExtractor, emptyMessage = common.ui.emptyTable }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
       <p className="text-body text-text-secondary text-center py-12 bg-surface rounded-xl border border-border">

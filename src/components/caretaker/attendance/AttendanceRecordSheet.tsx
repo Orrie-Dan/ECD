@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { FormField, TextInput } from '@/components/ui/FormField'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { caretaker } from '@/locales/rw/caretaker'
-import { GUARDIAN_RELATION_OPTIONS, OTHER_RELATION_VALUE } from '@/locales/rw/common'
+import { common, GUARDIAN_RELATION_OPTIONS, OTHER_RELATION_VALUE } from '@/locales/rw/common'
 import type { BroughtBy, Child } from '@/types'
 
 interface AttendanceRecordSheetProps {
@@ -74,7 +74,7 @@ export function AttendanceRecordSheet({
           <button
             onClick={onClose}
             className="flex items-center justify-center w-10 h-10 rounded-xl text-text-muted hover:bg-background-subtle"
-            aria-label="Funga"
+            aria-label={common.close}
           >
             <X size={22} />
           </button>
@@ -97,7 +97,7 @@ export function AttendanceRecordSheet({
                 <TextInput
                   value={broughtByOther}
                   onChange={(e) => onBroughtByOtherChange(e.target.value)}
-                  placeholder="Urugero: Mukuru w'umwana"
+                  placeholder={caretaker.attendance.broughtByOtherPlaceholder}
                   autoFocus
                 />
               </FormField>

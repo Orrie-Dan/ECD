@@ -8,7 +8,7 @@ import { ProgressCard } from '@/components/caretaker/dashboard/ProgressCard'
 import { ActivityTimeline, type ActivityItem } from '@/components/caretaker/dashboard/ActivityTimeline'
 import { useAuth, useData } from '@/contexts/AppContext'
 import { caretaker } from '@/locales/rw/caretaker'
-import { relations } from '@/locales/rw/common'
+import { common, relations } from '@/locales/rw/common'
 import {
   formatArrivalTime,
   formatRelativeDayLabel,
@@ -74,8 +74,8 @@ export function CaretakerDashboardPage() {
   return (
     <CaretakerLayout>
       {/* Welcome header */}
-      <header className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mb-8">
-        <div className="space-y-2">
+      <header className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between mb-6 sm:mb-8">
+        <div className="space-y-2 min-w-0">
           <h1 className="text-display text-text">
             {caretaker.dashboard.greeting}, {user?.name}
           </h1>
@@ -91,14 +91,14 @@ export function CaretakerDashboardPage() {
           size="xl"
           icon={<Plus size={22} strokeWidth={2.5} />}
           onClick={() => navigate('/caretaker/ubwitabire')}
-          className="shrink-0"
+          className="w-full sm:w-auto shrink-0"
         >
           {caretaker.dashboard.primaryAction}
         </Button>
       </header>
 
       {/* Statistics */}
-      <section aria-label="Imibare y'ingenzi" className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <section aria-label={common.ui.keyStats} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <StatCard icon={<Baby size={22} />} label={caretaker.dashboard.totalChildren} value={children.length} />
         <StatCard icon={<CheckCircle2 size={22} />} label={caretaker.dashboard.presentToday} value={presentCount} variant="success" />
         <StatCard icon={<Hourglass size={22} />} label={caretaker.dashboard.notYetArrived} value={waitingCount} variant="warning" />

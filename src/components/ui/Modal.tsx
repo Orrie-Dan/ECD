@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { Button } from './Button'
+import { common } from '@/locales/rw/common'
 
 interface ModalProps {
   open: boolean
@@ -50,21 +51,21 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
           max-h-[90vh] flex flex-col
         `}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border shrink-0 bg-surface">
-          <h2 id="modal-title" className="text-heading text-text">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-border shrink-0 bg-surface gap-3">
+          <h2 id="modal-title" className="text-heading text-text min-w-0">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="flex items-center justify-center w-10 h-10 rounded-xl text-text-muted hover:bg-background-subtle transition-colors"
-            aria-label="Funga"
+            className="touch-target flex items-center justify-center rounded-xl text-text-muted hover:bg-background-subtle transition-colors shrink-0"
+            aria-label={common.close}
           >
             <X size={22} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">{children}</div>
         {footer && (
-          <div className="shrink-0 px-6 py-5 border-t border-border bg-surface shadow-[0_-4px_16px_rgb(28_35_48/0.06)]">
+          <div className="shrink-0 px-4 sm:px-6 py-4 sm:py-5 border-t border-border bg-surface shadow-[0_-4px_16px_rgb(28_35_48/0.06)]">
             {footer}
           </div>
         )}
@@ -89,8 +90,8 @@ export function ConfirmModal({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Emeza',
-  cancelLabel = 'Hagarika',
+  confirmLabel = common.confirm,
+  cancelLabel = common.cancel,
 }: ConfirmModalProps) {
   return (
     <Modal
@@ -99,14 +100,14 @@ export function ConfirmModal({
       title={title}
       size="sm"
       footer={
-        <>
-          <Button variant="tertiary" onClick={onClose}>
+        <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+          <Button variant="tertiary" onClick={onClose} fullWidth className="sm:w-auto">
             {cancelLabel}
           </Button>
-          <Button variant="primary" onClick={onConfirm}>
+          <Button variant="primary" onClick={onConfirm} fullWidth className="sm:w-auto">
             {confirmLabel}
           </Button>
-        </>
+        </div>
       }
     >
       <p className="text-body-lg text-text-secondary">{message}</p>

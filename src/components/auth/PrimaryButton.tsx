@@ -1,4 +1,5 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { common } from '@/locales/rw/common'
 
 interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
@@ -30,7 +31,7 @@ export function PrimaryButton({
       `}
       {...props}
     >
-      {loading ? 'Tegereza gato...' : children}
+      {loading ? common.loading : children}
     </button>
   )
 }

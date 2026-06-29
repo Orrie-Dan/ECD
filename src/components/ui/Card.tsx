@@ -97,6 +97,7 @@ interface StatCardProps {
   icon?: ReactNode
   trend?: string
   variant?: 'default' | 'success' | 'warning' | 'info'
+  compact?: boolean
 }
 
 const statVariants = {
@@ -106,17 +107,34 @@ const statVariants = {
   info: 'border-secondary/20 bg-secondary-light/30',
 }
 
-export function StatCard({ label, value, icon, trend, variant = 'default' }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  icon,
+  trend,
+  variant = 'default',
+  compact = false,
+}: StatCardProps) {
   return (
-    <Card className={statVariants[variant]} padding="md">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <p className="text-caption font-medium uppercase tracking-wide">{label}</p>
-          <p className="text-display text-text">{value}</p>
-          {trend && <p className="text-caption mt-2">{trend}</p>}
+    <Card className={statVariants[variant]} padding={compact ? 'sm' : 'md'}>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p
+            className={`font-medium uppercase tracking-wide text-text-secondary ${
+              compact ? 'text-caption leading-tight' : 'text-caption'
+            }`}
+          >
+            {label}
+          </p>
+          <p className={`text-text ${compact ? 'text-heading mt-0.5' : 'text-display mt-0.5'}`}>{value}</p>
+          {trend && <p className="text-caption mt-1">{trend}</p>}
         </div>
         {icon && (
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-surface shadow-sm border border-border shrink-0">
+          <div
+            className={`flex items-center justify-center rounded-lg bg-surface shadow-sm border border-border shrink-0 ${
+              compact ? 'w-10 h-10' : 'w-12 h-12 rounded-xl'
+            }`}
+          >
             {icon}
           </div>
         )}

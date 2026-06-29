@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 import { CheckCircle2, XCircle } from 'lucide-react'
+import { common } from '@/locales/rw/common'
 
 interface ToastItem {
   id: string
@@ -42,7 +43,7 @@ export function Toast({ message, type, onClose, onUndo, undoLabel }: ToastProps)
       <button
         onClick={onClose}
         className="p-1 rounded-lg hover:opacity-70 transition-opacity"
-        aria-label="Funga"
+        aria-label={common.close}
       >
         ✕
       </button>

@@ -26,20 +26,20 @@ export function ListControlBar({
   showArrivedFilter = false,
 }: ListControlBarProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mb-4">
+    <div className="flex flex-col gap-3 mb-4 sm:flex-row">
       <SearchInput
         value={childName}
         onChange={onChildNameChange}
         placeholder={caretaker.filters.quickSearchPlaceholder}
-        className="flex-1 min-w-0"
+        className="flex-1 min-w-0 w-full"
       />
 
-      <div className="flex gap-2 shrink-0">
+      <div className="flex gap-2 w-full sm:w-auto sm:shrink-0">
         <SelectInput
           value={viewState}
           onChange={(e) => onViewStateChange(e.target.value as ListViewState)}
           aria-label={caretaker.filters.stateLabel}
-          className="!min-h-12 w-36 sm:w-44 text-body font-semibold"
+          className="!min-h-11 sm:!min-h-12 flex-1 sm:flex-none sm:w-44 text-body font-semibold"
         >
           <option value="waiting">{caretaker.filters.stateWaiting}</option>
           {showArrivedFilter && (
@@ -53,7 +53,7 @@ export function ListControlBar({
           size="md"
           icon={<Search size={18} />}
           onClick={onOpenSearchFilters}
-          className="relative whitespace-nowrap"
+          className="relative shrink-0"
         >
           <span className="hidden sm:inline">{caretaker.filters.openPanel}</span>
           <span className="sm:hidden">{caretaker.filters.openPanelShort}</span>

@@ -31,9 +31,9 @@ const STEPS = [
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between gap-4 text-body">
+    <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4 text-body">
       <dt className="text-text-secondary shrink-0">{label}</dt>
-      <dd className="font-semibold text-text text-right">{value}</dd>
+      <dd className="font-semibold text-text sm:text-right break-words">{value}</dd>
     </div>
   )
 }
@@ -395,9 +395,9 @@ export function RegisterChildPage() {
         </FormSection>
       )}
 
-      <div className="flex gap-3 mt-8 pt-6 border-t border-border">
+      <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8 pt-6 border-t border-border">
         {step > 1 && (
-          <Button variant="secondary" size="lg" onClick={() => setStep(step - 1)}>
+          <Button variant="secondary" size="lg" onClick={() => setStep(step - 1)} className="w-full sm:w-auto">
             {common.back}
           </Button>
         )}

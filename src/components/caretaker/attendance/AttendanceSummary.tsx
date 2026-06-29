@@ -20,20 +20,20 @@ export function AttendanceSummary({ total, arrived, waiting }: AttendanceSummary
         <h2 className="text-subheading text-text">{caretaker.attendance.summaryTitle}</h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-3 gap-3 mb-5">
         <div className="text-center p-3 rounded-xl bg-surface/80 border border-border">
-          <p className="text-display text-text leading-none">{total}</p>
+          <p className="text-heading sm:text-display text-text leading-none">{total}</p>
           <p className="text-caption mt-1.5">{caretaker.attendance.totalChildren}</p>
         </div>
         <div className="text-center p-3 rounded-xl bg-success-light/60 border border-success/20">
-          <p className="text-display text-success leading-none inline-flex items-center justify-center gap-2">
+          <p className="text-heading sm:text-display text-success leading-none inline-flex items-center justify-center gap-2">
             <Check size={22} aria-hidden="true" />
             {arrived}
           </p>
           <p className="text-caption text-success mt-1.5">{caretaker.attendance.arrived}</p>
         </div>
         <div className="text-center p-3 rounded-xl bg-warning-light/50 border border-warning/20">
-          <p className="text-display text-warning leading-none inline-flex items-center justify-center gap-2">
+          <p className="text-heading sm:text-display text-warning leading-none inline-flex items-center justify-center gap-2">
             <Hourglass size={22} aria-hidden="true" />
             {waiting}
           </p>

@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
   LogOut,
   ChevronDown,
@@ -10,11 +10,14 @@ import {
   ClipboardCheck,
   BarChart3,
   Settings,
-  type LucideIcon,
+  Menu,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
+import { BottomNav, type NavItem } from '@/components/ui/BottomNav'
+import { NavDrawer } from '@/components/ui/NavDrawer'
+import { SidebarNavLink, isSidebarNavActive, type SidebarNavItem } from '@/components/ui/SidebarNavLink'
 import { useState, useRef, useEffect } from 'react'
 import { common, messages } from '@/locales/rw/common'
 import { caretaker } from '@/locales/rw/caretaker'
@@ -27,18 +30,21 @@ interface CaretakerLayoutProps {
   backLabel?: string
 }
 
-const navItems: {
-  path: string
-  label: string
-  icon: LucideIcon
-  matchPaths?: string[]
-}[] = [
-  { path: '/caretaker', label: caretaker.nav.home, icon: Home, matchPaths: ['/caretaker'] },
+const navItems: SidebarNavItem[] = [
+  { path: '/caretaker', label: caretaker.nav.home, icon: Home },
   { path: '/caretaker/abana', label: caretaker.nav.children, icon: Users, matchPaths: ['/caretaker/abana'] },
   { path: '/caretaker/kwiyandikisha', label: caretaker.nav.register, icon: UserPlus },
   { path: '/caretaker/ubwitabire', label: caretaker.nav.attendance, icon: ClipboardCheck },
   { path: '/caretaker/raporo', label: caretaker.nav.reports, icon: BarChart3 },
   { path: '/caretaker/igenamiterere', label: caretaker.nav.settings, icon: Settings },
+]
+
+const mobileNavItems: NavItem[] = [
+  { path: '/caretaker', label: caretaker.nav.home, icon: Home },
+  { path: '/caretaker/abana', label: caretaker.nav.children, icon: Users, matchPaths: ['/caretaker/abana'] },
+  { path: '/caretaker/kwiyandikisha', label: caretaker.nav.register, icon: UserPlus },
+  { path: '/caretaker/ubwitabire', label: caretaker.nav.attendance, icon: ClipboardCheck },
+  { path: '/caretaker/raporo', label: caretaker.nav.reports, icon: BarChart3 },
 ]
 
 function getPageTitle(pathname: string): string {
@@ -51,11 +57,55 @@ function getPageTitle(pathname: string): string {
   return common.appName
 }
 
-function isNavActive(pathname: string, item: (typeof navItems)[number]): boolean {
-  if (item.matchPaths) {
-    return item.matchPaths.some((p) => pathname === p || pathname.startsWith(p + '/'))
-  }
-  return pathname === item.path
+function SidebarBrand({ collapsed = false, centerName }: { collapsed?: boolean; centerName?: string }) {
+  return (
+    <div className={`border-b border-border ${collapsed ? 'p-3' : 'p-4 xl:p-5'}`}>
+      <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
+        <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white border border-border shrink-0 overflow-hidden">
+          <img
+            src={ncdaLogo}
+            alt="NCDA"
+            className="w-full h-full object-contain scale-[1.35]"
+            loading="eager"
+            decoding="async"
+          />
+        </div>
+        {!collapsed && (
+          <div className="min-w-0">
+            <h1 className="text-subheading text-primary leading-tight truncate">{common.appName}</h1>
+            <p className="text-caption mt-0.5 truncate">{centerName}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SidebarNavList({
+  items,
+  pathname,
+  collapsed = false,
+  onNavigate,
+}: {
+  items: SidebarNavItem[]
+  pathname: string
+  collapsed?: boolean
+  onNavigate?: () => void
+}) {
+  return (
+    <nav className={`flex-1 overflow-y-auto space-y-0.5 ${collapsed ? 'p-2' : 'p-2.5 xl:p-3'}`} aria-label={common.nav.mainNav}>
+      {items.map((item) => (
+        <SidebarNavLink
+          key={item.path}
+          item={item}
+          active={isSidebarNavActive(pathname, item)}
+          collapsed={collapsed}
+          onNavigate={onNavigate}
+          activeStyle="filled"
+        />
+      ))}
+    </nav>
+  )
 }
 
 export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: CaretakerLayoutProps) {
@@ -64,11 +114,16 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
   const navigate = useNavigate()
   const [showLogout, setShowLogout] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
 
   const title = pageTitle ?? getPageTitle(location.pathname)
   const showBack = Boolean(backTo || backLabel)
   const resolvedBackLabel = backLabel ?? common.back
+
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [location.pathname])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -80,79 +135,74 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  return (
-    <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
-      <aside className="hidden lg:flex flex-col w-56 xl:w-60 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
-        <div className="p-4 xl:p-5 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white border border-border shrink-0 overflow-hidden">
-              <img
-                src={ncdaLogo}
-                alt="NCDA"
-                className="w-full h-full object-contain scale-[1.35]"
-                loading="eager"
-                decoding="async"
-              />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-subheading text-primary leading-tight truncate">{common.appName}</h1>
-              <p className="text-caption mt-0.5 truncate">{user?.centerName}</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-2.5 xl:p-3 space-y-0.5 overflow-y-auto" aria-label="Imbuga nkuru">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = isNavActive(location.pathname, item)
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`
-                  flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-body font-medium
-                  transition-all duration-200 ease-out
-                  ${isActive
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'text-text-secondary hover:bg-background-subtle hover:text-text hover:scale-[1.01]'}
-                `}
-                aria-current={isActive ? 'page' : undefined}
-              >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className="shrink-0" aria-hidden="true" />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-
+  const renderSidebar = (collapsed: boolean) => (
+    <>
+      <SidebarBrand collapsed={collapsed} centerName={user?.centerName} />
+      <SidebarNavList items={navItems} pathname={location.pathname} collapsed={collapsed} />
+      {!collapsed && (
         <div className="p-3 xl:p-4 border-t border-border">
           <div className="px-4 py-3 rounded-xl bg-background-subtle">
-            <p className="text-caption text-text-muted">Ukoresha sisitemu</p>
+            <p className="text-caption text-text-muted">{common.ui.systemUser}</p>
             <p className="text-body font-semibold text-text mt-0.5 truncate">{user?.name}</p>
           </div>
         </div>
+      )}
+    </>
+  )
+
+  return (
+    <div className="min-h-screen bg-background flex">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex flex-col w-56 xl:w-60 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
+        {renderSidebar(false)}
       </aside>
 
-      {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-56 xl:ml-60">
-        {/* Header */}
+      {/* Tablet collapsed sidebar */}
+      <aside className="hidden md:flex lg:hidden flex-col w-16 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
+        {renderSidebar(true)}
+      </aside>
+
+      <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={common.appName}>
+        <div className="mb-4 px-2 py-3 rounded-xl bg-background-subtle">
+          <p className="text-caption text-text-muted">{common.ui.systemUser}</p>
+          <p className="text-body font-semibold text-text mt-0.5">{user?.name}</p>
+          <p className="text-caption text-text-secondary mt-0.5">{user?.centerName}</p>
+        </div>
+        <SidebarNavList
+          items={navItems}
+          pathname={location.pathname}
+          onNavigate={() => setDrawerOpen(false)}
+        />
+      </NavDrawer>
+
+      <div className="flex-1 flex flex-col min-w-0 md:ml-16 lg:ml-56 xl:ml-60">
         <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
-          <div className="px-4 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-4">
-            <div className="min-w-0 flex items-center gap-2.5">
+          <div className="px-3 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="lg:hidden touch-target flex items-center justify-center rounded-lg text-text-secondary hover:bg-background-subtle transition-colors shrink-0"
+                aria-label={common.nav.openMenu}
+                aria-expanded={drawerOpen}
+              >
+                <Menu size={22} aria-hidden="true" />
+              </button>
               <h2 className="text-heading text-text truncate min-w-0">{title}</h2>
             </div>
 
-            <div className="flex items-center gap-3 sm:gap-5 shrink-0">
-              <div className="hidden md:block text-right">
-                <p className="text-body font-semibold text-text leading-tight">{user?.name}</p>
-                <p className="text-caption truncate max-w-[200px]">{user?.centerName}</p>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="hidden md:block text-right min-w-0">
+                <p className="text-body font-semibold text-text leading-tight truncate max-w-[12rem] lg:max-w-[14rem]">
+                  {user?.name}
+                </p>
+                <p className="text-caption truncate max-w-[12rem] lg:max-w-[14rem]">{user?.centerName}</p>
               </div>
 
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setShowProfileMenu((v) => !v)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-background-subtle hover:bg-background transition-colors"
+                  className="touch-target flex items-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl border border-border bg-background-subtle hover:bg-background transition-colors"
                   aria-expanded={showProfileMenu}
                   aria-haspopup="true"
                 >
@@ -163,7 +213,7 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
                 </button>
 
                 {showProfileMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-56 bg-surface rounded-xl border border-border shadow-lg py-1 z-50">
+                  <div className="absolute right-0 top-full mt-2 w-56 max-w-[calc(100vw-1.5rem)] bg-surface rounded-xl border border-border shadow-lg py-1 z-50">
                     <div className="px-4 py-3 border-b border-border md:hidden">
                       <p className="text-body font-semibold text-text">{user?.name}</p>
                       <p className="text-caption">{user?.centerName}</p>
@@ -195,28 +245,7 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
           </div>
         </header>
 
-        {/* Mobile nav strip */}
-        <nav className="lg:hidden flex overflow-x-auto border-b border-border bg-surface px-2 py-2 gap-1 shrink-0" aria-label="Imbuga nkuru">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = isNavActive(location.pathname, item)
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`
-                  flex items-center gap-1.5 px-3 py-2 rounded-lg text-caption font-medium whitespace-nowrap shrink-0 transition-colors
-                  ${isActive ? 'bg-primary text-white' : 'text-text-secondary hover:bg-background-subtle'}
-                `}
-              >
-                <Icon size={16} strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" />
-                <span className="hidden xs:inline">{item.label.split(' ')[0]}</span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 lg:p-6 xl:px-8">
+        <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 lg:p-6 xl:px-8 pb-24 lg:pb-6 min-w-0">
           {showBack && (
             <div className="mb-4 flex justify-start">
               <Button
@@ -244,6 +273,8 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
           {children}
         </main>
       </div>
+
+      <BottomNav items={mobileNavItems} />
 
       <ConfirmModal
         open={showLogout}

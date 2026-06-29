@@ -79,7 +79,7 @@ export function AttendanceModal({
             <TextInput
               value={broughtByOther}
               onChange={(e) => onBroughtByOtherChange(e.target.value)}
-              placeholder="Urugero: Mukuru w'umwana"
+              placeholder={caretaker.attendance.broughtByOtherPlaceholder}
               autoFocus
             />
           </FormField>

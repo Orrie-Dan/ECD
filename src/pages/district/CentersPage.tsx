@@ -1,93 +1,135 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { SearchInput } from '@/components/ui/SearchInput'
-import { DataTable } from '@/components/ui/EmptyState'
-import { ECD_CENTERS } from '@/lib/mock-data'
+import {
+  SchoolsSummaryCards,
+  SchoolsTable,
+  SchoolsFilterBar,
+  SchoolQuickPreview,
+  type SchoolsFilters,
+} from '@/components/district/schools'
+import {
+  getSchoolsTableData,
+  getUniqueSectors,
+} from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
-import { usePagination } from '@/hooks/usePagination'
-import { Pagination } from '@/components/ui/Pagination'
+
+const DEFAULT_FILTERS: SchoolsFilters = {
+  period: 'month',
+  month: '',
+  sector: '',
+  monitoringStatus: 'all',
+}
+
+function monitoringStatusFromAttention(attentionStatus: 'none' | 'low' | 'medium' | 'high') {
+  if (attentionStatus === 'high') return 'critical' as const
+  if (attentionStatus === 'medium' || attentionStatus === 'low') return 'followup' as const
+  return 'good' as const
+}
+
+function getPeriodCutoff(period: SchoolsFilters['period']) {
+  const now = new Date()
+  const cutoff = new Date(now)
+  if (period === 'today') cutoff.setDate(now.getDate())
+  else if (period === 'week') cutoff.setDate(now.getDate() - 7)
+  else if (period === 'month') cutoff.setDate(now.getDate() - 30)
+  else cutoff.setDate(now.getDate() - 365)
+  cutoff.setHours(0, 0, 0, 0)
+  return cutoff
+}
 
 export function CentersPage() {
-  const [search, setSearch] = useState('')
+  const [filters, setFilters] = useState<SchoolsFilters>(DEFAULT_FILTERS)
+  const [previewCenterId, setPreviewCenterId] = useState<string | null>(null)
 
-  const filtered = useMemo(() => {
-    if (!search.trim()) return ECD_CENTERS
-    const q = search.toLowerCase()
-    return ECD_CENTERS.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.sector.toLowerCase().includes(q)
-    )
-  }, [search])
+  const sectors = useMemo(() => getUniqueSectors(), [])
 
-  const pagination = usePagination(filtered, { resetDeps: [search] })
+  const allSchoolsData = useMemo(() => getSchoolsTableData(), [])
+
+  const filteredSchoolsData = useMemo(() => {
+    let data = allSchoolsData
+
+    if (filters.sector) {
+      data = data.filter((s) => s.sector === filters.sector)
+    }
+
+    const cutoff = getPeriodCutoff(filters.period)
+    data = data.filter((s) => new Date(s.lastActivity).getTime() >= cutoff.getTime())
+
+    if (filters.month) {
+      data = data.filter((s) => {
+        const month = String(new Date(s.lastActivity).getMonth() + 1).padStart(2, '0')
+        return month === filters.month
+      })
+    }
+
+    if (filters.monitoringStatus !== 'all') {
+      data = data.filter((s) => monitoringStatusFromAttention(s.attentionStatus) === filters.monitoringStatus)
+    }
+
+    return data
+  }, [allSchoolsData, filters.sector, filters.period, filters.month, filters.monitoringStatus])
+
+  const hasActiveFilters =
+    filters.period !== 'month' ||
+    filters.month !== '' ||
+    filters.sector !== '' ||
+    filters.monitoringStatus !== 'all'
+
+  const handleClearFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS)
+  }, [])
+
+  const handleViewSchool = useCallback((centerId: string) => {
+    setPreviewCenterId(centerId)
+  }, [])
+
+  const handleClosePreview = useCallback(() => {
+    setPreviewCenterId(null)
+  }, [])
+
+  const summary = useMemo(() => {
+    const totalSchools = filteredSchoolsData.length
+    const goodSchools = filteredSchoolsData.filter((s) => monitoringStatusFromAttention(s.attentionStatus) === 'good').length
+    const schoolsToFollowup = filteredSchoolsData.filter((s) => monitoringStatusFromAttention(s.attentionStatus) !== 'good').length
+    const totalChildren = filteredSchoolsData.reduce((sum, s) => sum + s.children, 0)
+    const totalCaretakers = filteredSchoolsData.reduce((sum, s) => sum + s.caretakers, 0)
+    return { totalSchools, goodSchools, schoolsToFollowup, totalChildren, totalCaretakers }
+  }, [filteredSchoolsData])
 
   return (
     <DistrictLayout>
-      <PageHeader
-        title={district.centers.title}
-        subtitle={district.centers.subtitle}
+      <PageHeader title={district.schools.title} subtitle={district.schools.subtitle} />
+
+      <SchoolsFilterBar
+        filters={filters}
+        onFiltersChange={setFilters}
+        sectors={sectors}
+        resultCount={filteredSchoolsData.length}
+        onClearFilters={handleClearFilters}
+        hasActiveFilters={hasActiveFilters}
       />
 
-      <SearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder={district.centers.searchPlaceholder}
-        className="mb-6 max-w-md"
-      />
+      <SchoolsSummaryCards summary={summary} />
 
-      <DataTable
-        data={pagination.items}
-        keyExtractor={(row) => row.id}
-        columns={[
-          {
-            key: 'name',
-            header: district.centers.centerName,
-            render: (row) => <span className="font-semibold text-text">{row.name}</span>,
-          },
-          {
-            key: 'sector',
-            header: district.centers.sector,
-            render: (row) => <span className="text-text-secondary">{row.sector}</span>,
-          },
-          {
-            key: 'children',
-            header: district.centers.children,
-            render: (row) => <span className="font-semibold">{row.children}</span>,
-          },
-          {
-            key: 'caretaker',
-            header: district.centers.caretaker,
-            render: (row) => <span className="text-text-secondary">{row.caretaker}</span>,
-          },
-          {
-            key: 'attendance',
-            header: district.centers.attendance,
-            render: (row) => (
-              <span className={`inline-flex px-2.5 py-1 rounded-full text-caption font-semibold ${
-                row.attendance >= 70
-                  ? 'bg-success-light text-success'
-                  : 'bg-warning-light text-warning'
-              }`}>
-                {row.attendance}%
-              </span>
-            ),
-          },
-        ]}
-      />
-
-      {pagination.total > 0 && (
-        <Pagination
-          page={pagination.page}
-          pageSize={pagination.pageSize}
-          total={pagination.total}
-          totalPages={pagination.totalPages}
-          startIndex={pagination.startIndex}
-          endIndex={pagination.endIndex}
-          hasPrevious={pagination.hasPrevious}
-          hasNext={pagination.hasNext}
-          onPageChange={pagination.setPage}
-          onPageSizeChange={pagination.setPageSize}
+      <div className="mb-4">
+        <h3 className="text-subheading text-text mb-3">{district.schools.tableTitle}</h3>
+        <SchoolsTable
+          data={filteredSchoolsData}
+          searchQuery={`${filters.period}-${filters.month}-${filters.sector}-${filters.monitoringStatus}`}
+          onViewSchool={handleViewSchool}
         />
+      </div>
+
+      {previewCenterId && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={handleClosePreview}
+            aria-hidden="true"
+          />
+          <SchoolQuickPreview centerId={previewCenterId} onClose={handleClosePreview} />
+        </>
       )}
     </DistrictLayout>
   )
