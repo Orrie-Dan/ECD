@@ -1,0 +1,13 @@
+/** Canonical attendance UI — import from here, not caretaker/attendance. */
+export { AttendanceCard } from '@/components/attendance/AttendanceCard'
+export { AttendanceActions } from '@/components/attendance/AttendanceActions'
+export { AttendanceGrid, AttendanceGridSkeleton } from '@/components/attendance/AttendanceGrid'
+export { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
+export { AttendanceFilters } from '@/components/attendance/AttendanceFilters'
+export type { ReportStatusFilter } from '@/components/attendance/AttendanceFilters'
+export { AttendanceDayFilters } from '@/components/attendance/AttendanceDayFilters'
+export { AttendanceDialog } from '@/components/attendance/AttendanceDialog'
+export type { AttendanceDialogResult } from '@/components/attendance/AttendanceDialog'
+export { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusBadge'
+export { AttendanceHistoryTable } from '@/components/attendance/AttendanceHistoryTable'
+export { AttendanceViewSheet } from '@/components/attendance/AttendanceViewSheet'

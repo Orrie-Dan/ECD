@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from 'react'
-import { Users } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
-import { ListControlBar, type ListViewState } from '@/components/ui/ListControlBar'
+import { PageContainer, PageContent } from '@/components/ui/PageShell'
+import { PageHeader } from '@/components/ui/PageHeader'
 import {
   SearchFiltersPanel,
   DEFAULT_ATTENDANCE_SEARCH,
@@ -9,69 +9,94 @@ import {
   type AttendanceSearchFilters,
 } from '@/components/ui/SearchFiltersPanel'
 import { FilterResultsBar } from '@/components/ui/FilterResultsBar'
-import { EmptyState } from '@/components/ui/EmptyState'
-import { AttendanceCard } from '@/components/caretaker/attendance/AttendanceCard'
-import { ArrivalTimeline } from '@/components/caretaker/attendance/ArrivalTimeline'
-import { AttendanceModal } from '@/components/caretaker/attendance/AttendanceModal'
-import { AttendanceViewSheet } from '@/components/caretaker/attendance/AttendanceViewSheet'
-import { useData } from '@/contexts/AppContext'
+import { AttendanceCard } from '@/components/attendance/AttendanceCard'
+import { AttendanceGrid } from '@/components/attendance/AttendanceGrid'
+import { AttendanceDayFilters } from '@/components/attendance/AttendanceDayFilters'
+import { AttendanceDialog, type AttendanceDialogResult } from '@/components/attendance/AttendanceDialog'
+import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
+import { useAuth, useData } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
-import { messages, OTHER_RELATION_VALUE } from '@/locales/rw/common'
+import { env } from '@/config/env'
+import { messages } from '@/locales/rw/common'
+import { messageForMutationFailure } from '@/offline/mutation-error-message'
+import { OfflineEmptyState } from '@/components/offline/OfflineEmptyState'
 import {
+  computeAttendanceSummary,
+  filterAbsentChildren,
   filterArrivedChildren,
   filterWaitingChildren,
   getTodayDate,
-  type RecentArrival,
 } from '@/lib/attendance-utils'
 import { buildAttendanceFilterSummary, hasActiveAttendanceFilters } from '@/lib/filter-summary'
-import type { AttendanceRecord, BroughtBy, Child } from '@/types'
+import type { AttendanceRecord, Child } from '@/types'
 import { usePagination } from '@/hooks/usePagination'
 import { Pagination } from '@/components/ui/Pagination'
+import type { ListViewState } from '@/components/ui/ListControlBar'
 
 export function AttendancePage() {
-  const { children, attendance, recordAttendance, clearTodayAttendance, getTodayRecord } = useData()
-  const { showSuccess } = useToast()
+  const { user } = useAuth()
+  const { children, attendance, recordAttendance, clearTodayAttendance, getTodayRecord, childrenNeedOnlineBootstrap } =
+    useData()
+  const { showSuccess, showError } = useToast()
 
   const [filters, setFilters] = useState<AttendanceSearchFilters>(DEFAULT_ATTENDANCE_SEARCH)
   const [viewState, setViewState] = useState<ListViewState>('waiting')
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const [modalChild, setModalChild] = useState<Child | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [broughtBy, setBroughtBy] = useState<BroughtBy | ''>('')
-  const [broughtByOther, setBroughtByOther] = useState('')
-  const [viewArrival, setViewArrival] = useState<RecentArrival | null>(null)
+  const [initialPresent, setInitialPresent] = useState<boolean | null>(null)
 
   const today = getTodayDate()
+  const recordedBy = user?.name ?? 'Umurezi'
+
+  const activeChildren = useMemo(
+    () => children.filter((c) => c.status === 'active'),
+    [children],
+  )
 
   const todayRecordsMap = useMemo(() => {
     const map = new Map<string, AttendanceRecord>()
-    children.forEach((c) => {
+    activeChildren.forEach((c) => {
       const record = attendance.find((a) => a.childId === c.id && a.date === today)
       if (record) map.set(c.id, record)
     })
     return map
-  }, [children, attendance, today])
+  }, [activeChildren, attendance, today])
+
+  const summary = useMemo(
+    () => computeAttendanceSummary(activeChildren, attendance, today),
+    [activeChildren, attendance, today],
+  )
 
   const waitingChildren = useMemo(
     () =>
       filterWaitingChildren({
-        children,
+        children: activeChildren,
         todayRecords: todayRecordsMap,
         filters,
       }),
-    [children, todayRecordsMap, filters],
+    [activeChildren, todayRecordsMap, filters],
   )
 
   const arrivedChildren = useMemo(
     () =>
       filterArrivedChildren({
-        children,
+        children: activeChildren,
         todayRecords: todayRecordsMap,
         filters,
       }),
-    [children, todayRecordsMap, filters],
+    [activeChildren, todayRecordsMap, filters],
+  )
+
+  const absentChildren = useMemo(
+    () =>
+      filterAbsentChildren({
+        children: activeChildren,
+        todayRecords: todayRecordsMap,
+        filters,
+      }),
+    [activeChildren, todayRecordsMap, filters],
   )
 
   const waitingPagination = usePagination(waitingChildren, {
@@ -82,6 +107,10 @@ export function AttendancePage() {
     resetDeps: [filters, viewState],
   })
 
+  const absentPagination = usePagination(absentChildren, {
+    resetDeps: [filters, viewState],
+  })
+
   const filterSummary = useMemo(
     () => buildAttendanceFilterSummary(filters, viewState),
     [filters, viewState],
@@ -89,97 +118,99 @@ export function AttendancePage() {
 
   const hasActiveConfig = hasActiveAttendanceFilters(filters, viewState)
   const activePanelCount =
-    viewState === 'waiting' || viewState === 'all' ? waitingChildren.length : arrivedChildren.length
+    viewState === 'waiting'
+      ? waitingChildren.length
+      : viewState === 'arrived'
+        ? arrivedChildren.length
+        : waitingChildren.length + arrivedChildren.length + absentChildren.length
 
   const resetAll = () => {
     setFilters(DEFAULT_ATTENDANCE_SEARCH)
     setViewState('waiting')
   }
 
-  const openModal = useCallback(
-    (child: Child, editing: boolean) => {
-      const record = getTodayRecord(child.id)
-      setModalChild(child)
-      setIsEditing(editing)
-      setBroughtBy(record?.broughtBy ?? '')
-      setBroughtByOther(record?.broughtByOther ?? '')
-    },
-    [getTodayRecord],
-  )
-
-  const closeModal = useCallback(() => {
-    setModalChild(null)
-    setIsEditing(false)
-    setBroughtBy('')
-    setBroughtByOther('')
+  const openDialog = useCallback((child: Child, presentPrefill: boolean | null) => {
+    setModalChild(child)
+    setInitialPresent(presentPrefill)
   }, [])
 
-  const handleConfirm = useCallback(() => {
-    if (!modalChild || !broughtBy) return
+  const closeDialog = useCallback(() => {
+    setModalChild(null)
+    setInitialPresent(null)
+  }, [])
 
-    const childId = modalChild.id
-    const existing = getTodayRecord(childId)
+  const handleConfirm = useCallback(
+    async (result: AttendanceDialogResult) => {
+      if (!modalChild) return
+      const childId = modalChild.id
 
-    recordAttendance({
-      childId,
-      date: today,
-      present: true,
-      broughtBy,
-      broughtByOther: broughtBy === OTHER_RELATION_VALUE ? broughtByOther.trim() : undefined,
-      arrivedAt: existing?.arrivedAt ?? new Date().toISOString(),
-    })
+      try {
+        await recordAttendance({
+          childId,
+          date: today,
+          present: result.present,
+          broughtBy: result.broughtBy,
+          broughtByOther: result.broughtByOther,
+          arrivedAt: result.arrivedAt,
+          absentReason: result.absentReason,
+          notes: result.notes,
+          recordedBy,
+        })
 
-    closeModal()
-
-    showSuccess(messages.attendanceRecorded, {
-      undoLabel: caretaker.attendance.undo,
-      onUndo: () => clearTodayAttendance(childId),
-    })
-  }, [
-    modalChild,
-    broughtBy,
-    broughtByOther,
-    getTodayRecord,
-    recordAttendance,
-    today,
-    showSuccess,
-    closeModal,
-    clearTodayAttendance,
-  ])
-
-  const handleEditFromTimeline = useCallback(
-    (childId: string) => {
-      const child = children.find((c) => c.id === childId)
-      if (child) openModal(child, true)
+        closeDialog()
+        // LIVE local-first: always confirm device save (sync is separate / shell status).
+        showSuccess(
+          env.isLive ? messages.attendanceRecordedLocal : messages.attendanceRecorded,
+          {
+            undoLabel: caretaker.attendance.undo,
+            onUndo: () => {
+              void clearTodayAttendance(childId)
+            },
+          },
+        )
+      } catch (err) {
+        showError(messageForMutationFailure(err))
+      }
     },
-    [children, openModal],
+    [modalChild, recordAttendance, today, recordedBy, closeDialog, showSuccess, showError, clearTodayAttendance],
+  )
+
+  const childHistory = useCallback(
+    (childId: string) => attendance.filter((a) => a.childId === childId),
+    [attendance],
   )
 
   const showWaitingPanel = viewState === 'waiting' || viewState === 'all'
   const showArrivedPanel = viewState === 'arrived' || viewState === 'all'
+  const showAbsentPanel = viewState === 'all' || viewState === 'arrived'
 
   const panelTitle =
-    viewState === 'arrived' ? caretaker.attendance.panelArrived : caretaker.attendance.panelWaiting
-  const panelSubtitle =
-    viewState === 'arrived' ? caretaker.attendance.recentArrivals : caretaker.attendance.subtitle
+    viewState === 'arrived'
+      ? caretaker.attendance.panelArrived
+      : viewState === 'waiting'
+        ? caretaker.attendance.panelWaiting
+        : caretaker.attendance.title
 
   return (
     <CaretakerLayout>
-      <section
-        aria-label={viewState === 'arrived' ? caretaker.attendance.panelArrived : caretaker.attendance.panelWaiting}
-        className="mb-6"
-      >
-        <h2 className="text-heading text-text mb-1">{panelTitle}</h2>
-        <p className="text-body text-text-secondary mb-5">{panelSubtitle}</p>
+      <PageContainer>
+        <PageHeader title={panelTitle} description={caretaker.attendance.subtitle} />
 
-        <ListControlBar
+        <PageContent>
+      {childrenNeedOnlineBootstrap ? (
+        <OfflineEmptyState />
+      ) : (
+      <>
+      <section aria-label={caretaker.attendance.summaryTitle} className="mb-6">
+        <AttendanceSummaryCards stats={summary} className="mb-6" />
+
+        <AttendanceDayFilters
           childName={filters.childName}
           onChildNameChange={(childName) => setFilters((prev) => ({ ...prev, childName }))}
           viewState={viewState}
           onViewStateChange={setViewState}
           onOpenSearchFilters={() => setDrawerOpen(true)}
           hasActiveSearchFilters={isAttendanceSearchActive(filters)}
-          showArrivedFilter
         />
 
         {children.length > 0 && (
@@ -192,100 +223,127 @@ export function AttendancePage() {
         )}
 
         {showWaitingPanel && (
-          <>
-            {waitingChildren.length === 0 ? (
-              <EmptyState
-                icon={<Users size={48} className="text-text-muted" strokeWidth={1.5} />}
-                title={caretaker.attendance.emptyWaiting}
-                description={caretaker.attendance.noChildrenDesc}
-              />
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {waitingPagination.items.map((child) => (
-                    <AttendanceCard
-                      key={child.id}
-                      child={child}
-                      onMarkArrived={() => openModal(child, false)}
-                    />
-                  ))}
-                </div>
-                <Pagination
-                  page={waitingPagination.page}
-                  pageSize={waitingPagination.pageSize}
-                  total={waitingPagination.total}
-                  totalPages={waitingPagination.totalPages}
-                  startIndex={waitingPagination.startIndex}
-                  endIndex={waitingPagination.endIndex}
-                  hasPrevious={waitingPagination.hasPrevious}
-                  hasNext={waitingPagination.hasNext}
-                  onPageChange={waitingPagination.setPage}
-                  onPageSizeChange={waitingPagination.setPageSize}
-                  pageSizeSelectId="attendance-waiting-page-size"
-                />
-              </>
+          <div className={viewState === 'all' ? 'mt-2' : undefined}>
+            {viewState === 'all' && (
+              <h3 className="text-label text-primary mb-3">{caretaker.attendance.panelWaiting}</h3>
             )}
-          </>
+            <AttendanceGrid
+              empty={waitingChildren.length === 0}
+              emptyTitle={caretaker.attendance.emptyWaiting}
+              emptyDescription={caretaker.attendance.noChildrenDesc}
+              aria-label={caretaker.attendance.panelWaiting}
+            >
+              {waitingPagination.items.map((child) => (
+                <AttendanceCard
+                  key={child.id}
+                  child={child}
+                  todayStatus="unrecorded"
+                  history={childHistory(child.id)}
+                  onMarkPresent={() => openDialog(child, true)}
+                  onMarkAbsent={() => openDialog(child, false)}
+                />
+              ))}
+            </AttendanceGrid>
+            {waitingChildren.length > 0 && (
+              <Pagination
+                page={waitingPagination.page}
+                pageSize={waitingPagination.pageSize}
+                total={waitingPagination.total}
+                totalPages={waitingPagination.totalPages}
+                startIndex={waitingPagination.startIndex}
+                endIndex={waitingPagination.endIndex}
+                hasPrevious={waitingPagination.hasPrevious}
+                hasNext={waitingPagination.hasNext}
+                onPageChange={waitingPagination.setPage}
+                onPageSizeChange={waitingPagination.setPageSize}
+                pageSizeSelectId="attendance-waiting-page-size"
+              />
+            )}
+          </div>
         )}
 
-        {showArrivedPanel && viewState !== 'all' && (
-          <>
-            {arrivedChildren.length === 0 ? (
-              <EmptyState
-                icon={<Users size={48} className="text-text-muted" strokeWidth={1.5} />}
-                title={caretaker.attendance.noArrivalsYet}
-                description={caretaker.attendance.noChildrenDesc}
-              />
-            ) : (
-              <>
-                <ArrivalTimeline
-                  arrivals={arrivedPagination.items}
-                  onEdit={handleEditFromTimeline}
-                  onView={setViewArrival}
-                />
-                <Pagination
-                  page={arrivedPagination.page}
-                  pageSize={arrivedPagination.pageSize}
-                  total={arrivedPagination.total}
-                  totalPages={arrivedPagination.totalPages}
-                  startIndex={arrivedPagination.startIndex}
-                  endIndex={arrivedPagination.endIndex}
-                  hasPrevious={arrivedPagination.hasPrevious}
-                  hasNext={arrivedPagination.hasNext}
-                  onPageChange={arrivedPagination.setPage}
-                  onPageSizeChange={arrivedPagination.setPageSize}
-                  pageSizeSelectId="attendance-arrived-page-size"
-                />
-              </>
+        {showArrivedPanel && (
+          <div className={viewState === 'all' || viewState === 'arrived' ? 'mt-6' : undefined}>
+            {(viewState === 'all' || viewState === 'arrived') && (
+              <h3 className="text-label text-primary mb-3">{caretaker.attendance.panelArrived}</h3>
             )}
-          </>
+            <AttendanceGrid
+              empty={arrivedChildren.length === 0}
+              emptyTitle={caretaker.attendance.noArrivalsYet}
+              emptyDescription={caretaker.attendance.noChildrenDesc}
+              aria-label={caretaker.attendance.panelArrived}
+            >
+              {arrivedPagination.items.map(({ child, record }) => (
+                <AttendanceCard
+                  key={record.id}
+                  child={child}
+                  todayStatus="present"
+                  todayRecord={record}
+                  history={childHistory(child.id)}
+                  onEdit={() => openDialog(child, true)}
+                />
+              ))}
+            </AttendanceGrid>
+            {arrivedChildren.length > 0 && (
+              <Pagination
+                page={arrivedPagination.page}
+                pageSize={arrivedPagination.pageSize}
+                total={arrivedPagination.total}
+                totalPages={arrivedPagination.totalPages}
+                startIndex={arrivedPagination.startIndex}
+                endIndex={arrivedPagination.endIndex}
+                hasPrevious={arrivedPagination.hasPrevious}
+                hasNext={arrivedPagination.hasNext}
+                onPageChange={arrivedPagination.setPage}
+                onPageSizeChange={arrivedPagination.setPageSize}
+                pageSizeSelectId="attendance-arrived-page-size"
+              />
+            )}
+          </div>
+        )}
+
+        {showAbsentPanel && (
+          <div className="mt-6">
+            {(viewState === 'all' || (viewState === 'arrived' && absentChildren.length > 0)) && (
+              <h3 className="text-label text-primary mb-3">{caretaker.attendance.panelAbsent}</h3>
+            )}
+            {(viewState === 'all' || absentChildren.length > 0) && (
+              <AttendanceGrid
+                empty={absentChildren.length === 0}
+                emptyTitle={caretaker.attendance.noAbsentYet}
+                emptyDescription={caretaker.attendance.noChildrenDesc}
+                aria-label={caretaker.attendance.panelAbsent}
+              >
+                {absentPagination.items.map(({ child, record }) => (
+                  <AttendanceCard
+                    key={record.id}
+                    child={child}
+                    todayStatus="absent"
+                    todayRecord={record}
+                    history={childHistory(child.id)}
+                    onEdit={() => openDialog(child, false)}
+                  />
+                ))}
+              </AttendanceGrid>
+            )}
+            {absentChildren.length > 0 && (
+              <Pagination
+                page={absentPagination.page}
+                pageSize={absentPagination.pageSize}
+                total={absentPagination.total}
+                totalPages={absentPagination.totalPages}
+                startIndex={absentPagination.startIndex}
+                endIndex={absentPagination.endIndex}
+                hasPrevious={absentPagination.hasPrevious}
+                hasNext={absentPagination.hasNext}
+                onPageChange={absentPagination.setPage}
+                onPageSizeChange={absentPagination.setPageSize}
+                pageSizeSelectId="attendance-absent-page-size"
+              />
+            )}
+          </div>
         )}
       </section>
-
-      {showArrivedPanel && viewState === 'all' && (
-        <section aria-label={caretaker.attendance.panelArrived}>
-          <ArrivalTimeline
-            arrivals={arrivedPagination.items}
-            onEdit={handleEditFromTimeline}
-            onView={setViewArrival}
-            emptyMessage={caretaker.attendance.noArrivalsYet}
-          />
-          <Pagination
-            page={arrivedPagination.page}
-            pageSize={arrivedPagination.pageSize}
-            total={arrivedPagination.total}
-            totalPages={arrivedPagination.totalPages}
-            startIndex={arrivedPagination.startIndex}
-            endIndex={arrivedPagination.endIndex}
-            hasPrevious={arrivedPagination.hasPrevious}
-            hasNext={arrivedPagination.hasNext}
-            onPageChange={arrivedPagination.setPage}
-            onPageSizeChange={arrivedPagination.setPageSize}
-            pageSizeSelectId="attendance-arrived-all-page-size"
-            className="max-w-4xl"
-          />
-        </section>
-      )}
 
       <SearchFiltersPanel
         open={drawerOpen}
@@ -295,24 +353,19 @@ export function AttendancePage() {
         onApply={(f) => setFilters(f as AttendanceSearchFilters)}
       />
 
-      <AttendanceModal
+      <AttendanceDialog
         open={!!modalChild}
         child={modalChild}
-        broughtBy={broughtBy}
-        broughtByOther={broughtByOther}
-        isEditing={isEditing}
-        onBroughtByChange={setBroughtBy}
-        onBroughtByOtherChange={setBroughtByOther}
-        onClose={closeModal}
+        existing={modalChild ? getTodayRecord(modalChild.id) : null}
+        initialPresent={initialPresent}
+        recordedBy={recordedBy}
+        onClose={closeDialog}
         onConfirm={handleConfirm}
       />
-
-      <AttendanceViewSheet
-        open={!!viewArrival}
-        child={viewArrival?.child ?? null}
-        record={viewArrival?.record ?? null}
-        onClose={() => setViewArrival(null)}
-      />
+      </>
+      )}
+        </PageContent>
+      </PageContainer>
     </CaretakerLayout>
   )
 }
