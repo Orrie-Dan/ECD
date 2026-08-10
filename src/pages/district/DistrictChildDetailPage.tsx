@@ -3,27 +3,14 @@ import { ArrowLeft } from 'lucide-react'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ChildDetailContent } from '@/components/children/ChildDetailContent'
-import { SkeletonCard } from '@/components/ui/Skeleton'
 import { useData } from '@/contexts/AppContext'
-import { useChildDetail } from '@/features/children'
-import { env } from '@/config/env'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 
 export function DistrictChildDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { children } = useData()
-  const detailQuery = useChildDetail(id, env.isLive && !!id)
-  const childFromList = children.find((c) => c.id === id)
-  const child = env.isLive ? (detailQuery.data ?? childFromList) : childFromList
-
-  if (env.isLive && detailQuery.isLoading && !child) {
-    return (
-      <DistrictLayout>
-        <SkeletonCard lines={6} />
-      </DistrictLayout>
-    )
-  }
+  const child = children.find((c) => c.id === id)
 
   if (!child) {
     return (
@@ -49,7 +36,7 @@ export function DistrictChildDetailPage() {
         <ArrowLeft size={18} aria-hidden />
         {common.back}
       </Link>
-      <ChildDetailContent child={child} showActions={false} />
+      <ChildDetailContent child={child} />
     </DistrictLayout>
   )
 }

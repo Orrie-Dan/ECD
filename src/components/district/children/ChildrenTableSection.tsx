@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SearchHighlight } from '@/components/ui/SearchHighlight'
 import { Pagination } from '@/components/ui/Pagination'
-import { StatusBadge } from '@/components/children/StatusBadge'
 import { calculateAge } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
 import { common, gender } from '@/locales/rw/common'
@@ -79,7 +78,6 @@ export function ChildrenTableSection({
                 {district.children.childAge}
               </th>
               <th className="text-caption font-semibold text-text-muted pb-3 pr-4">{common.labels.gender}</th>
-              <th className="text-caption font-semibold text-text-muted pb-3 pr-4">{common.labels.status}</th>
               <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
                 {district.children.childSector}
               </th>
@@ -106,9 +104,6 @@ export function ChildrenTableSection({
                 </td>
                 <td className="py-3 pr-4 text-body text-text-secondary" data-label={common.labels.gender}>
                   {gender[child.gender]}
-                </td>
-                <td className="py-3 pr-4" data-label={common.labels.status}>
-                  <StatusBadge status={child.status} />
                 </td>
                 <td
                   className="py-3 pr-4 text-body text-text-secondary"

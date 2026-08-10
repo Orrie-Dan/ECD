@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
-import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SearchFiltersPanel } from '@/components/ui/SearchFiltersPanel'
 import { DistrictChildrenFilterBar } from '@/components/district/children/DistrictChildrenFilterBar'
@@ -9,8 +8,6 @@ import { ChildrenSummaryCards } from '@/components/district/children/ChildrenSum
 import { EnrollmentTrendSection } from '@/components/district/children/EnrollmentTrendSection'
 import { ChildrenDistribution } from '@/components/district/children/ChildrenDistribution'
 import { ChildrenTableSection } from '@/components/district/children/ChildrenTableSection'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { SkeletonPage } from '@/components/ui/Skeleton'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePagination } from '@/hooks/usePagination'
 import {
@@ -25,10 +22,7 @@ import {
   getDistrictEnrollmentTrend,
 } from '@/lib/district-children-utils'
 import { MOCK_CHILDREN, CHILDREN_DISTRIBUTION } from '@/lib/mock-data'
-import { env } from '@/config/env'
-import { useData } from '@/contexts/AppContext'
 import { district } from '@/locales/rw/district'
-import { common } from '@/locales/rw/common'
 import type { EnrollmentPeriod } from '@/types'
 
 const periodLabels: Record<EnrollmentPeriod, string> = {
@@ -41,9 +35,6 @@ const periodLabels: Record<EnrollmentPeriod, string> = {
 const DEFAULT_PERIOD: EnrollmentPeriod = 'month'
 
 export function DistrictChildrenPage() {
-  const { children: liveChildren, childrenLoading, childrenError } = useData()
-  // LIVE: never fall back to MOCK_CHILDREN when the API returns empty.
-  const childrenSource = env.isLive ? liveChildren : liveChildren.length > 0 ? liveChildren : MOCK_CHILDREN
   const [period, setPeriod] = useState<EnrollmentPeriod>(DEFAULT_PERIOD)
   const [yearMonth, setYearMonth] = useState<string | null>(null)
   const [filters, setFilters] = useState<ChildrenSearchFilters>(DEFAULT_CHILDREN_SEARCH)
@@ -66,8 +57,8 @@ export function DistrictChildrenPage() {
   }, [period])
 
   const filteredChildren = useMemo(
-    () => filterDistrictChildren(childrenSource, effectiveFilters),
-    [childrenSource, effectiveFilters],
+    () => filterDistrictChildren(MOCK_CHILDREN, effectiveFilters),
+    [effectiveFilters],
   )
 
   const summary = useMemo(
@@ -75,11 +66,11 @@ export function DistrictChildrenPage() {
       getDistrictChildrenSummary(
         period,
         filteredChildren.length,
-        childrenSource.length,
+        MOCK_CHILDREN.length,
         effectiveFilters,
         yearMonth,
       ),
-    [period, filteredChildren.length, childrenSource.length, effectiveFilters, yearMonth],
+    [period, filteredChildren.length, effectiveFilters, yearMonth],
   )
 
   const trendData = useMemo(
@@ -87,21 +78,20 @@ export function DistrictChildrenPage() {
       getDistrictEnrollmentTrend(
         period,
         filteredChildren.length,
-        childrenSource.length,
+        MOCK_CHILDREN.length,
         effectiveFilters,
         yearMonth,
       ),
-    [period, filteredChildren.length, childrenSource.length, effectiveFilters, yearMonth],
+    [period, filteredChildren.length, effectiveFilters, yearMonth],
   )
 
   const hasActiveFilters = isChildrenSearchActive(effectiveFilters)
 
   const distribution = useMemo(() => {
-    // LIVE: always compute from the loaded roster — never hardcode CHILDREN_DISTRIBUTION.
-    if (env.isLive || hasActiveFilters) {
-      return computeChildrenDistribution(filteredChildren)
+    if (!hasActiveFilters) {
+      return CHILDREN_DISTRIBUTION
     }
-    return CHILDREN_DISTRIBUTION
+    return computeChildrenDistribution(filteredChildren)
   }, [filteredChildren, hasActiveFilters])
 
   const pagination = usePagination(filteredChildren, {
@@ -138,91 +128,68 @@ export function DistrictChildrenPage() {
 
   return (
     <DistrictLayout>
-      <PageContainer>
-        <PageHeader title={district.children.title} subtitle={district.children.subtitle} />
-        <PageContent>
-          {env.isLive && childrenLoading ? (
-            <SkeletonPage label={district.children.title} stats={4} />
-          ) : null}
+      <PageHeader title={district.children.title} subtitle={district.children.subtitle} />
 
-          {env.isLive && childrenError ? (
-            <LiveUnavailableState
-              title={common.error}
-              description={common.live.unavailableDesc}
-              className="mb-4"
-            />
-          ) : null}
+      <DistrictChildrenFilterBar
+        childName={filters.childName}
+        onChildNameChange={handleChildNameChange}
+        sort={filters.sort}
+        onSortChange={handleSortChange}
+        period={period}
+        onPeriodChange={setPeriod}
+        yearMonth={yearMonth}
+        onYearMonthChange={setYearMonth}
+        onOpenAdvancedFilters={() => setDrawerOpen(true)}
+        onClearFilters={resetAll}
+        hasActiveAdvancedFilters={hasAdvancedFilters}
+        showClearFilters={showClearFilters}
+        searchLoading={isSearchPending}
+      />
 
-          {env.isLive ? (
-            <p className="text-caption text-text-muted mb-4">{common.live.enrollmentKpiLimited}</p>
-          ) : null}
+      <DistrictChildrenAppliedFilters
+        period={period}
+        yearMonth={yearMonth}
+        resultCount={filteredChildren.length}
+        searchQuery={debouncedChildName}
+        hasAdvancedFilters={hasAdvancedFilters}
+        onRemovePeriod={() => setPeriod(DEFAULT_PERIOD)}
+        onRemoveMonth={() => setYearMonth(null)}
+        onRemoveSearch={() => setFilters((prev) => ({ ...prev, childName: '' }))}
+        onClearAll={resetAll}
+      />
 
-          <DistrictChildrenFilterBar
-            childName={filters.childName}
-            onChildNameChange={handleChildNameChange}
-            sort={filters.sort}
-            onSortChange={handleSortChange}
-            period={period}
-            onPeriodChange={setPeriod}
-            yearMonth={yearMonth}
-            onYearMonthChange={setYearMonth}
-            onOpenAdvancedFilters={() => setDrawerOpen(true)}
-            onClearFilters={resetAll}
-            hasActiveAdvancedFilters={hasAdvancedFilters}
-            showClearFilters={showClearFilters}
-            searchLoading={isSearchPending}
-          />
+      <ChildrenSummaryCards summary={summary} isLoading={isSearchPending} />
 
-          <DistrictChildrenAppliedFilters
-            period={period}
-            yearMonth={yearMonth}
-            resultCount={filteredChildren.length}
-            searchQuery={debouncedChildName}
-            hasAdvancedFilters={hasAdvancedFilters}
-            onRemovePeriod={() => setPeriod(DEFAULT_PERIOD)}
-            onRemoveMonth={() => setYearMonth(null)}
-            onRemoveSearch={() => setFilters((prev) => ({ ...prev, childName: '' }))}
-            onClearAll={resetAll}
-          />
+      <div className="mb-4">
+        <EnrollmentTrendSection period={period} data={trendData} periodLabel={trendPeriodLabel} />
+      </div>
 
-          {!(env.isLive && childrenLoading) ? (
-            <>
-              <ChildrenSummaryCards summary={summary} isLoading={isSearchPending} />
+      <ChildrenDistribution distribution={distribution} />
 
-              <div className="mb-4">
-                <EnrollmentTrendSection period={period} data={trendData} periodLabel={trendPeriodLabel} />
-              </div>
+      <ChildrenTableSection
+        children={pagination.items}
+        searchQuery={debouncedChildName}
+        page={pagination.page}
+        pageSize={pagination.pageSize}
+        total={pagination.total}
+        totalPages={pagination.totalPages}
+        startIndex={pagination.startIndex}
+        endIndex={pagination.endIndex}
+        hasPrevious={pagination.hasPrevious}
+        hasNext={pagination.hasNext}
+        onPageChange={pagination.setPage}
+        onPageSizeChange={pagination.setPageSize}
+        onResetFilters={resetAll}
+        hasActiveFilters={hasActiveFilters}
+      />
 
-              <ChildrenDistribution distribution={distribution} />
-
-              <ChildrenTableSection
-                children={pagination.items}
-                searchQuery={debouncedChildName}
-                page={pagination.page}
-                pageSize={pagination.pageSize}
-                total={pagination.total}
-                totalPages={pagination.totalPages}
-                startIndex={pagination.startIndex}
-                endIndex={pagination.endIndex}
-                hasPrevious={pagination.hasPrevious}
-                hasNext={pagination.hasNext}
-                onPageChange={pagination.setPage}
-                onPageSizeChange={pagination.setPageSize}
-                onResetFilters={resetAll}
-                hasActiveFilters={hasActiveFilters}
-              />
-            </>
-          ) : null}
-
-          <SearchFiltersPanel
-            open={drawerOpen}
-            onClose={() => setDrawerOpen(false)}
-            variant="children"
-            filters={filters}
-            onApply={(next) => setFilters(next as ChildrenSearchFilters)}
-          />
-        </PageContent>
-      </PageContainer>
+      <SearchFiltersPanel
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        variant="children"
+        filters={filters}
+        onApply={(next) => setFilters(next as ChildrenSearchFilters)}
+      />
     </DistrictLayout>
   )
 }

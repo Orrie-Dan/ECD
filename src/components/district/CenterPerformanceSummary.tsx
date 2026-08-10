@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { env } from '@/config/env'
 import { getBottomCenters, getTopCenters } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
 
@@ -41,15 +39,6 @@ function CompactList({
 }
 
 export function CenterPerformanceSummary({ limit = 3 }: CenterPerformanceSummaryProps) {
-  if (env.isLive) {
-    return (
-      <LiveUnavailableState
-        compact
-        title={district.dashboard.schoolPerformance}
-      />
-    )
-  }
-
   const top = getTopCenters(limit)
   const bottom = getBottomCenters(limit)
 

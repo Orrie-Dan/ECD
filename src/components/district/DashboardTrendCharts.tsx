@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { Card } from '@/components/ui/Card'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { EnhancedLineChart } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import {
@@ -16,7 +15,6 @@ import {
   getDistrictTeachersTrendForRange,
   hasDashboardDataForRange,
 } from '@/lib/dashboard-period-data'
-import { env } from '@/config/env'
 import { district } from '@/locales/rw/district'
 
 interface DashboardTrendChartsProps {
@@ -25,16 +23,6 @@ interface DashboardTrendChartsProps {
 }
 
 export function DashboardTrendCharts({ compact = false, effectiveRange }: DashboardTrendChartsProps) {
-  if (env.isLive) {
-    return (
-      <LiveUnavailableState
-        compact={compact}
-        title={district.charts.enrollmentTrendTitle}
-        description={district.charts.emptyPeriodDesc}
-      />
-    )
-  }
-
   const hasData = hasDashboardDataForRange(effectiveRange)
 
   const enrollmentData = useMemo(() => {

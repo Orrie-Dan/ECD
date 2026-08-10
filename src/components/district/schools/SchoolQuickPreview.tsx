@@ -23,8 +23,6 @@ import { toCenterEnrollmentChartData } from '@/lib/chart-data'
 import { filterByMonthLabel } from '@/lib/chart-period'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
-import { env } from '@/config/env'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import {
   ECD_CENTERS,
   getCenterRecentActivity,
@@ -39,8 +37,8 @@ interface SchoolQuickPreviewProps {
 }
 
 export function SchoolQuickPreview({ centerId, onClose }: SchoolQuickPreviewProps) {
+  const center = ECD_CENTERS.find((c) => c.id === centerId)
   const [chartPeriod, setChartPeriod] = useState<ChartPeriodFilterValue>({ period: 'month', month: '' })
-  const center = env.isMock ? ECD_CENTERS.find((c) => c.id === centerId) : undefined
 
   const enrollmentHistory = useMemo(() => {
     if (!center) return []
@@ -62,22 +60,6 @@ export function SchoolQuickPreview({ centerId, onClose }: SchoolQuickPreviewProp
     () => toCenterEnrollmentChartData(enrollmentHistory),
     [enrollmentHistory],
   )
-
-  if (env.isLive) {
-    return (
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md p-4">
-        <LiveUnavailableState
-          title={district.schools.title}
-          description={common.live.unavailableDesc}
-          action={
-            <Button variant="tertiary" onClick={onClose}>
-              {common.close}
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
   const enrollmentSeries = useMemo(
     () => [
       {

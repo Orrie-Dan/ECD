@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { env } from '@/config/env'
 import { filterActionAlerts } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
 import type { ActionAlert, ActionAlertCategory, ActionAlertPriority } from '@/types'
@@ -24,7 +22,6 @@ const categoryLabels: Record<ActionAlertCategory, string> = {
   enrollment: district.followup.filterEnrollment,
   data_quality: district.followup.filterDataQuality,
   operational: district.followup.filterOperational,
-  nutrition: district.followup.filterNutrition,
 }
 
 function ActionAlertCard({ alert }: { alert: ActionAlert }) {
@@ -95,15 +92,6 @@ interface ActionAlertsListProps {
 }
 
 export function ActionAlertsList({ category }: ActionAlertsListProps) {
-  if (env.isLive) {
-    return (
-      <LiveUnavailableState
-        title={district.followup.title}
-        description={district.followup.emptyDesc}
-      />
-    )
-  }
-
   const alerts = filterActionAlerts(category)
 
   if (alerts.length === 0) {

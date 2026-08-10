@@ -1,6 +1,4 @@
 import { Card } from '@/components/ui/Card'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { env } from '@/config/env'
 import { ATTENDANCE_OVERVIEW } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
 import { TrendBadge } from '@/components/district/TrendBadge'
@@ -16,16 +14,6 @@ interface AttendanceOverviewProps {
 }
 
 export function AttendanceOverview({ compact = false }: AttendanceOverviewProps) {
-  if (env.isLive) {
-    return (
-      <LiveUnavailableState
-        compact={compact}
-        title={district.dashboard.attendanceOverview}
-        className="h-full"
-      />
-    )
-  }
-
   return (
     <Card padding={compact ? 'md' : 'lg'} className="h-full">
       <h3 className={`font-semibold text-text ${compact ? 'text-body mb-3' : 'text-subheading mb-5'}`}>

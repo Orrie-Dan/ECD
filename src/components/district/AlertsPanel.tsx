@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom'
 import { AlertTriangle, ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { env } from '@/config/env'
 import { getHighPriorityAlerts } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
 import type { ActionAlertPriority } from '@/types'
@@ -19,17 +17,6 @@ interface AlertsPanelProps {
 }
 
 export function AlertsPanel({ compact = false, limit }: AlertsPanelProps) {
-  if (env.isLive) {
-    return (
-      <LiveUnavailableState
-        compact={compact}
-        title={district.dashboard.priorityAlerts}
-        description={district.followup.emptyDesc}
-        className="h-full"
-      />
-    )
-  }
-
   const alerts = getHighPriorityAlerts(limit)
 
   if (alerts.length === 0) {

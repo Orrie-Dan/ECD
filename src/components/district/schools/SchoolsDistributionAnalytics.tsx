@@ -16,9 +16,9 @@ function SectorDistributionChart({ data }: { data: SchoolDistribution['bySector'
     'bg-success',
     'bg-warning',
     'bg-accent',
-    'bg-primary-dark',
-    'bg-secondary',
-    'bg-danger',
+    'bg-emerald-500',
+    'bg-purple-500',
+    'bg-rose-500',
   ]
 
   return (

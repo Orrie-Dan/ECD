@@ -19,12 +19,9 @@ import {
 } from 'lucide-react'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card, StatCard } from '@/components/ui/Card'
 import { GisEmbed } from '@/components/district/GisEmbed'
 import { Button } from '@/components/ui/Button'
-import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { SkeletonPage } from '@/components/ui/Skeleton'
 import { EnhancedLineChart, ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { toAttendanceChartData, toCenterEnrollmentChartData } from '@/lib/chart-data'
@@ -38,10 +35,7 @@ import {
   getSchoolsTableData,
   formatDate,
 } from '@/lib/mock-data'
-import { env } from '@/config/env'
-import { useCenterDirectoryItem } from '@/features/centers'
 import { district } from '@/locales/rw/district'
-import { common } from '@/locales/rw/common'
 import { useAuth } from '@/contexts/AppContext'
 
 type MonitoringStatus = 'good' | 'followup' | 'critical'
@@ -100,9 +94,8 @@ function clamp(n: number, min: number, max: number) {
 export function CenterDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { user } = useAuth()
-  const liveCenterQ = useCenterDirectoryItem(id, env.isLive)
+  const center = ECD_CENTERS.find((c) => c.id === id)
   const [chartPeriod, setChartPeriod] = useState<ChartPeriodFilterValue>({ period: 'month', month: '' })
-  const center = env.isMock ? ECD_CENTERS.find((c) => c.id === id) : undefined
 
   const attendanceTrend = useMemo(
     () => (center ? getCenterAttendanceTrendForPeriod(center.id, chartPeriod.period) : []),
@@ -159,81 +152,6 @@ export function CenterDetailPage() {
     ],
     [],
   )
-
-  if (env.isLive) {
-    if (liveCenterQ.isLoading) {
-      return (
-        <DistrictLayout>
-          <PageContainer>
-            <SkeletonPage label={district.centerDetail.schoolInfo} stats={4} />
-          </PageContainer>
-        </DistrictLayout>
-      )
-    }
-
-    const live = liveCenterQ.data
-    if (liveCenterQ.isError || !live) {
-      return (
-        <DistrictLayout>
-          <PageContainer>
-            <PageContent>
-              <LiveUnavailableState
-                title={district.centerDetail.notFound}
-                description={common.live.unavailableDesc}
-              />
-              <Link to="/district/ibigo" className="text-primary font-semibold mt-4 inline-block">
-                ← {district.centerDetail.back}
-              </Link>
-            </PageContent>
-          </PageContainer>
-        </DistrictLayout>
-      )
-    }
-
-    return (
-      <DistrictLayout>
-        <PageContainer>
-          <PageHeader
-            title={live.name}
-            subtitle={live.districtName ?? user?.districtName ?? '—'}
-          />
-          <PageContent className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <StatCard
-                compact
-                label={district.centerDetail.totalChildren}
-                value={live.activeChildrenCount}
-                icon={<Users size={20} className="text-primary" />}
-              />
-              <StatCard
-                compact
-                label={district.centerDetail.schoolInfo}
-                value={live.code}
-                icon={<Building2 size={20} className="text-secondary" />}
-              />
-              <StatCard
-                compact
-                label={district.centerDetail.schoolHealth}
-                value={live.status}
-                icon={<CheckCircle2 size={20} className="text-success" />}
-              />
-            </div>
-            <LiveUnavailableState
-              title={district.dashboard.recentActivity}
-              description={common.live.unavailableDesc}
-            />
-            <LiveUnavailableState
-              title={district.charts.attendanceTrendTitle}
-              description={common.live.unavailableDesc}
-            />
-            <Link to="/district/ibigo" className="text-primary font-semibold inline-block">
-              ← {district.centerDetail.back}
-            </Link>
-          </PageContent>
-        </PageContainer>
-      </DistrictLayout>
-    )
-  }
 
   if (!center) {
     return (
