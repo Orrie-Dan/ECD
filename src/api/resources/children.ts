@@ -1,0 +1,154 @@
+/**
+ * Children resource layer — wraps generated OpenAPI client + mappers.
+ * Feature hooks import from here; UI never imports Child*Dto types.
+ */
+import {
+  childrenControllerArchive,
+  childrenControllerCreate,
+  childrenControllerFindAll,
+  childrenControllerFindOne,
+  childrenControllerReactivate,
+  childrenControllerUpdate,
+} from '@/api/generated/endpoints/children/children'
+import { transfersControllerCreate } from '@/api/generated/endpoints/transfers/transfers'
+import {
+  geoControllerListAdminUnits,
+  geoControllerListDistricts,
+} from '@/api/generated/endpoints/geo/geo'
+import type { CreateChildDto, UpdateChildDto } from '@/api/generated/models'
+import {
+  mapArchiveInputToDto,
+  mapChildDetailToViewModel,
+  mapFormToCreateChildDto,
+  mapPaginatedChildrenToViewModel,
+  mapReactivateToDto,
+  mapChildPatchToUpdateDto,
+} from '@/api/mappers/child.mapper'
+import type { ChildrenListFilters, ChildrenListResult, ChildViewModel } from '@/models/child'
+import type {
+  ArchiveChildInput,
+  Child,
+  ChildRegistrationForm,
+  TransferChildInput,
+} from '@/types'
+
+export async function fetchChildrenList(
+  filters: ChildrenListFilters = {},
+): Promise<ChildrenListResult> {
+  const dto = await childrenControllerFindAll({
+    centerId: filters.centerId,
+    status: filters.status,
+    search: filters.search,
+    page: filters.page ?? 1,
+    pageSize: filters.pageSize ?? 100,
+  })
+  return mapPaginatedChildrenToViewModel(dto)
+}
+
+export async function fetchChildDetail(id: string): Promise<ChildViewModel> {
+  const dto = await childrenControllerFindOne(id)
+  return mapChildDetailToViewModel(dto)
+}
+
+export async function createChildRequest(
+  form: ChildRegistrationForm,
+  options: { centerId: string; homeVillageId: string; registrationNumber?: string },
+): Promise<ChildViewModel> {
+  const body: CreateChildDto = mapFormToCreateChildDto(form, options)
+  const dto = await childrenControllerCreate(body)
+  return mapChildDetailToViewModel(dto)
+}
+
+export async function updateChildRequest(
+  child: ChildViewModel,
+  patch: Partial<Child>,
+): Promise<ChildViewModel> {
+  const body: UpdateChildDto = mapChildPatchToUpdateDto(child, patch)
+  const dto = await childrenControllerUpdate(child.id, body)
+  return mapChildDetailToViewModel(dto)
+}
+
+export async function archiveChildRequest(
+  child: ChildViewModel,
+  input: ArchiveChildInput,
+): Promise<ChildViewModel> {
+  const dto = await childrenControllerArchive(child.id, mapArchiveInputToDto(child, input))
+  return mapChildDetailToViewModel(dto)
+}
+
+export async function reactivateChildRequest(child: ChildViewModel): Promise<ChildViewModel> {
+  const dto = await childrenControllerReactivate(child.id, mapReactivateToDto(child))
+  return mapChildDetailToViewModel(dto)
+}
+
+export async function transferChildRequest(
+  child: ChildViewModel,
+  input: TransferChildInput,
+): Promise<ChildViewModel> {
+  await transfersControllerCreate({
+    childId: child.id,
+    toCenterId: input.destinationCenterId,
+    transferDate: input.transferDate,
+    reason: input.reason,
+    notes: input.notes,
+    childVersion: child.version,
+  })
+  return fetchChildDetail(child.id)
+}
+
+function matchName<T extends { name: string }>(items: T[], name: string): T | undefined {
+  const needle = name.trim().toLowerCase()
+  return items.find((u) => u.name.toLowerCase() === needle)
+}
+
+/**
+ * Resolve a village admin-unit UUID from cascade names.
+ * Districts come from `/districts`; sector/cell/village from `/admin-units`.
+ */
+export async function resolveHomeVillageId(location: {
+  district: string
+  sector: string
+  cell: string
+  village: string
+}): Promise<string> {
+  const districtsPage = await geoControllerListDistricts({
+    search: location.district.trim(),
+    page: 1,
+    pageSize: 50,
+  })
+  const district = matchName(districtsPage.items, location.district)
+  if (!district) {
+    throw new Error(`District not found: ${location.district}`)
+  }
+
+  const sectors = await geoControllerListAdminUnits({
+    level: 'sector',
+    districtId: district.id,
+  })
+  const sector = matchName(sectors, location.sector)
+  if (!sector) {
+    throw new Error(`Sector not found: ${location.sector}`)
+  }
+
+  const cells = await geoControllerListAdminUnits({
+    level: 'cell',
+    parentId: sector.id,
+    districtId: district.id,
+  })
+  const cell = matchName(cells, location.cell)
+  if (!cell) {
+    throw new Error(`Cell not found: ${location.cell}`)
+  }
+
+  const villages = await geoControllerListAdminUnits({
+    level: 'village',
+    parentId: cell.id,
+    districtId: district.id,
+  })
+  const village = matchName(villages, location.village)
+  if (!village) {
+    throw new Error(`Village not found: ${location.village}`)
+  }
+
+  return village.id
+}
