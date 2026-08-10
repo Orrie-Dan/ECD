@@ -12,17 +12,19 @@ interface RoleSelectionCardProps {
 
 const accentStyles: Record<
   RoleCardAccent,
-  { card: string; icon: string; chevron: string }
+  { card: string; icon: string; chevron: string; hover: string }
 > = {
   caretaker: {
-    card: 'border-l-[3px] border-l-gov-primary hover:border-l-gov-primary',
-    icon: 'bg-[#d9ede4] text-gov-primary group-hover:bg-[#cce5d9]',
-    chevron: 'group-hover:text-gov-primary',
+    card: 'border-l-[3px] border-l-primary',
+    icon: 'bg-primary-light text-primary group-hover:bg-primary-light',
+    chevron: 'group-hover:text-primary',
+    hover: 'hover:border-primary/40 hover:bg-primary/[0.04]',
   },
   districtOfficer: {
-    card: 'border-l-[3px] border-l-secondary hover:border-l-secondary',
-    icon: 'bg-[#e8eef8] text-secondary group-hover:bg-[#dce8f6]',
+    card: 'border-l-[3px] border-l-secondary',
+    icon: 'bg-secondary-light text-secondary group-hover:bg-secondary-light',
     chevron: 'group-hover:text-secondary',
+    hover: 'hover:border-secondary/40 hover:bg-secondary/[0.04]',
   },
 }
 
@@ -46,12 +48,10 @@ export function RoleSelectionCard({
         text-left cursor-pointer
         transition-all duration-200 ease-out
         hover:shadow-lg hover:-translate-y-px
-        focus-visible:outline-3 focus-visible:outline-gov-primary focus-visible:outline-offset-2
+        focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2
         active:translate-y-0 active:shadow-md
         ${styles.card}
-        ${accent === 'caretaker'
-          ? 'hover:border-gov-primary/40 hover:bg-gov-primary/[0.04]'
-          : 'hover:border-secondary/40 hover:bg-secondary/[0.04]'}
+        ${styles.hover}
       `}
     >
       <span

@@ -4,8 +4,10 @@ import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
 import { GovernmentHeader } from '@/components/auth/GovernmentHeader'
 import { InputField } from '@/components/auth/InputField'
-import { PrimaryButton } from '@/components/auth/PrimaryButton'
+import { Button } from '@/components/ui/Button'
+import { Alert } from '@/components/ui/Alert'
 import { auth } from '@/locales/rw/auth'
+import { hasRole, homePathForRole } from '@/api/roles'
 import type { UserRole } from '@/types'
 
 interface LoginFormProps {
@@ -23,38 +25,44 @@ export function LoginForm({ role }: LoginFormProps) {
   const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const title =
-    role === 'caretaker' ? auth.login.titleCaretaker : auth.login.titleDistrictOfficer
+  const title = hasRole({ role }, 'caretaker')
+    ? auth.login.titleCaretaker
+    : auth.login.titleDistrictOfficer
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setUsernameError('')
     setPasswordError('')
     setFormError('')
     setLoading(true)
 
-    const result = loginWithCredentials(username, password, role)
+    try {
+      const result = await loginWithCredentials(username, password, role)
 
-    if (!result.success) {
-      switch (result.error) {
-        case 'username_required':
-          setUsernameError(auth.login.usernameRequired)
-          break
-        case 'password_required':
-          setPasswordError(auth.login.passwordRequired)
-          break
-        case 'invalid_credentials':
-          setFormError(auth.login.invalidCredentials)
-          break
-        case 'wrong_role':
-          setFormError(auth.login.wrongRole)
-          break
+      if (!result.success) {
+        switch (result.error) {
+          case 'username_required':
+            setUsernameError(auth.login.usernameRequired)
+            break
+          case 'password_required':
+            setPasswordError(auth.login.passwordRequired)
+            break
+          case 'invalid_credentials':
+            setFormError(auth.login.invalidCredentials)
+            break
+          case 'wrong_role':
+            setFormError(auth.login.wrongRole)
+            break
+        }
+        return
       }
-      setLoading(false)
-      return
-    }
 
-    navigate(result.role === 'caretaker' ? '/caretaker' : '/district')
+      navigate(homePathForRole(result.role))
+    } catch {
+      setFormError(auth.login.invalidCredentials)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -77,14 +85,7 @@ export function LoginForm({ role }: LoginFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {formError && (
-          <div
-            className="rounded-xl border border-error/30 bg-error-light px-4 py-3 text-body text-error font-semibold"
-            role="alert"
-          >
-            {formError}
-          </div>
-        )}
+        {formError && <Alert variant="error">{formError}</Alert>}
 
         <InputField
           label={auth.login.username}
@@ -113,7 +114,9 @@ export function LoginForm({ role }: LoginFormProps) {
         />
 
         <div className="pt-2">
-          <PrimaryButton loading={loading}>{auth.login.submit}</PrimaryButton>
+          <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
+            {auth.login.submit}
+          </Button>
         </div>
       </form>
 

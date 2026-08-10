@@ -6,22 +6,32 @@ import {
   User,
   Home,
   Users,
-  UserPlus,
   ClipboardCheck,
-  BarChart3,
   Settings,
   Menu,
+  Ruler,
+  LayoutGrid,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
-import { ConfirmModal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav'
 import { NavDrawer } from '@/components/ui/NavDrawer'
 import { SidebarNavLink, isSidebarNavActive, type SidebarNavItem } from '@/components/ui/SidebarNavLink'
+import { SyncStatusIndicator } from '@/components/offline/SyncStatusIndicator'
+import {
+  LogoutPendingModal,
+  LogoutSimpleModal,
+} from '@/components/offline/LogoutPendingModal'
 import { useState, useRef, useEffect } from 'react'
 import { common, messages } from '@/locales/rw/common'
 import { caretaker } from '@/locales/rw/caretaker'
 import ncdaLogo from '@/assets/ncda-logo.png'
+import { env } from '@/config/env'
+import {
+  applyLogoutDataPolicy,
+  evaluateLogoutPolicy,
+  type LogoutAction,
+} from '@/offline/logout-policy'
 
 interface CaretakerLayoutProps {
   children: React.ReactNode
@@ -30,37 +40,52 @@ interface CaretakerLayoutProps {
   backLabel?: string
 }
 
-const navItems: SidebarNavItem[] = [
+/** Daily map: ≤5 items. Rarer tasks live under Ibindi. */
+const primaryNavItems: SidebarNavItem[] = [
   { path: '/caretaker', label: caretaker.nav.home, icon: Home },
   { path: '/caretaker/abana', label: caretaker.nav.children, icon: Users, matchPaths: ['/caretaker/abana'] },
-  { path: '/caretaker/kwiyandikisha', label: caretaker.nav.register, icon: UserPlus },
   { path: '/caretaker/ubwitabire', label: caretaker.nav.attendance, icon: ClipboardCheck },
-  { path: '/caretaker/raporo', label: caretaker.nav.reports, icon: BarChart3 },
-  { path: '/caretaker/igenamiterere', label: caretaker.nav.settings, icon: Settings },
+  {
+    path: '/caretaker/imikurire',
+    label: caretaker.nav.growth,
+    icon: Ruler,
+    matchPaths: ['/caretaker/imikurire'],
+  },
+  {
+    path: '/caretaker/ibindi',
+    label: caretaker.nav.more,
+    icon: LayoutGrid,
+    matchPaths: [
+      '/caretaker/ibindi',
+      '/caretaker/kwiyandikisha',
+      '/caretaker/imirire',
+      '/caretaker/sted',
+      '/caretaker/raporo',
+      '/caretaker/igenamiterere',
+    ],
+  },
 ]
 
-const mobileNavItems: NavItem[] = [
-  { path: '/caretaker', label: caretaker.nav.home, icon: Home },
-  { path: '/caretaker/abana', label: caretaker.nav.children, icon: Users, matchPaths: ['/caretaker/abana'] },
-  { path: '/caretaker/kwiyandikisha', label: caretaker.nav.register, icon: UserPlus },
-  { path: '/caretaker/ubwitabire', label: caretaker.nav.attendance, icon: ClipboardCheck },
-  { path: '/caretaker/raporo', label: caretaker.nav.reports, icon: BarChart3 },
-]
+const mobileNavItems: NavItem[] = primaryNavItems
 
 function getPageTitle(pathname: string): string {
   if (pathname === '/caretaker') return caretaker.nav.home
   if (pathname.startsWith('/caretaker/abana')) return caretaker.nav.children
   if (pathname === '/caretaker/kwiyandikisha') return caretaker.nav.register
   if (pathname === '/caretaker/ubwitabire') return caretaker.nav.attendance
+  if (pathname.startsWith('/caretaker/imikurire')) return caretaker.nav.growth
+  if (pathname.startsWith('/caretaker/imirire')) return caretaker.nav.imirire
+  if (pathname.startsWith('/caretaker/sted')) return caretaker.nav.sted
   if (pathname === '/caretaker/raporo') return caretaker.nav.reports
   if (pathname === '/caretaker/igenamiterere') return caretaker.nav.settings
+  if (pathname === '/caretaker/ibindi') return caretaker.nav.more
   return common.appName
 }
 
-function SidebarBrand({ collapsed = false, centerName }: { collapsed?: boolean; centerName?: string }) {
+function SidebarBrand({ centerName }: { centerName?: string }) {
   return (
-    <div className={`border-b border-border ${collapsed ? 'p-3' : 'p-4 xl:p-5'}`}>
-      <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
+    <div className="border-b border-border p-4 xl:p-5">
+      <div className="flex items-center gap-3">
         <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-white border border-border shrink-0 overflow-hidden">
           <img
             src={ncdaLogo}
@@ -70,12 +95,10 @@ function SidebarBrand({ collapsed = false, centerName }: { collapsed?: boolean; 
             decoding="async"
           />
         </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <h1 className="text-subheading text-primary leading-tight truncate">{common.appName}</h1>
-            <p className="text-caption mt-0.5 truncate">{centerName}</p>
-          </div>
-        )}
+        <div className="min-w-0">
+          <h1 className="text-subheading text-primary leading-tight truncate">{common.appName}</h1>
+          <p className="text-caption mt-0.5 truncate">{centerName}</p>
+        </div>
       </div>
     </div>
   )
@@ -84,22 +107,19 @@ function SidebarBrand({ collapsed = false, centerName }: { collapsed?: boolean; 
 function SidebarNavList({
   items,
   pathname,
-  collapsed = false,
   onNavigate,
 }: {
   items: SidebarNavItem[]
   pathname: string
-  collapsed?: boolean
   onNavigate?: () => void
 }) {
   return (
-    <nav className={`flex-1 overflow-y-auto space-y-0.5 ${collapsed ? 'p-2' : 'p-2.5 xl:p-3'}`} aria-label={common.nav.mainNav}>
+    <nav className="flex-1 overflow-y-auto space-y-0.5 p-2.5 xl:p-3" aria-label={common.nav.mainNav}>
       {items.map((item) => (
         <SidebarNavLink
           key={item.path}
           item={item}
           active={isSidebarNavActive(pathname, item)}
-          collapsed={collapsed}
           onNavigate={onNavigate}
           activeStyle="filled"
         />
@@ -113,6 +133,10 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
   const location = useLocation()
   const navigate = useNavigate()
   const [showLogout, setShowLogout] = useState(false)
+  const [logoutBlocked, setLogoutBlocked] = useState(false)
+  const [logoutMessage, setLogoutMessage] = useState<string>(messages.confirmLogout)
+  const [logoutPendingCount, setLogoutPendingCount] = useState(0)
+  const [logoutSyncBusy, setLogoutSyncBusy] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
@@ -120,6 +144,68 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
   const title = pageTitle ?? getPageTitle(location.pathname)
   const showBack = Boolean(backTo || backLabel)
   const resolvedBackLabel = backLabel ?? common.back
+
+  const openLogoutModal = async () => {
+    setShowProfileMenu(false)
+    if (!env.isLive) {
+      setLogoutBlocked(false)
+      setLogoutPendingCount(0)
+      setLogoutMessage(messages.confirmLogout)
+      setShowLogout(true)
+      return
+    }
+    const decision = await evaluateLogoutPolicy('cancel')
+    if (!decision.allowed) {
+      setLogoutBlocked(true)
+      setLogoutPendingCount(decision.pendingCount)
+      setLogoutMessage(
+        common.sync.logoutBlocked.replace('{count}', String(decision.pendingCount)),
+      )
+      setShowLogout(true)
+      return
+    }
+    setLogoutBlocked(false)
+    setLogoutPendingCount(0)
+    setLogoutMessage(messages.confirmLogout)
+    setShowLogout(true)
+  }
+
+  const finishLogout = async (action: LogoutAction) => {
+    if (env.isLive) {
+      if (action === 'cancel') {
+        setShowLogout(false)
+        setLogoutSyncBusy(false)
+        return
+      }
+      if (logoutBlocked && action === 'sync_then_logout') {
+        setLogoutSyncBusy(true)
+        try {
+          await applyLogoutDataPolicy('sync_then_logout')
+          const still = await evaluateLogoutPolicy('cancel')
+          if (!still.allowed) {
+            setLogoutPendingCount(still.pendingCount)
+            setLogoutMessage(common.sync.logoutSyncFailed)
+            return
+          }
+          await applyLogoutDataPolicy('keep_on_device')
+        } finally {
+          setLogoutSyncBusy(false)
+        }
+      } else if (logoutBlocked && action === 'keep_on_device') {
+        await applyLogoutDataPolicy('keep_on_device')
+      } else if (logoutBlocked && action === 'discard_local') {
+        await applyLogoutDataPolicy('discard_local', { userId: user?.id ?? null })
+      } else if (logoutBlocked) {
+        return
+      } else {
+        await applyLogoutDataPolicy('keep_on_device')
+      }
+    }
+    setShowLogout(false)
+    setLogoutSyncBusy(false)
+    logout()
+    navigate('/')
+  }
 
   useEffect(() => {
     setDrawerOpen(false)
@@ -135,31 +221,18 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const renderSidebar = (collapsed: boolean) => (
-    <>
-      <SidebarBrand collapsed={collapsed} centerName={user?.centerName} />
-      <SidebarNavList items={navItems} pathname={location.pathname} collapsed={collapsed} />
-      {!collapsed && (
+  return (
+    <div className="min-h-screen bg-background flex">
+      {/* Labeled sidebar only — never icon-only (design.md) */}
+      <aside className="hidden lg:flex flex-col w-56 xl:w-60 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
+        <SidebarBrand centerName={user?.centerName} />
+        <SidebarNavList items={primaryNavItems} pathname={location.pathname} />
         <div className="p-3 xl:p-4 border-t border-border">
           <div className="px-4 py-3 rounded-xl bg-background-subtle">
             <p className="text-caption text-text-muted">{common.ui.systemUser}</p>
             <p className="text-body font-semibold text-text mt-0.5 truncate">{user?.name}</p>
           </div>
         </div>
-      )}
-    </>
-  )
-
-  return (
-    <div className="min-h-screen bg-background flex">
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-56 xl:w-60 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
-        {renderSidebar(false)}
-      </aside>
-
-      {/* Tablet collapsed sidebar */}
-      <aside className="hidden md:flex lg:hidden flex-col w-16 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
-        {renderSidebar(true)}
       </aside>
 
       <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={common.appName}>
@@ -169,13 +242,13 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
           <p className="text-caption text-text-secondary mt-0.5">{user?.centerName}</p>
         </div>
         <SidebarNavList
-          items={navItems}
+          items={primaryNavItems}
           pathname={location.pathname}
           onNavigate={() => setDrawerOpen(false)}
         />
       </NavDrawer>
 
-      <div className="flex-1 flex flex-col min-w-0 md:ml-16 lg:ml-56 xl:ml-60">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-56 xl:ml-60">
         <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
           <div className="px-3 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-3">
             <div className="min-w-0 flex items-center gap-2">
@@ -192,6 +265,7 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <SyncStatusIndicator />
               <div className="hidden md:block text-right min-w-0">
                 <p className="text-body font-semibold text-text leading-tight truncate max-w-[12rem] lg:max-w-[14rem]">
                   {user?.name}
@@ -230,8 +304,7 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
                     </button>
                     <button
                       onClick={() => {
-                        setShowProfileMenu(false)
-                        setShowLogout(true)
+                        void openLogoutModal()
                       }}
                       className="flex items-center gap-3 w-full px-4 py-3 text-body text-error hover:bg-error-light transition-colors"
                     >
@@ -276,18 +349,28 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
 
       <BottomNav items={mobileNavItems} />
 
-      <ConfirmModal
-        open={showLogout}
-        onClose={() => setShowLogout(false)}
-        onConfirm={() => {
-          logout()
-          navigate('/')
-        }}
-        title={common.logout}
-        message={messages.confirmLogout}
-        confirmLabel={common.yes}
-        cancelLabel={common.no}
-      />
+      {logoutBlocked ? (
+        <LogoutPendingModal
+          open={showLogout}
+          pendingCount={logoutPendingCount}
+          message={logoutMessage}
+          syncBusy={logoutSyncBusy}
+          onClose={() => {
+            if (!logoutSyncBusy) setShowLogout(false)
+          }}
+          onAction={(action) => {
+            void finishLogout(action)
+          }}
+        />
+      ) : (
+        <LogoutSimpleModal
+          open={showLogout}
+          onClose={() => setShowLogout(false)}
+          onConfirm={() => {
+            void finishLogout('keep_on_device')
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -24,7 +24,7 @@ export function InputField({ label, error, id, className = '', ...props }: Input
           placeholder:text-text-muted
           transition-colors duration-150 ease-out
           hover:border-border-strong
-          focus:outline-none focus:border-gov-primary focus:ring-[3px] focus:ring-gov-primary/15
+          focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/15
           disabled:opacity-60 disabled:cursor-not-allowed
           ${error ? 'border-error focus:border-error focus:ring-error/15' : 'border-border'}
           ${className}
