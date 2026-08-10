@@ -1,50 +1,50 @@
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { AlertTriangle, Clock, Send } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { Pagination } from '@/components/ui/Pagination'
-import { useData } from '@/contexts/AppContext'
-import { usePagination } from '@/hooks/usePagination'
+import { Button } from '@/components/ui/Button'
+import { ChildHeader } from '@/components/children/ChildHeader'
+import { ChildInfoCard, DetailRow } from '@/components/children/ChildInfoCard'
+import { GuardianCard } from '@/components/children/GuardianCard'
+import { AddressCard } from '@/components/children/AddressCard'
+import { AttendanceSummaryCard } from '@/components/children/AttendanceSummaryCard'
+import { AttendanceHistoryTable } from '@/components/attendance/AttendanceHistoryTable'
+import { ChildGrowthHistorySection } from '@/components/growth/ChildGrowthHistorySection'
+import { NutritionStatusCard } from '@/components/growth/NutritionStatusCard'
+import { AssessmentReminderCard } from '@/components/growth/AssessmentReminderCard'
+import {
+  MeasurementDialog,
+  type MeasurementDialogResult,
+} from '@/components/growth/MeasurementDialog'
+import { ArchiveDialog } from '@/components/children/ArchiveDialog'
+import { ReactivateChildDialog } from '@/components/children/ReactivateChildDialog'
+import { useAuth, useData } from '@/contexts/AppContext'
+import { isCaretaker as userIsCaretaker } from '@/api/roles'
+import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
-import { gender, relations, location, common, getGuardianRelationLabel, normalizeGuardianRelation } from '@/locales/rw/common'
-import { calculateAge, formatDate } from '@/lib/mock-data'
-import { formatArrivalTime, getBroughtByLabel } from '@/lib/attendance-utils'
-import type { Child } from '@/types'
+import { common } from '@/locales/rw/common'
+import { formatDate } from '@/lib/mock-data'
+import {
+  getAssessmentDueStatus,
+  getLatestMeasurement,
+  sortMeasurementsDesc,
+} from '@/lib/nutrition-utils'
+import type { Child, GrowthMeasurement } from '@/types'
 
-function getInitials(name: string): string {
-  return name.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase()
-}
+type DetailTab = 'overview' | 'profile' | 'attendance' | 'growth'
 
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4 py-2.5 border-b border-border last:border-0">
-      <dt className="text-body text-text-secondary shrink-0">{label}</dt>
-      <dd className="text-body font-semibold text-text sm:text-right break-words">{value}</dd>
-    </div>
-  )
-}
-
-function SpecialNeedsBlock({ needs }: { needs?: string }) {
-  const trimmed = needs?.trim()
-  const hasNeeds = Boolean(trimmed)
-
-  return (
-    <div className="py-3 border-t border-border mt-1">
-      <dt className="text-body font-semibold text-text">{caretaker.childDetail.specialNeedsLabel}</dt>
-      <p className="text-caption text-text-muted mt-0.5 mb-2.5 leading-snug">
-        {caretaker.childDetail.specialNeedsHint}
-      </p>
-      <dd>
-        {hasNeeds ? (
-          <SpecialNeedsContent text={trimmed!} />
-        ) : (
-          <p className="text-body text-text-muted italic">{caretaker.registration.notProvided}</p>
-        )}
-      </dd>
-    </div>
-  )
-}
+const TABS: { id: DetailTab; label: string }[] = [
+  { id: 'overview', label: caretaker.childDetail.tabOverview },
+  { id: 'profile', label: caretaker.childDetail.tabProfile },
+  { id: 'attendance', label: caretaker.childDetail.tabAttendance },
+  { id: 'growth', label: caretaker.childDetail.tabGrowth },
+]
 
 function SpecialNeedsContent({ text }: { text: string }) {
-  const segments = text.split(/\s*—\s*/).map((part) => part.trim()).filter(Boolean)
+  const segments = text
+    .split(/\s*—\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean)
 
   if (segments.length <= 1) {
     return (
@@ -57,10 +57,7 @@ function SpecialNeedsContent({ text }: { text: string }) {
   return (
     <div className="rounded-lg border border-warning/25 bg-warning-light/35 px-3.5 py-3 space-y-2.5">
       {segments.map((segment, index) => (
-        <div
-          key={index}
-          className={index > 0 ? 'pt-2.5 border-t border-warning/15' : undefined}
-        >
+        <div key={index} className={index > 0 ? 'pt-2.5 border-t border-warning/15' : undefined}>
           {index === 0 ? (
             <p className="text-body font-semibold text-text leading-snug break-words">{segment}</p>
           ) : (
@@ -74,169 +71,411 @@ function SpecialNeedsContent({ text }: { text: string }) {
 
 interface ChildDetailContentProps {
   child: Child
+  /** Base path for edit navigation (caretaker vs district). */
+  editBasePath?: string
+  showActions?: boolean
 }
 
-export function ChildDetailContent({ child }: ChildDetailContentProps) {
-  const { id } = useParams<{ id: string }>()
-  const [searchParams] = useSearchParams()
-  const tab = searchParams.get('tab') ?? 'info'
-  const { getChildAttendance } = useData()
+export function ChildDetailContent({
+  child,
+  editBasePath = '/caretaker/abana',
+  showActions = true,
+}: ChildDetailContentProps) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const {
+    getChildAttendance,
+    getChildMeasurements,
+    getChildAssessments,
+    getChildReferrals,
+    recordMeasurement,
+    updateMeasurement,
+    updateReferralStatus,
+    updateReferral,
+  } = useData()
+  const { showSuccess } = useToast()
+
+  const rawTab = searchParams.get('tab')
+  const tab: DetailTab =
+    rawTab === 'attendance' ||
+    rawTab === 'overview' ||
+    rawTab === 'profile' ||
+    rawTab === 'growth'
+      ? rawTab
+      : rawTab === 'info'
+        ? 'profile'
+        : 'overview'
+
+  const [archiveOpen, setArchiveOpen] = useState(false)
+  const [reactivateOpen, setReactivateOpen] = useState(false)
+  const [measureOpen, setMeasureOpen] = useState(false)
+  const [editingMeasurement, setEditingMeasurement] = useState<GrowthMeasurement | null>(null)
+
+  const isCaretaker = userIsCaretaker(user)
+  const actionsEnabled = showActions && isCaretaker
 
   const attendance = getChildAttendance(child.id)
-  const attendancePagination = usePagination(attendance, { resetDeps: [id] })
   const presentCount = attendance.filter((a) => a.present).length
   const absentCount = attendance.filter((a) => !a.present).length
-  const initials = getInitials(child.fullName)
+
+  const measurements = getChildMeasurements(child.id)
+  const assessments = getChildAssessments(child.id)
+  const referrals = getChildReferrals(child.id)
+
+  const latestMeasurement = useMemo(
+    () => sortMeasurementsDesc(measurements)[0],
+    [measurements],
+  )
+  const latestAssessment = useMemo(
+    () =>
+      [...assessments].sort(
+        (a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id),
+      )[0],
+    [assessments],
+  )
+  const assessmentDue = getAssessmentDueStatus(latestMeasurement?.date)
+  const openReferrals = referrals.filter((r) => r.status !== 'completed')
+  const hasSpecialNeeds = Boolean(child.specialNeeds?.trim())
+  const hasAlerts =
+    hasSpecialNeeds ||
+    openReferrals.length > 0 ||
+    assessmentDue === 'due' ||
+    assessmentDue === 'overdue' ||
+    assessmentDue === 'never'
+
+  const timeline = useMemo(() => {
+    const items: { date: string; label: string }[] = [
+      { date: child.registeredAt, label: caretaker.childDetail.timelineRegistered },
+    ]
+    if (child.archivedAt) {
+      items.push({ date: child.archivedAt, label: caretaker.childDetail.timelineArchived })
+    }
+    return items.sort((a, b) => a.date.localeCompare(b.date))
+  }, [child])
+
+  const setTab = (next: DetailTab) => {
+    setSearchParams(next === 'overview' ? {} : { tab: next }, { replace: true })
+  }
+
+  const openMeasureDialog = (record: GrowthMeasurement | null = null) => {
+    setEditingMeasurement(record)
+    setMeasureOpen(true)
+  }
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row items-start gap-4 mb-6 sm:mb-8 p-4 sm:p-5 bg-surface rounded-xl border border-border shadow-card max-w-3xl">
-        <div
-          className={`flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-xl text-lg sm:text-xl font-bold shrink-0 ${
-            child.gender === 'Umuhungu' ? 'bg-secondary-light text-secondary' : 'bg-primary-light text-primary'
-          }`}
-        >
-          {initials}
-        </div>
-        <div className="min-w-0">
-          <h2 className="text-heading text-text break-words">{child.fullName}</h2>
-          <p className="text-body text-text-secondary mt-0.5">
-            {caretaker.children.age}: {calculateAge(child.dateOfBirth)} · {gender[child.gender]}
-          </p>
-        </div>
+      <ChildHeader
+        child={child}
+        showActions={actionsEnabled}
+        onEdit={() => navigate(`${editBasePath}/${child.id}/hindura`)}
+        onArchive={() => setArchiveOpen(true)}
+        onReactivate={() => setReactivateOpen(true)}
+        onRecordMeasurement={
+          actionsEnabled && child.status === 'active'
+            ? () => openMeasureDialog(null)
+            : undefined
+        }
+      />
+
+      <div
+        className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 mb-6 bg-background-subtle rounded-xl border border-border"
+        role="tablist"
+        aria-label={caretaker.childDetail.title}
+      >
+        {TABS.map((t) => {
+          const selected = tab === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              id={`child-tab-${t.id}`}
+              aria-controls={`child-panel-${t.id}`}
+              onClick={() => setTab(t.id)}
+              className={`
+                w-full min-h-11 px-2 sm:px-3 py-2.5 rounded-lg text-body font-semibold text-center
+                leading-snug transition-all duration-150
+                focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2
+                ${selected
+                  ? 'bg-surface text-primary shadow-sm'
+                  : 'text-text-secondary hover:text-text hover:bg-surface/60'}
+              `}
+            >
+              {t.label}
+            </button>
+          )
+        })}
       </div>
 
-      {tab === 'attendance' ? (
-        <div className="space-y-6 max-w-4xl">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Card padding="md" className="border-success/20 bg-success-light/40">
-              <p className="text-display text-success leading-none">{presentCount}</p>
-              <p className="text-caption text-success mt-2">{caretaker.childDetail.totalPresent}</p>
-            </Card>
-            <Card padding="md">
-              <p className="text-display text-text leading-none">{absentCount}</p>
-              <p className="text-caption mt-2">{caretaker.childDetail.totalAbsent}</p>
-            </Card>
+      {tab === 'overview' && (
+        <div
+          id="child-panel-overview"
+          role="tabpanel"
+          aria-labelledby="child-tab-overview"
+          className="space-y-4"
+        >
+          {/* Alerts requiring attention */}
+          <Card padding="lg">
+            <h3 className="text-label text-primary mb-4">{caretaker.childDetail.overviewAlerts}</h3>
+            {!hasAlerts ? (
+              <p className="text-body text-text-secondary">{caretaker.childDetail.noAlerts}</p>
+            ) : (
+              <ul className="space-y-3">
+                {(assessmentDue === 'due' ||
+                  assessmentDue === 'overdue' ||
+                  assessmentDue === 'never') && (
+                  <li className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning-light/40 px-3.5 py-3">
+                    <Clock size={18} className="text-warning shrink-0 mt-0.5" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body font-semibold text-text">
+                        {assessmentDue === 'overdue' || assessmentDue === 'never'
+                          ? caretaker.growth.dueOverdue
+                          : caretaker.growth.dueSoon}
+                      </p>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        className="mt-1 -ml-2"
+                        onClick={() => setTab('growth')}
+                      >
+                        {caretaker.childDetail.viewTab} {caretaker.childDetail.tabGrowth}
+                      </Button>
+                    </div>
+                  </li>
+                )}
+                {openReferrals.length > 0 && (
+                  <li className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning-light/40 px-3.5 py-3">
+                    <Send size={18} className="text-warning shrink-0 mt-0.5" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body font-semibold text-text">
+                        {caretaker.childDetail.openReferralsAlert}: {openReferrals.length}
+                      </p>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        className="mt-1 -ml-2"
+                        onClick={() => setTab('growth')}
+                      >
+                        {caretaker.childDetail.viewTab} {caretaker.childDetail.tabGrowth}
+                      </Button>
+                    </div>
+                  </li>
+                )}
+                {hasSpecialNeeds && (
+                  <li className="flex items-start gap-3 rounded-lg border border-border bg-background-subtle/60 px-3.5 py-3">
+                    <AlertTriangle size={18} className="text-accent shrink-0 mt-0.5" aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body font-semibold text-text">
+                        {caretaker.childDetail.specialNeedsAlert}
+                      </p>
+                      <Button
+                        variant="tertiary"
+                        size="sm"
+                        className="mt-1 -ml-2"
+                        onClick={() => setTab('profile')}
+                      >
+                        {caretaker.childDetail.viewTab} {caretaker.childDetail.tabProfile}
+                      </Button>
+                    </div>
+                  </li>
+                )}
+              </ul>
+            )}
+          </Card>
+
+          {/* Growth & nutrition at a glance */}
+          <div>
+            <h3 className="text-label text-primary mb-3">
+              {caretaker.childDetail.overviewGrowth}
+            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <NutritionStatusCard
+                measurement={latestMeasurement}
+                assessment={latestAssessment}
+              />
+              <AssessmentReminderCard latestDate={latestMeasurement?.date} />
+            </div>
           </div>
 
+          {/* Attendance snapshot */}
+          <div>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 className="text-label text-primary">
+                {caretaker.childDetail.overviewAttendance}
+              </h3>
+              <Button variant="tertiary" size="sm" onClick={() => setTab('attendance')}>
+                {caretaker.childDetail.viewTab} {caretaker.childDetail.tabAttendance}
+              </Button>
+            </div>
+            <AttendanceSummaryCard presentCount={presentCount} absentCount={absentCount} />
+          </div>
+
+          {/* Lifecycle milestones */}
           <Card padding="lg">
-            <h3 className="text-subheading text-text mb-5">{caretaker.childDetail.attendanceHistory}</h3>
-            {attendance.length === 0 ? (
-              <p className="text-body text-text-secondary text-center py-8">{caretaker.childDetail.noAttendanceHistory}</p>
-            ) : (
-              <div className="overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0">
-                <table className="w-full min-w-0 text-left responsive-table-cards">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-caption font-semibold text-text-muted pb-3 pr-4">{common.labels.date}</th>
-                      <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
-                        {caretaker.childDetail.checkInTime}
-                      </th>
-                      <th className="text-caption font-semibold text-text-muted pb-3 pr-4">{common.labels.status}</th>
-                      <th className="text-caption font-semibold text-text-muted pb-3">{common.labels.broughtBy}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attendancePagination.items.map((record) => (
-                      <tr key={record.id} className="border-b border-border last:border-0">
-                        <td className="py-3 pr-4 text-body" data-label={common.labels.date}>
-                          {formatDate(record.date)}
-                        </td>
-                        <td className="py-3 pr-4 text-body font-mono" data-label={caretaker.childDetail.checkInTime}>
-                          {record.present ? formatArrivalTime(record.arrivedAt) : '—'}
-                        </td>
-                        <td className="py-3 pr-4" data-label={common.labels.status}>
-                          <span
-                            className={`text-caption font-semibold px-3 py-1 rounded-full whitespace-nowrap ${
-                              record.present
-                                ? 'bg-success-light text-success'
-                                : 'bg-background-subtle text-text-muted'
-                            }`}
-                          >
-                            {record.present ? caretaker.childDetail.present : caretaker.childDetail.absent}
-                          </span>
-                        </td>
-                        <td className="py-3 text-body text-text-secondary break-words" data-label={common.labels.broughtBy}>
-                          {record.present
-                            ? getBroughtByLabel(record.broughtBy, record.broughtByOther, relations)
-                            : '—'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            <Pagination
-              page={attendancePagination.page}
-              pageSize={attendancePagination.pageSize}
-              total={attendancePagination.total}
-              totalPages={attendancePagination.totalPages}
-              startIndex={attendancePagination.startIndex}
-              endIndex={attendancePagination.endIndex}
-              hasPrevious={attendancePagination.hasPrevious}
-              hasNext={attendancePagination.hasNext}
-              onPageChange={attendancePagination.setPage}
-              onPageSizeChange={attendancePagination.setPageSize}
-              className="mt-0!"
+            <h3 className="text-label text-primary mb-4">
+              {caretaker.childDetail.overviewTimeline}
+            </h3>
+            <ol className="space-y-4">
+              {timeline.map((item, index) => (
+                <li key={`${item.date}-${item.label}`} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full mt-1.5 ${
+                        index === timeline.length - 1 ? 'bg-primary' : 'bg-border-strong'
+                      }`}
+                      aria-hidden
+                    />
+                    {index < timeline.length - 1 && (
+                      <span className="flex-1 w-px bg-border mt-1" aria-hidden />
+                    )}
+                  </div>
+                  <div className="pb-2">
+                    <p className="text-body font-semibold text-text">{item.label}</p>
+                    <p className="text-caption text-text-secondary">{formatDate(item.date)}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </Card>
+        </div>
+      )}
+
+      {tab === 'profile' && (
+        <div
+          id="child-panel-profile"
+          role="tabpanel"
+          aria-labelledby="child-tab-profile"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        >
+          <ChildInfoCard title={caretaker.childDetail.personalInfo}>
+            <DetailRow label={common.labels.dateOfBirth} value={formatDate(child.dateOfBirth)} />
+            <DetailRow
+              label={caretaker.childDetail.dateRegistered}
+              value={formatDate(child.registeredAt)}
             />
+          </ChildInfoCard>
+
+          <GuardianCard child={child} which={1} />
+          <GuardianCard child={child} which={2} />
+          <AddressCard child={child} />
+
+          <Card padding="lg" className="lg:col-span-2">
+            <h3 className="text-label text-primary mb-4">
+              {caretaker.childDetail.specialNeedsLabel}
+            </h3>
+            {child.specialNeeds?.trim() ? (
+              <SpecialNeedsContent text={child.specialNeeds.trim()} />
+            ) : (
+              <p className="text-body text-text-muted italic">
+                {caretaker.childDetail.noSpecialNeeds}
+              </p>
+            )}
           </Card>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card padding="lg">
-            <h3 className="text-label text-primary mb-4">{caretaker.registration.reviewChild}</h3>
-            <dl>
-              <DetailRow label={common.labels.name} value={child.fullName} />
-              <DetailRow label={common.labels.dateOfBirth} value={formatDate(child.dateOfBirth)} />
-              <DetailRow label={common.labels.childGender} value={gender[child.gender]} />
-              <DetailRow label={caretaker.childDetail.dateRegistered} value={formatDate(child.registeredAt)} />
-              <SpecialNeedsBlock needs={child.specialNeeds} />
-            </dl>
-          </Card>
-          <Card padding="lg">
-            <h3 className="text-label text-primary mb-4">{caretaker.registration.guardian1Section}</h3>
-            <dl>
-              <DetailRow label={common.labels.name} value={child.guardianName} />
-              <DetailRow label={common.labels.phone} value={child.guardianPhone} />
-              <DetailRow
-                label={common.labels.relation}
-                value={getGuardianRelationLabel(
-                  normalizeGuardianRelation(child.guardianRelation) ?? child.guardianRelation,
-                )}
-              />
-            </dl>
-          </Card>
-          {child.guardian2Name && (
-            <Card padding="lg">
-              <h3 className="text-label text-primary mb-4">{caretaker.registration.guardian2Section}</h3>
-              <dl>
-                <DetailRow label={common.labels.name} value={child.guardian2Name} />
-                <DetailRow label={common.labels.phone} value={child.guardian2Phone ?? ''} />
-                <DetailRow
-                  label={common.labels.relation}
-                  value={
-                    child.guardian2Relation
-                      ? getGuardianRelationLabel(
-                          normalizeGuardianRelation(child.guardian2Relation) ?? child.guardian2Relation,
-                        )
-                      : ''
-                  }
-                />
-              </dl>
-            </Card>
-          )}
-          <Card padding="lg">
-            <h3 className="text-label text-primary mb-4">{caretaker.registration.reviewLocation}</h3>
-            <dl>
-              <DetailRow label={location.province} value={child.province} />
-              <DetailRow label={location.district} value={child.district} />
-              <DetailRow label={location.sector} value={child.sector} />
-              <DetailRow label={location.cell} value={child.cell} />
-              <DetailRow label={location.village} value={child.village} />
-            </dl>
-          </Card>
+      )}
+
+      {tab === 'attendance' && (
+        <div
+          id="child-panel-attendance"
+          role="tabpanel"
+          aria-labelledby="child-tab-attendance"
+          className="space-y-4"
+        >
+          <AttendanceSummaryCard presentCount={presentCount} absentCount={absentCount} />
+          <AttendanceHistoryTable records={attendance} resetDeps={[child.id]} />
         </div>
+      )}
+
+      {tab === 'growth' && (
+        <div
+          id="child-panel-growth"
+          role="tabpanel"
+          aria-labelledby="child-tab-growth"
+        >
+          <ChildGrowthHistorySection
+            child={child}
+            measurements={measurements}
+            assessments={assessments}
+            referrals={referrals}
+            canEdit={actionsEnabled && child.status === 'active'}
+            onRecordMeasurement={() => openMeasureDialog(null)}
+            onEditMeasurement={(record) => openMeasureDialog(record)}
+            onCompleteReferral={async (id, notes) => {
+              await updateReferralStatus(id, 'completed', { notes })
+              showSuccess(caretaker.referral.statusUpdated)
+            }}
+            onMarkReferralImplemented={async (id) => {
+              await updateReferral(id, { implementedAt: new Date().toISOString().split('T')[0] })
+              showSuccess(caretaker.referral.implementedSaved)
+            }}
+            onSaveReferralNotes={async (id, notes) => {
+              await updateReferral(id, { notes })
+              showSuccess(caretaker.referral.notesSaved)
+            }}
+          />
+        </div>
+      )}
+
+      {actionsEnabled && (
+        <>
+          <ArchiveDialog open={archiveOpen} onClose={() => setArchiveOpen(false)} child={child} />
+          <ReactivateChildDialog
+            open={reactivateOpen}
+            onClose={() => setReactivateOpen(false)}
+            child={child}
+          />
+          <MeasurementDialog
+            open={measureOpen}
+            child={child}
+            existing={editingMeasurement}
+            fallbackHeightCm={
+              editingMeasurement?.heightCm ??
+              getLatestMeasurement(measurements, child.id)?.heightCm ??
+              0
+            }
+            onClose={() => {
+              setMeasureOpen(false)
+              setEditingMeasurement(null)
+            }}
+            onConfirm={async (result: MeasurementDialogResult) => {
+              try {
+                if (editingMeasurement) {
+                  await updateMeasurement(editingMeasurement.id, {
+                    date: result.date,
+                    weightKg: result.weightKg,
+                    heightCm: result.heightCm || editingMeasurement.heightCm,
+                    muacCm: result.muacCm,
+                    headCircumferenceCm:
+                      result.headCircumferenceCm ?? editingMeasurement.headCircumferenceCm,
+                    notes: result.notes,
+                    recordedBy: user?.name ?? 'Umurezi',
+                  })
+                  showSuccess(caretaker.growth.updated)
+                } else {
+                  const prior = getLatestMeasurement(measurements, child.id)
+                  await recordMeasurement({
+                    childId: child.id,
+                    date: result.date,
+                    weightKg: result.weightKg,
+                    heightCm: result.heightCm || prior?.heightCm || 0,
+                    muacCm: result.muacCm,
+                    headCircumferenceCm:
+                      result.headCircumferenceCm ?? prior?.headCircumferenceCm,
+                    notes: result.notes,
+                    recordedBy: user?.name ?? 'Umurezi',
+                  })
+                  showSuccess(caretaker.growth.saved)
+                }
+                setMeasureOpen(false)
+                setEditingMeasurement(null)
+              } catch {
+                // ApiErrorBridge toasts LIVE failures
+              }
+            }}
+          />
+        </>
       )}
     </>
   )
