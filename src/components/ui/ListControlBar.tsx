@@ -4,48 +4,63 @@ import { Button } from '@/components/ui/Button'
 import { SelectInput } from '@/components/ui/FormField'
 import { caretaker } from '@/locales/rw/caretaker'
 
+/** Attendance / children legacy view states. */
 export type ListViewState = 'all' | 'waiting' | 'arrived'
+
+export interface ListViewOption {
+  value: string
+  label: string
+}
 
 interface ListControlBarProps {
   childName: string
   onChildNameChange: (value: string) => void
-  viewState: ListViewState
-  onViewStateChange: (state: ListViewState) => void
+  viewState: string
+  onViewStateChange: (state: string) => void
+  /** Domain-specific options for the Reba dropdown. */
+  viewOptions: ListViewOption[]
   onOpenSearchFilters: () => void
   hasActiveSearchFilters?: boolean
-  showArrivedFilter?: boolean
+  searchPlaceholder?: string
+  className?: string
 }
 
+/**
+ * Shared caretaker list toolbar: quick name search + view select + advanced filters.
+ * Matches Children / Attendance filter UX; pass domain viewOptions per page.
+ */
 export function ListControlBar({
   childName,
   onChildNameChange,
   viewState,
   onViewStateChange,
+  viewOptions,
   onOpenSearchFilters,
   hasActiveSearchFilters = false,
-  showArrivedFilter = false,
+  searchPlaceholder = caretaker.filters.quickSearchPlaceholder,
+  className = '',
 }: ListControlBarProps) {
   return (
-    <div className="flex flex-col gap-3 mb-4 sm:flex-row">
+    <div className={`flex flex-col gap-3 mb-4 sm:flex-row ${className}`}>
       <SearchInput
         value={childName}
         onChange={onChildNameChange}
-        placeholder={caretaker.filters.quickSearchPlaceholder}
+        placeholder={searchPlaceholder}
         className="flex-1 min-w-0 w-full"
       />
 
       <div className="flex gap-2 w-full sm:w-auto sm:shrink-0">
         <SelectInput
           value={viewState}
-          onChange={(e) => onViewStateChange(e.target.value as ListViewState)}
+          onChange={(e) => onViewStateChange(e.target.value)}
           aria-label={caretaker.filters.stateLabel}
-          className="!min-h-11 sm:!min-h-12 flex-1 sm:flex-none sm:w-44 text-body font-semibold"
+          className="!min-h-11 sm:!min-h-12 flex-1 sm:flex-none sm:min-w-44 sm:w-auto text-body font-semibold"
         >
-          <option value="waiting">{caretaker.filters.stateWaiting}</option>
-          {showArrivedFilter && (
-            <option value="arrived">{caretaker.filters.stateArrived}</option>
-          )}
-          <option value="all">{caretaker.filters.stateAll}</option>
+          {viewOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
         </SelectInput>
 
         <Button
@@ -68,3 +83,16 @@ export function ListControlBar({
     </div>
   )
 }
+
+/** Default attendance/children view options for pages that still use ListViewState. */
+export const ATTENDANCE_VIEW_OPTIONS: ListViewOption[] = [
+  { value: 'waiting', label: caretaker.filters.stateWaiting },
+  { value: 'arrived', label: caretaker.filters.stateArrived },
+  { value: 'all', label: caretaker.filters.stateAll },
+]
+
+export const CHILDREN_VIEW_OPTIONS: ListViewOption[] = [
+  { value: 'waiting', label: caretaker.filters.stateWaiting },
+  { value: 'arrived', label: caretaker.filters.stateArrived },
+  { value: 'all', label: caretaker.filters.stateAll },
+]

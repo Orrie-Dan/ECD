@@ -1,13 +1,14 @@
 import { type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { common } from '@/locales/rw/common'
 
 type ButtonVariant =
   | 'primary'
   | 'secondary'
-  | 'tertiary'
-  | 'success'
-  | 'danger'
   | 'outline'
+  | 'danger'
   | 'ghost'
+  | 'success'
+  | 'tertiary'
 
 type ButtonSize = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -15,6 +16,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant
   size?: ButtonSize
   fullWidth?: boolean
+  loading?: boolean
   icon?: ReactNode
   children: ReactNode
 }
@@ -34,17 +36,17 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     'bg-primary text-white border-primary shadow-sm enabled:hover:bg-primary-dark enabled:hover:border-primary-dark',
   secondary:
-    'bg-surface text-primary border-2 border-primary shadow-sm enabled:hover:bg-primary-light enabled:hover:border-primary-dark',
-  tertiary:
-    'bg-transparent text-text-secondary border-transparent enabled:hover:bg-background-subtle enabled:hover:text-text enabled:hover:shadow-sm',
-  success:
-    'bg-success text-white border-success shadow-sm enabled:hover:bg-green-800 enabled:hover:border-green-800',
-  danger:
-    'bg-error text-white border-error shadow-sm enabled:hover:bg-red-800 enabled:hover:border-red-800',
+    'bg-primary-light text-primary border-primary/30 shadow-sm enabled:hover:bg-primary-light enabled:hover:border-primary enabled:hover:shadow-md',
   outline:
     'bg-surface text-primary border-2 border-primary shadow-sm enabled:hover:bg-primary-light enabled:hover:border-primary-dark',
+  danger:
+    'bg-error text-white border-error shadow-sm enabled:hover:bg-error-dark enabled:hover:border-error-dark',
   ghost:
-    'bg-transparent text-text-secondary border-transparent enabled:hover:bg-background-subtle enabled:hover:text-text enabled:hover:shadow-sm',
+    'bg-transparent text-text-secondary border-transparent enabled:hover:bg-surface-muted enabled:hover:text-text enabled:hover:shadow-sm',
+  success:
+    'bg-success text-white border-success shadow-sm enabled:hover:bg-success-dark enabled:hover:border-success-dark',
+  tertiary:
+    'bg-transparent text-text-secondary border-transparent enabled:hover:bg-surface-muted enabled:hover:text-text enabled:hover:shadow-sm',
 }
 
 const iconSizeClasses: Record<ButtonSize, string> = {
@@ -54,16 +56,16 @@ const iconSizeClasses: Record<ButtonSize, string> = {
   xl: '[&_svg]:size-6',
 }
 
+/** Caretaker targets ≥52px (md+); sm stays ≥44px for compact chrome. */
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'min-h-9 sm:min-h-8 px-3.5 text-sm rounded-lg',
-  md: 'min-h-11 sm:min-h-10 px-4 text-body rounded-xl',
-  lg: 'min-h-11 px-5 text-body-lg rounded-xl',
-  xl: 'min-h-12 px-6 text-subheading rounded-xl font-bold',
+  sm: 'min-h-11 px-3.5 text-caption rounded-lg',
+  md: 'min-h-[3.25rem] px-5 text-body rounded-xl',
+  lg: 'min-h-[3.25rem] px-5 text-body-lg rounded-xl',
+  xl: 'min-h-14 px-6 text-subheading rounded-xl font-bold',
 }
 
 function resolveVariant(variant: ButtonVariant): ButtonVariant {
-  if (variant === 'outline') return 'secondary'
-  if (variant === 'ghost') return 'tertiary'
+  if (variant === 'tertiary') return 'ghost'
   return variant
 }
 
@@ -71,6 +73,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   fullWidth = false,
+  loading = false,
   icon,
   children,
   className = '',
@@ -79,6 +82,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const resolved = resolveVariant(variant)
+  const isDisabled = disabled || loading
 
   return (
     <button
@@ -91,11 +95,16 @@ export function Button({
         ${fullWidth ? 'w-full' : ''}
         ${className}
       `}
-      disabled={disabled}
+      disabled={isDisabled}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {icon && <span className="shrink-0 flex items-center" aria-hidden="true">{icon}</span>}
-      {children}
+      {icon && !loading && (
+        <span className="shrink-0 flex items-center" aria-hidden="true">
+          {icon}
+        </span>
+      )}
+      {loading ? common.loading : children}
     </button>
   )
 }

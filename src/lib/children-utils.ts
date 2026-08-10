@@ -27,6 +27,12 @@ export function filterAndSortChildren({
 }: FilterSortParams): Child[] {
   let result = applySharedChildFilters(children, filters)
 
+  if (filters.status === 'active') {
+    result = result.filter((c) => c.status === 'active')
+  } else if (filters.status === 'archived') {
+    result = result.filter((c) => c.status === 'archived')
+  }
+
   if (attendanceFilter === 'present') {
     result = result.filter((c) => isPresentToday(c.id))
   } else if (attendanceFilter === 'absent') {

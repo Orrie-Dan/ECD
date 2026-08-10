@@ -1,21 +1,62 @@
 import type {
   ActionAlert,
+  AbsentReason,
   AttendanceRecord,
   BroughtBy,
+  CenterFeedingDay,
+  CenterFeedingMonthSummary,
   Child,
+  ChildStatus,
   EnrollmentCenterRanking,
   EnrollmentFollowupItem,
   EnrollmentGeoArea,
   EnrollmentPeriod,
   EnrollmentPeriodSummary,
   EnrollmentTrendPoint,
+  GrowthMeasurement,
   GuardianRelation,
+  NutritionAssessment,
+  Referral,
+  StedAssessment,
   TrendDirection,
 } from '@/types'
+import {
+  buildAssessmentFromMeasurement,
+  classifyNutrition,
+  requiresReferral,
+} from '@/lib/nutrition-utils'
+import {
+  buildDefaultOutcome,
+  emptyMilestones,
+  emptyPhysicalCheck,
+  getStedAgeBand,
+} from '@/lib/sted-utils'
+
+/** Default centre for caretaker demos (matches AuthProvider centerName). */
+export const DEFAULT_CENTER_ID = 'c1'
+export const DEFAULT_CENTER_NAME = 'Ikigo cya ECD Remera'
+
+export function buildRegistrationNumber(id: string, registeredAt: string): string {
+  const year = registeredAt.slice(0, 4) || '2025'
+  return `ECD-${year}-${String(id).padStart(4, '0')}`
+}
+
+function withChildDefaults(
+  child: Omit<Child, 'status' | 'registrationNumber' | 'centerId' | 'centerName'> &
+    Partial<Pick<Child, 'status' | 'registrationNumber' | 'centerId' | 'centerName'>>,
+): Child {
+  return {
+    status: 'active',
+    centerId: DEFAULT_CENTER_ID,
+    centerName: DEFAULT_CENTER_NAME,
+    registrationNumber: buildRegistrationNumber(child.id, child.registeredAt),
+    ...child,
+  }
+}
 
 /** Hand-crafted seed records kept for demos and stable deep links (ids 1–5). */
 const SEED_CHILDREN: Child[] = [
-  {
+  withChildDefaults({
     id: '1',
     fullName: 'Jean Claude Mukamana',
     dateOfBirth: '2021-03-15',
@@ -33,8 +74,8 @@ const SEED_CHILDREN: Child[] = [
     cell: 'Rukiri I',
     village: 'Kinunga',
     registeredAt: '2025-09-01',
-  },
-  {
+  }),
+  withChildDefaults({
     id: '2',
     fullName: 'Marie Claire Uwase',
     dateOfBirth: '2020-07-22',
@@ -48,8 +89,8 @@ const SEED_CHILDREN: Child[] = [
     cell: 'Rukiri II',
     village: 'Amahoro',
     registeredAt: '2025-08-15',
-  },
-  {
+  }),
+  withChildDefaults({
     id: '3',
     fullName: 'Emmanuel Nshimiyimana',
     dateOfBirth: '2022-01-10',
@@ -63,8 +104,14 @@ const SEED_CHILDREN: Child[] = [
     cell: 'Karuruma',
     village: 'Akamamana',
     registeredAt: '2025-10-20',
-  },
-  {
+    status: 'transferred' as ChildStatus,
+    transferredAt: '2026-05-12',
+    transferredToCenterId: 'c2',
+    transferredToCenterName: 'ECD Kimisagara',
+    transferReason: 'relocation',
+    transferNotes: 'Umuryango wimukiye',
+  }),
+  withChildDefaults({
     id: '4',
     fullName: 'Divine Ishimwe',
     dateOfBirth: '2021-11-05',
@@ -78,8 +125,12 @@ const SEED_CHILDREN: Child[] = [
     cell: 'Kabeza',
     village: 'Amahoro',
     registeredAt: '2025-07-10',
-  },
-  {
+    status: 'archived' as ChildStatus,
+    archivedAt: '2026-04-01',
+    archiveReason: 'age_out',
+    archiveNotes: 'Yageze ku myaka yo gutangira amashuri abanza',
+  }),
+  withChildDefaults({
     id: '5',
     fullName: 'Kevin Habimana',
     dateOfBirth: '2019-12-18',
@@ -93,7 +144,76 @@ const SEED_CHILDREN: Child[] = [
     cell: 'Rukiri II',
     village: 'Amahoro',
     registeredAt: '2025-06-01',
-  },
+  }),
+  // Incoming transfers destined for the demo caretaker centre (c1)
+  withChildDefaults({
+    id: '6',
+    fullName: 'Aline Uwase',
+    dateOfBirth: '2021-04-22',
+    gender: 'Umukobwa',
+    guardianName: 'Uwase Claire',
+    guardianPhone: '0785012345',
+    guardianRelation: 'umubyeyi_mama',
+    province: 'Umujyi wa Kigali',
+    district: 'Nyarugenge',
+    sector: 'Kimisagara',
+    cell: 'Gatare',
+    village: 'Gakoni',
+    registeredAt: '2025-09-08',
+    centerId: 'c2',
+    centerName: 'ECD Kimisagara',
+    status: 'transferred' as ChildStatus,
+    transferredAt: '2026-07-20',
+    transferredToCenterId: DEFAULT_CENTER_ID,
+    transferredToCenterName: DEFAULT_CENTER_NAME,
+    transferReason: 'relocation',
+    transferNotes: 'Umuryango wimukiye i Remera',
+  }),
+  withChildDefaults({
+    id: '7',
+    fullName: 'Eric Mugisha',
+    dateOfBirth: '2020-08-14',
+    gender: 'Umuhungu',
+    guardianName: 'Mugisha Patrick',
+    guardianPhone: '0785123456',
+    guardianRelation: 'umubyeyi_papa',
+    province: 'Umujyi wa Kigali',
+    district: 'Gasabo',
+    sector: 'Gisozi',
+    cell: 'Kinyinya',
+    village: 'Kamuhoza',
+    registeredAt: '2025-11-02',
+    centerId: 'c3',
+    centerName: 'ECD Gisozi',
+    status: 'transferred' as ChildStatus,
+    transferredAt: '2026-07-28',
+    transferredToCenterId: DEFAULT_CENTER_ID,
+    transferredToCenterName: DEFAULT_CENTER_NAME,
+    transferReason: 'guardian_request',
+  }),
+  withChildDefaults({
+    id: '8',
+    fullName: 'Sandrine Niyonsaba',
+    dateOfBirth: '2022-02-03',
+    gender: 'Umukobwa',
+    guardianName: 'Niyonsaba Esperance',
+    guardianPhone: '0785234567',
+    guardianRelation: 'umubyeyi_mama',
+    province: 'Umujyi wa Kigali',
+    district: 'Kicukiro',
+    sector: 'Kanombe',
+    cell: 'Busanza',
+    village: 'Kinyinya',
+    registeredAt: '2026-01-15',
+    centerId: 'c4',
+    centerName: 'ECD Kanombe',
+    status: 'transferred' as ChildStatus,
+    transferredAt: '2026-08-01',
+    transferredToCenterId: DEFAULT_CENTER_ID,
+    transferredToCenterName: DEFAULT_CENTER_NAME,
+    transferReason: 'centre_capacity',
+    transferNotes: 'Ikigo cyuzuye',
+  }),
 ]
 
 const BOY_NAMES = [
@@ -204,7 +324,11 @@ function generateChild(id: number): Child {
   const guardianFirst = pick(isBoy ? GIRL_NAMES : BOY_NAMES, index + 3)
   const hasSecondGuardian = index % 3 === 0
 
-  return {
+  const registeredAt = `2025-${String(registerMonth).padStart(2, '0')}-${String((index % 25) + 1).padStart(2, '0')}`
+  const status: ChildStatus =
+    index % 37 === 0 ? 'archived' : index % 29 === 0 ? 'transferred' : 'active'
+
+  return withChildDefaults({
     id: String(id),
     fullName: `${firstName} ${middleName} ${surname}`,
     dateOfBirth: `${birthYear}-${String(birthMonth).padStart(2, '0')}-${String(birthDay).padStart(2, '0')}`,
@@ -221,8 +345,23 @@ function generateChild(id: number): Child {
       : {}),
     specialNeeds: pick(SPECIAL_NEEDS_SAMPLES, index),
     ...location,
-    registeredAt: `2025-${String(registerMonth).padStart(2, '0')}-${String((index % 25) + 1).padStart(2, '0')}`,
-  }
+    registeredAt,
+    status,
+    ...(status === 'transferred'
+      ? {
+          transferredAt: '2026-03-15',
+          transferredToCenterId: 'c4',
+          transferredToCenterName: 'ECD Kanombe',
+          transferReason: 'guardian_request',
+        }
+      : {}),
+    ...(status === 'archived'
+      ? {
+          archivedAt: '2026-02-20',
+          archiveReason: 'moved_away',
+        }
+      : {}),
+  })
 }
 
 function generateChildren(total: number): Child[] {
@@ -232,6 +371,9 @@ function generateChildren(total: number): Child[] {
   }
   return [...SEED_CHILDREN, ...generated]
 }
+
+const ABSENT_REASONS: AbsentReason[] = ['sick', 'family', 'transport', 'weather', 'other']
+const DEFAULT_RECORDED_BY = 'Uwimana Marie'
 
 function generateAttendanceForChildren(children: Child[]): AttendanceRecord[] {
   const today = new Date()
@@ -246,8 +388,13 @@ function generateAttendanceForChildren(children: Child[]): AttendanceRecord[] {
       const date = addDays(today, -dayOffset)
       const dateStr = formatDateIso(date)
 
-      // ~42% present today, ~75% present on past days
-      const presentThreshold = dayOffset === 0 ? 42 : 75
+      // Today: leave ~35% unrecorded (no row). Past days: always recorded.
+      // Of recorded rows: ~70% present historically, ~55% present today.
+      if (dayOffset === 0 && childIndex % 100 >= 65) {
+        continue
+      }
+
+      const presentThreshold = dayOffset === 0 ? 55 : 70
       const present = childIndex % 100 < presentThreshold
 
       const record: AttendanceRecord = {
@@ -255,6 +402,7 @@ function generateAttendanceForChildren(children: Child[]): AttendanceRecord[] {
         childId: child.id,
         date: dateStr,
         present,
+        recordedBy: DEFAULT_RECORDED_BY,
       }
 
       if (present) {
@@ -262,6 +410,11 @@ function generateAttendanceForChildren(children: Child[]): AttendanceRecord[] {
         const hour = 7 + ((childIndex + dayOffset) % 3)
         const minute = 10 + ((childIndex * 3 + dayOffset * 7) % 50)
         record.arrivedAt = `${dateStr}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
+      } else {
+        record.absentReason = pick(ABSENT_REASONS, childIndex + dayOffset)
+        if (record.absentReason === 'other') {
+          record.notes = 'Impamvu yihariye'
+        }
       }
 
       records.push(record)
@@ -321,6 +474,231 @@ function generateEcdCenters(count: number) {
 export const MOCK_CHILDREN: Child[] = generateChildren(MOCK_CHILD_COUNT)
 
 export const MOCK_ATTENDANCE: AttendanceRecord[] = generateAttendanceForChildren(MOCK_CHILDREN)
+
+const GROWTH_HISTORY_MONTHS = 6
+
+function generateGrowthForChildren(children: Child[]): {
+  measurements: GrowthMeasurement[]
+  assessments: NutritionAssessment[]
+} {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const measurements: GrowthMeasurement[] = []
+  const assessments: NutritionAssessment[] = []
+  let counter = 1
+
+  for (const child of children) {
+    if (child.status === 'archived') continue
+    const childIndex = Number(child.id) || counter
+    // ~12% never measured
+    if (childIndex % 100 < 12) continue
+
+    const monthCount = 2 + (childIndex % GROWTH_HISTORY_MONTHS)
+    for (let monthOffset = 0; monthOffset < monthCount; monthOffset++) {
+      // Skip recent months for some children so they appear due/overdue
+      if (monthOffset === 0 && childIndex % 7 === 0) continue
+      if (monthOffset <= 1 && childIndex % 11 === 0) continue
+
+      const date = addDays(today, -(monthOffset * 30 + (childIndex % 5)))
+      const dateStr = formatDateIso(date)
+      const baseWeight = 10 + (childIndex % 8) + monthOffset * 0.15
+      const baseHeight = 80 + (childIndex % 20) + monthOffset * 0.4
+      let muac = 13.2 + ((childIndex * 3) % 20) / 10 - monthOffset * 0.05
+
+      // Seed some at-risk / moderate / severe cases
+      if (childIndex % 17 === 0) muac = 11.0
+      else if (childIndex % 13 === 0) muac = 12.0
+      else if (childIndex % 9 === 0) muac = 12.9
+
+      const measurement: GrowthMeasurement = {
+        id: `g${counter}`,
+        childId: child.id,
+        date: dateStr,
+        weightKg: Math.round(baseWeight * 10) / 10,
+        heightCm: Math.round(baseHeight * 10) / 10,
+        muacCm: Math.round(muac * 10) / 10,
+        headCircumferenceCm:
+          childIndex % 3 === 0
+            ? Math.round((48 + (childIndex % 6) + monthOffset * 0.1) * 10) / 10
+            : undefined,
+        notes: childIndex % 19 === 0 ? 'Akeneye gukurikiranwa' : undefined,
+        recordedBy: DEFAULT_RECORDED_BY,
+      }
+
+      const assessment = buildAssessmentFromMeasurement(measurement, `na${counter}`)
+      // Ensure status matches seeded MUAC
+      assessment.status = classifyNutrition({ muacCm: measurement.muacCm })
+      assessment.requiresReferral = requiresReferral(assessment.status)
+
+      measurements.push(measurement)
+      assessments.push(assessment)
+      counter++
+    }
+  }
+
+  return { measurements, assessments }
+}
+
+const generatedGrowth = generateGrowthForChildren(MOCK_CHILDREN)
+export const MOCK_GROWTH_MEASUREMENTS: GrowthMeasurement[] = generatedGrowth.measurements
+export const MOCK_NUTRITION_ASSESSMENTS: NutritionAssessment[] = generatedGrowth.assessments
+
+function generateFeedingForCenters(): {
+  days: CenterFeedingDay[]
+  summaries: CenterFeedingMonthSummary[]
+} {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const yearMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+  const days: CenterFeedingDay[] = []
+  const summaries: CenterFeedingMonthSummary[] = []
+  let dayCounter = 1
+
+  const centerIds = [DEFAULT_CENTER_ID, 'c2', 'c3', 'c4', 'c5']
+  for (const centerId of centerIds) {
+    for (let d = 1; d <= Math.min(today.getDate(), 18); d++) {
+      const date = `${yearMonth}-${String(d).padStart(2, '0')}`
+      const milk = d % 2 === 1
+      const porridge = d % 3 !== 0
+      const balanced = d % 4 === 0
+      days.push({
+        id: `fd${dayCounter++}`,
+        centerId,
+        date,
+        milkServed: milk,
+        porridgeServed: porridge,
+        balancedMealServed: balanced,
+        composition: balanced
+          ? {
+              cerealsOrTubers: true,
+              legumes: true,
+              dairy: true,
+              animalProducts: true,
+              fruitsVegetables: true,
+              addedFat: true,
+            }
+          : undefined,
+        recordedBy: 'Uwimana Marie',
+      })
+    }
+    summaries.push({
+      id: `fs${centerId}`,
+      centerId,
+      yearMonth,
+      milkLiters: 20 + (centerId.charCodeAt(1) % 10) * 3,
+      flourKg: 15 + (centerId.charCodeAt(1) % 8) * 2,
+      foodSource: centerId === DEFAULT_CENTER_ID ? "Akarima k'ikigo" : 'Ababyeyi',
+      updatedAt: today.toISOString().split('T')[0],
+    })
+  }
+
+  return { days, summaries }
+}
+
+const generatedFeeding = generateFeedingForCenters()
+export const MOCK_FEEDING_DAYS: CenterFeedingDay[] = generatedFeeding.days
+export const MOCK_FEEDING_SUMMARIES: CenterFeedingMonthSummary[] = generatedFeeding.summaries
+
+function generateStedAssessments(children: Child[]): StedAssessment[] {
+  const today = new Date().toISOString().split('T')[0]
+  const assessments: StedAssessment[] = []
+  let counter = 1
+
+  for (const child of children) {
+    if (child.status !== 'active') continue
+    const ageBand = getStedAgeBand(child.dateOfBirth, today)
+    if (!ageBand) continue
+    // Seed ~40% of eligible children
+    if (Number(child.id) % 5 > 2) continue
+
+    const physical = emptyPhysicalCheck()
+    const milestones = emptyMilestones(ageBand)
+    // Seed a few problem cases
+    if (Number(child.id) % 7 === 0) {
+      physical.arms = 'problem'
+      milestones[Object.keys(milestones)[0]] = 'oya'
+    }
+
+    const assessmentDate = today
+    const outcome = buildDefaultOutcome(physical, milestones, assessmentDate)
+    // Seed overdue STED follow-ups for some normal outcomes
+    if (outcome.followUpIn6Months && Number(child.id) % 11 === 0) {
+      outcome.followUpDueDate = formatDateIso(addDays(new Date(), -10))
+    }
+    assessments.push({
+      id: `sted${counter++}`,
+      childId: child.id,
+      centerId: child.centerId,
+      assessmentDate,
+      ageBand,
+      consentObtained: true,
+      physical,
+      noProblem: physical.arms !== 'problem',
+      milestones,
+      outcome,
+      assessedBy: 'Uwimana Marie',
+    })
+  }
+
+  return assessments
+}
+
+export const MOCK_STED_ASSESSMENTS: StedAssessment[] = generateStedAssessments(MOCK_CHILDREN)
+
+function generateReferrals(
+  assessments: NutritionAssessment[],
+  stedAssessments: StedAssessment[],
+): Referral[] {
+  const referrals: Referral[] = []
+  let counter = 1
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  for (const a of assessments) {
+    if (!a.requiresReferral) continue
+    if (counter > 8) break
+    const completed = counter % 3 === 0
+    // Older dates so some pending referrals count as overdue follow-ups
+    const date = formatDateIso(addDays(today, completed ? -5 : -(20 + (counter % 10))))
+    referrals.push({
+      id: `ref${counter++}`,
+      childId: a.childId,
+      assessmentId: a.id,
+      sourceType: 'nutrition',
+      date,
+      reason: `MUAC — ${a.status}`,
+      status: completed ? 'completed' : 'pending',
+      destination: 'Ikigo nderabuzima',
+      implementedAt: completed ? date : undefined,
+    })
+  }
+
+  for (const s of stedAssessments) {
+    if (!s.outcome.referred) continue
+    const completed = counter % 4 === 0
+    const date = formatDateIso(
+      addDays(today, completed ? -3 : -(18 + (counter % 8))),
+    )
+    referrals.push({
+      id: `ref${counter++}`,
+      childId: s.childId,
+      assessmentId: s.id,
+      sourceType: 'sted',
+      date,
+      reason: 'STED — ikibazo cyahamwe',
+      status: completed ? 'completed' : 'pending',
+      destination: 'Ikigo nderabuzima',
+      implementedAt: completed ? date : undefined,
+    })
+  }
+
+  return referrals
+}
+
+export const MOCK_REFERRALS: Referral[] = generateReferrals(
+  MOCK_NUTRITION_ASSESSMENTS,
+  MOCK_STED_ASSESSMENTS,
+)
 
 export const DISTRICT_STATS = {
   totalChildren: 12450,
@@ -819,6 +1197,45 @@ export const ACTION_ALERTS: ActionAlert[] = [
     priority: 'low',
     description: 'Ibikorwa bitunguranye byabonetse',
     suggestedAction: 'Suzuma amakuru y\'ikigo.',
+  },
+  {
+    id: 'aa11',
+    centerId: 'c5',
+    centerName: 'ECD Nyamirambo',
+    sector: 'Nyamirambo',
+    category: 'nutrition',
+    type: 'high_risk_nutrition',
+    priority: 'high',
+    description: 'Abana benshi bafite ikibazo cy\'imirire',
+    suggestedAction: 'Suzuma imipimo y\'imikurire no kohereza abakeneye ubufasha.',
+    metrics: [
+      { label: 'Abakeneye gufashwa', value: '8' },
+      { label: 'Igerageza', value: 'MUAC' },
+    ],
+  },
+  {
+    id: 'aa12',
+    centerId: 'c6',
+    centerName: 'ECD Bumbogo',
+    sector: 'Bumbogo',
+    category: 'nutrition',
+    type: 'missed_assessment',
+    priority: 'high',
+    description: 'Abana benshi batapimwe mu gihe cyagenwe',
+    suggestedAction: 'Fasha umurezi gukora ipimo ry\'imikurire.',
+    metrics: [{ label: 'Batariye', value: '14' }],
+  },
+  {
+    id: 'aa13',
+    centerId: 'c7',
+    centerName: 'ECD Kanyinya',
+    sector: 'Kinyinya',
+    category: 'nutrition',
+    type: 'referral_required',
+    priority: 'medium',
+    description: 'Hari abana basaba koherezwa ku kigo nderabuzima',
+    suggestedAction: 'Komeza gukurikirana abana bakeneye koherezwa.',
+    metrics: [{ label: 'Koherezwa', value: '3' }],
   },
 ]
 

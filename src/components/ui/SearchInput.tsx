@@ -1,7 +1,8 @@
+import { type InputHTMLAttributes } from 'react'
 import { Loader2, Search, X } from 'lucide-react'
 import { common } from '@/locales/rw/common'
 
-interface SearchInputProps {
+interface SearchInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'type'> {
   value: string
   onChange: (value: string) => void
   placeholder?: string
@@ -17,6 +18,12 @@ export function SearchInput({
   className = '',
   loading = false,
   clearable = true,
+  id,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
+  'aria-required': ariaRequired,
+  'aria-label': ariaLabel,
+  ...props
 }: SearchInputProps) {
   const showClear = clearable && value.length > 0
 
@@ -28,17 +35,22 @@ export function SearchInput({
         aria-hidden="true"
       />
       <input
+        id={id}
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={ariaLabel ?? (id ? undefined : placeholder)}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
+        aria-required={ariaRequired}
         className="
           w-full min-h-11 sm:min-h-10 pl-10 text-body rounded-xl border border-border
           bg-surface text-text placeholder:text-text-muted input-focus shadow-sm
           transition-shadow duration-200 hover:shadow-md focus:shadow-md
         "
         style={{ paddingRight: showClear || loading ? '2.75rem' : '0.875rem' }}
-        aria-label={placeholder}
+        {...props}
       />
       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
         {loading && (

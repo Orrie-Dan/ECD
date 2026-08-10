@@ -13,6 +13,7 @@ import {
 } from '@/lib/child-filters'
 import { calculateAge } from '@/lib/mock-data'
 import { ENROLLMENT_SUMMARY_BY_PERIOD, ENROLLMENT_TREND_BY_PERIOD } from '@/lib/mock-data'
+import { env } from '@/config/env'
 
 export interface ChildrenDistributionData {
   ageGroups: { label: string; count: number; percent: number }[]
@@ -114,8 +115,25 @@ export function getDistrictChildrenSummary(
   filters: ChildrenSearchFilters,
   yearMonthLabel?: string | null,
 ): EnrollmentPeriodSummary {
-  const base = ENROLLMENT_SUMMARY_BY_PERIOD[period]
   const hasFilters = isChildrenSearchActive(filters, DEFAULT_CHILDREN_SEARCH)
+
+  // LIVE: never scale hardcoded ENROLLMENT_* mock period tables.
+  if (env.isLive) {
+    return {
+      totalEnrolled: hasFilters ? filteredCount : allCount,
+      newRegistrations: 0,
+      dropouts: 0,
+      netGrowth: 0,
+      trends: {
+        totalEnrolled: { direction: 'stable', change: 0 },
+        newRegistrations: { direction: 'stable', change: 0 },
+        dropouts: { direction: 'stable', change: 0 },
+        netGrowth: { direction: 'stable', change: 0 },
+      },
+    }
+  }
+
+  const base = ENROLLMENT_SUMMARY_BY_PERIOD[period]
   const scale = allCount > 0 ? filteredCount / allCount : 1
 
   if (yearMonthLabel && period === 'year') {
@@ -146,8 +164,21 @@ export function getDistrictEnrollmentTrend(
   filters: ChildrenSearchFilters,
   yearMonthLabel?: string | null,
 ): EnrollmentTrendPoint[] {
-  const data = ENROLLMENT_TREND_BY_PERIOD[period]
   const hasFilters = isChildrenSearchActive(filters, DEFAULT_CHILDREN_SEARCH)
+
+  // LIVE: no synthetic enrollment trend series from mock tables.
+  if (env.isLive) {
+    return [
+      {
+        label: yearMonthLabel ?? period,
+        newRegistrations: 0,
+        dropouts: 0,
+        netEnrollment: hasFilters ? filteredCount : allCount,
+      },
+    ]
+  }
+
+  const data = ENROLLMENT_TREND_BY_PERIOD[period]
   const scale = allCount > 0 && hasFilters ? filteredCount / allCount : 1
 
   if (yearMonthLabel && period === 'year') {

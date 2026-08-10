@@ -39,6 +39,43 @@ export function Card({
   )
 }
 
+interface CardSectionProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode
+}
+
+/** Standard card header — title row / actions. Use with padding="none" on Card. */
+export function CardHeader({ children, className = '', ...props }: CardSectionProps) {
+  return (
+    <div
+      className={`flex flex-col gap-1 px-4 pt-4 pb-3 sm:px-5 sm:pt-5 border-b border-border ${className}`}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
+
+/** Standard card body. Use with padding="none" on Card. */
+export function CardContent({ children, className = '', ...props }: CardSectionProps) {
+  return (
+    <div className={`px-4 py-4 sm:px-5 ${className}`} {...props}>
+      {children}
+    </div>
+  )
+}
+
+/** Standard card footer — actions. Use with padding="none" on Card. */
+export function CardFooter({ children, className = '', ...props }: CardSectionProps) {
+  return (
+    <div
+      className={`flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5 border-t border-border bg-surface-muted/40 ${className}`}
+      {...props}
+    >
+      {children}
+    </div>
+  )
+}
+
 type ActionCardAccent = 'green' | 'blue' | 'teal' | 'amber'
 
 interface ActionCardProps {
@@ -52,8 +89,8 @@ interface ActionCardProps {
 const accentStyles: Record<ActionCardAccent, { bg: string; icon: string; border: string }> = {
   green: { bg: 'bg-primary-light', icon: 'text-primary', border: 'hover:border-primary/40' },
   blue: { bg: 'bg-secondary-light', icon: 'text-secondary', border: 'hover:border-secondary/40' },
-  teal: { bg: 'bg-emerald-50', icon: 'text-emerald-700', border: 'hover:border-emerald-300' },
-  amber: { bg: 'bg-accent-light', icon: 'text-accent', border: 'hover:border-amber-300' },
+  teal: { bg: 'bg-success-light', icon: 'text-success', border: 'hover:border-success/40' },
+  amber: { bg: 'bg-accent-light', icon: 'text-accent', border: 'hover:border-accent/40' },
 }
 
 export function ActionCard({ icon, title, description, onClick, accent = 'green' }: ActionCardProps) {
@@ -83,7 +120,7 @@ export function ActionCard({ icon, title, description, onClick, accent = 'green'
         </div>
         <ChevronRight
           size={22}
-          className="text-text-muted shrink-0 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block"
+          className="text-text-muted shrink-0"
           aria-hidden="true"
         />
       </div>
@@ -96,8 +133,12 @@ interface StatCardProps {
   value: string | number
   icon?: ReactNode
   trend?: string
-  variant?: 'default' | 'success' | 'warning' | 'info'
+  variant?: 'default' | 'success' | 'warning' | 'info' | 'danger'
   compact?: boolean
+  /** When set, the card becomes a filter/toggle control. */
+  onClick?: () => void
+  selected?: boolean
+  'aria-label'?: string
 }
 
 const statVariants = {
@@ -105,6 +146,7 @@ const statVariants = {
   success: 'border-success/20 bg-success-light/30',
   warning: 'border-warning/20 bg-warning-light/30',
   info: 'border-secondary/20 bg-secondary-light/30',
+  danger: 'border-error/20 bg-error-light/30',
 }
 
 export function StatCard({
@@ -114,31 +156,60 @@ export function StatCard({
   trend,
   variant = 'default',
   compact = false,
+  onClick,
+  selected = false,
+  'aria-label': ariaLabel,
 }: StatCardProps) {
-  return (
-    <Card className={statVariants[variant]} padding={compact ? 'sm' : 'md'}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p
-            className={`font-medium uppercase tracking-wide text-text-secondary ${
-              compact ? 'text-caption leading-tight' : 'text-caption'
-            }`}
-          >
-            {label}
-          </p>
-          <p className={`text-text ${compact ? 'text-heading mt-0.5' : 'text-display mt-0.5'}`}>{value}</p>
-          {trend && <p className="text-caption mt-1">{trend}</p>}
-        </div>
-        {icon && (
-          <div
-            className={`flex items-center justify-center rounded-lg bg-surface shadow-sm border border-border shrink-0 ${
-              compact ? 'w-10 h-10' : 'w-12 h-12 rounded-xl'
-            }`}
-          >
-            {icon}
-          </div>
-        )}
+  const selectedRing = selected
+    ? 'ring-2 ring-primary ring-offset-2 border-primary shadow-md'
+    : ''
+
+  const content = (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p
+          className={`font-medium uppercase tracking-wide text-text-secondary ${
+            compact ? 'text-caption leading-tight' : 'text-caption'
+          }`}
+        >
+          {label}
+        </p>
+        <p className={`text-text ${compact ? 'text-heading mt-0.5' : 'text-display mt-0.5'}`}>
+          {value}
+        </p>
+        {trend && <p className="text-caption mt-1">{trend}</p>}
       </div>
+      {icon && (
+        <div
+          className={`flex items-center justify-center rounded-lg bg-surface shadow-sm border border-border shrink-0 ${
+            compact ? 'w-10 h-10' : 'w-12 h-12 rounded-xl'
+          }`}
+        >
+          {icon}
+        </div>
+      )}
+    </div>
+  )
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={selected}
+        aria-label={ariaLabel ?? label}
+        className={`w-full h-full text-left rounded-xl border transition-all focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 ${statVariants[variant]} ${selectedRing} ${
+          compact ? 'p-3' : 'p-5'
+        } hover:shadow-md`}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <Card className={`${statVariants[variant]} ${selectedRing}`} padding={compact ? 'sm' : 'md'}>
+      {content}
     </Card>
   )
 }
@@ -151,14 +222,14 @@ interface FormSectionProps {
 
 export function FormSection({ title, description, children }: FormSectionProps) {
   return (
-    <Card padding="lg" className="space-y-6">
-      <div className="pb-2 border-b border-border">
+    <Card padding="none">
+      <CardHeader>
         <h2 className="text-heading text-text">{title}</h2>
         {description && (
           <p className="text-body text-text-secondary mt-1">{description}</p>
         )}
-      </div>
-      <div className="space-y-6">{children}</div>
+      </CardHeader>
+      <CardContent className="space-y-6">{children}</CardContent>
     </Card>
   )
 }

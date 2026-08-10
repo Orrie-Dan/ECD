@@ -1,17 +1,17 @@
-/** Consistent chart colors across the ECD District module. */
+/** Chart colors aligned to ECD design tokens (src/index.css @theme). */
 export const CHART_METRIC_COLORS = {
-  /** Ubururu — Abanditswe Bashya */
+  /** Secondary — Abanditswe Bashya */
   newRegistrations: '#2563a8',
-  /** Icyatsi — Ubwitabire */
+  /** Success — Ubwitabire */
   attendance: '#15803d',
-  /** Umutuku — Abavuye */
+  /** Danger — Abavuye */
   dropouts: '#b42318',
-  /** Umuhonda — Ibibazo / Alerts */
+  /** Accent — Ibibazo / Alerts */
   alerts: '#c47d1a',
-  /** Ibigo byanditswe */
+  /** Primary — Ibigo */
   schools: '#1a6b52',
-  /** Abarezi */
-  teachers: '#7c3aed',
+  /** Secondary (muted) — Abarezi */
+  teachers: '#2563a8',
 } as const
 
 export type ChartMetricKey = keyof typeof CHART_METRIC_COLORS

@@ -6,11 +6,18 @@ import type { ListViewState } from '@/components/ui/ListControlBar'
 import {
   DEFAULT_ATTENDANCE_SEARCH,
   DEFAULT_CHILDREN_SEARCH,
+  DEFAULT_ROSTER_SEARCH,
   type AttendanceSearchFilters,
   type ChildrenSearchFilters,
+  type RosterSearchFilters,
   isAttendanceSearchActive,
   isChildrenSearchActive,
+  isRosterSearchActive,
 } from '@/lib/child-filters'
+import type { GrowthListFilter } from '@/lib/nutrition-utils'
+import type { StedListFilter } from '@/lib/sted-utils'
+
+export type { StedListFilter }
 
 function joinClauses(clauses: string[]): string {
   if (clauses.length === 0) return ''
@@ -21,7 +28,9 @@ function joinClauses(clauses: string[]): string {
   return `${rest}, kandi ${last}`
 }
 
-function sharedClauses(filters: ChildrenSearchFilters | AttendanceSearchFilters): string[] {
+function sharedClauses(
+  filters: ChildrenSearchFilters | AttendanceSearchFilters | RosterSearchFilters,
+): string[] {
   const clauses: string[] = []
 
   if (filters.childName.trim()) {
@@ -77,6 +86,12 @@ export function buildChildrenFilterSummary(
     clauses.push('abaje uyu munsi')
   }
 
+  if (filters.status === 'active') {
+    clauses.push('bakora')
+  } else if (filters.status === 'archived') {
+    clauses.push('bari mu bubiko')
+  }
+
   if (filters.sort === 'registered-desc') {
     clauses.push('banditswe vuba')
   }
@@ -103,6 +118,84 @@ export function buildAttendanceFilterSummary(
   return `Urimo kubona abana ${joinClauses(clauses)}.`
 }
 
+function growthViewClause(view: GrowthListFilter): string | null {
+  switch (view) {
+    case 'due':
+      return 'basabwa gupimwa'
+    case 'overdue':
+      return 'bafite ipimo rirataye'
+    case 'at_risk':
+      return 'bakeneye gukurikiranwa'
+    case 'up_to_date':
+      return 'bafite ipimo riri ku gihe'
+    default:
+      return null
+  }
+}
+
+export function buildGrowthFilterSummary(
+  filters: RosterSearchFilters,
+  view: GrowthListFilter,
+): string | null {
+  const clauses = sharedClauses(filters)
+  const viewClause = growthViewClause(view)
+  if (viewClause) clauses.push(viewClause)
+  if (clauses.length === 0) return null
+  return `Urimo kubona abana ${joinClauses(clauses)}.`
+}
+
+function stedViewClause(view: StedListFilter): string | null {
+  switch (view) {
+    case 'due':
+      return 'basabwa gusubiramo'
+    case 'referred':
+      return 'baherejwe'
+    case 'assessed':
+      return 'basuzumwe'
+    default:
+      return null
+  }
+}
+
+export function buildStedFilterSummary(
+  filters: RosterSearchFilters,
+  view: StedListFilter,
+): string | null {
+  const clauses = sharedClauses(filters)
+  const viewClause = stedViewClause(view)
+  if (viewClause) clauses.push(viewClause)
+  if (clauses.length === 0) return null
+  return `Urimo kubona abana ${joinClauses(clauses)}.`
+}
+
+export type ReferralListFilter = 'all' | 'pending' | 'completed' | 'cancelled' | 'overdue'
+
+function referralViewClause(view: ReferralListFilter): string | null {
+  switch (view) {
+    case 'pending':
+      return 'bitegereje'
+    case 'completed':
+      return 'byakozwe'
+    case 'cancelled':
+      return 'byahagaritswe'
+    case 'overdue':
+      return 'byarenze igihe'
+    default:
+      return null
+  }
+}
+
+export function buildReferralFilterSummary(
+  filters: RosterSearchFilters,
+  view: ReferralListFilter,
+): string | null {
+  const clauses = sharedClauses(filters)
+  const viewClause = referralViewClause(view)
+  if (viewClause) clauses.push(viewClause)
+  if (clauses.length === 0) return null
+  return `Urimo kubona kohereza ${joinClauses(clauses)}.`
+}
+
 export function formatResultsCount(count: number): string {
   return caretaker.filters.resultsFound.replace('{count}', String(count))
 }
@@ -111,7 +204,7 @@ export function hasActiveChildrenFilters(
   filters: ChildrenSearchFilters,
   viewState: ListViewState,
 ): boolean {
-  return isChildrenSearchActive(filters) || viewState !== 'waiting'
+  return isChildrenSearchActive(filters) || viewState !== 'all'
 }
 
 export function hasActiveAttendanceFilters(
@@ -121,10 +214,38 @@ export function hasActiveAttendanceFilters(
   return isAttendanceSearchActive(filters) || viewState !== 'waiting'
 }
 
+export function hasActiveGrowthFilters(
+  filters: RosterSearchFilters,
+  view: GrowthListFilter,
+  defaultView: GrowthListFilter = 'due',
+): boolean {
+  return isRosterSearchActive(filters) || view !== defaultView
+}
+
+export function hasActiveStedFilters(
+  filters: RosterSearchFilters,
+  view: StedListFilter,
+  defaultView: StedListFilter = 'due',
+): boolean {
+  return isRosterSearchActive(filters) || view !== defaultView
+}
+
+export function hasActiveReferralFilters(
+  filters: RosterSearchFilters,
+  view: ReferralListFilter,
+  defaultView: ReferralListFilter = 'pending',
+): boolean {
+  return isRosterSearchActive(filters) || view !== defaultView
+}
+
 export function getChildrenDefaultFilters(): ChildrenSearchFilters {
   return DEFAULT_CHILDREN_SEARCH
 }
 
 export function getAttendanceDefaultFilters(): AttendanceSearchFilters {
   return DEFAULT_ATTENDANCE_SEARCH
+}
+
+export function getRosterDefaultFilters(): RosterSearchFilters {
+  return DEFAULT_ROSTER_SEARCH
 }

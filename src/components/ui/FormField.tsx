@@ -1,28 +1,95 @@
-import { type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from 'react'
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  useId,
+  type InputHTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from 'react'
 
 interface FormFieldProps {
   label: string
   error?: string
   hint?: string
   required?: boolean
+  /** Explicit control id. Defaults to a stable useId value. */
+  htmlFor?: string
   children: ReactNode
 }
 
-export function FormField({ label, error, hint, required, children }: FormFieldProps) {
+type ControlProps = {
+  id?: string
+  'aria-invalid'?: boolean | 'true' | 'false'
+  'aria-describedby'?: string
+  'aria-required'?: boolean | 'true' | 'false'
+}
+
+function mergeDescribedBy(existing: string | undefined, ...ids: Array<string | undefined>) {
+  const parts = [existing, ...ids].filter(Boolean)
+  return parts.length > 0 ? parts.join(' ') : undefined
+}
+
+/**
+ * Accessible field wrapper: wires label htmlFor → control id and
+ * aria-describedby for hint / error messages.
+ */
+export function FormField({
+  label,
+  error,
+  hint,
+  required,
+  htmlFor,
+  children,
+}: FormFieldProps) {
+  const generatedId = useId()
+  const fieldId = htmlFor ?? generatedId
+  const hintId = `${fieldId}-hint`
+  const errorId = `${fieldId}-error`
+
+  const enhanced = Children.map(children, (child) => {
+    if (!isValidElement(child)) return child
+
+    const el = child as ReactElement<ControlProps>
+    const existingId = el.props.id
+    const describedBy = mergeDescribedBy(
+      el.props['aria-describedby'],
+      error ? errorId : undefined,
+      hint && !error ? hintId : undefined,
+    )
+
+    return cloneElement(el, {
+      id: existingId ?? fieldId,
+      'aria-invalid': error ? true : el.props['aria-invalid'],
+      'aria-describedby': describedBy,
+      'aria-required': required ? true : el.props['aria-required'],
+    })
+  })
+
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-label">
+      <label htmlFor={fieldId} className="text-label">
         {label}
         {required && (
-          <span className="text-error ml-1 font-bold" aria-hidden="true">*</span>
+          <span className="text-error ml-1 font-bold" aria-hidden="true">
+            *
+          </span>
         )}
       </label>
-      {children}
+      {enhanced}
       {hint && !error && (
-        <p className="text-caption">{hint}</p>
+        <p id={hintId} className="text-caption">
+          {hint}
+        </p>
       )}
       {error && (
-        <p className="text-caption text-error font-semibold flex items-center gap-1.5" role="alert">
+        <p
+          id={errorId}
+          className="text-caption text-error font-semibold flex items-center gap-1.5"
+          role="alert"
+        >
           <span aria-hidden="true">⚠</span>
           {error}
         </p>
@@ -67,7 +134,13 @@ interface SelectInputProps extends SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string
 }
 
-export function SelectInput({ error, placeholder, children, className = '', ...props }: SelectInputProps) {
+export function SelectInput({
+  error,
+  placeholder,
+  children,
+  className = '',
+  ...props
+}: SelectInputProps) {
   return (
     <select
       className={`${inputBase} ${error ? 'border-error' : ''} ${className}`}
@@ -85,22 +158,46 @@ interface RadioGroupProps {
   onChange: (value: string) => void
   options: { value: string; label: string }[]
   error?: boolean
+  disabled?: boolean
+  id?: string
+  'aria-describedby'?: string
+  'aria-invalid'?: boolean | 'true' | 'false'
+  'aria-required'?: boolean | 'true' | 'false'
 }
 
-export function RadioGroup({ name, value, onChange, options, error }: RadioGroupProps) {
+export function RadioGroup({
+  name,
+  value,
+  onChange,
+  options,
+  error,
+  disabled = false,
+  id,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
+  'aria-required': ariaRequired,
+}: RadioGroupProps) {
   return (
     <div
-      className={`flex flex-col gap-2 ${error ? 'rounded-xl border border-error p-3 bg-error-light/30' : ''}`}
+      id={id}
+      className={`flex flex-col gap-2 ${error ? 'rounded-xl border border-error p-3 bg-error-light/30' : ''} ${disabled ? 'opacity-60' : ''}`}
       role="radiogroup"
+      aria-describedby={ariaDescribedBy}
+      aria-invalid={ariaInvalid ?? (error ? true : undefined)}
+      aria-required={ariaRequired}
+      aria-disabled={disabled || undefined}
     >
       {options.map((opt) => {
         const selected = value === opt.value
+        const optionId = id ? `${id}-${opt.value}` : undefined
         return (
           <label
             key={opt.value}
+            htmlFor={optionId}
             className={`
-              flex items-center gap-4 min-h-14 px-4 rounded-xl border cursor-pointer
+              flex items-center gap-4 min-h-14 px-4 rounded-xl border
               transition-all duration-200 ease-out
+              ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}
               ${selected
                 ? 'border-primary bg-primary-light shadow-sm scale-[1.01]'
                 : 'border-border bg-surface hover:border-primary/30 hover:bg-background-subtle hover:shadow-sm active:scale-[0.99]'}
@@ -108,16 +205,27 @@ export function RadioGroup({ name, value, onChange, options, error }: RadioGroup
             `}
           >
             <input
+              id={optionId}
               type="radio"
               name={name}
               value={opt.value}
               checked={selected}
-              onChange={() => onChange(opt.value)}
-              className="w-5 h-5 accent-primary shrink-0"
+              disabled={disabled}
+              onChange={() => {
+                if (!disabled) onChange(opt.value)
+              }}
+              className="sr-only"
             />
-            <span className={`text-body ${selected ? 'font-semibold text-text' : 'text-text-secondary'}`}>
-              {opt.label}
+            <span
+              className={`
+                flex items-center justify-center w-5 h-5 rounded-full border-2 shrink-0
+                ${selected ? 'border-primary' : 'border-border'}
+              `}
+              aria-hidden="true"
+            >
+              {selected && <span className="w-2.5 h-2.5 rounded-full bg-primary" />}
             </span>
+            <span className="text-body font-medium text-text">{opt.label}</span>
           </label>
         )
       })}

@@ -45,7 +45,7 @@ export function BottomNav({ items }: BottomNavProps) {
               >
                 <Icon size={22} strokeWidth={active ? 2.5 : 2} />
               </span>
-              <span className={`text-[0.6875rem] sm:text-xs leading-tight text-center truncate max-w-full px-0.5 ${active ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`text-[0.875rem] leading-tight text-center truncate max-w-full px-0.5 ${active ? 'font-semibold' : 'font-medium'}`}>
                 {item.label}
               </span>
             </Link>

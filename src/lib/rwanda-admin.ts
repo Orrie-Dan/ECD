@@ -35,6 +35,14 @@ export function getProvinceDisplayName(provinceKey: string): string {
   return PROVINCE_LABELS[provinceKey] ?? provinceKey
 }
 
+/** Resolve province form key from a stored display name (e.g. "Umujyi wa Kigali" → "Kigali"). */
+export function getProvinceKeyFromDisplayName(displayName: string): string {
+  const entry = Object.entries(PROVINCE_LABELS).find(([, label]) => label === displayName)
+  if (entry) return entry[0]
+  if (displayName in locations) return displayName
+  return displayName
+}
+
 export function getDistricts(province: string): string[] {
   if (!province || !locations[province]) return []
   return sortNames(Object.keys(locations[province]))

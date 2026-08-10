@@ -45,7 +45,7 @@ export function Stepper({ steps, currentStep }: StepperProps) {
               >
                 <div
                   className={`
-                    flex items-center justify-center w-9 h-9 rounded-full text-sm font-bold mb-2
+                    flex items-center justify-center w-9 h-9 rounded-full text-caption font-bold mb-2
                     ${isComplete ? 'bg-success text-white' : ''}
                     ${isActive ? 'bg-primary text-white ring-4 ring-primary-light' : ''}
                     ${!isComplete && !isActive ? 'bg-background-subtle text-text-muted border border-border' : ''}

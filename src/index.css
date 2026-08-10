@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand — calm government greens & blues */
-  --color-primary: #1a6b52;
-  --color-primary-dark: #145a44;
-  --color-gov-primary: #006b3f;
-  --color-gov-primary-dark: #005a34;
+  /* ── Brand (single ECD identity) ───────────────────────── */
+  --color-brand-primary: #1a6b52;
+  --color-brand-primary-hover: #145a44;
+  --color-brand-secondary: #2563a8;
+
+  /* Canonical utilities: bg-primary, text-primary, border-primary */
+  --color-primary: var(--color-brand-primary);
+  --color-primary-dark: var(--color-brand-primary-hover);
   --color-primary-light: #e8f4ef;
-  --color-secondary: #2563a8;
+  --color-secondary: var(--color-brand-secondary);
   --color-secondary-light: #e8f0fa;
   --color-accent: #c47d1a;
   --color-accent-light: #fdf4e8;
@@ -15,8 +18,9 @@
   /* Surfaces */
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
+  --color-surface-muted: #eef1f4;
   --color-background: #f4f6f8;
-  --color-background-subtle: #eef1f4;
+  --color-background-subtle: var(--color-surface-muted);
 
   /* Text */
   --color-text: #1c2330;
@@ -29,9 +33,14 @@
 
   /* Status */
   --color-success: #15803d;
+  --color-success-dark: #166534;
   --color-success-light: #ecfdf3;
   --color-error: #b42318;
+  --color-error-dark: #912018;
   --color-error-light: #fef3f2;
+  --color-danger: var(--color-error);
+  --color-danger-dark: var(--color-error-dark);
+  --color-danger-light: var(--color-error-light);
   --color-warning: #b45309;
   --color-warning-light: #fffbeb;
 
@@ -56,15 +65,10 @@
 }
 
 html {
-  font-size: 14px;
+  /* Caretaker-first: 16px root for outdoor / low-literacy readability */
+  font-size: 16px;
   scroll-behavior: smooth;
   overflow-x: clip;
-}
-
-@media (min-width: 1280px) {
-  html {
-    font-size: 15px;
-  }
 }
 
 body {
@@ -84,16 +88,16 @@ body {
   min-width: 0;
 }
 
-/* Typography scale */
+/* Typography scale — only system for UI copy (see design.md) */
 .text-display {
-  font-size: clamp(1.25rem, 2.5vw + 0.5rem, 1.625rem);
+  font-size: clamp(1.375rem, 2vw + 0.75rem, 1.625rem);
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.02em;
 }
 
 .text-heading {
-  font-size: clamp(1.0625rem, 1.5vw + 0.5rem, 1.25rem);
+  font-size: clamp(1.125rem, 1vw + 0.75rem, 1.25rem);
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: -0.01em;
@@ -106,26 +110,26 @@ body {
 }
 
 .text-body {
-  font-size: 0.9375rem;
-  font-weight: 400;
-  line-height: 1.55;
-}
-
-.text-body-lg {
   font-size: 1rem;
   font-weight: 400;
   line-height: 1.55;
 }
 
+.text-body-lg {
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
 .text-label {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1.4;
   color: var(--color-text);
 }
 
 .text-caption {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 400;
   line-height: 1.5;
   color: var(--color-text-muted);
@@ -236,12 +240,10 @@ body {
   background-size: 48px 48px;
 }
 
-/* Layout utilities */
+/* Layout utilities — page content width inside role layouts */
 .page-container {
   width: 100%;
-  max-width: 80rem;
-  margin-inline: auto;
-  padding-inline: clamp(0.75rem, 2vw, 2rem);
+  min-width: 0;
 }
 
 .touch-target {

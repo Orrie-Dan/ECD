@@ -2,14 +2,30 @@ import { type ReactNode } from 'react'
 
 interface PageHeaderProps {
   title: string
-  subtitle?: string
+  /** Preferred prop for supporting copy under the title. */
+  description?: ReactNode
+  /** @deprecated Prefer `description`. Kept for existing call sites. */
+  subtitle?: ReactNode
   badge?: string
   action?: ReactNode
   size?: 'default' | 'compact'
 }
 
-export function PageHeader({ title, subtitle, badge, action, size = 'default' }: PageHeaderProps) {
+/**
+ * Standard page title block.
+ * - default → text-display (page title)
+ * - compact → text-heading (dense district pages)
+ */
+export function PageHeader({
+  title,
+  description,
+  subtitle,
+  badge,
+  action,
+  size = 'default',
+}: PageHeaderProps) {
   const compact = size === 'compact'
+  const support = description ?? subtitle
 
   return (
     <header className={compact ? 'mb-3' : 'mb-5'}>
@@ -21,9 +37,9 @@ export function PageHeader({ title, subtitle, badge, action, size = 'default' }:
             </span>
           )}
           <h1 className={compact ? 'text-heading text-text' : 'text-display text-text'}>{title}</h1>
-          {subtitle && (
+          {support && (
             <p className={`text-text-secondary max-w-2xl ${compact ? 'text-body' : 'text-body-lg'}`}>
-              {subtitle}
+              {support}
             </p>
           )}
         </div>

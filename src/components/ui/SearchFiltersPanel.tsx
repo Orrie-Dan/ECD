@@ -10,12 +10,16 @@ import { common, gender as genderLabels, GUARDIAN_RELATION_OPTIONS, location } f
 import {
   DEFAULT_ATTENDANCE_SEARCH,
   DEFAULT_CHILDREN_SEARCH,
+  DEFAULT_ROSTER_SEARCH,
   isAttendanceSearchActive,
   isChildrenSearchActive,
+  isRosterSearchActive,
   resetLocationField,
   type AttendanceSearchFilters,
   type ChildrenSearchFilters,
+  type RosterSearchFilters,
   type SharedChildFilters,
+  type ChildStatusFilter,
 } from '@/lib/child-filters'
 import {
   PROVINCES,
@@ -28,24 +32,30 @@ import {
 } from '@/lib/rwanda-admin'
 import { getGuardianRelationLabel } from '@/lib/guardian-relations'
 
-export type { ChildrenSearchFilters, AttendanceSearchFilters } from '@/lib/child-filters'
+export type { ChildrenSearchFilters, AttendanceSearchFilters, RosterSearchFilters } from '@/lib/child-filters'
 export {
   DEFAULT_CHILDREN_SEARCH,
   DEFAULT_ATTENDANCE_SEARCH,
+  DEFAULT_ROSTER_SEARCH,
   DEFAULT_CHILDREN_ADVANCED,
   DEFAULT_ATTENDANCE_ADVANCED,
   isChildrenSearchActive,
   isAttendanceSearchActive,
+  isRosterSearchActive,
   isChildrenAdvancedActive,
   isAttendanceAdvancedActive,
 } from '@/lib/child-filters'
 
+type SearchFiltersVariant = 'attendance' | 'children' | 'roster'
+
 interface SearchFiltersPanelProps {
   open: boolean
   onClose: () => void
-  variant: 'attendance' | 'children'
-  filters: ChildrenSearchFilters | AttendanceSearchFilters
-  onApply: (filters: ChildrenSearchFilters | AttendanceSearchFilters) => void
+  variant: SearchFiltersVariant
+  filters: ChildrenSearchFilters | AttendanceSearchFilters | RosterSearchFilters
+  onApply: (
+    filters: ChildrenSearchFilters | AttendanceSearchFilters | RosterSearchFilters,
+  ) => void
 }
 
 function getGenderPreview(value: SharedChildFilters['gender']): string | undefined {
@@ -82,7 +92,12 @@ export function SearchFiltersPanel({
   onApply,
 }: SearchFiltersPanelProps) {
   const [draft, setDraft] = useState(filters)
-  const defaults = variant === 'attendance' ? DEFAULT_ATTENDANCE_SEARCH : DEFAULT_CHILDREN_SEARCH
+  const defaults =
+    variant === 'attendance'
+      ? DEFAULT_ATTENDANCE_SEARCH
+      : variant === 'roster'
+        ? DEFAULT_ROSTER_SEARCH
+        : DEFAULT_CHILDREN_SEARCH
 
   useEffect(() => {
     if (open) setDraft(filters)
@@ -114,16 +129,24 @@ export function SearchFiltersPanel({
           { value: 'name-asc', label: caretaker.filters.sortNameAsc },
           { value: 'recent-first', label: caretaker.filters.sortRecentFirst },
         ]
-      : [
-          { value: 'name-asc', label: caretaker.filters.sortNameAsc },
-          { value: 'name-desc', label: caretaker.filters.sortNameDesc },
-          { value: 'registered-desc', label: caretaker.filters.sortRegisteredDesc },
-        ]
+      : variant === 'roster'
+        ? [
+            { value: 'name-asc', label: caretaker.filters.sortNameAsc },
+            { value: 'name-desc', label: caretaker.filters.sortNameDesc },
+            { value: 'recent-first', label: caretaker.filters.sortRecentActivity },
+          ]
+        : [
+            { value: 'name-asc', label: caretaker.filters.sortNameAsc },
+            { value: 'name-desc', label: caretaker.filters.sortNameDesc },
+            { value: 'registered-desc', label: caretaker.filters.sortRegisteredDesc },
+          ]
 
   const isActive =
     variant === 'attendance'
       ? isAttendanceSearchActive(draft as AttendanceSearchFilters, defaults as AttendanceSearchFilters)
-      : isChildrenSearchActive(draft as ChildrenSearchFilters, defaults as ChildrenSearchFilters)
+      : variant === 'roster'
+        ? isRosterSearchActive(draft as RosterSearchFilters, defaults as RosterSearchFilters)
+        : isChildrenSearchActive(draft as ChildrenSearchFilters, defaults as ChildrenSearchFilters)
 
   const childPreview = useMemo(() => {
     const parts = [
@@ -131,8 +154,13 @@ export function SearchFiltersPanel({
       getGenderPreview(draft.gender),
       getAgePreview(draft.age),
     ].filter(Boolean)
+    if (variant === 'children') {
+      const status = (draft as ChildrenSearchFilters).status
+      if (status === 'active') parts.push(caretaker.filters.statusActive)
+      else if (status === 'archived') parts.push(caretaker.filters.statusArchived)
+    }
     return parts.length > 0 ? parts.join(' · ') : undefined
-  }, [draft.childName, draft.gender, draft.age])
+  }, [draft, variant])
 
   const districtOptions = draft.province ? toLocationOptions(getDistricts(draft.province)) : []
   const sectorOptions =
@@ -226,6 +254,29 @@ export function SearchFiltersPanel({
               ]}
             />
           </FormField>
+
+          {variant === 'children' && (
+            <FormField label={caretaker.filters.statusLabel} hint={caretaker.filters.statusHint}>
+              <RadioGroup
+                name="filter-status"
+                value={(draft as ChildrenSearchFilters).status}
+                onChange={(v) =>
+                  setDraft(
+                    (prev) =>
+                      ({
+                        ...(prev as ChildrenSearchFilters),
+                        status: v as ChildStatusFilter,
+                      }) satisfies ChildrenSearchFilters,
+                  )
+                }
+                options={[
+                  { value: 'active', label: caretaker.filters.statusActive },
+                  { value: 'archived', label: caretaker.filters.statusArchived },
+                  { value: 'all', label: caretaker.filters.statusAll },
+                ]}
+              />
+            </FormField>
+          )}
         </FilterAccordionSection>
 
         <FilterAccordionSection
@@ -335,7 +386,26 @@ export function SearchFiltersPanel({
             <RadioGroup
               name="filter-sort"
               value={draft.sort}
-              onChange={(v) => setDraft((prev) => ({ ...prev, sort: v as typeof draft.sort }))}
+              onChange={(v) =>
+                setDraft((prev) => {
+                  if (variant === 'children') {
+                    return {
+                      ...(prev as ChildrenSearchFilters),
+                      sort: v as ChildrenSearchFilters['sort'],
+                    }
+                  }
+                  if (variant === 'roster') {
+                    return {
+                      ...(prev as RosterSearchFilters),
+                      sort: v as RosterSearchFilters['sort'],
+                    }
+                  }
+                  return {
+                    ...(prev as AttendanceSearchFilters),
+                    sort: v as AttendanceSearchFilters['sort'],
+                  }
+                })
+              }
               options={sortOptions}
             />
           </FormField>

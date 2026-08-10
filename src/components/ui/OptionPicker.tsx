@@ -80,7 +80,7 @@ export function OptionPicker({
               `}
             >
               {opt.icon && (
-                <span className="text-2xl leading-none shrink-0" aria-hidden="true">
+                <span className="text-display leading-none shrink-0" aria-hidden="true">
                   {opt.icon}
                 </span>
               )}

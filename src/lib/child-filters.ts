@@ -32,13 +32,22 @@ export interface SharedChildFilters extends LocationFilters {
 
 export type ChildrenSort = 'name-asc' | 'name-desc' | 'registered-desc'
 export type AttendanceSort = 'absent-first' | 'name-asc' | 'recent-first'
+export type RosterSort = 'name-asc' | 'name-desc' | 'recent-first'
+export type ChildStatusFilter = 'all' | 'active' | 'archived'
 
 export interface ChildrenSearchFilters extends SharedChildFilters {
   sort: ChildrenSort
+  /** Lifecycle status filter for caretaker child list */
+  status: ChildStatusFilter
 }
 
 export interface AttendanceSearchFilters extends SharedChildFilters {
   sort: AttendanceSort
+}
+
+/** Shared search filters for growth / STED / referral-style child rosters. */
+export interface RosterSearchFilters extends SharedChildFilters {
+  sort: RosterSort
 }
 
 export const DEFAULT_SHARED_FILTERS: SharedChildFilters = {
@@ -53,11 +62,17 @@ export const DEFAULT_SHARED_FILTERS: SharedChildFilters = {
 export const DEFAULT_CHILDREN_SEARCH: ChildrenSearchFilters = {
   ...DEFAULT_SHARED_FILTERS,
   sort: 'name-asc',
+  status: 'active',
 }
 
 export const DEFAULT_ATTENDANCE_SEARCH: AttendanceSearchFilters = {
   ...DEFAULT_SHARED_FILTERS,
   sort: 'absent-first',
+}
+
+export const DEFAULT_ROSTER_SEARCH: RosterSearchFilters = {
+  ...DEFAULT_SHARED_FILTERS,
+  sort: 'name-asc',
 }
 
 /** @deprecated Use ChildrenSearchFilters */
@@ -91,7 +106,11 @@ export function isChildrenSearchActive(
   filters: ChildrenSearchFilters,
   defaults: ChildrenSearchFilters = DEFAULT_CHILDREN_SEARCH,
 ): boolean {
-  return isSharedFiltersActive(filters, defaults) || filters.sort !== defaults.sort
+  return (
+    isSharedFiltersActive(filters, defaults) ||
+    filters.sort !== defaults.sort ||
+    filters.status !== defaults.status
+  )
 }
 
 export function isAttendanceSearchActive(
@@ -101,10 +120,41 @@ export function isAttendanceSearchActive(
   return isSharedFiltersActive(filters, defaults) || filters.sort !== defaults.sort
 }
 
+export function isRosterSearchActive(
+  filters: RosterSearchFilters,
+  defaults: RosterSearchFilters = DEFAULT_ROSTER_SEARCH,
+): boolean {
+  return isSharedFiltersActive(filters, defaults) || filters.sort !== defaults.sort
+}
+
 /** @deprecated Use isChildrenSearchActive */
 export const isChildrenAdvancedActive = isChildrenSearchActive
 /** @deprecated Use isAttendanceSearchActive */
 export const isAttendanceAdvancedActive = isAttendanceSearchActive
+
+export function sortRosterChildren(
+  children: Child[],
+  sort: RosterSort,
+  getRecentDate?: (childId: string) => string | undefined,
+): Child[] {
+  const result = [...children]
+  result.sort((a, b) => {
+    switch (sort) {
+      case 'name-desc':
+        return b.fullName.localeCompare(a.fullName, 'rw')
+      case 'recent-first': {
+        const aDate = getRecentDate?.(a.id) ?? ''
+        const bDate = getRecentDate?.(b.id) ?? ''
+        if (aDate !== bDate) return bDate.localeCompare(aDate)
+        return a.fullName.localeCompare(b.fullName, 'rw')
+      }
+      case 'name-asc':
+      default:
+        return a.fullName.localeCompare(b.fullName, 'rw')
+    }
+  })
+  return result
+}
 
 export function applySharedChildFilters(children: Child[], filters: SharedChildFilters): Child[] {
   let result = [...children]
