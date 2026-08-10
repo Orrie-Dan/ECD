@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
+import { env } from '@/config/env'
 import { ECD_CENTERS } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
 
@@ -54,6 +56,10 @@ export function CenterRanking({ variant, limit = 3, showSearch = false }: Center
 
   const title = variant === 'top' ? district.dashboard.topCenters : district.dashboard.bottomCenters
   const accent = variant === 'top' ? 'success' : 'warning'
+
+  if (env.isLive) {
+    return <LiveUnavailableState compact title={title} />
+  }
 
   return (
     <Card padding="lg" className="h-full">
