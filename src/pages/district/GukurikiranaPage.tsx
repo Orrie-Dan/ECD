@@ -1,67 +1,84 @@
 import { useState } from 'react'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
+import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, StatCard } from '@/components/ui/Card'
+import { SegmentedTabs } from '@/components/ui/SegmentedTabs'
 import { ActionAlertsList } from '@/components/district/ActionAlertCard'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
+import { env } from '@/config/env'
 import { ACTION_ALERTS } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
+import { common } from '@/locales/rw/common'
 
 const categories = [
-  { key: 'all', label: district.followup.filterAll },
-  { key: 'attendance', label: district.followup.filterAttendance },
-  { key: 'enrollment', label: district.followup.filterEnrollment },
-  { key: 'data_quality', label: district.followup.filterDataQuality },
-  { key: 'operational', label: district.followup.filterOperational },
-]
+  { id: 'all', label: district.followup.filterAll },
+  { id: 'attendance', label: district.followup.filterAttendance },
+  { id: 'enrollment', label: district.followup.filterEnrollment },
+  { id: 'nutrition', label: district.followup.filterNutrition },
+  { id: 'data_quality', label: district.followup.filterDataQuality },
+  { id: 'operational', label: district.followup.filterOperational },
+] as const
+
+type CategoryFilter = (typeof categories)[number]['id']
 
 export function GukurikiranaPage() {
-  const [category, setCategory] = useState('all')
+  const [category, setCategory] = useState<CategoryFilter>('all')
   const highCount = ACTION_ALERTS.filter((a) => a.priority === 'high').length
 
   return (
     <DistrictLayout>
-      <PageHeader title={district.followup.title} subtitle={district.followup.subtitle} />
+      <PageContainer>
+        <PageHeader title={district.followup.title} subtitle={district.followup.subtitle} />
+        <PageContent className="space-y-6">
+          {env.isLive ? (
+            <LiveUnavailableState
+              title={district.followup.title}
+              description={common.live.unavailableDesc}
+            />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
+                <div className="h-full [&>div]:h-full">
+                  <StatCard
+                    compact
+                    label={district.followup.totalAlerts}
+                    value={ACTION_ALERTS.length}
+                    variant="info"
+                  />
+                </div>
+                <div className="h-full [&>div]:h-full">
+                  <StatCard
+                    compact
+                    label={district.followup.highPriority}
+                    value={highCount}
+                    variant="danger"
+                  />
+                </div>
+                <div className="h-full [&>div]:h-full">
+                  <StatCard
+                    compact
+                    label={district.followup.filterAttendance}
+                    value={ACTION_ALERTS.filter((a) => a.category === 'attendance').length}
+                  />
+                </div>
+              </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <StatCard
-          compact
-          label={district.followup.totalAlerts}
-          value={ACTION_ALERTS.length}
-          variant="info"
-        />
-        <StatCard
-          compact
-          label={district.followup.highPriority}
-          value={highCount}
-          variant="warning"
-        />
-        <StatCard
-          compact
-          label={district.followup.filterAttendance}
-          value={ACTION_ALERTS.filter((a) => a.category === 'attendance').length}
-        />
-      </div>
+              <Card padding="lg">
+                <SegmentedTabs
+                  options={[...categories]}
+                  value={category}
+                  onChange={setCategory}
+                  aria-label={district.followup.title}
+                  columns={3}
+                />
+              </Card>
 
-      <Card padding="md" className="mb-5">
-        <div className="flex flex-wrap gap-2">
-          {categories.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setCategory(key)}
-              className={`min-h-11 px-4 py-2 rounded-lg text-body font-semibold transition-colors ${
-                category === key
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'bg-background-subtle text-text-secondary hover:bg-primary-light hover:text-primary'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      <ActionAlertsList category={category} />
+              <ActionAlertsList category={category} />
+            </>
+          )}
+        </PageContent>
+      </PageContainer>
     </DistrictLayout>
   )
 }

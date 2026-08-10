@@ -26,13 +26,14 @@ import type {
 
 import type {
   CreateUserDto,
+  CreateUserResponseDto,
   ErrorResponseDto,
   PaginatedUsersResponseDto,
   ResetUserPasswordDto,
+  ResetUserPasswordResponseDto,
   UpdateUserDto,
   UserResponseDto,
-  UsersControllerFindAllParams,
-  UsersControllerResetPassword200
+  UsersControllerFindAllParams
 } from '../../models';
 
 import { customInstance } from '../../../client';
@@ -43,7 +44,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Provisions a new user account within the caller management scope. Temporary credentials are not returned in the response.
+ * Provisions a new user account within the caller management scope. Returns a one-time `temporaryPassword` that must be shared out-of-band; it is never included on subsequent GET/list/update responses.
  * @summary Create a user
  */
 export const usersControllerCreate = (
@@ -52,7 +53,7 @@ export const usersControllerCreate = (
 ) => {
       
       
-      return customInstance<UserResponseDto>(
+      return customInstance<CreateUserResponseDto>(
       {url: `/api/v1/users`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: createUserDto, signal
@@ -358,7 +359,7 @@ export const useUsersControllerUpdate = <TError = ErrorResponseDto | ErrorRespon
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Resets the target user password. Never returns the password in the response; returns `{ success: true }` on success.
+ * Resets the target user password. When `newPassword` is omitted, a temporary password is generated and returned once as `temporaryPassword`. When an explicit password is provided, it is not echoed in the response.
  * @summary Reset user password
  */
 export const usersControllerResetPassword = (
@@ -368,7 +369,7 @@ export const usersControllerResetPassword = (
 ) => {
       
       
-      return customInstance<UsersControllerResetPassword200 | void>(
+      return customInstance<ResetUserPasswordResponseDto | ResetUserPasswordResponseDto>(
       {url: `/api/v1/users/${id}/reset-password`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: resetUserPasswordDto, signal

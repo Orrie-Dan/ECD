@@ -5,7 +5,9 @@
  * Early Childhood Development management system API. Success responses are bare DTO bodies; errors use `{ success, statusCode, message, timestamp }` (plus `entity` / `currentVersion` on optimistic-lock conflicts). List endpoints use offset pagination (`items`, `page`, `pageSize`, `total`, `totalPages`); sync pull uses cursor pagination.
  * OpenAPI spec version: 1.0
  */
+import type { UserDistrictSummaryDto } from './userDistrictSummaryDto';
 
-export type UsersControllerResetPassword200 = {
-  success: boolean;
-};
+/**
+ * @nullable
+ */
+export type CreateUserResponseDtoDistrict = UserDistrictSummaryDto | null;

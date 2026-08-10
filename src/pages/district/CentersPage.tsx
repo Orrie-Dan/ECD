@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import {
   SchoolsSummaryCards,
   SchoolsTable,
@@ -8,11 +9,17 @@ import {
   SchoolQuickPreview,
   type SchoolsFilters,
 } from '@/components/district/schools'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
+import { SkeletonPage } from '@/components/ui/Skeleton'
 import {
   getSchoolsTableData,
   getUniqueSectors,
+  type SchoolTableData,
 } from '@/lib/mock-data'
+import { env } from '@/config/env'
+import { useCentersDirectory } from '@/features/centers'
 import { district } from '@/locales/rw/district'
+import { common } from '@/locales/rw/common'
 
 const DEFAULT_FILTERS: SchoolsFilters = {
   period: 'month',
@@ -42,29 +49,56 @@ export function CentersPage() {
   const [filters, setFilters] = useState<SchoolsFilters>(DEFAULT_FILTERS)
   const [previewCenterId, setPreviewCenterId] = useState<string | null>(null)
 
-  const sectors = useMemo(() => getUniqueSectors(), [])
+  const liveCenters = useCentersDirectory({ page: 1, pageSize: 100 }, env.isLive)
 
-  const allSchoolsData = useMemo(() => getSchoolsTableData(), [])
+  const sectors = useMemo(() => {
+    if (env.isLive) return [] as string[]
+    return getUniqueSectors()
+  }, [])
+
+  const allSchoolsData = useMemo((): SchoolTableData[] => {
+    if (env.isLive) {
+      return (liveCenters.data?.items ?? []).map((c) => ({
+        id: c.id,
+        name: c.name,
+        sector: c.districtName ?? '—',
+        cell: c.villageName ?? '—',
+        children: c.activeChildrenCount,
+        caretakers: 0,
+        isActive: c.status === 'active',
+        enrollmentTrend: 'stable' as const,
+        enrollmentChange: 0,
+        lastActivity: '',
+        attentionStatus: 'none' as const,
+        attendance: 0,
+      }))
+    }
+    return getSchoolsTableData()
+  }, [liveCenters.data?.items])
 
   const filteredSchoolsData = useMemo(() => {
     let data = allSchoolsData
 
-    if (filters.sector) {
+    if (env.isMock && filters.sector) {
       data = data.filter((s) => s.sector === filters.sector)
     }
 
-    const cutoff = getPeriodCutoff(filters.period)
-    data = data.filter((s) => new Date(s.lastActivity).getTime() >= cutoff.getTime())
+    if (env.isMock) {
+      const cutoff = getPeriodCutoff(filters.period)
+      data = data.filter((s) => new Date(s.lastActivity).getTime() >= cutoff.getTime())
 
-    if (filters.month) {
-      data = data.filter((s) => {
-        const month = String(new Date(s.lastActivity).getMonth() + 1).padStart(2, '0')
-        return month === filters.month
-      })
-    }
+      if (filters.month) {
+        data = data.filter((s) => {
+          const month = String(new Date(s.lastActivity).getMonth() + 1).padStart(2, '0')
+          return month === filters.month
+        })
+      }
 
-    if (filters.monitoringStatus !== 'all') {
-      data = data.filter((s) => monitoringStatusFromAttention(s.attentionStatus) === filters.monitoringStatus)
+      if (filters.monitoringStatus !== 'all') {
+        data = data.filter(
+          (s) => monitoringStatusFromAttention(s.attentionStatus) === filters.monitoringStatus,
+        )
+      }
     }
 
     return data
@@ -90,8 +124,12 @@ export function CentersPage() {
 
   const summary = useMemo(() => {
     const totalSchools = filteredSchoolsData.length
-    const goodSchools = filteredSchoolsData.filter((s) => monitoringStatusFromAttention(s.attentionStatus) === 'good').length
-    const schoolsToFollowup = filteredSchoolsData.filter((s) => monitoringStatusFromAttention(s.attentionStatus) !== 'good').length
+    const goodSchools = filteredSchoolsData.filter(
+      (s) => monitoringStatusFromAttention(s.attentionStatus) === 'good',
+    ).length
+    const schoolsToFollowup = filteredSchoolsData.filter(
+      (s) => monitoringStatusFromAttention(s.attentionStatus) !== 'good',
+    ).length
     const totalChildren = filteredSchoolsData.reduce((sum, s) => sum + s.children, 0)
     const totalCaretakers = filteredSchoolsData.reduce((sum, s) => sum + s.caretakers, 0)
     return { totalSchools, goodSchools, schoolsToFollowup, totalChildren, totalCaretakers }
@@ -99,38 +137,81 @@ export function CentersPage() {
 
   return (
     <DistrictLayout>
-      <PageHeader title={district.schools.title} subtitle={district.schools.subtitle} />
+      <PageContainer>
+        <PageHeader title={district.schools.title} subtitle={district.schools.subtitle} />
+        <PageContent>
+          {env.isLive && liveCenters.isLoading ? (
+            <SkeletonPage label={district.schools.title} stats={4} />
+          ) : null}
 
-      <SchoolsFilterBar
-        filters={filters}
-        onFiltersChange={setFilters}
-        sectors={sectors}
-        resultCount={filteredSchoolsData.length}
-        onClearFilters={handleClearFilters}
-        hasActiveFilters={hasActiveFilters}
-      />
+          {env.isLive && liveCenters.isError ? (
+            <LiveUnavailableState
+              title={district.schools.title}
+              description={common.live.unavailableDesc}
+              className="mb-4"
+            />
+          ) : null}
 
-      <SchoolsSummaryCards summary={summary} />
+          {env.isLive ? (
+            <p className="text-caption text-text-muted mb-4">
+              {common.live.sectorFilterUnavailable} · {common.live.unavailableDesc}
+            </p>
+          ) : null}
 
-      <div className="mb-4">
-        <h3 className="text-subheading text-text mb-3">{district.schools.tableTitle}</h3>
-        <SchoolsTable
-          data={filteredSchoolsData}
-          searchQuery={`${filters.period}-${filters.month}-${filters.sector}-${filters.monitoringStatus}`}
-          onViewSchool={handleViewSchool}
-        />
-      </div>
+          {!(env.isLive && liveCenters.isLoading) ? (
+            <>
+              <SchoolsFilterBar
+                filters={filters}
+                onFiltersChange={setFilters}
+                sectors={sectors}
+                resultCount={filteredSchoolsData.length}
+                onClearFilters={handleClearFilters}
+                hasActiveFilters={hasActiveFilters && env.isMock}
+              />
 
-      {previewCenterId && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/30 z-40"
-            onClick={handleClosePreview}
-            aria-hidden="true"
-          />
-          <SchoolQuickPreview centerId={previewCenterId} onClose={handleClosePreview} />
-        </>
-      )}
+              <SchoolsSummaryCards summary={summary} />
+
+              <div className="mb-4">
+                <h3 className="text-subheading text-text mb-3">{district.schools.tableTitle}</h3>
+                <SchoolsTable
+                  data={filteredSchoolsData}
+                  searchQuery={`${filters.period}-${filters.month}-${filters.sector}-${filters.monitoringStatus}`}
+                  onViewSchool={handleViewSchool}
+                />
+              </div>
+
+              {previewCenterId && env.isMock ? (
+                <>
+                  <div
+                    className="fixed inset-0 bg-black/30 z-40"
+                    onClick={handleClosePreview}
+                    aria-hidden
+                  />
+                  <SchoolQuickPreview centerId={previewCenterId} onClose={handleClosePreview} />
+                </>
+              ) : null}
+
+              {previewCenterId && env.isLive ? (
+                <LiveUnavailableState
+                  compact
+                  title={district.schools.title}
+                  description={common.live.unavailableDesc}
+                  className="mb-4"
+                  action={
+                    <button
+                      type="button"
+                      className="text-caption font-semibold text-primary"
+                      onClick={handleClosePreview}
+                    >
+                      {common.close}
+                    </button>
+                  }
+                />
+              ) : null}
+            </>
+          ) : null}
+        </PageContent>
+      </PageContainer>
     </DistrictLayout>
   )
 }

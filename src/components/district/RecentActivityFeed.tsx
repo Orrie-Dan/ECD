@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { Clock, UserPlus, UserMinus, CheckCircle, ClipboardCheck } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
+import { env } from '@/config/env'
 import { DISTRICT_RECENT_ACTIVITY } from '@/lib/mock-data'
 import { district } from '@/locales/rw/district'
 
@@ -37,6 +39,16 @@ interface RecentActivityFeedProps {
 }
 
 export function RecentActivityFeed({ compact = false, limit = 6 }: RecentActivityFeedProps) {
+  if (env.isLive) {
+    return (
+      <LiveUnavailableState
+        compact={compact}
+        title={district.dashboard.recentActivity}
+        className="h-full"
+      />
+    )
+  }
+
   const items = DISTRICT_RECENT_ACTIVITY.slice(0, limit)
 
   return (

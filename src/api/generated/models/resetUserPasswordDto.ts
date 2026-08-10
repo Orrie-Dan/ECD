@@ -8,7 +8,7 @@
 
 export interface ResetUserPasswordDto {
   /**
-   * Optional explicit password. If omitted, a temporary password is generated and a reset token is issued.
+   * Optional explicit password. If omitted, a temporary password is generated and returned once as `temporaryPassword`.
    * @minLength 8
    * @maxLength 128
    */

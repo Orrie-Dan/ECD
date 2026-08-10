@@ -3100,7 +3100,7 @@
       "post": {
         "operationId": "UsersController_create",
         "summary": "Create a user",
-        "description": "Provisions a new user account within the caller management scope. Temporary credentials are not returned in the response.",
+        "description": "Provisions a new user account within the caller management scope. Returns a one-time `temporaryPassword` that must be shared out-of-band; it is never included on subsequent GET/list/update responses.",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3118,7 +3118,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
+                  "$ref": "#/components/schemas/CreateUserResponseDto"
                 }
               }
             }
@@ -3455,7 +3455,7 @@
       "post": {
         "operationId": "UsersController_resetPassword",
         "summary": "Reset user password",
-        "description": "Resets the target user password. Never returns the password in the response; returns `{ success: true }` on success.",
+        "description": "Resets the target user password. When `newPassword` is omitted, a temporary password is generated and returned once as `temporaryPassword`. When an explicit password is provided, it is not echoed in the response.",
         "parameters": [
           {
             "name": "id",
@@ -3480,26 +3480,24 @@
         },
         "responses": {
           "200": {
-            "description": "Password reset accepted",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    }
-                  },
-                  "required": [
-                    "success"
-                  ]
+                  "$ref": "#/components/schemas/ResetUserPasswordResponseDto"
                 }
               }
             }
           },
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetUserPasswordResponseDto"
+                }
+              }
+            }
           },
           "400": {
             "description": "Validation failed or malformed parameters",
@@ -7383,7 +7381,7 @@
   "servers": [
     {
       "url": "http://localhost:3000",
-      "description": "Local development"
+      "description": "API"
     }
   ],
   "components": {
@@ -10176,6 +10174,91 @@
           "fullName"
         ]
       },
+      "CreateUserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string",
+            "example": "caregiver01"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Jane Doe"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true,
+            "example": "+250788123456"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApiUserStatus"
+          },
+          "district": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserDistrictSummaryDto"
+              }
+            ]
+          },
+          "center": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserCenterSummaryDto"
+              }
+            ]
+          },
+          "createdBy": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserCreatedBySummaryDto"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "temporaryPassword": {
+            "type": "string",
+            "description": "One-time temporary password for the new account. Share out-of-band with the user; it is not returned on subsequent reads.",
+            "example": "K7mN2pQx9R"
+          },
+          "mustChangePassword": {
+            "type": "boolean",
+            "description": "True when the user should change password on first login (passwordChangedAt is null).",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "fullName",
+          "phone",
+          "role",
+          "status",
+          "district",
+          "center",
+          "createdBy",
+          "createdAt",
+          "updatedAt",
+          "temporaryPassword",
+          "mustChangePassword"
+        ]
+      },
       "UserResponseDto": {
         "type": "object",
         "properties": {
@@ -10318,11 +10401,34 @@
         "properties": {
           "newPassword": {
             "type": "string",
-            "description": "Optional explicit password. If omitted, a temporary password is generated and a reset token is issued.",
+            "description": "Optional explicit password. If omitted, a temporary password is generated and returned once as `temporaryPassword`.",
             "minLength": 8,
             "maxLength": 128
           }
         }
+      },
+      "ResetUserPasswordResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "temporaryPassword": {
+            "type": "string",
+            "description": "Present only when the server generated a temporary password (no `newPassword` in the request). Share out-of-band; not returned again.",
+            "example": "K7mN2pQx9R"
+          },
+          "mustChangePassword": {
+            "type": "boolean",
+            "description": "True when a temporary password was generated and the user should change it on next login.",
+            "example": true
+          }
+        },
+        "required": [
+          "success",
+          "mustChangePassword"
+        ]
       },
       "ApiStedAgeBand": {
         "type": "string",
