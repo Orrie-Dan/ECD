@@ -3,17 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import { Baby, CheckCircle2, Hourglass, Plus } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Button } from '@/components/ui/Button'
+import { PageContainer, PageContent } from '@/components/ui/PageShell'
+import { PageHeader } from '@/components/ui/PageHeader'
 import { StatCard } from '@/components/caretaker/dashboard/StatCard'
 import { ProgressCard } from '@/components/caretaker/dashboard/ProgressCard'
 import { ActivityTimeline, type ActivityItem } from '@/components/caretaker/dashboard/ActivityTimeline'
+import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
 import { useAuth, useData } from '@/contexts/AppContext'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, relations } from '@/locales/rw/common'
 import {
+  computeAttendanceSummary,
   formatArrivalTime,
   formatRelativeDayLabel,
   getBroughtByLabel,
   getRecentArrivals,
+  getTodayDate,
 } from '@/lib/attendance-utils'
 import type { Child, AttendanceRecord } from '@/types'
 
@@ -60,11 +65,15 @@ function formatTodayDate(): string {
 
 export function CaretakerDashboardPage() {
   const { user } = useAuth()
-  const { children, attendance, isPresentToday } = useData()
+  const { children, attendance } = useData()
   const navigate = useNavigate()
 
-  const presentCount = children.filter((c) => isPresentToday(c.id)).length
-  const waitingCount = children.length - presentCount
+  const summary = useMemo(
+    () => computeAttendanceSummary(children, attendance, getTodayDate()),
+    [children, attendance],
+  )
+  const presentCount = summary.present
+  const waitingCount = summary.unrecorded
 
   const activityItems = useMemo(
     () => buildActivityFeed(children, attendance),
@@ -73,42 +82,43 @@ export function CaretakerDashboardPage() {
 
   return (
     <CaretakerLayout>
-      {/* Welcome header */}
-      <header className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between mb-6 sm:mb-8">
-        <div className="space-y-2 min-w-0">
-          <h1 className="text-display text-text">
-            {caretaker.dashboard.greeting}, {user?.name}
-          </h1>
-          <p className="text-body-lg text-text-secondary">
-            {caretaker.dashboard.centerLabel}: <span className="font-semibold text-text">{user?.centerName}</span>
-          </p>
-          <p className="text-body text-text-muted">
-            {caretaker.dashboard.todayLabel}: {formatTodayDate()}
-          </p>
-        </div>
-        <Button
-          variant="primary"
-          size="xl"
-          icon={<Plus size={22} strokeWidth={2.5} />}
-          onClick={() => navigate('/caretaker/ubwitabire')}
-          className="w-full sm:w-auto shrink-0"
-        >
-          {caretaker.dashboard.primaryAction}
-        </Button>
-      </header>
+      <PageContainer>
+        <PageHeader
+          title={`${caretaker.dashboard.greeting}, ${user?.name}`}
+          description={`${caretaker.dashboard.centerLabel}: ${user?.centerName}`}
+          action={
+            <Button
+              variant="primary"
+              size="xl"
+              icon={<Plus size={22} strokeWidth={2.5} />}
+              onClick={() => navigate('/caretaker/ubwitabire')}
+              className="w-full sm:w-auto shrink-0"
+            >
+              {caretaker.dashboard.primaryAction}
+            </Button>
+          }
+        />
+        <p className="text-body text-text-muted -mt-3 mb-5">
+          {caretaker.dashboard.todayLabel}: {formatTodayDate()}
+        </p>
 
-      {/* Statistics */}
-      <section aria-label={common.ui.keyStats} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard icon={<Baby size={22} />} label={caretaker.dashboard.totalChildren} value={children.length} />
-        <StatCard icon={<CheckCircle2 size={22} />} label={caretaker.dashboard.presentToday} value={presentCount} variant="success" />
-        <StatCard icon={<Hourglass size={22} />} label={caretaker.dashboard.notYetArrived} value={waitingCount} variant="warning" />
-      </section>
+        <PageContent>
+          <section aria-label={caretaker.attendance.summaryTitle} className="mb-8">
+            <AttendanceSummaryCards stats={summary} />
+          </section>
 
-      {/* Two-column main area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ActivityTimeline items={activityItems} />
-        <ProgressCard present={presentCount} total={children.length} />
-      </div>
+          <section aria-label={common.ui.keyStats} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <StatCard icon={<Baby size={22} />} label={caretaker.dashboard.totalChildren} value={children.length} />
+            <StatCard icon={<CheckCircle2 size={22} />} label={caretaker.dashboard.presentToday} value={presentCount} variant="success" />
+            <StatCard icon={<Hourglass size={22} />} label={caretaker.dashboard.notYetArrived} value={waitingCount} variant="warning" />
+          </section>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ActivityTimeline items={activityItems} />
+            <ProgressCard present={presentCount} total={children.length} />
+          </div>
+        </PageContent>
+      </PageContainer>
     </CaretakerLayout>
   )
 }
