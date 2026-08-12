@@ -30,3 +30,10 @@ export const UNSYNCED_OUTBOX_STATUSES: OutboxStatus[] = [
 export const MAX_PUSH_BATCH = 500
 export const SESSION_POLL_INTERVAL_MS = 750
 export const SESSION_POLL_MAX_ATTEMPTS = 40
+
+/**
+ * Client-side recovery window for ops stuck in `syncing` (or pending with a
+ * stamped sessionId) when the initial post-push poll never started.
+ * Shorter than the server's 5-minute stale-session recovery.
+ */
+export const ORPHAN_SYNCING_RECOVERY_MS = 30_000

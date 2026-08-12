@@ -3,6 +3,7 @@ import {
 } from '@/api/generated/endpoints/sync/sync'
 import type { LocalStore } from '@/storage/local-store'
 import {
+  ORPHAN_SYNCING_RECOVERY_MS,
   SESSION_POLL_INTERVAL_MS,
   SESSION_POLL_MAX_ATTEMPTS,
 } from '@/sync/sync-types'
@@ -83,5 +84,55 @@ export async function pollSessionUntilSettled(
       status: 'pending',
       lastError: 'Session poll timed out',
     })
+  }
+}
+
+/**
+ * Recover outbox rows stuck after a push that never started (or finished) polling.
+ * - `syncing` without sessionId → reset to `pending` for a normal re-push.
+ * - `syncing` / `pending` with a stamped sessionId → poll that session via the
+ *   existing poller (applied / conflict / failed / pending-on-timeout).
+ */
+export async function recoverOrphanedSyncOperations(
+  store: LocalStore,
+  options: { ownerUserId: string; olderThanMs?: number },
+): Promise<void> {
+  const { ownerUserId } = options
+  if (!ownerUserId) return
+
+  const olderThanMs = options.olderThanMs ?? ORPHAN_SYNCING_RECOVERY_MS
+  const cutoff = Date.now() - olderThanMs
+  const candidates = await store.listOperations({
+    ownerUserId,
+    status: ['syncing', 'pending'],
+  })
+
+  const sessionIdsToPoll = new Set<string>()
+
+  for (const op of candidates) {
+    const updatedAtMs = Date.parse(op.updatedAt)
+    if (!Number.isFinite(updatedAtMs) || updatedAtMs > cutoff) continue
+
+    if (op.status === 'pending' && !op.sessionId) continue
+
+    if (op.sessionId) {
+      sessionIdsToPoll.add(op.sessionId)
+      continue
+    }
+
+    // syncing with no sessionId — re-enter the push batch.
+    console.info(
+      '[sync] orphan sweep: reset syncing op without sessionId to pending',
+      op.clientOperationId,
+    )
+    await store.updateOperation(op.clientOperationId, {
+      status: 'pending',
+      lastError: undefined,
+    })
+  }
+
+  for (const sessionId of sessionIdsToPoll) {
+    console.info('[sync] orphan sweep: polling stamped session', sessionId)
+    await pollSessionUntilSettled(store, sessionId)
   }
 }

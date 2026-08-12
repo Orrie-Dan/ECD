@@ -21,15 +21,37 @@ function toPushDto(op: SyncOperationRecord): SyncPushOperationDto {
   }
 }
 
+export interface PushOperationResult {
+  clientOperationId: string
+  status: string
+  conflictReason: string | null
+  entityId: string | null
+  replayed: boolean
+  sessionId: string | null
+}
+
 export interface PushResult {
   sessionId: string | null
-  operationResults: Array<{
-    clientOperationId: string
-    status: string
-    conflictReason: string | null
-    entityId: string | null
-    replayed: boolean
-  }>
+  operationResults: PushOperationResult[]
+}
+
+/**
+ * Sessions the engine should poll after push.
+ * Prefers top-level sessionId; on all-replay batches (top-level null) falls
+ * back to unique non-null per-op sessionIds.
+ */
+export function resolveSessionIdsToPoll(result: PushResult): {
+  sessionIds: string[]
+  usedPerOpFallback: boolean
+} {
+  if (result.sessionId) {
+    return { sessionIds: [result.sessionId], usedPerOpFallback: false }
+  }
+  const ids = new Set<string>()
+  for (const op of result.operationResults) {
+    if (op.sessionId) ids.add(op.sessionId)
+  }
+  return { sessionIds: [...ids], usedPerOpFallback: ids.size > 0 }
 }
 
 /**
@@ -79,6 +101,26 @@ export async function pushOutbox(
       for (const op of ownedBatch) {
         await store.updateOperation(op.clientOperationId, { sessionId })
       }
+    } else {
+      // All-replay / dedup path: top-level sessionId is null but per-op may carry
+      // the original session. Stamp those so poll timeout matching works.
+      const stampedSessions = new Set<string>()
+      for (const result of response.operations) {
+        if (!result.sessionId || result.status !== 'pending') continue
+        await store.updateOperation(result.clientOperationId, {
+          sessionId: result.sessionId,
+        })
+        if (!stampedSessions.has(result.sessionId)) {
+          stampedSessions.add(result.sessionId)
+          await store.upsertSession({
+            sessionId: result.sessionId,
+            status: response.status,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            ownerUserId,
+          })
+        }
+      }
     }
 
     // Immediate terminal statuses from push response (dedupe / already applied).
@@ -106,7 +148,7 @@ export async function pushOutbox(
           sessionId: result.sessionId ?? sessionId ?? undefined,
         })
       }
-      // pending → wait for session poll
+      // pending → wait for session poll (top-level or per-op fallback)
     }
 
     return {
@@ -117,6 +159,7 @@ export async function pushOutbox(
         conflictReason: r.conflictReason,
         entityId: r.entityId,
         replayed: r.replayed,
+        sessionId: r.sessionId,
       })),
     }
   } catch (error) {

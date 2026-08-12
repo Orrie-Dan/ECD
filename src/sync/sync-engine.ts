@@ -8,8 +8,8 @@ import {
 } from '@/storage/db'
 import { META_KEYS } from '@/storage/types'
 import { networkState } from '@/network/network-state'
-import { pushOutbox } from '@/sync/push'
-import { pollSessionUntilSettled } from '@/sync/session'
+import { pushOutbox, resolveSessionIdsToPoll } from '@/sync/push'
+import { pollSessionUntilSettled, recoverOrphanedSyncOperations } from '@/sync/session'
 import { pullAll, pullOnce } from '@/sync/pull'
 import {
   ACTIVE_OUTBOX_STATUSES,
@@ -173,6 +173,16 @@ export class SyncEngine {
         networkState.beginReconnect()
       }
 
+      // Recover ops stuck in syncing (or pending+sessionId) from a prior cycle
+      // that never started/finished session polling — before pull/push.
+      await recoverOrphanedSyncOperations(cycleStore, { ownerUserId })
+      if (!this.identityStillValid(ownerUserId, cycleDbName)) {
+        this.lastError = 'Local owner changed during sync'
+        this.status = 'SYNC_ERROR'
+        await this.emitAsync()
+        return
+      }
+
       await pullAll(cycleStore, {
         deviceId,
         shouldContinue: () => this.identityStillValid(ownerUserId, cycleDbName),
@@ -192,8 +202,17 @@ export class SyncEngine {
         await this.emitAsync()
         return
       }
-      if (pushResult?.sessionId) {
-        await pollSessionUntilSettled(cycleStore, pushResult.sessionId)
+      if (pushResult) {
+        const { sessionIds, usedPerOpFallback } = resolveSessionIdsToPoll(pushResult)
+        if (usedPerOpFallback) {
+          console.info(
+            '[sync] push poll fallback: using per-op sessionId(s)',
+            sessionIds,
+          )
+        }
+        for (const id of sessionIds) {
+          await pollSessionUntilSettled(cycleStore, id)
+        }
       }
 
       // Conflicts: pull again so server CAS state lands locally while conflict ops stay visible.

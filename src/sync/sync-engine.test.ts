@@ -300,6 +300,252 @@ describe('SyncEngine + children offline proof', () => {
     expect((await store.getChild(entityId))?._localStatus).toBe('clean')
   })
 
+  it('polls per-op sessionId when top-level sessionId is null (all-replay)', async () => {
+    const opId = createUuid()
+    const entityId = createUuid()
+    const priorSessionId = createUuid()
+    await store.putChild({
+      id: entityId,
+      version: 0,
+      deletedAt: null,
+      lastModifiedAt: new Date().toISOString(),
+      _localStatus: 'dirty',
+      registrationNumber: 'R',
+      firstName: 'A',
+      fullName: 'A',
+      centerId: 'c',
+      centerName: '',
+      dateOfBirth: '2020-01-01',
+      gender: 'Umuhungu',
+      status: 'active',
+      guardianName: 'G',
+      guardianPhone: '07',
+      guardianRelation: 'umubyeyi',
+      homeVillageId: 'v',
+      registeredAt: '2024-01-01',
+      province: '',
+      district: '',
+      sector: '',
+      cell: '',
+      village: '',
+    })
+    await store.enqueueOperation({
+      clientOperationId: opId,
+      entityType: 'child',
+      operation: 'create',
+      entityId,
+      version: 0,
+      payload: {
+        firstName: 'A',
+        homeVillageId: 'v',
+        registrationNumber: 'R',
+        centerId: 'c',
+        dateOfBirth: '2020-01-01',
+        gender: 'Umuhungu',
+        guardianName: 'G',
+        guardianPhone: '07',
+        guardianRelation: 'umubyeyi',
+        registeredAt: '2024-01-01',
+      },
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: null,
+      hasMore: false,
+      limit: 500,
+      created: emptyBuckets(),
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+    vi.mocked(syncControllerPush).mockResolvedValue({
+      sessionId: null,
+      accepted: 1,
+      created: 0,
+      deduplicated: 1,
+      status: 'pending',
+      operations: [
+        {
+          id: createUuid(),
+          clientOperationId: opId,
+          localId: entityId,
+          entityId,
+          entityType: 'child',
+          operation: 'create',
+          status: 'pending',
+          conflictReason: null,
+          replayed: true,
+          sessionId: priorSessionId,
+        },
+      ],
+    })
+    vi.mocked(syncControllerSessionStatus).mockResolvedValue({
+      id: priorSessionId,
+      status: 'completed',
+      totalOperations: 1,
+      successfulOperations: 1,
+      failedOperations: 0,
+      retryCount: 0,
+      lastRetryAt: null,
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      operations: [
+        {
+          id: createUuid(),
+          clientOperationId: opId,
+          entityType: 'child',
+          operation: 'create',
+          status: 'applied',
+          conflictReason: null,
+          processedAt: new Date().toISOString(),
+        },
+      ],
+    })
+
+    await resetSyncEngineForTests(store).syncNow()
+    expect(syncControllerSessionStatus).toHaveBeenCalledWith(priorSessionId)
+    expect((await store.getOperation(opId))?.status).toBe('applied')
+    expect((await store.getOperation(opId))?.sessionId).toBe(priorSessionId)
+    expect((await store.getChild(entityId))?._localStatus).toBe('clean')
+  })
+
+  it('orphan sweep resets stale syncing ops without sessionId to pending', async () => {
+    const opId = createUuid()
+    const entityId = createUuid()
+    await store.enqueueOperation({
+      clientOperationId: opId,
+      entityType: 'child',
+      operation: 'create',
+      entityId,
+      version: 0,
+      payload: { firstName: 'A' },
+    })
+    const stale = new Date(Date.now() - 60_000).toISOString()
+    await store.updateOperation(opId, {
+      status: 'syncing',
+      updatedAt: stale,
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: null,
+      hasMore: false,
+      limit: 500,
+      created: emptyBuckets(),
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+    // After sweep resets to pending, push runs — return applied immediately.
+    vi.mocked(syncControllerPush).mockResolvedValue({
+      sessionId: null,
+      accepted: 1,
+      created: 0,
+      deduplicated: 0,
+      status: 'applied',
+      operations: [
+        {
+          id: createUuid(),
+          clientOperationId: opId,
+          localId: entityId,
+          entityId,
+          entityType: 'child',
+          operation: 'create',
+          status: 'applied',
+          conflictReason: null,
+          replayed: true,
+          sessionId: null,
+        },
+      ],
+    })
+
+    await resetSyncEngineForTests(store).syncNow()
+    expect(syncControllerPush).toHaveBeenCalled()
+    expect((await store.getOperation(opId))?.status).toBe('applied')
+  })
+
+  it('orphan sweep polls stale syncing ops that already have a sessionId', async () => {
+    const opId = createUuid()
+    const entityId = createUuid()
+    const sessionId = createUuid()
+    await store.putChild({
+      id: entityId,
+      version: 0,
+      deletedAt: null,
+      lastModifiedAt: new Date().toISOString(),
+      _localStatus: 'dirty',
+      registrationNumber: 'R',
+      firstName: 'A',
+      fullName: 'A',
+      centerId: 'c',
+      centerName: '',
+      dateOfBirth: '2020-01-01',
+      gender: 'Umuhungu',
+      status: 'active',
+      guardianName: 'G',
+      guardianPhone: '07',
+      guardianRelation: 'umubyeyi',
+      homeVillageId: 'v',
+      registeredAt: '2024-01-01',
+      province: '',
+      district: '',
+      sector: '',
+      cell: '',
+      village: '',
+    })
+    await store.enqueueOperation({
+      clientOperationId: opId,
+      entityType: 'child',
+      operation: 'create',
+      entityId,
+      version: 0,
+      payload: { firstName: 'A' },
+    })
+    const stale = new Date(Date.now() - 60_000).toISOString()
+    await store.updateOperation(opId, {
+      status: 'syncing',
+      sessionId,
+      updatedAt: stale,
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: null,
+      hasMore: false,
+      limit: 500,
+      created: emptyBuckets(),
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+    vi.mocked(syncControllerSessionStatus).mockResolvedValue({
+      id: sessionId,
+      status: 'completed',
+      totalOperations: 1,
+      successfulOperations: 1,
+      failedOperations: 0,
+      retryCount: 0,
+      lastRetryAt: null,
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      operations: [
+        {
+          id: createUuid(),
+          clientOperationId: opId,
+          entityType: 'child',
+          operation: 'create',
+          status: 'applied',
+          conflictReason: null,
+          processedAt: new Date().toISOString(),
+        },
+      ],
+    })
+
+    await resetSyncEngineForTests(store).syncNow()
+    expect(syncControllerSessionStatus).toHaveBeenCalledWith(sessionId)
+    expect((await store.getOperation(opId))?.status).toBe('applied')
+    // Sweep applied the op before push — no pending batch to push.
+    expect(syncControllerPush).not.toHaveBeenCalled()
+  })
+
   it('offline child create survives "restart" and syncs without new id', async () => {
     const created = await createChildLocalFirst(store, {
       form: {
