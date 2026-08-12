@@ -33,6 +33,8 @@ export const auth = {
     usernameRequired: "Nimero y'umukoresha irakenewe.",
     passwordRequired: "Ijambo ry'ibanga rirakenewe.",
     invalidCredentials: "Nimero y'umukoresha cyangwa ijambo ry'ibanga sibyo.",
+    apiUnavailable:
+      "Sisitemu ntiyihuje na API. Abakoresha b'ukuri (nk'ncda_admin) ntibashobora kwinjira — reba VITE_API_MODE=live na VITE_API_BASE_URL mu buryo bwo gutanga porogaramu.",
     submit: 'Injira',
     helpLink: 'Ukeneye ubufasha?',
     helpMessage:

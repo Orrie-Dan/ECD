@@ -16,7 +16,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       injectRegister: false,
-      includeAssets: ['favicon.svg', 'icons.svg'],
+      includeAssets: ['ncda-logo.png', 'icons.svg'],
       manifest: {
         name: "Sisitemu y'Ubwitabire bw'Abana",
         short_name: 'ECD',
@@ -28,16 +28,16 @@ export default defineConfig({
         lang: 'rw',
         icons: [
           {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: '/ncda-logo.png',
+            sizes: '542x197',
+            type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/icons.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            src: '/ncda-logo.png',
+            sizes: '542x197',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
       },

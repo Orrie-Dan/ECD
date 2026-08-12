@@ -7,6 +7,7 @@ import { InputField } from '@/components/auth/InputField'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { auth } from '@/locales/rw/auth'
+import { env } from '@/config/env'
 import { hasRole, homePathForRole } from '@/api/roles'
 import type { UserRole } from '@/types'
 
@@ -55,6 +56,9 @@ export function LoginForm({ role }: LoginFormProps) {
           case 'wrong_role':
             setFormError(auth.login.wrongRole)
             break
+          case 'api_unavailable':
+            setFormError(auth.login.apiUnavailable)
+            break
         }
         return
       }
@@ -87,6 +91,9 @@ export function LoginForm({ role }: LoginFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {env.isProductionMock && (
+          <Alert variant="warning">{auth.login.apiUnavailable}</Alert>
+        )}
         {formError && <Alert variant="error">{formError}</Alert>}
 
         <InputField

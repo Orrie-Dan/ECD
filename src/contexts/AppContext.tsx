@@ -258,6 +258,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (env.isMock) {
+        if (env.isProductionMock) {
+          return { success: false, error: 'api_unavailable' }
+        }
+
         const account = DEMO_CREDENTIALS[trimmedUsername.toLowerCase()]
 
         if (!account || account.password !== password) {

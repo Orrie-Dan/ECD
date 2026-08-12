@@ -25,6 +25,10 @@ export const env = {
   get isLive(): boolean {
     return this.apiMode === 'live'
   },
+  /** Production build without LIVE API config — mock login must not run. */
+  get isProductionMock(): boolean {
+    return import.meta.env.PROD && this.isMock
+  },
 } as const
 
 /** True when a production LIVE build is still pointed at a local API origin. */
