@@ -8,6 +8,7 @@ import {
   splitFullName,
   villageCacheKey,
 } from '@/sync/child-sync-mapper'
+import { VILLAGE_REFERENCE_BLOCKED_ERROR } from '@/sync/failure-class'
 import type { ArchiveChildInput, Child, ChildRegistrationForm } from '@/types'
 import type { ChildViewModel } from '@/models/child'
 
@@ -132,7 +133,7 @@ export async function createChildLocalFirst(
       payload,
       version: 0,
       status: opStatus,
-      lastError: opStatus === 'blocked' ? 'homeVillageId required before sync' : undefined,
+      lastError: opStatus === 'blocked' ? VILLAGE_REFERENCE_BLOCKED_ERROR : undefined,
     })
 
     if (homeVillageId) {
@@ -426,8 +427,12 @@ export async function unblockChildCreatesNeedingVillage(
           updatedAt: new Date().toISOString(),
         })
       })
-    } catch {
-      // Keep blocked — sync will retry later.
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : 'village not found'
+      await store.updateOperation(op.clientOperationId, {
+        status: 'blocked',
+        lastError: `${VILLAGE_REFERENCE_BLOCKED_ERROR}: ${detail}`.slice(0, 240),
+      })
     }
   }
 }

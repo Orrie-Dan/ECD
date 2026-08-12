@@ -5,22 +5,64 @@ import type { LocalStore } from '@/storage/local-store'
 import {
   ORPHAN_SYNCING_RECOVERY_MS,
   SESSION_POLL_INTERVAL_MS,
-  SESSION_POLL_MAX_ATTEMPTS,
+  SESSION_POLL_MAX_WALL_MS,
+  SESSION_POLL_STALL_ATTEMPTS,
 } from '@/sync/sync-types'
 import { markEntityApplied } from '@/sync/apply-local'
+import { isPermanentOutboxError, isRetryableOutboxError } from '@/sync/failure-class'
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+function progressKey(dto: {
+  status: string
+  successfulOperations: number
+  failedOperations: number
+  retryCount: number
+  operations: Array<{ status: string; processedAt?: string | Date | null }>
+}): string {
+  const processed = dto.operations.filter((op) => op.status !== 'pending').length
+  return `${dto.status}:${dto.successfulOperations}:${dto.failedOperations}:${dto.retryCount}:${processed}`
+}
+
+export type SessionPollOutcome = 'completed' | 'failed' | 'timeout' | 'progressing'
+
+export interface PollSessionOptions {
+  maxStallAttempts?: number
+  intervalMs?: number
+  maxWallMs?: number
+}
+
+let pollOptionsForTests: PollSessionOptions | undefined
+
+export function setPollSessionOptionsForTests(options?: PollSessionOptions): void {
+  pollOptionsForTests = options
+}
+
 /**
- * Poll sync session until completed/failed or attempts exhausted.
+ * Poll sync session until completed/failed, stalled (no progress), or wall clock exhausted.
+ * Timeout does NOT mark operations applied and does NOT imply sync success.
  */
 export async function pollSessionUntilSettled(
   store: LocalStore,
   sessionId: string,
-): Promise<void> {
-  for (let attempt = 0; attempt < SESSION_POLL_MAX_ATTEMPTS; attempt += 1) {
+  options?: PollSessionOptions,
+): Promise<SessionPollOutcome> {
+  const maxStall =
+    options?.maxStallAttempts ??
+    pollOptionsForTests?.maxStallAttempts ??
+    SESSION_POLL_STALL_ATTEMPTS
+  const intervalMs =
+    options?.intervalMs ?? pollOptionsForTests?.intervalMs ?? SESSION_POLL_INTERVAL_MS
+  const maxWallMs =
+    options?.maxWallMs ?? pollOptionsForTests?.maxWallMs ?? SESSION_POLL_MAX_WALL_MS
+  const startedAt = Date.now()
+
+  let lastKey = ''
+  let idleAttempts = 0
+
+  while (Date.now() - startedAt < maxWallMs) {
     const dto = await syncControllerSessionStatus(sessionId)
 
     await store.upsertSession({
@@ -31,7 +73,9 @@ export async function pollSessionUntilSettled(
       error: dto.status === 'failed' ? 'Session failed' : undefined,
     })
 
+    const seen = new Set<string>()
     for (const op of dto.operations) {
+      seen.add(op.clientOperationId)
       if (op.status === 'applied') {
         await store.updateOperation(op.clientOperationId, {
           status: 'applied',
@@ -49,42 +93,71 @@ export async function pollSessionUntilSettled(
           sessionId,
         })
       } else if (op.status === 'failed') {
-        await store.updateOperation(op.clientOperationId, {
-          status: 'failed',
-          lastError: op.conflictReason ?? 'failed',
-          sessionId,
-        })
+        const reason = op.conflictReason ?? 'failed'
+        if (isPermanentOutboxError(reason)) {
+          await store.updateOperation(op.clientOperationId, {
+            status: 'failed',
+            lastError: reason,
+            sessionId,
+          })
+        } else if (isRetryableOutboxError(reason)) {
+          await store.updateOperation(op.clientOperationId, {
+            status: 'pending',
+            lastError: reason,
+            sessionId,
+          })
+        } else {
+          await store.updateOperation(op.clientOperationId, {
+            status: 'failed',
+            lastError: reason,
+            sessionId,
+          })
+        }
       }
     }
 
     if (dto.status === 'completed' || dto.status === 'failed') {
-      // Any still-pending ops in this session → pending for retry or failed with session.
       const lingering = await store.listOperations({ status: 'syncing' })
       for (const op of lingering) {
         if (op.sessionId !== sessionId) continue
+        if (seen.has(op.clientOperationId)) continue
+        // Session ended without a terminal DTO for this op — keep it replayable.
         await store.updateOperation(op.clientOperationId, {
-          status: dto.status === 'failed' ? 'failed' : 'pending',
+          status: 'pending',
           lastError:
             dto.status === 'failed'
-              ? 'Session failed before operation applied'
+              ? 'Session ended before operation applied'
               : undefined,
         })
       }
-      return
+      return dto.status
     }
 
-    await sleep(SESSION_POLL_INTERVAL_MS)
+    const key = progressKey(dto)
+    if (key !== lastKey) {
+      lastKey = key
+      idleAttempts = 0
+    } else {
+      idleAttempts += 1
+    }
+
+    if (idleAttempts >= maxStall) {
+      break
+    }
+
+    await sleep(intervalMs)
   }
 
-  // Timed out — return syncing ops to pending for a later cycle (same IDs).
+  // Stalled / timed out — keep sessionId and leave ops syncing so a later
+  // cycle polls this session. Never treat timeout as applied/synced.
   const stuck = await store.listOperations({ status: 'syncing' })
   for (const op of stuck) {
     if (op.sessionId !== sessionId) continue
     await store.updateOperation(op.clientOperationId, {
-      status: 'pending',
-      lastError: 'Session poll timed out',
+      lastError: 'Session still processing',
     })
   }
+  return 'timeout'
 }
 
 /**
@@ -120,10 +193,13 @@ export async function recoverOrphanedSyncOperations(
       continue
     }
 
-    // syncing with no sessionId — re-enter the push batch.
     console.info(
-      '[sync] orphan sweep: reset syncing op without sessionId to pending',
-      op.clientOperationId,
+      JSON.stringify({
+        event: 'sync.orphan.reset',
+        clientOperationId: op.clientOperationId,
+        entityType: op.entityType,
+        entityId: op.entityId,
+      }),
     )
     await store.updateOperation(op.clientOperationId, {
       status: 'pending',
@@ -132,7 +208,12 @@ export async function recoverOrphanedSyncOperations(
   }
 
   for (const sessionId of sessionIdsToPoll) {
-    console.info('[sync] orphan sweep: polling stamped session', sessionId)
+    console.info(
+      JSON.stringify({
+        event: 'sync.orphan.poll',
+        sessionId,
+      }),
+    )
     await pollSessionUntilSettled(store, sessionId)
   }
 }

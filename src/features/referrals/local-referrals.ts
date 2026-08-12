@@ -6,6 +6,7 @@ import type {
   SyncOperationKind,
   SyncOperationRecord,
 } from '@/storage/types'
+import { findUnsyncedChildCreateOp } from '@/sync/child-dependency'
 import {
   buildReferralSyncPayload,
   buildReferralUpdateSyncPayload,
@@ -131,6 +132,7 @@ export async function createReferralLocalFirst(
   const now = new Date().toISOString()
   const referralId = createUuid()
   const opId = createUuid()
+  const childDep = await findUnsyncedChildCreateOp(store, input.childId)
 
   const record: LocalReferralRecord = {
     id: referralId,
@@ -163,8 +165,9 @@ export async function createReferralLocalFirst(
       localId: record.id,
       payload: buildReferralSyncPayload(record),
       version: 0,
-      status: 'pending',
-      lastError: undefined,
+      status: childDep ? 'blocked' : 'pending',
+      dependsOn: childDep ? [childDep] : [],
+      lastError: childDep ? 'Waiting for dependency operations' : undefined,
     })
   })
 

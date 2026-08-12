@@ -2,6 +2,7 @@ import { createUuid } from '@/lib/uuid'
 import type { LocalStore } from '@/storage/local-store'
 import type { LocalAttendanceRecord, OutboxStatus, SyncOperationKind, SyncOperationRecord } from '@/storage/types'
 import { buildAttendanceSyncPayload } from '@/sync/attendance-sync-mapper'
+import { findUnsyncedChildCreateOp } from '@/sync/child-dependency'
 import type { AttendanceUpsertInput, AttendanceViewModel } from '@/models/attendance'
 import type { AbsentReason, BroughtBy } from '@/types'
 
@@ -118,6 +119,7 @@ export async function upsertAttendanceLocalFirst(
     _updatedAtLocal: now,
   }
 
+  const childDep = await findUnsyncedChildCreateOp(store, input.childId)
   const payload = buildAttendanceSyncPayload(row)
 
   await store.runTransaction(['attendance', 'sync_operations'], 'rw', async (tx) => {
@@ -130,8 +132,9 @@ export async function upsertAttendanceLocalFirst(
       localId: row.id,
       payload,
       version: resolved.version,
-      status: 'pending',
-      lastError: undefined,
+      status: childDep ? 'blocked' : 'pending',
+      dependsOn: childDep ? [childDep] : [],
+      lastError: childDep ? 'Waiting for dependency operations' : undefined,
     })
   })
 

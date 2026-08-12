@@ -9,6 +9,7 @@ export {
   isOperationReady,
   selectPushBatch,
   refreshBlockedOperations,
+  recoverRetryableFailedOperations,
 } from '@/sync/outbox'
 export {
   buildChildCreateSyncPayload,
@@ -25,4 +26,7 @@ export {
   markEntityApplied,
   conflictedEntityIds,
   shouldSkipDirtyPull,
+  reconcileDirtyAttendanceSibling,
+  reconcileDirtyFeedingDaySibling,
+  reconcileDirtyFeedingMonthSibling,
 } from '@/sync/apply-local'

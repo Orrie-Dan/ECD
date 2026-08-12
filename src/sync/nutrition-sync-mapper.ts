@@ -95,12 +95,20 @@ export function mapPullNutritionScreeningToLocal(
 export function buildNutritionScreeningSyncPayload(
   row: LocalNutritionScreeningRecord,
 ): Record<string, unknown> {
+  const nutritionStatus = typeof row.nutritionStatus === 'string'
+    ? row.nutritionStatus.trim()
+    : ''
+  if (!nutritionStatus) {
+    throw new Error(
+      'nutritionStatus is required before enqueueing a nutrition screening sync operation',
+    )
+  }
   return {
     childId: row.childId,
     screeningDate: row.screeningDate,
     weightKg: row.weightKg,
     muacCm: row.muacCm,
-    nutritionStatus: row.nutritionStatus,
+    nutritionStatus,
     requiresReferral: row.requiresReferral,
     ...(row.heightCm != null && row.heightCm > 0 ? { heightCm: row.heightCm } : {}),
     ...(row.headCircumferenceCm != null && row.headCircumferenceCm > 0

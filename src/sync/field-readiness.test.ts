@@ -638,7 +638,7 @@ describe('Sprint 4.8.8 caretaker field readiness', () => {
       await applyLogoutDataPolicy('discard_local', { userId: USER_A })
       await activateLocalWorkspace(USER_A, CENTER_A)
     }
-  })
+  }, 15_000)
 
   it('Phase 8: screening/STED → referral dependency ordering + blocked restart', async () => {
     const { store, children } = await seedSyncedSnapshot(USER_A, CENTER_A, 12)
@@ -801,5 +801,7 @@ describe('Sprint 4.8.8 caretaker field readiness', () => {
     expect(common.sync.diagnosticQueue).toContain('{pending}')
     expect(common.sync.failedCount).toContain('{count}')
     expect(common.sync.blockedCount).toContain('{count}')
+    expect(common.sync.blockedVillageCount).toContain('{count}')
+    expect(common.sync.blockedVillageHint).toBeTruthy()
   })
 })

@@ -621,6 +621,47 @@ describe('Referral offline-first (Sprint 4.8.5)', () => {
       expect.objectContaining({ limit: 500 }),
     )
   })
+
+  it('Sprint 5.9: STED referral outbox payload always includes recordedById', async () => {
+    const recordedById = createUuid()
+    const physical = emptyPhysicalCheck()
+    physical.headFace = 'problem'
+    const result = await createStedLocalFirst(store, {
+      childId: createUuid(),
+      centerId: createUuid(),
+      assessmentDate: '2026-08-12',
+      ageBand: '1_3',
+      consentObtained: true,
+      physical,
+      noProblem: false,
+      milestones: {
+        pickStandStep: 'yego',
+        chooseStack: 'yego',
+        imitatePicture: 'yego',
+        scribble: 'yego',
+        knowsTools: 'yego',
+        understandsCommands: 'yego',
+        socialPlay: 'yego',
+      },
+      outcome: {
+        normal: false,
+        referred: true,
+        counseling: false,
+        other: false,
+        followUpIn6Months: false,
+      },
+      assessedById: recordedById,
+      referralReason: 'Sprint 5.9',
+      referralDestination: 'Ikigo nderabuzima',
+    })
+    expect(result.referralOperationId).toBeTruthy()
+    const op = await store.getOperation(result.referralOperationId!)
+    expect(op?.payload?.recordedById).toBe(recordedById)
+    expect(op?.payload?.recordedBy).toBe(recordedById)
+    expect(op?.payload?.sourceType).toBe('sted')
+    expect(op?.payload?.sourceId).toBe(result.assessment.id)
+    expect(op?.dependsOn).toContain(result.stedOperationId)
+  })
 })
 
 function emptyBuckets() {

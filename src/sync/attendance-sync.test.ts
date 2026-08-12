@@ -529,6 +529,70 @@ describe('Attendance offline sync integration', () => {
     expect((await store.getAttendance(entityId))?._localStatus).toBe('clean')
     expect((await store.getAttendance(entityId))?.version).toBe(1)
   })
+
+  it('pull reconciles dirty local sibling with different UUID for same child+date', async () => {
+    const childId = createUuid()
+    const date = '2026-08-12'
+    const localId = createUuid()
+    const serverId = createUuid()
+    const now = '2026-08-12T08:00:00.000Z'
+    const serverNewer = '2026-08-12T12:00:00.000Z'
+    await store.putAttendance({
+      id: localId,
+      childId,
+      centerId: 'c1',
+      date,
+      present: true,
+      recordedBy: 'local-user',
+      version: 0,
+      deletedAt: null,
+      lastModifiedAt: now,
+      _localStatus: 'dirty',
+      _updatedAtLocal: now,
+    })
+    await store.enqueueOperation({
+      clientOperationId: createUuid(),
+      entityType: 'attendance_record',
+      operation: 'create',
+      entityId: localId,
+      version: 0,
+      payload: { childId, date, present: true },
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: { lastModifiedAt: serverNewer, id: serverId },
+      hasMore: false,
+      limit: 500,
+      created: {
+        ...emptyBuckets(),
+        attendance_record: [
+          {
+            id: serverId,
+            childId,
+            centerId: 'c1',
+            attendanceDate: date,
+            status: 'absent',
+            absentReason: 'sick',
+            recordedById: createUuid(),
+            version: 2,
+            lastModifiedAt: serverNewer,
+            deletedAt: null,
+          },
+        ],
+      },
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+
+    await pullOnce(store, { deviceId: tokenStorage.getDeviceId()! })
+    const adopted = await store.getAttendance(serverId)
+    expect(adopted).toBeTruthy()
+    expect(adopted?._localStatus).toBe('clean')
+    expect(adopted?.present).toBe(false)
+    const sibling = await store.getAttendance(localId)
+    expect(sibling?.deletedAt || sibling?._localStatus === 'clean').toBeTruthy()
+  })
 })
 
 function emptyBuckets() {

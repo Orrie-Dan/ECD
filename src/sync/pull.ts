@@ -10,7 +10,13 @@ import {
   mapPullFeedingMonthSummaryToLocal,
 } from '@/sync/feeding-sync-mapper'
 import { mapPullStedAssessmentToLocal } from '@/sync/sted-sync-mapper'
-import { conflictedEntityIds, shouldSkipDirtyPull } from '@/sync/apply-local'
+import {
+  conflictedEntityIds,
+  shouldSkipDirtyPull,
+  reconcileDirtyAttendanceSibling,
+  reconcileDirtyFeedingDaySibling,
+  reconcileDirtyFeedingMonthSibling,
+} from '@/sync/apply-local'
 
 /**
  * Pull one page and apply entity buckets into LocalStore.
@@ -74,6 +80,7 @@ export async function pullOnce(
       'feeding_days',
       'feeding_month_summaries',
       'sted_assessments',
+      'sync_operations',
       'meta',
     ],
     'rw',
@@ -109,7 +116,11 @@ export async function pullOnce(
         if (mapped.childId && mapped.date) {
           const byKey = await tx.getAttendanceByNaturalKey(mapped.childId, mapped.date)
           if (byKey && byKey.id !== mapped.id) {
-            if (shouldSkipDirtyPull(byKey._localStatus, byKey.id, conflictIds)) continue
+            if (shouldSkipDirtyPull(byKey._localStatus, byKey.id, conflictIds)) {
+              const reconciled = await reconcileDirtyAttendanceSibling(tx, byKey, mapped)
+              await tx.putAttendance(reconciled)
+              continue
+            }
             await tx.softDeleteAttendance(byKey.id, mapped.lastModifiedAt, 'clean')
           }
         }
@@ -187,7 +198,11 @@ export async function pullOnce(
         if (mapped.centerId && mapped.date) {
           const byKey = await tx.getFeedingDayByNaturalKey(mapped.centerId, mapped.date)
           if (byKey && byKey.id !== mapped.id) {
-            if (shouldSkipDirtyPull(byKey._localStatus, byKey.id, conflictIds)) continue
+            if (shouldSkipDirtyPull(byKey._localStatus, byKey.id, conflictIds)) {
+              const reconciled = await reconcileDirtyFeedingDaySibling(tx, byKey, mapped)
+              await tx.putFeedingDay(reconciled)
+              continue
+            }
             await tx.softDeleteFeedingDay(byKey.id, mapped.lastModifiedAt, 'clean')
           }
         }
@@ -222,7 +237,11 @@ export async function pullOnce(
             mapped.yearMonth,
           )
           if (byKey && byKey.id !== mapped.id) {
-            if (shouldSkipDirtyPull(byKey._localStatus, byKey.id, conflictIds)) continue
+            if (shouldSkipDirtyPull(byKey._localStatus, byKey.id, conflictIds)) {
+              const reconciled = await reconcileDirtyFeedingMonthSibling(tx, byKey, mapped)
+              await tx.putFeedingMonthSummary(reconciled)
+              continue
+            }
             await tx.softDeleteFeedingMonthSummary(
               byKey.id,
               mapped.lastModifiedAt,

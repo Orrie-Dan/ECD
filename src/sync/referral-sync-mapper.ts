@@ -69,6 +69,13 @@ export function mapPullReferralToLocal(
 export function buildReferralSyncPayload(
   row: LocalReferralRecord,
 ): Record<string, unknown> {
+  const recordedById =
+    typeof row.recordedById === 'string' ? row.recordedById.trim() : ''
+  if (!recordedById) {
+    throw new Error(
+      'recordedById is required before enqueueing a referral sync operation',
+    )
+  }
   return {
     childId: row.childId,
     centerId: row.centerId,
@@ -80,8 +87,8 @@ export function buildReferralSyncPayload(
     status: row.status,
     notes: row.notes ?? null,
     implementedAt: row.implementedAt ?? null,
-    recordedBy: row.recordedById,
-    recordedById: row.recordedById,
+    recordedBy: recordedById,
+    recordedById,
     ...(row.lastModifiedByDeviceId
       ? { deviceId: row.lastModifiedByDeviceId }
       : {}),

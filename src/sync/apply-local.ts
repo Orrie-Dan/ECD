@@ -1,5 +1,11 @@
 import type { LocalStore } from '@/storage/local-store'
-import type { SyncOperationRecord } from '@/storage/types'
+import type {
+  LocalAttendanceRecord,
+  LocalFeedingDayRecord,
+  LocalFeedingMonthSummaryRecord,
+  SyncableEntityType,
+  SyncOperationRecord,
+} from '@/storage/types'
 
 /**
  * Infer post-apply server version when the push/session DTO does not return it.
@@ -122,7 +128,121 @@ export function shouldSkipDirtyPull(
   conflictIds: Set<string>,
 ): boolean {
   if (localStatus !== 'dirty' && localStatus !== 'pending_delete') return false
-  // Conflicted entities: allow server snapshot to replace local (server wins).
   if (conflictIds.has(entityId)) return false
   return true
+}
+
+type NaturalKeySibling = {
+  id: string
+  version: number
+  lastModifiedAt: string
+  _localStatus: string
+}
+
+/**
+ * Device B has a dirty local UUID that collides with a server row on the same
+ * domain natural key. Adopt the server identity. Keep newer field values.
+ * Do not delete the outbox; retarget it or mark create as applied.
+ */
+export async function reconcileDirtyNaturalKeySibling<T extends NaturalKeySibling>(
+  store: LocalStore,
+  sibling: T,
+  server: T,
+  options: {
+    entityType: SyncableEntityType
+    conflictReason: string
+    softDelete: (id: string, deletedAt: string) => Promise<void>
+  },
+): Promise<T> {
+  const ops = await store.listOperations({
+    status: ['pending', 'blocked', 'syncing', 'failed'],
+  })
+  const related = ops.filter(
+    (op) => op.entityType === options.entityType && op.entityId === sibling.id,
+  )
+
+  const localTs = Date.parse(String(sibling.lastModifiedAt))
+  const serverTs = Date.parse(server.lastModifiedAt)
+  const localNewer = Number.isFinite(localTs) && localTs > serverTs
+
+  if (localNewer) {
+    const merged: T = {
+      ...sibling,
+      id: server.id,
+      version: server.version,
+      _localStatus: 'dirty',
+    }
+    for (const op of related) {
+      await store.updateOperation(op.clientOperationId, {
+        entityId: server.id,
+        localId: server.id,
+        operation: op.operation === 'create' ? 'update' : op.operation,
+        version: server.version,
+        status: op.status === 'failed' ? 'pending' : op.status,
+        payload: op.payload ? { ...op.payload } : op.payload,
+      })
+    }
+    await options.softDelete(sibling.id, server.lastModifiedAt)
+    return merged
+  }
+
+  for (const op of related) {
+    if (op.operation === 'create') {
+      await store.updateOperation(op.clientOperationId, {
+        status: 'applied',
+        lastError: undefined,
+        entityId: server.id,
+      })
+    } else {
+      await store.updateOperation(op.clientOperationId, {
+        entityId: server.id,
+        localId: server.id,
+        version: server.version,
+        status: 'conflict',
+        lastError: options.conflictReason,
+      })
+    }
+  }
+  await options.softDelete(sibling.id, server.lastModifiedAt)
+  return { ...server, _localStatus: 'clean' }
+}
+
+/** Attendance natural key: (childId, date). */
+export async function reconcileDirtyAttendanceSibling(
+  store: LocalStore,
+  sibling: LocalAttendanceRecord,
+  server: LocalAttendanceRecord,
+): Promise<LocalAttendanceRecord> {
+  return reconcileDirtyNaturalKeySibling(store, sibling, server, {
+    entityType: 'attendance_record',
+    conflictReason: 'Cross-device attendance natural-key conflict',
+    softDelete: (id, deletedAt) => store.softDeleteAttendance(id, deletedAt, 'clean'),
+  })
+}
+
+/** Feeding day natural key: (centerId, date) ↔ @@unique([centerId, recordedDate]). */
+export async function reconcileDirtyFeedingDaySibling(
+  store: LocalStore,
+  sibling: LocalFeedingDayRecord,
+  server: LocalFeedingDayRecord,
+): Promise<LocalFeedingDayRecord> {
+  return reconcileDirtyNaturalKeySibling(store, sibling, server, {
+    entityType: 'center_feeding_day',
+    conflictReason: 'Cross-device feeding-day natural-key conflict',
+    softDelete: (id, deletedAt) => store.softDeleteFeedingDay(id, deletedAt, 'clean'),
+  })
+}
+
+/** Feeding month natural key: (centerId, yearMonth). */
+export async function reconcileDirtyFeedingMonthSibling(
+  store: LocalStore,
+  sibling: LocalFeedingMonthSummaryRecord,
+  server: LocalFeedingMonthSummaryRecord,
+): Promise<LocalFeedingMonthSummaryRecord> {
+  return reconcileDirtyNaturalKeySibling(store, sibling, server, {
+    entityType: 'center_feeding_month_summary',
+    conflictReason: 'Cross-device feeding-month natural-key conflict',
+    softDelete: (id, deletedAt) =>
+      store.softDeleteFeedingMonthSummary(id, deletedAt, 'clean'),
+  })
 }

@@ -15,6 +15,7 @@ import { queryClient } from '@/api/query-client'
 import { normalizeApiError, type ApiError } from '@/api/errors'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { deactivateLocalWorkspace } from '@/storage/local-workspace'
+import { clearBrowserDeviceIdentity } from '@/features/device'
 import type {
   AuthMeResponseDto,
   AuthTokensResponseDto,
@@ -66,6 +67,7 @@ export function ApiAuthProvider({ children }: { children: ReactNode }) {
 
   const clearSession = useCallback(() => {
     tokenStorage.clearTokens()
+    clearBrowserDeviceIdentity()
     setAccessToken(null)
     setApiUser(null)
     setStatus(env.isLive ? 'unauthenticated' : 'idle')
@@ -80,6 +82,11 @@ export function ApiAuthProvider({ children }: { children: ReactNode }) {
     setStatus('authenticated')
     if (user !== undefined) {
       setApiUser(user)
+    }
+    // Authenticated session must not keep a stale AUTH_REQUIRED flag from a
+    // prior expiry — device bootstrap is a separate state.
+    if (env.isLive) {
+      getSyncEngine().setAuthRequired(false)
     }
   }, [])
 

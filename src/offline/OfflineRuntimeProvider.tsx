@@ -10,6 +10,7 @@ import { ensureDeviceRegistered } from '@/features/device'
 import { unblockChildCreatesNeedingVillage } from '@/features/children/local-children'
 import { resolveHomeVillageId } from '@/api/resources/children'
 import { notifyDeviceRegistrationFailed } from '@/offline/DeviceRegistrationBridge'
+import { SYNC_HEARTBEAT_MS } from '@/sync/sync-types'
 
 /**
  * LIVE-only offline runtime: bind local owner, device ensure, network listeners, sync.
@@ -43,9 +44,16 @@ export function OfflineRuntimeProvider({ children }: { children: ReactNode }) {
       }
     })
 
+    const heartbeat = setInterval(() => {
+      const snap = networkState.getSnapshot()
+      if (snap.status === 'OFFLINE') return
+      requestSync()
+    }, SYNC_HEARTBEAT_MS)
+
     return () => {
       unsubNet()
       networkState.stop()
+      clearInterval(heartbeat)
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
     }
   }, [])
@@ -58,6 +66,10 @@ export function OfflineRuntimeProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false
     void (async () => {
+      // Authenticated but device/workspace not ready yet — distinct from AUTH_REQUIRED.
+      getSyncEngine().setAuthRequired(false)
+      const engine = getSyncEngine()
+      // Soft signal via syncNow short-circuit once owner/device missing.
       try {
         await activateLocalWorkspace(userId, apiAuth.apiUser?.centerId ?? undefined)
       } catch {
@@ -73,7 +85,7 @@ export function OfflineRuntimeProvider({ children }: { children: ReactNode }) {
       })
       if (cancelled || getActiveOwnerUserId() !== userId) return
       if (!result.ok && result.reason === 'unauthorized') {
-        getSyncEngine().setAuthRequired(true)
+        engine.setAuthRequired(true)
         return
       }
       if (!result.ok && result.reason === 'network') {
@@ -86,10 +98,10 @@ export function OfflineRuntimeProvider({ children }: { children: ReactNode }) {
       }
       // Registration failure must not wipe local data; sync may be blocked until device exists.
       if (result.ok) {
-        getSyncEngine().setAuthRequired(false)
+        engine.setAuthRequired(false)
         await unblockChildCreatesNeedingVillage(getLocalStore(), resolveHomeVillageId)
         if (cancelled || getActiveOwnerUserId() !== userId) return
-        await getSyncEngine().syncNow()
+        await engine.syncNow()
       }
     })()
 

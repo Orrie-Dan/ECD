@@ -408,6 +408,290 @@ describe('Feeding offline sync integration', () => {
     expect(batch.length).toBeLessThanOrEqual(MAX_PUSH_BATCH)
     expect(batch.length).toBe(12)
   })
+
+  it('pull reconciles dirty feeding-day sibling with different UUID for same center+date', async () => {
+    const centerId = createUuid()
+    const localId = createUuid()
+    const serverId = createUuid()
+    const now = '2026-08-12T08:00:00.000Z'
+    const serverNewer = '2026-08-12T12:00:00.000Z'
+    await store.putFeedingDay({
+      id: localId,
+      centerId,
+      date: '2026-08-12',
+      milkServed: false,
+      porridgeServed: true,
+      balancedMealServed: false,
+      cerealsOrTubers: false,
+      legumes: false,
+      dairy: false,
+      animalProducts: false,
+      fruitsVegetables: false,
+      addedFat: false,
+      recordedById: createUuid(),
+      version: 0,
+      deletedAt: null,
+      lastModifiedAt: now,
+      _localStatus: 'dirty',
+      _updatedAtLocal: now,
+    })
+    await store.enqueueOperation({
+      clientOperationId: createUuid(),
+      entityType: 'center_feeding_day',
+      operation: 'create',
+      entityId: localId,
+      version: 0,
+      payload: { centerId, recordedDate: '2026-08-12' },
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: { lastModifiedAt: serverNewer, id: serverId },
+      hasMore: false,
+      limit: 500,
+      created: {
+        ...emptyBuckets(),
+        center_feeding_day: [
+          {
+            id: serverId,
+            centerId,
+            recordedDate: '2026-08-12',
+            milkServed: true,
+            porridgeServed: false,
+            balancedMealServed: false,
+            cerealsOrTubers: false,
+            legumes: false,
+            dairy: false,
+            animalProducts: false,
+            fruitsVegetables: false,
+            addedFat: false,
+            recordedById: createUuid(),
+            version: 2,
+            lastModifiedAt: serverNewer,
+            deletedAt: null,
+          },
+        ],
+      },
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+
+    await pullOnce(store, { deviceId: tokenStorage.getDeviceId()! })
+    const adopted = await store.getFeedingDay(serverId)
+    expect(adopted).toBeTruthy()
+    expect(adopted?._localStatus).toBe('clean')
+    expect(adopted?.milkServed).toBe(true)
+    const sibling = await store.getFeedingDay(localId)
+    expect(sibling?.deletedAt || sibling?._localStatus === 'clean').toBeTruthy()
+  })
+
+  it('pull keeps newer local feeding-day fields when dirty sibling is newer than server', async () => {
+    const centerId = createUuid()
+    const localId = createUuid()
+    const serverId = createUuid()
+    const localNewer = '2026-08-12T14:00:00.000Z'
+    const serverTs = '2026-08-12T08:00:00.000Z'
+    const opId = createUuid()
+    await store.putFeedingDay({
+      id: localId,
+      centerId,
+      date: '2026-08-12',
+      milkServed: true,
+      porridgeServed: true,
+      balancedMealServed: true,
+      cerealsOrTubers: true,
+      legumes: false,
+      dairy: false,
+      animalProducts: false,
+      fruitsVegetables: false,
+      addedFat: false,
+      recordedById: createUuid(),
+      version: 0,
+      deletedAt: null,
+      lastModifiedAt: localNewer,
+      _localStatus: 'dirty',
+      _updatedAtLocal: localNewer,
+    })
+    await store.enqueueOperation({
+      clientOperationId: opId,
+      entityType: 'center_feeding_day',
+      operation: 'create',
+      entityId: localId,
+      version: 0,
+      payload: { centerId, recordedDate: '2026-08-12', milkServed: true },
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: { lastModifiedAt: serverTs, id: serverId },
+      hasMore: false,
+      limit: 500,
+      created: {
+        ...emptyBuckets(),
+        center_feeding_day: [
+          {
+            id: serverId,
+            centerId,
+            recordedDate: '2026-08-12',
+            milkServed: false,
+            porridgeServed: false,
+            balancedMealServed: false,
+            cerealsOrTubers: false,
+            legumes: false,
+            dairy: false,
+            animalProducts: false,
+            fruitsVegetables: false,
+            addedFat: false,
+            recordedById: createUuid(),
+            version: 3,
+            lastModifiedAt: serverTs,
+            deletedAt: null,
+          },
+        ],
+      },
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+
+    await pullOnce(store, { deviceId: tokenStorage.getDeviceId()! })
+    const adopted = await store.getFeedingDay(serverId)
+    expect(adopted?._localStatus).toBe('dirty')
+    expect(adopted?.milkServed).toBe(true)
+    expect(adopted?.balancedMealServed).toBe(true)
+    expect(adopted?.version).toBe(3)
+    const op = await store.getOperation(opId)
+    expect(op?.entityId).toBe(serverId)
+    expect(op?.operation).toBe('update')
+    expect(op?.status).toBe('pending')
+  })
+
+  it('does not merge feeding days with different dates at the same center', async () => {
+    const centerId = createUuid()
+    const localId = createUuid()
+    const serverId = createUuid()
+    const now = '2026-08-12T08:00:00.000Z'
+    await store.putFeedingDay({
+      id: localId,
+      centerId,
+      date: '2026-08-11',
+      milkServed: true,
+      porridgeServed: false,
+      balancedMealServed: false,
+      cerealsOrTubers: false,
+      legumes: false,
+      dairy: false,
+      animalProducts: false,
+      fruitsVegetables: false,
+      addedFat: false,
+      recordedById: createUuid(),
+      version: 0,
+      deletedAt: null,
+      lastModifiedAt: now,
+      _localStatus: 'dirty',
+      _updatedAtLocal: now,
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: { lastModifiedAt: now, id: serverId },
+      hasMore: false,
+      limit: 500,
+      created: {
+        ...emptyBuckets(),
+        center_feeding_day: [
+          {
+            id: serverId,
+            centerId,
+            recordedDate: '2026-08-12',
+            milkServed: false,
+            porridgeServed: true,
+            balancedMealServed: false,
+            cerealsOrTubers: false,
+            legumes: false,
+            dairy: false,
+            animalProducts: false,
+            fruitsVegetables: false,
+            addedFat: false,
+            recordedById: createUuid(),
+            version: 1,
+            lastModifiedAt: now,
+            deletedAt: null,
+          },
+        ],
+      },
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+
+    await pullOnce(store, { deviceId: tokenStorage.getDeviceId()! })
+    expect((await store.getFeedingDay(localId))?._localStatus).toBe('dirty')
+    expect((await store.getFeedingDay(localId))?.date).toBe('2026-08-11')
+    expect((await store.getFeedingDay(serverId))?._localStatus).toBe('clean')
+    expect((await store.getFeedingDay(serverId))?.date).toBe('2026-08-12')
+  })
+
+  it('pull reconciles dirty feeding-month sibling with different UUID for same center+yearMonth', async () => {
+    const centerId = createUuid()
+    const localId = createUuid()
+    const serverId = createUuid()
+    const now = '2026-08-12T08:00:00.000Z'
+    const serverNewer = '2026-08-12T12:00:00.000Z'
+    await store.putFeedingMonthSummary({
+      id: localId,
+      centerId,
+      yearMonth: '2026-08',
+      milkLiters: 4,
+      flourKg: 1,
+      foodSource: 'local',
+      updatedById: createUuid(),
+      version: 0,
+      deletedAt: null,
+      lastModifiedAt: now,
+      _localStatus: 'dirty',
+      _updatedAtLocal: now,
+    })
+    await store.enqueueOperation({
+      clientOperationId: createUuid(),
+      entityType: 'center_feeding_month_summary',
+      operation: 'create',
+      entityId: localId,
+      version: 0,
+      payload: { centerId, yearMonth: '2026-08' },
+    })
+    tokenStorage.setDeviceId(createUuid())
+    vi.mocked(syncControllerPull).mockResolvedValue({
+      cursor: null,
+      nextCursor: { lastModifiedAt: serverNewer, id: serverId },
+      hasMore: false,
+      limit: 500,
+      created: {
+        ...emptyBuckets(),
+        center_feeding_month_summary: [
+          {
+            id: serverId,
+            centerId,
+            yearMonth: '2026-08',
+            milkLiters: 20,
+            flourKg: 8,
+            foodSource: 'donation',
+            updatedById: createUuid(),
+            version: 2,
+            lastModifiedAt: serverNewer,
+            deletedAt: null,
+          },
+        ],
+      },
+      updated: emptyBuckets(),
+      deleted: emptyBuckets(),
+    })
+
+    await pullOnce(store, { deviceId: tokenStorage.getDeviceId()! })
+    const adopted = await store.getFeedingMonthSummary(serverId)
+    expect(adopted?._localStatus).toBe('clean')
+    expect(adopted?.milkLiters).toBe(20)
+    const sibling = await store.getFeedingMonthSummary(localId)
+    expect(sibling?.deletedAt || sibling?._localStatus === 'clean').toBeTruthy()
+  })
 })
 
 function emptyBuckets() {

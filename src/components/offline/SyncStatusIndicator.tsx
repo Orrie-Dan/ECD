@@ -2,6 +2,7 @@ import { env } from '@/config/env'
 import { common } from '@/locales/rw/common'
 import { useNetworkState } from '@/network'
 import { usePendingSyncSummary } from '@/sync/use-pending-summary'
+import { classifyBlockedReason } from '@/sync/failure-class'
 import { Button } from '@/components/ui/Button'
 
 function formatTime(iso: string | null): string {
@@ -17,9 +18,25 @@ function statusLabel(
   syncStatus: string,
   networkStatus: string,
   failedCount: number,
+  pendingCount: number,
+  blockedCount: number,
+  lastError?: string | null,
 ): { label: string; tone: string } {
   if (syncStatus === 'AUTH_REQUIRED') {
     return { label: common.sync.signInRequired, tone: 'text-warning' }
+  }
+  if (syncStatus === 'DEVICE_BLOCKED') {
+    return { label: common.sync.deviceBlocked, tone: 'text-warning' }
+  }
+  if (
+    syncStatus === 'DEVICE_PENDING' ||
+    lastError === 'Device not registered' ||
+    lastError === 'No active local owner'
+  ) {
+    return { label: common.sync.devicePending, tone: 'text-warning' }
+  }
+  if (syncStatus === 'SERVER_UNAVAILABLE') {
+    return { label: common.sync.serverUnavailable, tone: 'text-warning' }
   }
   if (networkStatus === 'OFFLINE' || syncStatus === 'OFFLINE') {
     return { label: common.sync.offline, tone: 'text-warning' }
@@ -30,6 +47,12 @@ function statusLabel(
   if (syncStatus === 'SYNCING') {
     return { label: common.sync.syncing, tone: 'text-primary' }
   }
+  if (blockedCount > 0 && pendingCount === blockedCount && failedCount === 0) {
+    return { label: common.sync.needsAttention, tone: 'text-warning' }
+  }
+  if (syncStatus === 'PENDING' || pendingCount > 0) {
+    return { label: common.sync.waitingToSync, tone: 'text-warning' }
+  }
   if (syncStatus === 'SYNC_ERROR') {
     return {
       label: failedCount > 0 ? common.sync.couldntSync : common.sync.failed,
@@ -39,7 +62,7 @@ function statusLabel(
   if (syncStatus === 'CONFLICT_PRESENT') {
     return { label: common.sync.needsAttention, tone: 'text-warning' }
   }
-  return { label: common.sync.online, tone: 'text-text-secondary' }
+  return { label: common.sync.synced, tone: 'text-text-secondary' }
 }
 
 /**
@@ -52,7 +75,14 @@ export function SyncStatusIndicator() {
 
   if (env.isMock) return null
 
-  const { label, tone } = statusLabel(sync.status, network.status, sync.failedCount)
+  const { label, tone } = statusLabel(
+    sync.status,
+    network.status,
+    sync.failedCount,
+    sync.pendingCount,
+    sync.blockedCount ?? 0,
+    sync.lastError,
+  )
   const busy = sync.status === 'SYNCING'
   const pending =
     sync.pendingCount > 0
@@ -66,9 +96,9 @@ export function SyncStatusIndicator() {
   return (
     <button
       type="button"
-      disabled={busy}
+      disabled={busy || sync.status === 'DEVICE_PENDING'}
       onClick={() => {
-        if (!busy) void sync.syncNow()
+        if (!busy && sync.status !== 'DEVICE_PENDING') void sync.syncNow()
       }}
       className="flex flex-col items-end max-w-[12rem] text-right px-2 py-1 rounded-lg hover:bg-background-subtle transition-colors disabled:opacity-70"
       title={sync.lastError ?? (busy ? common.sync.syncingBusy : common.sync.tapToSync)}
@@ -77,9 +107,11 @@ export function SyncStatusIndicator() {
       <span className={`text-caption font-medium leading-tight ${tone}`}>{label}</span>
       {pending && <span className="text-[11px] text-text-muted leading-tight">{pending}</span>}
       {conflict && <span className="text-[11px] text-warning leading-tight">{conflict}</span>}
-      <span className="text-[11px] text-text-muted leading-tight">
-        {common.sync.lastSynced.replace('{time}', formatTime(sync.lastSyncedAt))}
-      </span>
+      {sync.pendingCount === 0 && sync.failedCount === 0 && sync.status === 'IDLE' ? (
+        <span className="text-[11px] text-text-muted leading-tight">
+          {common.sync.lastSynced.replace('{time}', formatTime(sync.lastSyncedAt))}
+        </span>
+      ) : null}
     </button>
   )
 }
@@ -105,16 +137,27 @@ export function PendingSyncPanel({ className = '' }: { className?: string }) {
 
   if (env.isMock) return null
 
-  const { label, tone } = statusLabel(sync.status, network.status, sync.failedCount)
+  const { label, tone } = statusLabel(
+    sync.status,
+    network.status,
+    sync.failedCount,
+    sync.pendingCount,
+    sync.blockedCount ?? 0,
+    sync.lastError,
+  )
   const busy = sync.status === 'SYNCING' || sync.acknowledging
 
   return (
     <div className={`rounded-xl border border-border bg-background-subtle p-4 ${className}`}>
       <h3 className="text-subheading text-text mb-3">{common.sync.statusPanelTitle}</h3>
       <p className={`text-body font-medium ${tone}`}>{label}</p>
-      <p className="text-caption text-text-muted mt-1">
-        {common.sync.lastSynced.replace('{time}', formatTime(sync.lastSyncedAt))}
-      </p>
+      {sync.pendingCount === 0 && sync.failedCount === 0 && sync.status === 'IDLE' ? (
+        <p className="text-caption text-text-muted mt-1">
+          {common.sync.lastSynced.replace('{time}', formatTime(sync.lastSyncedAt))}
+        </p>
+      ) : (
+        <p className="text-caption text-text-muted mt-1">{common.sync.savedOnDeviceHint}</p>
+      )}
       <p className="text-caption text-text-muted mt-1">
         {common.sync.diagnosticQueue
           .replace('{pending}', String(sync.pendingCount))
@@ -170,14 +213,30 @@ export function PendingSyncPanel({ className = '' }: { className?: string }) {
       )}
       {(sync.blockedCount ?? 0) > 0 && (
         <div className="mt-3 rounded-lg border border-border p-3 space-y-2">
-          <p className="text-caption font-semibold text-text-secondary">
-            {common.sync.blockedCount.replace('{count}', String(sync.blockedCount))}
-          </p>
+          {sync.blockedItems.some(
+            (item) => classifyBlockedReason(item.lastError) === 'village_reference',
+          ) ? (
+            <>
+              <p className="text-caption font-semibold text-text-secondary">
+                {common.sync.blockedVillageCount.replace(
+                  '{count}',
+                  String(sync.blockedCount),
+                )}
+              </p>
+              <p className="text-caption text-text-muted">{common.sync.blockedVillageHint}</p>
+            </>
+          ) : (
+            <p className="text-caption font-semibold text-text-secondary">
+              {common.sync.blockedCount.replace('{count}', String(sync.blockedCount))}
+            </p>
+          )}
           {sync.blockedItems.length > 0 && (
             <ul className="space-y-1.5">
               {sync.blockedItems.map((item) => (
                 <li key={item.clientOperationId} className="text-body text-text">
-                  {common.sync.blockedItem.replace('{label}', item.label)}
+                  {classifyBlockedReason(item.lastError) === 'village_reference'
+                    ? common.sync.blockedVillageItem.replace('{label}', item.label)
+                    : common.sync.blockedItem.replace('{label}', item.label)}
                 </li>
               ))}
             </ul>
@@ -206,7 +265,7 @@ export function PendingSyncPanel({ className = '' }: { className?: string }) {
         variant="primary"
         className="mt-4"
         fullWidth
-        disabled={busy || network.status === 'OFFLINE' || sync.status === 'AUTH_REQUIRED'}
+        disabled={busy || network.status === 'OFFLINE' || sync.status === 'AUTH_REQUIRED' || sync.status === 'DEVICE_PENDING'}
         onClick={() => void sync.syncNow()}
       >
         {busy ? common.sync.syncingBusy : common.sync.syncNow}

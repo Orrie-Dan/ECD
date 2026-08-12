@@ -146,6 +146,23 @@ describe('Outbox', () => {
     expect(isOperationReady(op, byId)).toBe(true)
   })
 
+  it('does not auto-unblock village-reference blocked child creates', async () => {
+    const opId = createUuid()
+    await store.enqueueOperation({
+      clientOperationId: opId,
+      entityType: 'child',
+      operation: 'create',
+      entityId: createUuid(),
+      version: 0,
+      status: 'blocked',
+      lastError: 'homeVillageId required before sync',
+    })
+    await refreshBlockedOperations(store)
+    expect((await store.getOperation(opId))?.status).toBe('blocked')
+    const batch = await selectPushBatch(store)
+    expect(batch.map((o) => o.clientOperationId)).not.toContain(opId)
+  })
+
   it('attendance create/update/delete enqueue correct operations', async () => {
     const created = await upsertAttendanceLocalFirst(store, {
       childId: 'c1',
@@ -231,7 +248,10 @@ describe('Outbox', () => {
       version: 0,
     })
     await store.updateOperation(conflictId, { status: 'conflict', lastError: 'version mismatch' })
-    await store.updateOperation(failedId, { status: 'failed', lastError: 'not found' })
+    await store.updateOperation(failedId, {
+      status: 'failed',
+      lastError: 'append-only and cannot be updated',
+    })
     expect(await store.getOperation(conflictId)).toMatchObject({ status: 'conflict' })
     expect(await store.getOperation(failedId)).toMatchObject({ status: 'failed' })
     const ready = await selectPushBatch(store)

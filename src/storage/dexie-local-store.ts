@@ -214,6 +214,8 @@ export class DexieLocalStore implements LocalStore {
         | 'updatedAt'
         | 'operation'
         | 'ownerUserId'
+        | 'entityId'
+        | 'localId'
       >
     >,
   ): Promise<void> {

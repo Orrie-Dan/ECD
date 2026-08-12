@@ -9,6 +9,7 @@ import type {
 } from '@/storage/types'
 import { buildNutritionScreeningSyncPayload } from '@/sync/nutrition-sync-mapper'
 import { buildReferralSyncPayload } from '@/sync/referral-sync-mapper'
+import { findUnsyncedChildCreateOp } from '@/sync/child-dependency'
 import type { GrowthAssessmentViewModel, GrowthMeasurementViewModel } from '@/models/growth'
 import type { NutritionAssessment, NutritionStatus } from '@/types'
 
@@ -155,6 +156,9 @@ export async function createScreeningLocalFirst(
     weightKg: input.weightKg,
     heightCm: input.heightCm,
   })
+  if (!nutritionStatus) {
+    throw new Error('nutritionStatus is required to save a nutrition screening')
+  }
   const needsReferral = requiresReferral(nutritionStatus)
 
   const screening: LocalNutritionScreeningRecord = {
@@ -185,6 +189,7 @@ export async function createScreeningLocalFirst(
 
   const assessment = localScreeningToAssessment(screening)
   const createReferral = shouldEnqueueReferral(assessment)
+  const childDep = await findUnsyncedChildCreateOp(store, input.childId)
 
   // Duplicate prevention: never create a second local referral for the same screening.
   const existingReferral = createReferral
@@ -238,8 +243,9 @@ export async function createScreeningLocalFirst(
       localId: screening.id,
       payload: buildNutritionScreeningSyncPayload(screening),
       version: 0,
-      status: 'pending',
-      lastError: undefined,
+      status: childDep ? 'blocked' : 'pending',
+      dependsOn: childDep ? [childDep] : [],
+      lastError: childDep ? 'Waiting for dependency operations' : undefined,
     })
 
     if (referral && referralOpId) {
@@ -253,7 +259,7 @@ export async function createScreeningLocalFirst(
         payload: buildReferralSyncPayload(referral),
         version: 0,
         status: 'blocked',
-        dependsOn: [screeningOpId],
+        dependsOn: childDep ? [screeningOpId, childDep] : [screeningOpId],
         lastError: 'Waiting for dependency operations',
       })
     }

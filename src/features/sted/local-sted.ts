@@ -13,6 +13,7 @@ import type {
 } from '@/storage/types'
 import { buildStedAssessmentSyncPayload } from '@/sync/sted-sync-mapper'
 import { buildReferralSyncPayload } from '@/sync/referral-sync-mapper'
+import { findUnsyncedChildCreateOp } from '@/sync/child-dependency'
 import type { StedAssessmentCreateInput, StedAssessmentViewModel } from '@/models/sted'
 import type {
   StedAgeBand,
@@ -181,6 +182,7 @@ export async function createStedLocalFirst(
   const now = new Date().toISOString()
   const assessmentId = createUuid()
   const stedOpId = createUuid()
+  const childDep = await findUnsyncedChildCreateOp(store, input.childId)
   const noProblem = input.noProblem ?? isPhysicalClear(input.physical)
 
   const physicalAssessment: Record<string, unknown> = { ...input.physical }
@@ -279,8 +281,9 @@ export async function createStedLocalFirst(
       localId: record.id,
       payload: buildStedAssessmentSyncPayload(record),
       version: 0,
-      status: 'pending',
-      lastError: undefined,
+      status: childDep ? 'blocked' : 'pending',
+      dependsOn: childDep ? [childDep] : [],
+      lastError: childDep ? 'Waiting for dependency operations' : undefined,
     })
 
     if (referral && referralOpId) {
@@ -294,7 +297,7 @@ export async function createStedLocalFirst(
         payload: buildReferralSyncPayload(referral),
         version: 0,
         status: 'blocked',
-        dependsOn: [stedOpId],
+        dependsOn: childDep ? [stedOpId, childDep] : [stedOpId],
         lastError: 'Waiting for dependency operations',
       })
     }

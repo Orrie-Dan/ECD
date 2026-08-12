@@ -1,6 +1,7 @@
 import type { LocalStore } from '@/storage/local-store'
 import type { OutboxStatus, SyncOperationRecord } from '@/storage/types'
 import { getActiveOwnerUserId } from '@/storage/ownership'
+import { isRetryableOutboxError, isVillageReferenceBlocked } from '@/sync/failure-class'
 
 /**
  * Outbox readiness: an op is ready when every dependency is applied.
@@ -10,9 +11,33 @@ export function isOperationReady(
   byId: Map<string, SyncOperationRecord>,
 ): boolean {
   if (op.status === 'applied' || op.status === 'syncing') return false
-  if (op.status === 'conflict' || op.status === 'failed') return false
-  // pending or blocked: ready when all deps are applied (or no deps).
+  if (op.status === 'conflict') return false
+  if (op.status === 'failed' && !isRetryableOutboxError(op.lastError)) return false
+  if (isVillageReferenceBlocked(op.lastError)) return false
   return (op.dependsOn ?? []).every((depId) => byId.get(depId)?.status === 'applied')
+}
+
+export async function recoverRetryableFailedOperations(
+  store: LocalStore,
+  ownerUserId?: string,
+): Promise<void> {
+  const owner = ownerUserId ?? getActiveOwnerUserId() ?? undefined
+  const failedCount = await store.countOperations(
+    ['failed'],
+    owner ? { ownerUserId: owner } : undefined,
+  )
+  if (failedCount === 0) return
+  const failed = await store.listOperations({
+    ownerUserId: owner,
+    status: 'failed',
+  })
+  for (const op of failed) {
+    if (!isRetryableOutboxError(op.lastError)) continue
+    await store.updateOperation(op.clientOperationId, {
+      status: 'pending',
+      lastError: op.lastError,
+    })
+  }
 }
 
 export async function refreshBlockedOperations(
@@ -30,6 +55,7 @@ export async function refreshBlockedOperations(
     if (op.status !== 'pending' && op.status !== 'blocked') continue
     const ready = isOperationReady({ ...op, status: 'pending' }, byId)
     if (ready && op.status === 'blocked') {
+      if (isVillageReferenceBlocked(op.lastError)) continue
       await store.updateOperation(op.clientOperationId, {
         status: 'pending',
         lastError: undefined,
@@ -37,7 +63,9 @@ export async function refreshBlockedOperations(
     } else if (!ready && op.status === 'pending') {
       await store.updateOperation(op.clientOperationId, {
         status: 'blocked',
-        lastError: 'Waiting for dependency operations',
+        lastError: isVillageReferenceBlocked(op.lastError)
+          ? op.lastError
+          : 'Waiting for dependency operations',
       })
     }
   }
@@ -67,6 +95,7 @@ export async function selectPushBatch(
     return []
   }
 
+  await recoverRetryableFailedOperations(store, ownerUserId)
   await refreshBlockedOperations(store, ownerUserId)
   const all = await store.listOperations({ ownerUserId })
   const byId = new Map(all.map((op) => [op.clientOperationId, op]))

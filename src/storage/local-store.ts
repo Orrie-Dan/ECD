@@ -144,6 +144,8 @@ export interface LocalStore {
         | 'updatedAt'
         | 'operation'
         | 'ownerUserId'
+        | 'entityId'
+        | 'localId'
       >
     >,
   ): Promise<void>

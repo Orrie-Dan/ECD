@@ -198,7 +198,7 @@ describe('STED assessment offline sync (Sprint 4.8.4)', () => {
     expect(batch.map((o) => o.clientOperationId)).toEqual([result.stedOperationId])
     expect(batch.find((o) => o.clientOperationId === result.referralOperationId)).toBeUndefined()
 
-    // STED fails → referral remains blocked.
+    // STED retryable failure is recovered into pending; referral stays blocked.
     await store.updateOperation(result.stedOperationId, {
       status: 'failed',
       lastError: 'network',
@@ -206,7 +206,9 @@ describe('STED assessment offline sync (Sprint 4.8.4)', () => {
     await refreshBlockedOperations(store)
     referralOp = await store.getOperation(result.referralOperationId!)
     expect(referralOp?.status).toBe('blocked')
-    expect((await selectPushBatch(store)).map((o) => o.clientOperationId)).toEqual([])
+    expect((await selectPushBatch(store)).map((o) => o.clientOperationId)).toEqual([
+      result.stedOperationId,
+    ])
 
     // STED applied → referral becomes pending.
     await store.updateOperation(result.stedOperationId, {

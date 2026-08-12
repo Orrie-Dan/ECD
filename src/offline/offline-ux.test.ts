@@ -160,6 +160,20 @@ describe('Sprint 4.8.7 offline UX & operational hardening', () => {
     ).toBeGreaterThan(0)
   })
 
+  it('Sprint 5.9: missing device is DEVICE_PENDING not AUTH_REQUIRED', async () => {
+    await activateLocalWorkspace(USER, 'c1')
+    tokenStorage.setTokens({ accessToken: 'a', refreshToken: 'r' })
+    tokenStorage.clearDeviceId()
+    await getLocalStore().setMeta(META_KEYS.deviceId, '')
+
+    const engine = resetSyncEngineForTests(getLocalStore())
+    engine.setAuthRequired(false)
+    await engine.syncNow()
+    const snap = await engine.getSnapshot()
+    expect(snap.status).toBe('DEVICE_PENDING')
+    expect(snap.lastError).toBe('Device not registered')
+  })
+
   it('concurrent syncNow calls share one in-flight cycle', async () => {
     await activateLocalWorkspace(USER, 'c1')
     tokenStorage.setDeviceId('device-ux')

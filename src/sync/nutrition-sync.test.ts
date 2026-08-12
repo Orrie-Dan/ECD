@@ -153,7 +153,9 @@ describe('Growth/Nutrition screening offline sync', () => {
     await refreshBlockedOperations(store)
     referralOp = await store.getOperation(result.referralOperationId!)
     expect(referralOp?.status).toBe('blocked')
-    expect((await selectPushBatch(store)).map((o) => o.clientOperationId)).toEqual([])
+    expect((await selectPushBatch(store)).map((o) => o.clientOperationId)).toEqual([
+      result.screeningOperationId,
+    ])
 
     // Retry screening → applied → referral becomes pending.
     await store.updateOperation(result.screeningOperationId, {
@@ -403,6 +405,51 @@ describe('Growth/Nutrition screening offline sync', () => {
 
     await getSyncEngine().syncNow()
     expect((await store.getOperation(result.screeningOperationId))?.status).toBe('conflict')
+  })
+
+  it('Sprint 5.9: rejects nutrition payload without nutritionStatus before enqueue', async () => {
+    const { buildNutritionScreeningSyncPayload } = await import(
+      '@/sync/nutrition-sync-mapper'
+    )
+    const now = new Date().toISOString()
+    expect(() =>
+      buildNutritionScreeningSyncPayload({
+        id: createUuid(),
+        childId: createUuid(),
+        centerId: createUuid(),
+        screeningDate: '2026-08-12',
+        weightKg: 12,
+        muacCm: 14,
+        heightCm: null,
+        headCircumferenceCm: null,
+        nutritionStatus: '',
+        requiresReferral: false,
+        mealQuality: null,
+        feedingConcern: false,
+        dietNotes: null,
+        recordedById: createUuid(),
+        version: 0,
+        deletedAt: null,
+        lastModifiedAt: now,
+        createdAt: now,
+        _localStatus: 'dirty',
+        _updatedAtLocal: now,
+      }),
+    ).toThrow(/nutritionStatus is required/)
+  })
+
+  it('Sprint 5.9: local create always enqueues nutritionStatus', async () => {
+    const result = await createScreeningLocalFirst(store, {
+      childId: createUuid(),
+      centerId: createUuid(),
+      date: '2026-08-12',
+      weightKg: 12,
+      muacCm: 14,
+      recordedById: createUuid(),
+    })
+    const op = await store.getOperation(result.screeningOperationId)
+    expect(typeof op?.payload?.nutritionStatus).toBe('string')
+    expect(String(op?.payload?.nutritionStatus).length).toBeGreaterThan(0)
   })
 })
 

@@ -18,7 +18,17 @@ import {
 } from '@/sync/sync-types'
 import { tokenStorage } from '@/api/token-storage'
 import { normalizeApiError } from '@/api/errors'
+import { queryClient } from '@/api/query-client'
+import { children } from '@/api/query-keys'
 import { getActiveOwnerUserId } from '@/storage/ownership'
+import {
+  clearBrowserDeviceIdentity,
+  ensureDeviceRegistered,
+} from '@/features/device'
+import {
+  isDeviceOwnershipError,
+  isServerUnavailableError,
+} from '@/sync/failure-class'
 
 type Listener = (snapshot: SyncStatusSnapshot) => void
 
@@ -29,6 +39,7 @@ export class SyncEngine {
   private listeners = new Set<Listener>()
   private running: Promise<void> | null = null
   private authRequired = false
+  private deviceBlocked = false
   private abortRequested = false
   /** Fallback store when constructed for tests; cycles pin their own DB-bound store. */
   private readonly store: LocalStore
@@ -80,6 +91,7 @@ export class SyncEngine {
 
   setAuthRequired(required: boolean): void {
     this.authRequired = required
+    if (!required) this.deviceBlocked = false
     void this.emitAsync()
   }
 
@@ -127,6 +139,12 @@ export class SyncEngine {
       return
     }
 
+    if (this.deviceBlocked) {
+      this.status = 'DEVICE_BLOCKED'
+      await this.emitAsync()
+      return
+    }
+
     if (!tokenStorage.getAccessToken() && !tokenStorage.getRefreshToken()) {
       this.authRequired = true
       this.status = 'AUTH_REQUIRED'
@@ -138,7 +156,7 @@ export class SyncEngine {
     const cycleDbName = getOfflineDbName()
     if (!ownerUserId || !cycleDbName) {
       this.lastError = 'No active local owner'
-      this.status = 'SYNC_ERROR'
+      this.status = 'DEVICE_PENDING'
       await this.emitAsync()
       return
     }
@@ -157,7 +175,7 @@ export class SyncEngine {
         tokenStorage.getDeviceId() ?? (await cycleStore.getMeta(META_KEYS.deviceId))
       if (!deviceId) {
         this.lastError = 'Device not registered'
-        this.status = 'SYNC_ERROR'
+        this.status = 'DEVICE_PENDING'
         await this.emitAsync()
         return
       }
@@ -193,6 +211,9 @@ export class SyncEngine {
         await this.emitAsync()
         return
       }
+      // Pull writes LocalStore without going through React Query — refresh
+      // caregiver list so UI cannot stay at 0 while IDB/API already have rows.
+      void queryClient.invalidateQueries({ queryKey: children.keys.all })
       networkState.markReachable()
 
       const pushResult = await pushOutbox(cycleStore, deviceId, { ownerUserId })
@@ -234,6 +255,39 @@ export class SyncEngine {
         return
       }
 
+      const [pendingCount, syncingCount, blockedCount, failedCount, conflictCountAfter] =
+        await Promise.all([
+          cycleStore.countOperations(['pending'], { ownerUserId }),
+          cycleStore.countOperations(['syncing'], { ownerUserId }),
+          cycleStore.countOperations(['blocked'], { ownerUserId }),
+          cycleStore.countOperations(['failed'], { ownerUserId }),
+          cycleStore.countOperations(['conflict'], { ownerUserId }),
+        ])
+      const unresolved = pendingCount + syncingCount + blockedCount
+
+      if (unresolved > 0) {
+        this.authRequired = false
+        this.status = 'PENDING'
+        if (!this.lastError) {
+          this.lastError =
+            syncingCount > 0 ? 'Session still processing' : 'Waiting to sync'
+        }
+        await this.emitAsync()
+        return
+      }
+
+      if (failedCount > 0) {
+        this.status = 'SYNC_ERROR'
+        await this.emitAsync()
+        return
+      }
+
+      if (conflictCountAfter > 0) {
+        this.status = 'CONFLICT_PRESENT'
+        await this.emitAsync()
+        return
+      }
+
       const now = new Date().toISOString()
       await cycleStore.setMeta(META_KEYS.lastSyncedAt, now)
       this.lastSyncedAt = now
@@ -248,7 +302,34 @@ export class SyncEngine {
         this.authRequired = true
         this.status = 'AUTH_REQUIRED'
         this.lastError = 'Sign in required to synchronize'
-        // Do NOT clear IndexedDB / outbox.
+        await this.emitAsync()
+        return
+      }
+      if (isDeviceOwnershipError(error)) {
+        this.deviceBlocked = true
+        this.status = 'DEVICE_BLOCKED'
+        this.lastError = 'Sync paused — device identity must be re-registered'
+        try {
+          clearBrowserDeviceIdentity()
+          const repaired = await ensureDeviceRegistered({
+            userId: ownerUserId,
+            store: cycleStore,
+          })
+          if (repaired.ok) {
+            this.deviceBlocked = false
+            this.lastError = 'Device identity repaired — waiting to sync'
+            this.status = 'PENDING'
+          }
+        } catch {
+          /* keep blocked; heartbeat will retry repair */
+        }
+        await this.emitAsync()
+        return
+      }
+      if (isServerUnavailableError(error)) {
+        this.lastError = apiError.message || 'Server unavailable'
+        this.status = 'SERVER_UNAVAILABLE'
+        networkState.markUnreachable()
         await this.emitAsync()
         return
       }
@@ -267,11 +348,16 @@ export class SyncEngine {
     pendingLike: number,
   ): SyncEngineStatus {
     if (this.authRequired) return 'AUTH_REQUIRED'
+    if (this.deviceBlocked) return 'DEVICE_BLOCKED'
     if (networkState.getSnapshot().status === 'OFFLINE') return 'OFFLINE'
     if (this.status === 'SYNCING') return 'SYNCING'
+    if (this.status === 'DEVICE_PENDING') return 'DEVICE_PENDING'
+    if (this.status === 'SERVER_UNAVAILABLE') return 'SERVER_UNAVAILABLE'
     if (conflictCount > 0) return 'CONFLICT_PRESENT'
     if (this.status === 'SYNC_ERROR' || failedCount > 0) return 'SYNC_ERROR'
-    if (pendingLike > 0 && networkState.getSnapshot().status !== 'ONLINE') return 'OFFLINE'
+    if (pendingLike > 0) {
+      return networkState.getSnapshot().status === 'ONLINE' ? 'PENDING' : 'OFFLINE'
+    }
     return 'IDLE'
   }
 
