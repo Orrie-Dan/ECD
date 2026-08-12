@@ -9,6 +9,12 @@ import {
   Settings,
   LogOut,
   Menu,
+  CalendarCheck,
+  Activity,
+  Utensils,
+  Accessibility,
+  Send,
+  UserCog,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
@@ -17,7 +23,7 @@ import { DistrictRequiresOnlineBanner } from '@/components/offline/DistrictRequi
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav'
 import { NavDrawer } from '@/components/ui/NavDrawer'
 import { SidebarNavLink, isSidebarNavActive, type SidebarNavItem } from '@/components/ui/SidebarNavLink'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { common, messages } from '@/locales/rw/common'
 import { district } from '@/locales/rw/district'
 import { env } from '@/config/env'
@@ -41,6 +47,17 @@ const sidebarNavItems: SidebarNavItem[] = [
     icon: Building2,
     matchPaths: ['/district/ibigo'],
   },
+  {
+    path: '/district/abakoresha',
+    label: district.nav.caregivers,
+    icon: UserCog,
+    matchPaths: ['/district/abakoresha'],
+  },
+  { path: '/district/attendance', label: district.nav.attendance, icon: CalendarCheck },
+  { path: '/district/imikurire', label: district.nav.growth, icon: Activity },
+  { path: '/district/imirire', label: district.nav.imirire, icon: Utensils },
+  { path: '/district/sted', label: district.nav.sted, icon: Accessibility },
+  { path: '/district/referrals', label: district.nav.referrals, icon: Send },
   {
     path: '/district/gukurikirana',
     label: district.nav.followup,
@@ -131,10 +148,11 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
   const [logoutPendingCount, setLogoutPendingCount] = useState(0)
   const [logoutSyncBusy, setLogoutSyncBusy] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-
-  useEffect(() => {
+  const [drawerPathname, setDrawerPathname] = useState(location.pathname)
+  if (drawerPathname !== location.pathname) {
+    setDrawerPathname(location.pathname)
     setDrawerOpen(false)
-  }, [location.pathname])
+  }
 
   const openLogoutModal = async () => {
     if (!env.isLive) {

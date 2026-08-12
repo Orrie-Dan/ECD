@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { FormField, SelectInput, TextInput } from '@/components/ui/FormField'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
@@ -106,8 +107,25 @@ const accentStyles = {
 }
 
 export function DistrictReportsPage() {
-  const { showSuccess, showError } = useToast()
+  if (env.isLive) {
+    return <DistrictReportsPageShared children={[]} attendance={[]} />
+  }
+  return <DistrictReportsPageMock />
+}
+
+function DistrictReportsPageMock() {
   const { children, attendance } = useData()
+  return <DistrictReportsPageShared children={children} attendance={attendance} />
+}
+
+function DistrictReportsPageShared({
+  children,
+  attendance,
+}: {
+  children: import('@/types').Child[]
+  attendance: import('@/types').AttendanceRecord[]
+}) {
+  const { showSuccess, showError } = useToast()
   const today = getTodayDate()
   const yesterday = getYesterdayDate()
 
@@ -162,6 +180,8 @@ export function DistrictReportsPage() {
   const comparisonRows = attendanceReport.rows
   const districtSummary = attendanceReport.summary
   const isLoading = attendanceReport.isLoading
+  const isError = attendanceReport.isError
+  const refetch = attendanceReport.refetch
 
   const pagination = usePagination(comparisonRows, {
     resetDeps: [dateFrom, dateTo, search, sector],
@@ -489,7 +509,17 @@ export function DistrictReportsPage() {
         </div>
       </Card>
 
-      {isLoading ? (
+      {isError ? (
+        <LiveUnavailableState
+          title={common.error}
+          description="Ntibyashoboye kubona raporo y'ubwitabire kuri API. Ongera ugerageze."
+          action={
+            <Button type="button" variant="primary" onClick={() => void refetch?.()}>
+              {common.reset}
+            </Button>
+          }
+        />
+      ) : isLoading ? (
         <SkeletonPage label={district.reports.title} stats={4} />
       ) : selectedRow && selectedSummary ? (
         <div className="space-y-6">
@@ -529,15 +559,22 @@ export function DistrictReportsPage() {
             }}
           />
 
-          <AttendanceHistoryTable
-            records={centerRecords}
-            childrenById={childrenById}
-            showChildName
-            title={caretaker.report.historyTitle}
-            emptyMessage={district.reports.noCenterRecords}
-            emptyDescription={district.reports.noCenterRecordsDesc}
-            resetDeps={[selectedCenterId, dateFrom, dateTo]}
-          />
+          {env.isLive ? (
+            <LiveUnavailableState
+              title={caretaker.report.historyTitle}
+              description="Amateka y'ubwitabire ku mwana ntabwo aboneka kuri monitoring/report aggregates. Ntabwo dukoresha LocalStore."
+            />
+          ) : (
+            <AttendanceHistoryTable
+              records={centerRecords}
+              childrenById={childrenById}
+              showChildName
+              title={caretaker.report.historyTitle}
+              emptyMessage={district.reports.noCenterRecords}
+              emptyDescription={district.reports.noCenterRecordsDesc}
+              resetDeps={[selectedCenterId, dateFrom, dateTo]}
+            />
+          )}
         </div>
       ) : (
         <>

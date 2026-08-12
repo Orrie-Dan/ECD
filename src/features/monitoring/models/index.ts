@@ -15,7 +15,7 @@ export type {
   MonitoringFeedingCenterItemViewModel,
   MonitoringStedViewModel,
   MonitoringStedSummaryViewModel,
-  MonitoringStedCenterItemViewModel,
+  MonitoringStedItemViewModel,
   MonitoringReferralsViewModel,
   MonitoringReferralsSummaryViewModel,
   MonitoringReferralsCenterItemViewModel,

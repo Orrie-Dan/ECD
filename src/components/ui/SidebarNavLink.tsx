@@ -18,11 +18,15 @@ interface SidebarNavLinkProps {
 
 export function isSidebarNavActive(pathname: string, item: SidebarNavItem): boolean {
   if (item.matchPaths) {
-    return item.matchPaths.some(
-      (path) => pathname === path || pathname.startsWith(path + '/'),
-    )
+    return item.matchPaths.some((path) => {
+      // Root portal paths are exact-only so they never prefix-match child routes.
+      if (path === '/ncda' || path === '/district' || path === '/caretaker') {
+        return pathname === path
+      }
+      return pathname === path || pathname.startsWith(path + '/')
+    })
   }
-  if (item.path.endsWith('/') || item.path === '/caretaker' || item.path === '/district') {
+  if (item.path === '/caretaker' || item.path === '/district' || item.path === '/ncda') {
     return pathname === item.path
   }
   return pathname === item.path || pathname.startsWith(item.path + '/')

@@ -6,6 +6,7 @@ import type { UserRole } from '@/types'
 const LOGIN_ROLE_MAP: Record<string, UserRole> = {
   caretaker: 'caretaker',
   district: 'districtOfficer',
+  ncda: 'ncda',
 }
 
 export function LoginPage() {

@@ -177,18 +177,24 @@ export interface MonitoringFeedingViewModel extends MonitoringPagination {
 
 export interface MonitoringStedSummaryViewModel {
   assessmentsCompleted: number
+  childrenAssessed: number
+  centersWithAssessments: number
   activeChildren: number
   coverage: number | null
   averageScore: number | null
   pendingFollowUps: number
+  centersInScope: number
   ageBandDistribution: Record<string, number>
   outcomeDistribution: Record<string, number>
 }
 
-export interface MonitoringStedCenterItemViewModel {
-  centerId: string
-  centerName: string
+export interface MonitoringStedItemViewModel {
+  centerId?: string
+  centerName?: string
+  districtId?: string
+  districtName?: string
   assessmentsCompleted: number
+  childrenAssessed?: number
   averageScore: number | null
 }
 
@@ -197,8 +203,55 @@ export interface MonitoringStedViewModel extends MonitoringPagination {
   to: string
   districtId: string | null
   centerId: string | null
+  granularity: 'district' | 'center'
   summary: MonitoringStedSummaryViewModel
-  items: MonitoringStedCenterItemViewModel[]
+  items: MonitoringStedItemViewModel[]
+}
+
+// ─── Compliance aggregates ───────────────────────────────────────────────────
+
+export interface MonitoringComplianceSummaryViewModel {
+  totalAssessments: number
+  centersAssessed: number
+  centersInScope: number
+  byStatus: Record<string, number>
+  byType: Record<string, number>
+  classificationPopulated: number
+  byClassification: Record<string, number>
+  classificationNullRate: number | null
+}
+
+export interface MonitoringComplianceViewModel {
+  from: string
+  to: string
+  districtId: string | null
+  centerId: string | null
+  summary: MonitoringComplianceSummaryViewModel
+}
+
+// ─── WASH aggregates ─────────────────────────────────────────────────────────
+
+export interface MonitoringWashSummaryViewModel {
+  centersInScope: number
+  reporting: {
+    recordsInRange: number
+    centersReporting: number
+  }
+  latestSnapshot: {
+    centersWithData: number
+    waterSourceAvailable: number
+    sanitationFacilityAvailable: number
+    handwashingFacilityAvailable: number
+    wasteManagementAvailable: number
+  }
+}
+
+export interface MonitoringWashViewModel {
+  from: string
+  to: string
+  districtId: string | null
+  centerId: string | null
+  summary: MonitoringWashSummaryViewModel
 }
 
 // ─── Referrals ───────────────────────────────────────────────────────────────

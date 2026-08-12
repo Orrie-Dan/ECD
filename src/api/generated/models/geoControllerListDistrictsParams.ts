@@ -12,6 +12,10 @@ export type GeoControllerListDistrictsParams = {
  */
 search?: string;
 /**
+ * Filter by district active flag when provided
+ */
+isActive?: boolean;
+/**
  * @minimum 1
  */
 page?: number;

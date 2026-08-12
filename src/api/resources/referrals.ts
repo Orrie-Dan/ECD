@@ -34,6 +34,8 @@ export async function fetchReferralList(
     sourceType: filters.sourceType,
     centerId: filters.centerId,
     childId: filters.childId,
+    from: filters.from,
+    to: filters.to,
   })
   return mapReferralListToViewModel(dto)
 }
@@ -44,15 +46,15 @@ export async function fetchAllReferrals(
 ): Promise<ReferralViewModel[]> {
   const pageSize = 200
   let page = 1
-  let totalPages = 1
   const items: ReferralViewModel[] = []
 
-  do {
+  for (;;) {
     const result = await fetchReferralList({ ...filters, page, pageSize })
     items.push(...result.items)
-    totalPages = Math.max(1, result.totalPages)
+    const totalPages = Math.max(1, result.totalPages)
+    if (page >= totalPages) break
     page += 1
-  } while (page <= totalPages)
+  }
 
   return items
 }

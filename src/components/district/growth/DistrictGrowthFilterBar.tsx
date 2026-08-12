@@ -23,6 +23,8 @@ interface DistrictGrowthFilterBarProps {
   onChange: (next: Partial<DistrictGrowthFilters>) => void
   onReset: () => void
   showReset: boolean
+  /** LIVE: search/age are unsupported server filters — disable with hint. */
+  liveMode?: boolean
 }
 
 const selectClassName =
@@ -34,18 +36,36 @@ export function DistrictGrowthFilterBar({
   onChange,
   onReset,
   showReset,
+  liveMode = false,
 }: DistrictGrowthFilterBarProps) {
   return (
     <Card padding="lg" className="mb-4 space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 xl:items-end">
         <div className="md:col-span-2 xl:col-span-1">
-          <FormField label={district.growth.searchLabel}>
-            <SearchInput
-              value={filters.search}
-              onChange={(search) => onChange({ search })}
-              placeholder={district.growth.searchPlaceholder}
-              className="w-full"
-            />
+          <FormField
+            label={district.growth.searchLabel}
+            hint={
+              liveMode
+                ? 'Gushakisha izina ntabwo bishoboka kuri API (nta search param).'
+                : undefined
+            }
+          >
+            {liveMode ? (
+              <TextInput
+                value=""
+                disabled
+                placeholder={district.growth.searchPlaceholder}
+                className="!min-h-11 sm:!min-h-12"
+                aria-label={district.growth.searchLabel}
+              />
+            ) : (
+              <SearchInput
+                value={filters.search}
+                onChange={(search) => onChange({ search })}
+                placeholder={district.growth.searchPlaceholder}
+                className="w-full"
+              />
+            )}
           </FormField>
         </div>
 
@@ -90,12 +110,20 @@ export function DistrictGrowthFilterBar({
           </SelectInput>
         </FormField>
 
-        <FormField label={district.growth.ageGroupLabel}>
+        <FormField
+          label={district.growth.ageGroupLabel}
+          hint={
+            liveMode
+              ? 'Akayunguruzo k’imyaka ntabwo gishoboka kuri API.'
+              : undefined
+          }
+        >
           <SelectInput
-            value={filters.ageGroup}
+            value={liveMode ? 'all' : filters.ageGroup}
             onChange={(e) => onChange({ ageGroup: e.target.value as GrowthAgeGroupFilter })}
             aria-label={district.growth.ageGroupLabel}
             className={selectClassName}
+            disabled={liveMode}
           >
             <option value="all">{district.growth.ageAll}</option>
             <option value="3-4">{district.growth.age34}</option>

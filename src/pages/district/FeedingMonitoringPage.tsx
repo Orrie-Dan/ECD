@@ -4,21 +4,49 @@ import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { FormField, TextInput } from '@/components/ui/FormField'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
 import { useFeedingMonitoringView, roundPct } from '@/features/monitoring'
 import { district } from '@/locales/rw/district'
+import { common } from '@/locales/rw/common'
 import { getCurrentYearMonth } from '@/lib/feeding-utils'
+import { env } from '@/config/env'
+import type { CenterFeedingDay, CenterFeedingMonthSummary } from '@/types'
 
 export function FeedingMonitoringPage() {
+  if (env.isLive) {
+    return (
+      <FeedingMonitoringPageShared
+        feedingDays={[] as CenterFeedingDay[]}
+        feedingSummaries={[] as CenterFeedingMonthSummary[]}
+      />
+    )
+  }
+  return <FeedingMonitoringPageMock />
+}
+
+function FeedingMonitoringPageMock() {
   const { feedingDays, feedingSummaries } = useData()
+  return <FeedingMonitoringPageShared feedingDays={feedingDays} feedingSummaries={feedingSummaries} />
+}
+
+function FeedingMonitoringPageShared({
+  feedingDays,
+  feedingSummaries,
+}: {
+  feedingDays: CenterFeedingDay[]
+  feedingSummaries: CenterFeedingMonthSummary[]
+}) {
   const [yearMonth, setYearMonth] = useState(getCurrentYearMonth())
   const [search, setSearch] = useState('')
 
-  const { data, mockComparisons, mockSummary, isLoading, source } = useFeedingMonitoringView({
+  const { data, mockComparisons, mockSummary, isLoading, isError, source, refetch } =
+    useFeedingMonitoringView({
     yearMonth,
     feedingDays,
     feedingSummaries,
@@ -99,6 +127,16 @@ export function FeedingMonitoringPage() {
 
           {isLoading ? (
             <SkeletonPage label={district.imirire.title} stats={4} />
+          ) : isError ? (
+            <LiveUnavailableState
+              title={common.error}
+              description="Ntibyashoboye kubona amakuru y'imirire kuri API. Ongera ugerageze."
+              action={
+                <Button type="button" variant="primary" onClick={() => void refetch?.()}>
+                  {common.reset}
+                </Button>
+              }
+            />
           ) : (
             <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">

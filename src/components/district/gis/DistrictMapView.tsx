@@ -3,6 +3,7 @@ import { ECD_CENTERS } from '@/lib/mock-data'
 import { env } from '@/config/env'
 import { useCentersDirectory } from '@/features/centers'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
+import { Button } from '@/components/ui/Button'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { MapContainer } from './MapContainer'
@@ -128,7 +129,17 @@ export function DistrictMapView() {
   }
 
   if (env.isLive && liveCenters.isError) {
-    return <LiveUnavailableState title={district.gis.centersMap} description={common.live.unavailableDesc} />
+    return (
+      <LiveUnavailableState
+        title={district.gis.centersMap}
+        description={common.live.unavailableDesc}
+        action={
+          <Button type="button" variant="primary" onClick={() => void liveCenters.refetch()}>
+            {common.reset}
+          </Button>
+        }
+      />
+    )
   }
 
   return (

@@ -187,11 +187,18 @@ const DEMO_USERS: Record<UserRole, User> = {
     role: 'districtOfficer',
     districtName: 'Gasabo',
   },
+  ncda: {
+    id: 'u3',
+    name: 'NCDA Admin',
+    role: 'ncda',
+  },
 }
 
 const DEMO_CREDENTIALS: Record<string, { password: string; role: UserRole }> = {
   umurezi: { password: '1234', role: 'caretaker' },
   akarere: { password: '1234', role: 'districtOfficer' },
+  /** Explicit MOCK credential only — LIVE role comes from JWT/backend. */
+  ncda: { password: '1234', role: 'ncda' },
 }
 
 function persistUiUser(user: User | null) {

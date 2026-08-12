@@ -3,8 +3,10 @@ import type {
   NutritionAlertDto,
   NutritionAlertsResponseDto,
   NutritionHistoryResponseDto,
+  NutritionScreeningListItemDto,
   NutritionScreeningResponseDto,
   NutritionStatus as ApiNutritionStatus,
+  PaginatedNutritionScreeningsResponseDto,
 } from '@/api/generated/models'
 import { classifyNutrition, requiresReferral } from '@/lib/nutrition'
 import type {
@@ -14,6 +16,10 @@ import type {
   NutritionHistoryResult,
   NutritionScreeningCreateInput,
 } from '@/models/nutrition'
+import type {
+  NutritionScreeningListItemViewModel,
+  NutritionScreeningListResult,
+} from '@/models/nutrition-screenings'
 import type { NutritionStatus } from '@/types'
 
 function mapNutritionStatusToUi(
@@ -85,6 +91,50 @@ export function mapNutritionAlertsToViewModel(
   return {
     items: dto.items.map(mapNutritionAlertDtoToViewModel),
     total: dto.total,
+  }
+}
+
+function mapGender(value: string | null | undefined): 'male' | 'female' {
+  return value === 'female' ? 'female' : 'male'
+}
+
+function toDateOnly(value: string): string {
+  return value.slice(0, 10)
+}
+
+export function mapScreeningListItemToViewModel(
+  dto: NutritionScreeningListItemDto,
+): NutritionScreeningListItemViewModel {
+  return {
+    id: dto.id,
+    childId: dto.childId,
+    childFullName: dto.childFullName,
+    childDateOfBirth: toDateOnly(String(dto.childDateOfBirth)),
+    childGender: mapGender(dto.childGender),
+    centerId: dto.centerId,
+    centerName: dto.centerName,
+    screeningDate: toDateOnly(String(dto.screeningDate)),
+    weightKg: dto.weightKg,
+    muacCm: dto.muacCm,
+    heightCm: dto.heightCm,
+    headCircumferenceCm: dto.headCircumferenceCm,
+    nutritionStatus: mapNutritionStatusToUi(dto.nutritionStatus),
+    requiresReferral: dto.requiresReferral,
+    recordedById: dto.recordedById,
+    version: dto.version,
+    createdAt: dto.createdAt,
+  }
+}
+
+export function mapPaginatedScreeningsToViewModel(
+  dto: PaginatedNutritionScreeningsResponseDto,
+): NutritionScreeningListResult {
+  return {
+    items: dto.items.map(mapScreeningListItemToViewModel),
+    total: dto.total,
+    page: dto.page,
+    pageSize: dto.pageSize,
+    totalPages: dto.totalPages,
   }
 }
 

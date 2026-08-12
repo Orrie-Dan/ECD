@@ -56,12 +56,19 @@ export function useChildrenRepository(user: User | null) {
       page: 1,
       pageSize: 100,
     }),
-    [user?.centerId, user?.role],
+    [user],
   )
 
-  const liveListQuery = useChildrenList(listFilters, env.isLive && !!user)
+  // District LIVE must not hydrate caregiver LocalStore / unbounded centerless lists.
+  const liveListQuery = useChildrenList(
+    listFilters,
+    env.isLive && !!user && isCaretaker(user),
+  )
 
-  const children: Child[] = env.isLive ? (liveListQuery.data?.items ?? []) : mockChildren
+  const children: Child[] = useMemo(
+    () => (env.isLive ? (liveListQuery.data?.items ?? []) : mockChildren),
+    [liveListQuery.data?.items, mockChildren],
+  )
 
   const childrenLoading = env.isLive && liveListQuery.isLoading
   const childrenError = env.isLive && liveListQuery.isError

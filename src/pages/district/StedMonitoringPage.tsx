@@ -5,10 +5,15 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Button } from '@/components/ui/Button'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
 import { useStedMonitoringView, roundPct } from '@/features/monitoring'
 import { district } from '@/locales/rw/district'
+import { common } from '@/locales/rw/common'
+import { env } from '@/config/env'
+import type { Child, Referral, StedAssessment } from '@/types'
 
 function coverageVariant(rate: number): 'success' | 'warning' | 'danger' {
   if (rate >= 70) return 'success'
@@ -17,8 +22,39 @@ function coverageVariant(rate: number): 'success' | 'warning' | 'danger' {
 }
 
 export function StedMonitoringPage() {
+  if (env.isLive) {
+    return (
+      <StedMonitoringPageShared
+        children={[] as Child[]}
+        stedAssessments={[] as StedAssessment[]}
+        referrals={[] as Referral[]}
+      />
+    )
+  }
+  return <StedMonitoringPageMock />
+}
+
+function StedMonitoringPageMock() {
   const { children, stedAssessments, referrals } = useData()
-  const { data, mockComparisons, mockTotals, isLoading, source } = useStedMonitoringView({
+  return (
+    <StedMonitoringPageShared
+      children={children}
+      stedAssessments={stedAssessments}
+      referrals={referrals}
+    />
+  )
+}
+
+function StedMonitoringPageShared({
+  children,
+  stedAssessments,
+  referrals,
+}: {
+  children: Child[]
+  stedAssessments: StedAssessment[]
+  referrals: Referral[]
+}) {
+  const { data, mockComparisons, mockTotals, isLoading, isError, source, refetch } = useStedMonitoringView({
     children,
     stedAssessments,
     referrals,
@@ -68,6 +104,16 @@ export function StedMonitoringPage() {
         <PageContent className="space-y-6">
           {isLoading ? (
             <SkeletonPage label={district.sted.title} stats={5} />
+          ) : isError ? (
+            <LiveUnavailableState
+              title={common.error}
+              description="Ntibyashoboye kubona amakuru ya STED kuri API. Ongera ugerageze."
+              action={
+                <Button type="button" variant="primary" onClick={() => void refetch?.()}>
+                  {common.reset}
+                </Button>
+              }
+            />
           ) : (
             <>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 items-stretch">

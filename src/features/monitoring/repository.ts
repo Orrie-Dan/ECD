@@ -9,6 +9,7 @@ import {
   useMonitoringReferrals,
   useMonitoringSted,
 } from '@/features/monitoring/queries'
+import { useDropoutsReport, useEnrollmentReport } from '@/features/reporting/queries'
 import {
   dayToMonitoringRange,
   effectiveRangeToMonitoringDates,
@@ -40,7 +41,6 @@ import type {
   Referral,
   StedAssessment,
 } from '@/types'
-import type { CenterDailyAttendanceRow } from '@/lib/district-attendance'
 
 /**
  * Mode-aware monitoring read access for district pages.
@@ -62,34 +62,47 @@ export function useDashboardMonitoring(input: {
     { ...dateFilters, page: 1, pageSize: 100 },
     env.isLive,
   )
-
-  const mock = useMemo(
-    () =>
-      buildMockDashboard(
-        input.range,
-        input.children,
-        input.growthMeasurements,
-        input.nutritionAssessments,
-      ),
-    [input.range, input.children, input.growthMeasurements, input.nutritionAssessments],
-  )
+  /** Registrations/dropouts are on /reports/*, not analytics dashboard DTO. */
+  const liveEnrollment = useEnrollmentReport(dateFilters, env.isLive)
+  const liveDropouts = useDropoutsReport(dateFilters, env.isLive)
 
   if (env.isLive) {
     const dashboard = liveDash.data as MonitoringDashboardViewModel | undefined
     const nutrition = liveNutrition.data
     return {
       dashboard,
-      /** LIVE: registrations/dropouts not on analytics dashboard — surface as null (gap). */
-      newRegistrations: null as number | null,
-      dropouts: null as number | null,
+      newRegistrations: liveEnrollment.data?.summary.newRegistrations ?? null,
+      dropouts: liveDropouts.data?.summary.dropouts ?? null,
       growthCoverage: nutrition ? roundPct(nutrition.summary.screeningCoverage) : null,
       growthOverdue: nutrition?.summary.overdueScreenings ?? null,
       growthAtRisk: nutrition?.summary.atRisk ?? dashboard?.nutrition.atRisk ?? null,
-      isLoading: liveDash.isLoading || liveNutrition.isLoading,
-      isError: liveDash.isError || liveNutrition.isError,
+      isLoading:
+        liveDash.isLoading ||
+        liveNutrition.isLoading ||
+        liveEnrollment.isLoading ||
+        liveDropouts.isLoading,
+      isError:
+        liveDash.isError ||
+        liveNutrition.isError ||
+        liveEnrollment.isError ||
+        liveDropouts.isError,
+      refetch: () =>
+        Promise.all([
+          liveDash.refetch(),
+          liveNutrition.refetch(),
+          liveEnrollment.refetch(),
+          liveDropouts.refetch(),
+        ]).then(() => undefined),
       source: 'api' as const,
     }
   }
+
+  const mock = buildMockDashboard(
+    input.range,
+    input.children,
+    input.growthMeasurements,
+    input.nutritionAssessments,
+  )
 
   return {
     dashboard: mock.dashboard,
@@ -100,6 +113,7 @@ export function useDashboardMonitoring(input: {
     growthAtRisk: mock.growthAtRisk,
     isLoading: false,
     isError: false,
+    refetch: undefined,
     source: 'mock' as const,
   }
 }
@@ -125,21 +139,28 @@ export function useNutritionMonitoringView(input: {
   )
   const live = useMonitoringNutrition(filters)
 
-  const mock = useMemo(
-    () =>
-      buildMockNutritionMonitoring(
-        input.children,
-        input.growthMeasurements,
-        input.nutritionAssessments,
-      ),
-    [input.children, input.growthMeasurements, input.nutritionAssessments],
+  if (env.isLive) {
+    return {
+      data: live.data as MonitoringNutritionViewModel | undefined,
+      isLoading: live.isLoading,
+      isError: live.isError,
+      refetch: live.refetch,
+      source: 'api' as const,
+    }
+  }
+
+  const mock = buildMockNutritionMonitoring(
+    input.children,
+    input.growthMeasurements,
+    input.nutritionAssessments,
   )
 
   return {
-    data: (env.isLive ? live.data : mock) as MonitoringNutritionViewModel | undefined,
-    isLoading: env.isLive && live.isLoading,
-    isError: env.isLive && live.isError,
-    source: env.isLive ? ('api' as const) : ('mock' as const),
+    data: mock as MonitoringNutritionViewModel | undefined,
+    isLoading: false,
+    isError: false,
+    refetch: undefined,
+    source: 'mock' as const,
   }
 }
 
@@ -159,17 +180,26 @@ export function useAttendanceMonitoringView(input: {
 
   const live = useMonitoringAttendance(filters)
 
-  const mockRows = useMemo(
-    () => getMockAttendanceCenterRows(input.selectedDate),
-    [input.selectedDate],
-  )
+  if (env.isLive) {
+    return {
+      data: live.data as MonitoringAttendanceViewModel | undefined,
+      mockRows: undefined,
+      isLoading: live.isLoading,
+      isError: live.isError,
+      refetch: live.refetch,
+      source: 'api' as const,
+    }
+  }
+
+  const mockRows = getMockAttendanceCenterRows(input.selectedDate)
 
   return {
-    data: live.data as MonitoringAttendanceViewModel | undefined,
-    mockRows: env.isMock ? mockRows : (undefined as CenterDailyAttendanceRow[] | undefined),
-    isLoading: env.isLive && live.isLoading,
-    isError: env.isLive && live.isError,
-    source: env.isLive ? ('api' as const) : ('mock' as const),
+    data: undefined,
+    mockRows,
+    isLoading: false,
+    isError: false,
+    refetch: undefined,
+    source: 'mock' as const,
   }
 }
 
@@ -184,19 +214,33 @@ export function useFeedingMonitoringView(input: {
   }, [input.yearMonth])
 
   const live = useMonitoringFeeding(filters)
-  const mock = useMemo(
-    () =>
-      buildMockFeedingMonitoring(input.feedingDays, input.feedingSummaries, input.yearMonth),
-    [input.feedingDays, input.feedingSummaries, input.yearMonth],
+
+  if (env.isLive) {
+    return {
+      data: live.data as MonitoringFeedingViewModel | undefined,
+      mockComparisons: undefined,
+      mockSummary: undefined,
+      isLoading: live.isLoading,
+      isError: live.isError,
+      refetch: live.refetch,
+      source: 'api' as const,
+    }
+  }
+
+  const mock = buildMockFeedingMonitoring(
+    input.feedingDays,
+    input.feedingSummaries,
+    input.yearMonth,
   )
 
   return {
-    data: (env.isLive ? live.data : mock.view) as MonitoringFeedingViewModel | undefined,
-    mockComparisons: env.isMock ? mock.comparisons : undefined,
-    mockSummary: env.isMock ? mock.summary : undefined,
-    isLoading: env.isLive && live.isLoading,
-    isError: env.isLive && live.isError,
-    source: env.isLive ? ('api' as const) : ('mock' as const),
+    data: mock.view as MonitoringFeedingViewModel | undefined,
+    mockComparisons: mock.comparisons,
+    mockSummary: mock.summary,
+    isLoading: false,
+    isError: false,
+    refetch: undefined,
+    source: 'mock' as const,
   }
 }
 
@@ -207,18 +251,29 @@ export function useStedMonitoringView(input: {
 }) {
   const filters = useMemo(() => ({ page: 1, pageSize: 100 }), [])
   const live = useMonitoringSted(filters)
-  const mock = useMemo(
-    () => buildMockStedMonitoring(input.children, input.stedAssessments, input.referrals),
-    [input.children, input.stedAssessments, input.referrals],
-  )
+
+  if (env.isLive) {
+    return {
+      data: live.data as MonitoringStedViewModel | undefined,
+      mockComparisons: undefined,
+      mockTotals: undefined,
+      isLoading: live.isLoading,
+      isError: live.isError,
+      refetch: live.refetch,
+      source: 'api' as const,
+    }
+  }
+
+  const mock = buildMockStedMonitoring(input.children, input.stedAssessments, input.referrals)
 
   return {
-    data: (env.isLive ? live.data : mock.view) as MonitoringStedViewModel | undefined,
-    mockComparisons: env.isMock ? mock.comparisons : undefined,
-    mockTotals: env.isMock ? mock.totals : undefined,
-    isLoading: env.isLive && live.isLoading,
-    isError: env.isLive && live.isError,
-    source: env.isLive ? ('api' as const) : ('mock' as const),
+    data: mock.view as MonitoringStedViewModel | undefined,
+    mockComparisons: mock.comparisons,
+    mockTotals: mock.totals,
+    isLoading: false,
+    isError: false,
+    refetch: undefined,
+    source: 'mock' as const,
   }
 }
 
@@ -237,19 +292,29 @@ export function useReferralsMonitoringView(input: {
     [input.centerId],
   )
   const live = useMonitoringReferrals(filters)
-  const mock = useMemo(
-    () =>
-      buildMockReferralsMonitoring(input.children, input.referrals, input.stedAssessments),
-    [input.children, input.referrals, input.stedAssessments],
-  )
+
+  if (env.isLive) {
+    return {
+      data: live.data as MonitoringReferralsViewModel | undefined,
+      mockSummary: undefined,
+      mockComparisons: undefined,
+      isLoading: live.isLoading,
+      isError: live.isError,
+      refetch: live.refetch,
+      source: 'api' as const,
+    }
+  }
+
+  const mock = buildMockReferralsMonitoring(input.children, input.referrals, input.stedAssessments)
 
   return {
-    data: (env.isLive ? live.data : mock.view) as MonitoringReferralsViewModel | undefined,
-    mockSummary: env.isMock ? mock.summary : undefined,
-    mockComparisons: env.isMock ? mock.comparisons : undefined,
-    isLoading: env.isLive && live.isLoading,
-    isError: env.isLive && live.isError,
-    source: env.isLive ? ('api' as const) : ('mock' as const),
+    data: mock.view as MonitoringReferralsViewModel | undefined,
+    mockSummary: mock.summary,
+    mockComparisons: mock.comparisons,
+    isLoading: false,
+    isError: false,
+    refetch: undefined,
+    source: 'mock' as const,
   }
 }
 

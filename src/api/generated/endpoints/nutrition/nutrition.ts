@@ -30,8 +30,10 @@ import type {
   GrowthChartResponseDto,
   NutritionAlertsResponseDto,
   NutritionControllerGetAlertsParams,
+  NutritionControllerListScreeningsParams,
   NutritionHistoryResponseDto,
-  NutritionScreeningResponseDto
+  NutritionScreeningResponseDto,
+  PaginatedNutritionScreeningsResponseDto
 } from '../../models';
 
 import { customInstance } from '../../../client';
@@ -108,6 +110,99 @@ export const useNutritionControllerCreateScreening = <TError = ErrorResponseDto 
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Paginated operational screening records in caller scope. Filters by center (via child), child, inclusive screeningDate range (from/to), and nutritionStatus. No default date window.
+ * @summary List nutrition screenings
+ */
+export const nutritionControllerListScreenings = (
+    params?: NutritionControllerListScreeningsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<PaginatedNutritionScreeningsResponseDto>(
+      {url: `/api/v1/nutrition/screenings`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getNutritionControllerListScreeningsQueryKey = (params?: NutritionControllerListScreeningsParams,) => {
+    return [
+    `/api/v1/nutrition/screenings`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getNutritionControllerListScreeningsQueryOptions = <TData = Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(params?: NutritionControllerListScreeningsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getNutritionControllerListScreeningsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof nutritionControllerListScreenings>>> = ({ signal }) => nutritionControllerListScreenings(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type NutritionControllerListScreeningsQueryResult = NonNullable<Awaited<ReturnType<typeof nutritionControllerListScreenings>>>
+export type NutritionControllerListScreeningsQueryError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto
+
+
+export function useNutritionControllerListScreenings<TData = Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params: undefined |  NutritionControllerListScreeningsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof nutritionControllerListScreenings>>,
+          TError,
+          Awaited<ReturnType<typeof nutritionControllerListScreenings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNutritionControllerListScreenings<TData = Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: NutritionControllerListScreeningsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof nutritionControllerListScreenings>>,
+          TError,
+          Awaited<ReturnType<typeof nutritionControllerListScreenings>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useNutritionControllerListScreenings<TData = Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: NutritionControllerListScreeningsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List nutrition screenings
+ */
+
+export function useNutritionControllerListScreenings<TData = Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: NutritionControllerListScreeningsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof nutritionControllerListScreenings>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getNutritionControllerListScreeningsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * Returns all nutrition screenings for a child (newest first).
  * @summary Get child nutrition history
  */

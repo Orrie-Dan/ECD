@@ -1,19 +1,23 @@
 import type {
   DashboardResponseDto,
   MonitoringAttendanceResponseDto,
+  MonitoringComplianceResponseDto,
   MonitoringFeedingResponseDto,
   MonitoringNutritionResponseDto,
   MonitoringReferralsResponseDto,
   MonitoringStedResponseDto,
+  MonitoringWashResponseDto,
 } from '@/api/generated/models'
 import type {
   MonitoringAttendanceViewModel,
+  MonitoringComplianceViewModel,
   MonitoringDashboardViewModel,
   MonitoringFeedingViewModel,
   MonitoringNutritionViewModel,
   MonitoringReferralsViewModel,
   MonitoringScopeFilters,
   MonitoringStedViewModel,
+  MonitoringWashViewModel,
 } from '@/models/monitoring'
 
 function roundRate(value: number | null | undefined): number | null {
@@ -182,25 +186,78 @@ export function mapStedMonitoringToViewModel(
     to: dto.to,
     districtId: dto.districtId,
     centerId: dto.centerId,
+    granularity: dto.granularity,
     summary: {
       assessmentsCompleted: dto.summary.assessmentsCompleted,
+      childrenAssessed: dto.summary.childrenAssessed,
+      centersWithAssessments: dto.summary.centersWithAssessments,
       activeChildren: dto.summary.activeChildren,
       coverage: roundRate(dto.summary.coverage),
       averageScore: dto.summary.averageScore,
       pendingFollowUps: dto.summary.pendingFollowUps,
+      centersInScope: dto.summary.centersInScope,
       ageBandDistribution: { ...(dto.summary.ageBandDistribution ?? {}) },
       outcomeDistribution: { ...(dto.summary.outcomeDistribution ?? {}) },
     },
     items: dto.items.map((item) => ({
       centerId: item.centerId,
       centerName: item.centerName,
+      districtId: item.districtId,
+      districtName: item.districtName,
       assessmentsCompleted: item.assessmentsCompleted,
+      childrenAssessed: item.childrenAssessed,
       averageScore: item.averageScore,
     })),
     total: dto.total,
     page: dto.page,
     pageSize: dto.pageSize,
     totalPages: dto.totalPages,
+  }
+}
+
+export function mapComplianceMonitoringToViewModel(
+  dto: MonitoringComplianceResponseDto,
+): MonitoringComplianceViewModel {
+  return {
+    from: dto.from,
+    to: dto.to,
+    districtId: dto.districtId,
+    centerId: dto.centerId,
+    summary: {
+      totalAssessments: dto.summary.totalAssessments,
+      centersAssessed: dto.summary.centersAssessed,
+      centersInScope: dto.summary.centersInScope,
+      byStatus: { ...(dto.summary.byStatus ?? {}) },
+      byType: { ...(dto.summary.byType ?? {}) },
+      classificationPopulated: dto.summary.classificationPopulated,
+      byClassification: { ...(dto.summary.byClassification ?? {}) },
+      classificationNullRate: dto.summary.classificationNullRate,
+    },
+  }
+}
+
+export function mapWashMonitoringToViewModel(
+  dto: MonitoringWashResponseDto,
+): MonitoringWashViewModel {
+  return {
+    from: dto.from,
+    to: dto.to,
+    districtId: dto.districtId,
+    centerId: dto.centerId,
+    summary: {
+      centersInScope: dto.summary.centersInScope,
+      reporting: {
+        recordsInRange: dto.summary.reporting.recordsInRange,
+        centersReporting: dto.summary.reporting.centersReporting,
+      },
+      latestSnapshot: {
+        centersWithData: dto.summary.latestSnapshot.centersWithData,
+        waterSourceAvailable: dto.summary.latestSnapshot.waterSourceAvailable,
+        sanitationFacilityAvailable: dto.summary.latestSnapshot.sanitationFacilityAvailable,
+        handwashingFacilityAvailable: dto.summary.latestSnapshot.handwashingFacilityAvailable,
+        wasteManagementAvailable: dto.summary.latestSnapshot.wasteManagementAvailable,
+      },
+    },
   }
 }
 

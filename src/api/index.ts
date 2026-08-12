@@ -33,8 +33,10 @@ export {
   hasRole,
   isCaretaker,
   isDistrictOfficer,
+  isNcda,
   homePathForRole,
   homePathForUser,
+  UnknownUserRoleError,
   type BackendUserRole,
   type UiUserRole,
 } from '@/api/roles'

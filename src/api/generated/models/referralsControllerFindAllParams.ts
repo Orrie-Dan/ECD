@@ -22,4 +22,12 @@ status?: ApiReferralStatus;
 sourceType?: ApiReferralSourceType;
 centerId?: string;
 childId?: string;
+/**
+ * Inclusive start date on referralDate (YYYY-MM-DD, UTC date-only). No default range.
+ */
+from?: string;
+/**
+ * Inclusive end date on referralDate (YYYY-MM-DD, UTC date-only). No default range.
+ */
+to?: string;
 };

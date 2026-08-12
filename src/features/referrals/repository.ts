@@ -43,10 +43,14 @@ export function useReferralRepository(user: User | null, children: Child[]) {
     () => ({
       centerId: isCaretaker(user) ? user?.centerId : undefined,
     }),
-    [user?.centerId, user?.role],
+    [user],
   )
 
-  const liveQuery = useReferralWindow(windowFilters, env.isLive && !!user)
+  // District LIVE must not pull district-wide referral windows into LocalStore.
+  const liveQuery = useReferralWindow(
+    windowFilters,
+    env.isLive && !!user && isCaretaker(user),
+  )
 
   const childCenterMap = useMemo(() => {
     const map = new Map<string, string>()

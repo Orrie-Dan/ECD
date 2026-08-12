@@ -17,8 +17,9 @@
 #   token-storage.ts   localStorage for access/refresh/device
 #   errors.ts          Normalized ApiError + helpers
 #   roles.ts           API ↔ UI role normalization (hasRole / normalizeRole)
+#                      caregiver→caretaker | district_focal_person→districtOfficer | ncda_admin→ncda
 #   query-client.ts    React Query defaults + global mutation errors
-#   query-keys.ts      Domain key factories (auth.keys / children.keys)
+#   query-keys.ts      Domain key factories (auth / children / district / ncda)
 #   auth/              ApiAuthProvider (LIVE session; does not replace mock UI auth)
 #   providers/         QueryProvider + ApiProviders + ApiErrorBridge
 #   generated/         Orval output (models + React Query hooks) — do not edit

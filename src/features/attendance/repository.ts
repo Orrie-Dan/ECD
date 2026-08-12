@@ -44,10 +44,14 @@ export function useAttendanceRepository(user: User | null) {
       startDate: daysAgoIso(LIVE_LOOKBACK_DAYS),
       endDate: todayIso(),
     }),
-    [user?.centerId, user?.role],
+    [user],
   )
 
-  const liveQuery = useAttendanceWindow(listFilters, env.isLive && !!user)
+  // District LIVE must not pull district-wide attendance windows into LocalStore.
+  const liveQuery = useAttendanceWindow(
+    listFilters,
+    env.isLive && !!user && isCaretaker(user),
+  )
 
   const attendance: AttendanceRecord[] = useMemo(() => {
     if (!env.isLive) return mockAttendance
@@ -76,7 +80,7 @@ export function useAttendanceRepository(user: User | null) {
             (a) => a.childId === record.childId && a.date === record.date,
           )
 
-          let arrivedAt = record.arrivedAt
+          let arrivedAt: string | undefined
           if (record.present) {
             arrivedAt = record.arrivedAt ?? existing?.arrivedAt ?? new Date().toISOString()
           } else {

@@ -111,7 +111,7 @@ export const useChildrenControllerCreate = <TError = ErrorResponseDto | ErrorRes
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Returns a paginated list of children visible in the caller scope. List items omit detail-only fields such as notes and version.
+ * Returns a paginated list of children visible in the caller scope. Supports centerId, districtId, status, and search filters. List items omit detail-only fields such as notes and version.
  * @summary List children
  */
 export const childrenControllerFindAll = (

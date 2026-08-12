@@ -1259,13 +1259,23 @@
       "get": {
         "operationId": "ChildrenController_findAll",
         "summary": "List children",
-        "description": "Returns a paginated list of children visible in the caller scope. List items omit detail-only fields such as notes and version.",
+        "description": "Returns a paginated list of children visible in the caller scope. Supports centerId, districtId, status, and search filters. List items omit detail-only fields such as notes and version.",
         "parameters": [
           {
             "name": "centerId",
             "required": false,
             "in": "query",
             "description": "Filter by ECD center",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "districtId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by district (via center.districtId). NCDA may use nationally; district focal persons may only pass their own district.",
             "schema": {
               "format": "uuid",
               "type": "string"
@@ -2091,6 +2101,137 @@
           },
           "404": {
             "description": "Child not found or not visible in caller scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "nutrition"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/nutrition/screenings": {
+      "get": {
+        "operationId": "NutritionController_listScreenings",
+        "summary": "List nutrition screenings",
+        "description": "Paginated operational screening records in caller scope. Filters by center (via child), child, inclusive screeningDate range (from/to), and nutritionStatus. No default date window.",
+        "parameters": [
+          {
+            "name": "centerId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by ECD center (via child.centerId)",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "childId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by child",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive start date on screeningDate (YYYY-MM-DD, UTC date-only)",
+            "schema": {
+              "example": "2024-06-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive end date on screeningDate (YYYY-MM-DD, UTC date-only)",
+            "schema": {
+              "example": "2024-06-30",
+              "type": "string"
+            }
+          },
+          {
+            "name": "nutritionStatus",
+            "required": false,
+            "in": "query",
+            "description": "Filter by nutrition status",
+            "schema": {
+              "$ref": "#/components/schemas/NutritionStatus"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50,
+              "example": 50,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedNutritionScreeningsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
             "content": {
               "application/json": {
                 "schema": {
@@ -3948,6 +4089,26 @@
               "format": "uuid",
               "type": "string"
             }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive start date on referralDate (YYYY-MM-DD, UTC date-only). No default range.",
+            "schema": {
+              "example": "2024-06-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive end date on referralDate (YYYY-MM-DD, UTC date-only). No default range.",
+            "schema": {
+              "example": "2024-06-30",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5185,6 +5346,264 @@
         ]
       }
     },
+    "/api/v1/monitoring/compliance": {
+      "get": {
+        "operationId": "MonitoringController_compliance",
+        "summary": "Monitor compliance aggregates",
+        "description": "National/district compliance assessment counts and status breakdown — SQL aggregates only.",
+        "parameters": [
+          {
+            "name": "districtId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "centerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sectorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive range start",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive range end",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringComplianceResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "monitoring"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/monitoring/wash": {
+      "get": {
+        "operationId": "MonitoringController_wash",
+        "summary": "Monitor WASH aggregates",
+        "description": "WASH reporting volume and latest-snapshot facility counts for the selected scope.",
+        "parameters": [
+          {
+            "name": "districtId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "centerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sectorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive range start",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Inclusive range end",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitoringWashResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "monitoring"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/monitoring/referrals": {
       "get": {
         "operationId": "MonitoringController_referrals",
@@ -6212,6 +6631,16 @@
             }
           },
           {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Filter by district active flag when provided",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          },
+          {
             "name": "page",
             "required": false,
             "in": "query",
@@ -6268,6 +6697,85 @@
           },
           "403": {
             "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "geo"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/districts/{id}": {
+      "get": {
+        "operationId": "GeoController_getDistrict",
+        "summary": "Get district by id",
+        "description": "Returns a single district. Caregivers and district focal persons are limited to their own district.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "District UUID",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistrictResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "District not found or not visible in caller scope",
             "content": {
               "application/json": {
                 "schema": {
@@ -9290,6 +9798,141 @@
           "createdAt"
         ]
       },
+      "ChildGender": {
+        "type": "string",
+        "enum": [
+          "male",
+          "female"
+        ]
+      },
+      "NutritionScreeningListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "childFullName": {
+            "type": "string",
+            "example": "Jean Uwimana"
+          },
+          "childDateOfBirth": {
+            "type": "string",
+            "format": "date"
+          },
+          "childGender": {
+            "$ref": "#/components/schemas/ChildGender"
+          },
+          "centerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "centerName": {
+            "type": "string",
+            "example": "ECD Center A"
+          },
+          "screeningDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "weightKg": {
+            "type": "number",
+            "example": 12.5
+          },
+          "muacCm": {
+            "type": "number",
+            "example": 14.2
+          },
+          "heightCm": {
+            "type": "number",
+            "nullable": true,
+            "example": 85
+          },
+          "headCircumferenceCm": {
+            "type": "number",
+            "nullable": true,
+            "example": 48
+          },
+          "nutritionStatus": {
+            "example": "normal",
+            "$ref": "#/components/schemas/NutritionStatus"
+          },
+          "requiresReferral": {
+            "type": "boolean",
+            "example": false
+          },
+          "recordedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "number",
+            "description": "Optimistic-lock version",
+            "example": 1
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "childId",
+          "childFullName",
+          "childDateOfBirth",
+          "childGender",
+          "centerId",
+          "centerName",
+          "screeningDate",
+          "weightKg",
+          "muacCm",
+          "heightCm",
+          "headCircumferenceCm",
+          "nutritionStatus",
+          "requiresReferral",
+          "recordedById",
+          "version",
+          "createdAt"
+        ]
+      },
+      "PaginatedNutritionScreeningsResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NutritionScreeningListItemDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "example": 50
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "pageSize",
+          "totalPages"
+        ]
+      },
       "NutritionHistoryResponseDto": {
         "type": "object",
         "properties": {
@@ -12122,6 +12765,16 @@
             "type": "number",
             "example": 40
           },
+          "childrenAssessed": {
+            "type": "number",
+            "example": 35,
+            "description": "Distinct children assessed in range"
+          },
+          "centersWithAssessments": {
+            "type": "number",
+            "example": 12,
+            "description": "Distinct centers with assessments in range"
+          },
           "activeChildren": {
             "type": "number",
             "example": 100
@@ -12139,6 +12792,11 @@
           "pendingFollowUps": {
             "type": "number",
             "example": 5
+          },
+          "centersInScope": {
+            "type": "number",
+            "example": 39445,
+            "description": "Centers in resolved scope"
           },
           "ageBandDistribution": {
             "type": "object",
@@ -12165,10 +12823,13 @@
         },
         "required": [
           "assessmentsCompleted",
+          "childrenAssessed",
+          "centersWithAssessments",
           "activeChildren",
           "coverage",
           "averageScore",
           "pendingFollowUps",
+          "centersInScope",
           "ageBandDistribution",
           "outcomeDistribution"
         ]
@@ -12184,9 +12845,21 @@
             "type": "string",
             "example": "Kigali ECD Center"
           },
+          "districtId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "districtName": {
+            "type": "string",
+            "example": "Gasabo"
+          },
           "assessmentsCompleted": {
             "type": "number",
             "example": 8
+          },
+          "childrenAssessed": {
+            "type": "number",
+            "example": 6
           },
           "averageScore": {
             "type": "number",
@@ -12195,8 +12868,6 @@
           }
         },
         "required": [
-          "centerId",
-          "centerName",
           "assessmentsCompleted",
           "averageScore"
         ]
@@ -12221,6 +12892,14 @@
             "type": "string",
             "nullable": true,
             "format": "uuid"
+          },
+          "granularity": {
+            "type": "string",
+            "enum": [
+              "district",
+              "center"
+            ],
+            "description": "Grain of items — district rollup at national scope, centers when scoped"
           },
           "summary": {
             "$ref": "#/components/schemas/MonitoringStedSummaryDto"
@@ -12253,12 +12932,224 @@
           "to",
           "districtId",
           "centerId",
+          "granularity",
           "summary",
           "items",
           "total",
           "page",
           "pageSize",
           "totalPages"
+        ]
+      },
+      "MonitoringComplianceSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalAssessments": {
+            "type": "number",
+            "example": 120
+          },
+          "centersAssessed": {
+            "type": "number",
+            "example": 45
+          },
+          "centersInScope": {
+            "type": "number",
+            "example": 30
+          },
+          "byStatus": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "example": {
+              "draft": 10,
+              "submitted": 20,
+              "verified": 80,
+              "rejected": 10
+            }
+          },
+          "byType": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "example": {
+              "self_assessment": 50,
+              "supportive_supervision": 40,
+              "external_audit": 30
+            }
+          },
+          "classificationPopulated": {
+            "type": "number",
+            "example": 60
+          },
+          "byClassification": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            },
+            "example": {
+              "compliant": 30,
+              "partially_compliant": 20,
+              "non_compliant": 10
+            }
+          },
+          "classificationNullRate": {
+            "type": "number",
+            "nullable": true,
+            "example": 0.5,
+            "description": "Share of assessments with null overallClassification (sparse when REST-only)"
+          }
+        },
+        "required": [
+          "totalAssessments",
+          "centersAssessed",
+          "centersInScope",
+          "byStatus",
+          "byType",
+          "classificationPopulated",
+          "byClassification",
+          "classificationNullRate"
+        ]
+      },
+      "MonitoringComplianceResponseDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "example": "2026-08-01T00:00:00.000Z"
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-08-06T23:59:59.999Z"
+          },
+          "districtId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "centerId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/MonitoringComplianceSummaryDto"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "districtId",
+          "centerId",
+          "summary"
+        ]
+      },
+      "MonitoringWashReportingDto": {
+        "type": "object",
+        "properties": {
+          "recordsInRange": {
+            "type": "number",
+            "example": 200
+          },
+          "centersReporting": {
+            "type": "number",
+            "example": 80
+          }
+        },
+        "required": [
+          "recordsInRange",
+          "centersReporting"
+        ]
+      },
+      "MonitoringWashLatestSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "centersWithData": {
+            "type": "number",
+            "example": 500
+          },
+          "waterSourceAvailable": {
+            "type": "number",
+            "example": 420
+          },
+          "sanitationFacilityAvailable": {
+            "type": "number",
+            "example": 380
+          },
+          "handwashingFacilityAvailable": {
+            "type": "number",
+            "example": 350
+          },
+          "wasteManagementAvailable": {
+            "type": "number",
+            "example": 300
+          }
+        },
+        "required": [
+          "centersWithData",
+          "waterSourceAvailable",
+          "sanitationFacilityAvailable",
+          "handwashingFacilityAvailable",
+          "wasteManagementAvailable"
+        ]
+      },
+      "MonitoringWashSummaryDto": {
+        "type": "object",
+        "properties": {
+          "centersInScope": {
+            "type": "number",
+            "example": 30
+          },
+          "reporting": {
+            "$ref": "#/components/schemas/MonitoringWashReportingDto"
+          },
+          "latestSnapshot": {
+            "description": "Latest indicator per center (point-in-time facility state)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MonitoringWashLatestSnapshotDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "centersInScope",
+          "reporting",
+          "latestSnapshot"
+        ]
+      },
+      "MonitoringWashResponseDto": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "example": "2026-08-01T00:00:00.000Z"
+          },
+          "to": {
+            "type": "string",
+            "example": "2026-08-06T23:59:59.999Z"
+          },
+          "districtId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "centerId": {
+            "type": "string",
+            "nullable": true,
+            "format": "uuid"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/MonitoringWashSummaryDto"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "districtId",
+          "centerId",
+          "summary"
         ]
       },
       "MonitoringReferralsSummaryDto": {

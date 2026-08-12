@@ -6,35 +6,54 @@ import type { UserRole } from '@/types'
  * Backend roles must never be compared in UI components.
  * Always normalize first, then use `hasRole` / helpers.
  *
- * Mapping:
+ * Mapping (Sprint 5.5A):
  *   caregiver              → caretaker
- *   district_focal_person  → districtOfficer
- *   ncda_admin             → districtOfficer
+ *   district_focal_person  → districtOfficer  (legacy District UI role name)
+ *   ncda_admin             → ncda
+ *
+ * Unknown API roles fail closed (never default to District or NCDA).
  */
 
 export type BackendUserRole = 'caregiver' | 'district_focal_person' | 'ncda_admin'
 
 export type UiUserRole = UserRole
 
+export type AppHomePath = '/caretaker' | '/district' | '/ncda'
+
 const API_TO_UI_ROLE: Record<BackendUserRole, UiUserRole> = {
   caregiver: 'caretaker',
   district_focal_person: 'districtOfficer',
-  ncda_admin: 'districtOfficer',
+  ncda_admin: 'ncda',
 }
 
-/** Reverse map for requests that need a backend role. NCDA collapses to district officer UI-side. */
+/** Reverse map for requests that need a backend role. */
 const UI_TO_API_ROLE: Record<UiUserRole, BackendUserRole> = {
   caretaker: 'caregiver',
   districtOfficer: 'district_focal_person',
+  ncda: 'ncda_admin',
 }
 
-const HOME_PATH: Record<UiUserRole, '/caretaker' | '/district'> = {
+const HOME_PATH: Record<UiUserRole, AppHomePath> = {
   caretaker: '/caretaker',
   districtOfficer: '/district',
+  ncda: '/ncda',
 }
+
+/** Already-normalized UI role strings accepted for passthrough (e.g. mock session). */
+const UI_ROLE_PASSTHROUGH = new Set<string>(['caretaker', 'districtOfficer', 'ncda'])
 
 export function isBackendUserRole(value: string): value is BackendUserRole {
   return value in API_TO_UI_ROLE
+}
+
+export class UnknownUserRoleError extends Error {
+  readonly apiRole: string
+
+  constructor(apiRole: string) {
+    super(`Unsupported user role: ${apiRole}`)
+    this.name = 'UnknownUserRoleError'
+    this.apiRole = apiRole
+  }
 }
 
 /** Map an API / JWT role string to the UI role used by routes and guards. */
@@ -42,10 +61,11 @@ export function normalizeRole(apiRole: string): UiUserRole {
   if (isBackendUserRole(apiRole)) {
     return API_TO_UI_ROLE[apiRole]
   }
-  if (apiRole === 'caretaker' || apiRole === 'districtOfficer') {
-    return apiRole
+  if (UI_ROLE_PASSTHROUGH.has(apiRole)) {
+    return apiRole as UiUserRole
   }
-  return 'districtOfficer'
+  // Fail closed — never grant District or NCDA access to unrecognized roles.
+  throw new UnknownUserRoleError(apiRole)
 }
 
 /** Map a UI role back to the primary backend role for outbound DTOs. */
@@ -74,12 +94,16 @@ export function isDistrictOfficer(user: RoleBearer): boolean {
   return hasRole(user, 'districtOfficer')
 }
 
+export function isNcda(user: RoleBearer): boolean {
+  return hasRole(user, 'ncda')
+}
+
 /** Default post-login / wrong-role redirect for a UI role. */
-export function homePathForRole(role: UiUserRole): '/caretaker' | '/district' {
+export function homePathForRole(role: UiUserRole): AppHomePath {
   return HOME_PATH[role]
 }
 
-export function homePathForUser(user: RoleBearer): '/caretaker' | '/district' {
-  if (!user) return '/district'
+export function homePathForUser(user: RoleBearer): AppHomePath | '/' {
+  if (!user) return '/'
   return homePathForRole(user.role)
 }

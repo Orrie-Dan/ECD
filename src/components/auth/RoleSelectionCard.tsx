@@ -1,6 +1,6 @@
 import { ChevronRight, type LucideIcon } from 'lucide-react'
 
-type RoleCardAccent = 'caretaker' | 'districtOfficer'
+type RoleCardAccent = 'caretaker' | 'districtOfficer' | 'ncda'
 
 interface RoleSelectionCardProps {
   icon: LucideIcon
@@ -25,6 +25,12 @@ const accentStyles: Record<
     icon: 'bg-secondary-light text-secondary group-hover:bg-secondary-light',
     chevron: 'group-hover:text-secondary',
     hover: 'hover:border-secondary/40 hover:bg-secondary/[0.04]',
+  },
+  ncda: {
+    card: 'border-l-[3px] border-l-accent',
+    icon: 'bg-accent-light text-accent group-hover:bg-accent-light',
+    chevron: 'group-hover:text-accent',
+    hover: 'hover:border-accent/40 hover:bg-accent/[0.04]',
   },
 }
 

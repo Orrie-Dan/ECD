@@ -4,6 +4,7 @@ import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, StatCard } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { FilterResultsBar } from '@/components/ui/FilterResultsBar'
 import { GrowthSummaryCards } from '@/components/growth/GrowthSummaryCards'
 import {
@@ -13,12 +14,15 @@ import {
   NutritionAlertList,
 } from '@/components/district/growth'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
-import { useNutritionMonitoringView, roundPct } from '@/features/monitoring'
+import { useNutritionMonitoringView, roundPct, yearMonthToMonitoringRange } from '@/features/monitoring'
+import { useDistrictNutritionAlerts, useDistrictNutritionScreenings } from '@/features/district'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePagination } from '@/hooks/usePagination'
 import { env } from '@/config/env'
 import { ECD_CENTERS, calculateAge } from '@/lib/mock-data'
+import { getAssessmentDueStatus } from '@/lib/nutrition'
 import {
   DEFAULT_DISTRICT_GROWTH_FILTERS,
   buildCoverageByCenterSeries,
@@ -27,14 +31,101 @@ import {
   computeCenterGrowthComparison,
   filterDistrictGrowthRows,
   isDistrictGrowthFiltersActive,
+  type DistrictGrowthChildRow,
   type DistrictGrowthFilters,
   type GrowthSummaryStats,
+  type NutritionAlert,
+  type NutritionAlertKind,
 } from '@/lib/nutrition-utils'
 import { district } from '@/locales/rw/district'
+import { common } from '@/locales/rw/common'
+import type { Child, GrowthMeasurement, NutritionAssessment } from '@/types'
+import type { NutritionAlertViewModel } from '@/models/nutrition'
+import type { NutritionScreeningListItemViewModel } from '@/models/nutrition-screenings'
+
+function mapApiNutritionAlertToUi(alert: NutritionAlertViewModel): NutritionAlert {
+  let kind: NutritionAlertKind = 'at_risk'
+  if (alert.type === 'severe_nutrition') kind = 'severe'
+  else if (alert.type === 'overdue_screening') kind = 'overdue'
+  else if (alert.type === 'requires_referral') kind = 'at_risk'
+
+  return {
+    id: alert.id,
+    childId: alert.childId,
+    childName: alert.childFullName,
+    centerId: alert.centerId,
+    centerName: alert.centerName ?? '—',
+    kind,
+    nutritionStatus: alert.nutritionStatus,
+    recommendationKey: kind,
+    lastScreeningDate: alert.screeningDate,
+    priority: kind === 'severe' || kind === 'overdue' ? 1 : 3,
+  }
+}
+
+function mapScreeningToGrowthRow(
+  item: NutritionScreeningListItemViewModel,
+): DistrictGrowthChildRow {
+  const dob = item.childDateOfBirth
+  return {
+    childId: item.childId,
+    fullName: item.childFullName,
+    dateOfBirth: dob,
+    age: calculateAge(dob),
+    gender: item.childGender === 'female' ? 'Umukobwa' : 'Umuhungu',
+    centerId: item.centerId,
+    centerName: item.centerName,
+    sector: '—',
+    lastScreeningDate: item.screeningDate,
+    nutritionStatus: item.nutritionStatus,
+    requiresReferral: item.requiresReferral,
+    dueStatus: getAssessmentDueStatus(item.screeningDate),
+  }
+}
+
+function yearMonthToDateOnlyRange(yearMonth: string): { from: string; to: string } {
+  const range = yearMonthToMonitoringRange(yearMonth)
+  return {
+    from: (range.from ?? `${yearMonth}-01`).slice(0, 10),
+    to: (range.to ?? `${yearMonth}-28`).slice(0, 10),
+  }
+}
 
 export function GrowthMonitoringPage() {
+  if (env.isLive) {
+    return (
+      <GrowthMonitoringPageShared
+        children={[] as Child[]}
+        growthMeasurements={[] as GrowthMeasurement[]}
+        nutritionAssessments={[] as NutritionAssessment[]}
+      />
+    )
+  }
+  return <GrowthMonitoringPageMock />
+}
+
+function GrowthMonitoringPageMock() {
   const { children, growthMeasurements, nutritionAssessments } = useData()
+  return (
+    <GrowthMonitoringPageShared
+      children={children}
+      growthMeasurements={growthMeasurements}
+      nutritionAssessments={nutritionAssessments}
+    />
+  )
+}
+
+function GrowthMonitoringPageShared({
+  children,
+  growthMeasurements,
+  nutritionAssessments,
+}: {
+  children: Child[]
+  growthMeasurements: GrowthMeasurement[]
+  nutritionAssessments: NutritionAssessment[]
+}) {
   const [filters, setFilters] = useState<DistrictGrowthFilters>(DEFAULT_DISTRICT_GROWTH_FILTERS)
+  const [screeningPage, setScreeningPage] = useState(1)
 
   const debouncedSearch = useDebounce(filters.search, 300)
   const effectiveFilters = useMemo(
@@ -47,12 +138,47 @@ export function GrowthMonitoringPage() {
       ? effectiveFilters.centerId
       : undefined
 
+  const monthRange = useMemo((): { from?: string; to?: string } => {
+    if (!effectiveFilters.yearMonth) return {}
+    return yearMonthToMonitoringRange(effectiveFilters.yearMonth)
+  }, [effectiveFilters.yearMonth])
+
+  const screeningDateRange = useMemo((): { from?: string; to?: string } => {
+    if (!effectiveFilters.yearMonth) return {}
+    return yearMonthToDateOnlyRange(effectiveFilters.yearMonth)
+  }, [effectiveFilters.yearMonth])
+
   const nutritionMonitoring = useNutritionMonitoringView({
     children,
     growthMeasurements,
     nutritionAssessments,
     centerId,
+    from: monthRange.from,
+    to: monthRange.to,
   })
+
+  const liveAlertsQ = useDistrictNutritionAlerts(
+    { centerId },
+    env.isLive,
+  )
+
+  const liveScreeningsQ = useDistrictNutritionScreenings(
+    {
+      centerId,
+      from: screeningDateRange.from,
+      to: screeningDateRange.to,
+      nutritionStatus:
+        effectiveFilters.status !== 'all' ? effectiveFilters.status : undefined,
+      page: screeningPage,
+      pageSize: 50,
+    },
+    env.isLive,
+  )
+
+  const liveScreeningRows = useMemo(
+    () => (liveScreeningsQ.data?.items ?? []).map(mapScreeningToGrowthRow),
+    [liveScreeningsQ.data?.items],
+  )
 
   const allRows = useMemo(
     () =>
@@ -107,6 +233,11 @@ export function GrowthMonitoringPage() {
   }, [nutritionMonitoring.data?.summary])
 
   const alerts = useMemo(() => buildNutritionAlerts(filteredRows, 8), [filteredRows])
+
+  const liveAlerts = useMemo((): NutritionAlert[] => {
+    const items = liveAlertsQ.data?.items ?? []
+    return items.slice(0, 8).map(mapApiNutritionAlertToUi)
+  }, [liveAlertsQ.data?.items])
 
   const centerRows = useMemo(() => {
     if (nutritionMonitoring.source === 'api' && nutritionMonitoring.data) {
@@ -175,10 +306,12 @@ export function GrowthMonitoringPage() {
 
   const resetFilters = useCallback(() => {
     setFilters(DEFAULT_DISTRICT_GROWTH_FILTERS)
+    setScreeningPage(1)
   }, [])
 
   const patchFilters = useCallback((next: Partial<DistrictGrowthFilters>) => {
     setFilters((prev) => ({ ...prev, ...next }))
+    setScreeningPage(1)
   }, [])
 
   return (
@@ -186,7 +319,21 @@ export function GrowthMonitoringPage() {
       <PageContainer>
         <PageHeader title={district.growth.title} description={district.growth.subtitle} />
         <PageContent className="space-y-6">
-          {nutritionMonitoring.isLoading ? (
+          {nutritionMonitoring.isError ? (
+            <LiveUnavailableState
+              title={common.error}
+              description="Ntibyashoboye kubona amakuru y'imikurire kuri API. Ongera ugerageze."
+              action={
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={() => void nutritionMonitoring.refetch?.()}
+                >
+                  {common.reset}
+                </Button>
+              }
+            />
+          ) : nutritionMonitoring.isLoading ? (
             <SkeletonPage label={district.growth.title} stats={5} />
           ) : (
             <>
@@ -229,7 +376,7 @@ export function GrowthMonitoringPage() {
                   <StatCard
                     label={district.growth.statusModerate}
                     value={statusCounts.moderate}
-                    icon={<HeartPulse size={18} className="text-accent" />}
+                    icon={<HeartPulse size={18} className="text-warning" />}
                     variant="warning"
                     compact
                   />
@@ -243,7 +390,7 @@ export function GrowthMonitoringPage() {
                     compact
                   />
                 </div>
-                <div className="h-full [&>div]:h-full col-span-2 sm:col-span-1">
+                <div className="h-full [&>div]:h-full">
                   <StatCard
                     label={district.growth.requiresReferral}
                     value={statusCounts.requiresReferral}
@@ -262,9 +409,10 @@ export function GrowthMonitoringPage() {
             onChange={patchFilters}
             onReset={resetFilters}
             showReset={showReset}
+            liveMode={env.isLive}
           />
 
-          {hasActiveFilters && (
+          {hasActiveFilters && !env.isLive && (
             <FilterResultsBar
               count={filteredRows.length}
               onClear={resetFilters}
@@ -272,29 +420,101 @@ export function GrowthMonitoringPage() {
             />
           )}
 
-          <NutritionAlertList alerts={alerts} />
+          {env.isLive ? (
+            <>
+              {liveAlertsQ.isError ? (
+                <LiveUnavailableState
+                  title={district.growth.alertsTitle}
+                  description="Ntibyashoboye kubona amatangazo y'imirire kuri API."
+                  action={
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={() => void liveAlertsQ.refetch()}
+                    >
+                      {common.reset}
+                    </Button>
+                  }
+                />
+              ) : liveAlertsQ.isLoading ? (
+                <SkeletonPage label={district.growth.title} stats={0} />
+              ) : (
+                <NutritionAlertList alerts={liveAlerts} />
+              )}
+              {liveScreeningsQ.isError ? (
+                <LiveUnavailableState
+                  title={district.growth.tableTitle}
+                  description="Ntibyashoboye kubona urutonde rw’ibipimo by’imirire kuri API. Ongera ugerageze."
+                  action={
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={() => void liveScreeningsQ.refetch()}
+                    >
+                      {common.reset}
+                    </Button>
+                  }
+                />
+              ) : liveScreeningsQ.isLoading ? (
+                <SkeletonPage label={district.growth.tableTitle} stats={0} />
+              ) : (
+                <DistrictGrowthChildrenTable
+                  rows={liveScreeningRows}
+                  searchQuery=""
+                  page={liveScreeningsQ.data?.page ?? 1}
+                  pageSize={liveScreeningsQ.data?.pageSize ?? 50}
+                  total={liveScreeningsQ.data?.total ?? 0}
+                  totalPages={liveScreeningsQ.data?.totalPages ?? 1}
+                  startIndex={
+                    ((liveScreeningsQ.data?.page ?? 1) - 1) *
+                      (liveScreeningsQ.data?.pageSize ?? 50) +
+                    1
+                  }
+                  endIndex={Math.min(
+                    (liveScreeningsQ.data?.page ?? 1) *
+                      (liveScreeningsQ.data?.pageSize ?? 50),
+                    liveScreeningsQ.data?.total ?? 0,
+                  )}
+                  hasPrevious={(liveScreeningsQ.data?.page ?? 1) > 1}
+                  hasNext={
+                    (liveScreeningsQ.data?.page ?? 1) <
+                    (liveScreeningsQ.data?.totalPages ?? 1)
+                  }
+                  onPageChange={setScreeningPage}
+                  onPageSizeChange={() => undefined}
+                  onResetFilters={resetFilters}
+                  hasActiveFilters={hasActiveFilters}
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <NutritionAlertList alerts={alerts} />
+              <DistrictGrowthChildrenTable
+                rows={pagination.items}
+                searchQuery={debouncedSearch}
+                page={pagination.page}
+                pageSize={pagination.pageSize}
+                total={pagination.total}
+                totalPages={pagination.totalPages}
+                startIndex={pagination.startIndex}
+                endIndex={pagination.endIndex}
+                hasPrevious={pagination.hasPrevious}
+                hasNext={pagination.hasNext}
+                onPageChange={pagination.setPage}
+                onPageSizeChange={pagination.setPageSize}
+                onResetFilters={resetFilters}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </>
+          )}
 
-          <DistrictGrowthTrendSection
-            coverageSeries={coverageSeries}
-            statusCounts={statusCounts}
-          />
-
-          <DistrictGrowthChildrenTable
-            rows={pagination.items}
-            searchQuery={debouncedSearch}
-            page={pagination.page}
-            pageSize={pagination.pageSize}
-            total={pagination.total}
-            totalPages={pagination.totalPages}
-            startIndex={pagination.startIndex}
-            endIndex={pagination.endIndex}
-            hasPrevious={pagination.hasPrevious}
-            hasNext={pagination.hasNext}
-            onPageChange={pagination.setPage}
-            onPageSizeChange={pagination.setPageSize}
-            onResetFilters={resetFilters}
-            hasActiveFilters={hasActiveFilters}
-          />
+          {!nutritionMonitoring.isLoading && !nutritionMonitoring.isError && (
+            <DistrictGrowthTrendSection
+              coverageSeries={coverageSeries}
+              statusCounts={statusCounts}
+            />
+          )}
 
           <Card padding="lg">
             <h2 className="text-subheading text-text mb-4">{district.growth.centerComparison}</h2>

@@ -20,12 +20,48 @@ import { useData } from '@/contexts/AppContext'
 import { useDashboardMonitoring } from '@/features/monitoring'
 import { roundPct } from '@/features/monitoring'
 import { district } from '@/locales/rw/district'
+import { common } from '@/locales/rw/common'
+import { env } from '@/config/env'
+import type { Child, GrowthMeasurement, NutritionAssessment } from '@/types'
+import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 
 const DEFAULT_PERIOD_FILTER: ChartPeriodFilterValue = { period: 'month', month: '' }
 
 export function DistrictDashboardPage() {
-  const navigate = useNavigate()
+  if (env.isLive) {
+    return (
+      <DistrictDashboardPageShared
+        children={[] as Child[]}
+        growthMeasurements={[] as GrowthMeasurement[]}
+        nutritionAssessments={[] as NutritionAssessment[]}
+      />
+    )
+  }
+
+  return <DistrictDashboardPageMock />
+}
+
+function DistrictDashboardPageMock() {
   const { children, growthMeasurements, nutritionAssessments } = useData()
+  return (
+    <DistrictDashboardPageShared
+      children={children}
+      growthMeasurements={growthMeasurements}
+      nutritionAssessments={nutritionAssessments}
+    />
+  )
+}
+
+function DistrictDashboardPageShared({
+  children,
+  growthMeasurements,
+  nutritionAssessments,
+}: {
+  children: Child[]
+  growthMeasurements: GrowthMeasurement[]
+  nutritionAssessments: NutritionAssessment[]
+}) {
+  const navigate = useNavigate()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD_FILTER)
 
   const effectiveRange = useMemo(
@@ -41,6 +77,8 @@ export function DistrictDashboardPage() {
     growthOverdue,
     growthAtRisk,
     isLoading,
+    isError,
+    refetch,
   } = useDashboardMonitoring({
     range: effectiveRange,
     children,
@@ -83,7 +121,17 @@ export function DistrictDashboardPage() {
         <DashboardFilterSummary effectiveRange={effectiveRange} />
       </div>
 
-      {isLoading || !dashboard ? (
+      {isError ? (
+        <LiveUnavailableState
+          title={district.dashboard.title}
+          description="Ntibyashoboye kubona amakuru ya dashboard kuri API. Ongera ugerageze."
+          action={
+            <Button type="button" variant="primary" onClick={() => void refetch?.()}>
+              {common.reset}
+            </Button>
+          }
+        />
+      ) : isLoading || !dashboard ? (
         <SkeletonPage label={district.dashboard.title} stats={6} />
       ) : (
         <>

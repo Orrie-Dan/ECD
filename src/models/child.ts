@@ -26,6 +26,8 @@ export interface ChildrenListResult {
 
 export interface ChildrenListFilters {
   centerId?: string
+  /** Server-side via center.districtId (Sprint 5.5F). */
+  districtId?: string
   status?: Child['status']
   search?: string
   page?: number

@@ -35,14 +35,24 @@ import type {
 export async function fetchChildrenList(
   filters: ChildrenListFilters = {},
 ): Promise<ChildrenListResult> {
+  const pageSize = Math.min(Math.max(1, filters.pageSize ?? 20), 100)
   const dto = await childrenControllerFindAll({
     centerId: filters.centerId,
+    districtId: filters.districtId,
     status: filters.status,
-    search: filters.search,
+    search: filters.search?.trim() || undefined,
     page: filters.page ?? 1,
-    pageSize: filters.pageSize ?? 100,
+    pageSize,
   })
   return mapPaginatedChildrenToViewModel(dto)
+}
+
+/** Bounded child count via DB `total` — pageSize=1 keeps payload tiny. */
+export async function fetchChildrenTotal(
+  filters: Omit<ChildrenListFilters, 'page' | 'pageSize'> = {},
+): Promise<number> {
+  const result = await fetchChildrenList({ ...filters, page: 1, pageSize: 1 })
+  return result.total
 }
 
 export async function fetchChildDetail(id: string): Promise<ChildViewModel> {

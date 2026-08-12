@@ -14,6 +14,7 @@ import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummar
 import { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusBadge'
 import { useData } from '@/contexts/AppContext'
 import { useAttendanceMonitoringView, roundPct } from '@/features/monitoring'
+import { useDistrictCenterDayAttendanceRoster } from '@/features/district'
 import { usePagination } from '@/hooks/usePagination'
 import { Pagination } from '@/components/ui/Pagination'
 import { ECD_CENTERS, formatDate } from '@/lib/mock-data'
@@ -29,7 +30,7 @@ import { env } from '@/config/env'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
-import type { AttendanceDayStatus, EcdCenter } from '@/types'
+import type { AttendanceDayStatus, AttendanceRecord, Child, EcdCenter } from '@/types'
 
 type ChildStatusFilter = 'all' | AttendanceDayStatus
 
@@ -66,7 +67,24 @@ function SubmissionStatusBadge({ status }: { status: CenterSubmissionStatus }) {
 }
 
 export function DistrictAttendancePage() {
+  if (env.isLive) {
+    return <DistrictAttendancePageShared children={[]} attendance={[]} />
+  }
+  return <DistrictAttendancePageMock />
+}
+
+function DistrictAttendancePageMock() {
   const { children, attendance } = useData()
+  return <DistrictAttendancePageShared children={children} attendance={attendance} />
+}
+
+function DistrictAttendancePageShared({
+  children,
+  attendance,
+}: {
+  children: Child[]
+  attendance: AttendanceRecord[]
+}) {
   const today = getTodayDate()
   const yesterday = getYesterdayDate()
 
@@ -76,15 +94,27 @@ export function DistrictAttendancePage() {
   const [search, setSearch] = useState('')
   const [selectedCenterId, setSelectedCenterId] = useState<string | null>(null)
   const [childStatusFilter, setChildStatusFilter] = useState<ChildStatusFilter>('all')
+  const [liveDrillPage, setLiveDrillPage] = useState(1)
 
   const monitoring = useAttendanceMonitoringView({
     selectedDate,
     centerId,
   })
 
+  const liveRoster = useDistrictCenterDayAttendanceRoster(
+    {
+      centerId: selectedCenterId,
+      date: selectedDate,
+      page: liveDrillPage,
+      pageSize: 50,
+    },
+    env.isLive && !!selectedCenterId,
+  )
+
   const setDateCapped = (date: string) => {
     setSelectedDate(date > today ? today : date)
     setSelectedCenterId(null)
+    setLiveDrillPage(1)
   }
 
   const allRows = useMemo((): CenterDailyAttendanceRow[] => {
@@ -158,6 +188,10 @@ export function DistrictAttendancePage() {
 
   const drillDown = useMemo(() => {
     if (!selectedRow) return null
+    if (env.isLive) {
+      if (!liveRoster.data) return null
+      return { rows: liveRoster.data.rows, stats: liveRoster.data.stats }
+    }
     const fromContext = buildCenterChildDayRowsFromContext(
       children,
       attendance,
@@ -165,10 +199,8 @@ export function DistrictAttendancePage() {
       selectedDate,
     )
     if (fromContext) return fromContext
-    // LIVE: never invent child/day rows. MOCK may keep synthetic drill-down.
-    if (env.isLive) return null
     return buildSyntheticCenterChildDayRows(selectedRow)
-  }, [selectedRow, children, attendance, selectedDate])
+  }, [selectedRow, children, attendance, selectedDate, liveRoster.data])
 
   const drillRows = useMemo(() => {
     if (!drillDown) return []
@@ -184,11 +216,13 @@ export function DistrictAttendancePage() {
   const isYesterday = selectedDate === yesterday
   const isSynthetic = env.isMock && (drillDown?.rows.some((r) => r.isSynthetic) ?? false)
   const isLoading = monitoring.isLoading
-  const liveDrillUnavailable = env.isLive && !!selectedRow && !drillDown
+  const liveDrillLoading = env.isLive && !!selectedRow && liveRoster.isLoading
+  const liveDrillError = env.isLive && !!selectedRow && liveRoster.isError
 
   const openCenter = (row: CenterDailyAttendanceRow) => {
     setSelectedCenterId(row.center.id)
     setChildStatusFilter('all')
+    setLiveDrillPage(1)
   }
 
   return (
@@ -287,9 +321,46 @@ export function DistrictAttendancePage() {
         <span className="font-semibold text-text">{formatDate(selectedDate)}</span>
       </p>
 
-      {isLoading ? (
+      {monitoring.isError ? (
+        <div className="space-y-6">
+          <LiveUnavailableState
+            title={common.error}
+            description="Ntibyashoboye kubona ubwitabire kuri API. Ongera ugerageze."
+            action={
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => void monitoring.refetch?.()}
+              >
+                {common.reset}
+              </Button>
+            }
+          />
+        </div>
+      ) : isLoading ? (
         <SkeletonPage label={district.attendanceMonitoring.loading} stats={3} />
-      ) : liveDrillUnavailable ? (
+      ) : selectedRow && liveDrillLoading ? (
+        <div className="space-y-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="tertiary"
+              size="md"
+              icon={<ArrowLeft size={16} />}
+              onClick={() => setSelectedCenterId(null)}
+            >
+              {district.attendanceMonitoring.backToList}
+            </Button>
+            <div className="min-w-0">
+              <h2 className="text-subheading text-text">{selectedRow.center.name}</h2>
+              <p className="text-body text-text-secondary">
+                {selectedRow.center.sector} · {formatDate(selectedDate)}
+              </p>
+            </div>
+          </div>
+          <SkeletonPage label={district.attendanceMonitoring.childrenList} stats={3} />
+        </div>
+      ) : selectedRow && liveDrillError ? (
         <div className="space-y-6">
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -309,8 +380,13 @@ export function DistrictAttendancePage() {
             </div>
           </div>
           <LiveUnavailableState
-            title={district.attendanceMonitoring.childrenList}
-            description={common.live.syntheticAttendanceUnavailable}
+            title={common.error}
+            description="Ntibyashoboye kubona urutonde rw’abana kuri API. Ongera ugerageze."
+            action={
+              <Button type="button" variant="primary" onClick={() => void liveRoster.refetch()}>
+                {common.reset}
+              </Button>
+            }
           />
         </div>
       ) : selectedRow && drillDown ? (
@@ -390,7 +466,7 @@ export function DistrictAttendancePage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {drillPagination.items.map((row) => (
+                      {(env.isLive ? drillRows : drillPagination.items).map((row) => (
                         <tr key={row.id} className="border-b border-border last:border-0">
                           <td
                             className="py-3 pr-4 text-body font-medium text-text"
@@ -414,19 +490,40 @@ export function DistrictAttendancePage() {
                     </tbody>
                   </table>
                 </div>
-                <Pagination
-                  page={drillPagination.page}
-                  pageSize={drillPagination.pageSize}
-                  total={drillPagination.total}
-                  totalPages={drillPagination.totalPages}
-                  startIndex={drillPagination.startIndex}
-                  endIndex={drillPagination.endIndex}
-                  hasPrevious={drillPagination.hasPrevious}
-                  hasNext={drillPagination.hasNext}
-                  onPageChange={drillPagination.setPage}
-                  onPageSizeChange={drillPagination.setPageSize}
-                  className="!mt-0"
-                />
+                {env.isLive && liveRoster.data ? (
+                  <Pagination
+                    page={liveRoster.data.childrenPage}
+                    pageSize={liveRoster.data.childrenPageSize}
+                    total={liveRoster.data.childrenTotal}
+                    totalPages={liveRoster.data.childrenTotalPages}
+                    startIndex={
+                      (liveRoster.data.childrenPage - 1) * liveRoster.data.childrenPageSize + 1
+                    }
+                    endIndex={Math.min(
+                      liveRoster.data.childrenPage * liveRoster.data.childrenPageSize,
+                      liveRoster.data.childrenTotal,
+                    )}
+                    hasPrevious={liveRoster.data.childrenPage > 1}
+                    hasNext={liveRoster.data.childrenPage < liveRoster.data.childrenTotalPages}
+                    onPageChange={setLiveDrillPage}
+                    onPageSizeChange={() => undefined}
+                    className="!mt-0"
+                  />
+                ) : (
+                  <Pagination
+                    page={drillPagination.page}
+                    pageSize={drillPagination.pageSize}
+                    total={drillPagination.total}
+                    totalPages={drillPagination.totalPages}
+                    startIndex={drillPagination.startIndex}
+                    endIndex={drillPagination.endIndex}
+                    hasPrevious={drillPagination.hasPrevious}
+                    hasNext={drillPagination.hasNext}
+                    onPageChange={drillPagination.setPage}
+                    onPageSizeChange={drillPagination.setPageSize}
+                    className="!mt-0"
+                  />
+                )}
               </>
             )}
           </Card>

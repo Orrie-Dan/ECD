@@ -5,6 +5,7 @@
  * Early Childhood Development management system API. Success responses are bare DTO bodies; errors use `{ success, statusCode, message, timestamp }` (plus `entity` / `currentVersion` on optimistic-lock conflicts). List endpoints use offset pagination (`items`, `page`, `pageSize`, `total`, `totalPages`); sync pull uses cursor pagination.
  * OpenAPI spec version: 1.0
  */
+import type { MonitoringStedResponseDtoGranularity } from './monitoringStedResponseDtoGranularity';
 import type { MonitoringStedSummaryDto } from './monitoringStedSummaryDto';
 import type { MonitoringStedCenterItemDto } from './monitoringStedCenterItemDto';
 
@@ -15,6 +16,8 @@ export interface MonitoringStedResponseDto {
   districtId: string | null;
   /** @nullable */
   centerId: string | null;
+  /** Grain of items — district rollup at national scope, centers when scoped */
+  granularity: MonitoringStedResponseDtoGranularity;
   summary: MonitoringStedSummaryDto;
   items: MonitoringStedCenterItemDto[];
   total: number;

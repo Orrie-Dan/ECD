@@ -1,4 +1,5 @@
-export type UserRole = 'caretaker' | 'districtOfficer'
+/** Application (UI) roles — normalized from backend JWT roles via `normalizeRole`. */
+export type UserRole = 'caretaker' | 'districtOfficer' | 'ncda'
 
 export interface User {
   id: string

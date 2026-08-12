@@ -22,6 +22,7 @@ import type {
 
 import type {
   AdminUnitResponseDto,
+  DistrictResponseDto,
   ErrorResponseDto,
   GeoControllerListAdminUnitsParams,
   GeoControllerListCentersByDistrictParams,
@@ -213,6 +214,98 @@ export function useGeoControllerListDistricts<TData = Awaited<ReturnType<typeof 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGeoControllerListDistrictsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * Returns a single district. Caregivers and district focal persons are limited to their own district.
+ * @summary Get district by id
+ */
+export const geoControllerGetDistrict = (
+    id: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<DistrictResponseDto>(
+      {url: `/api/v1/districts/${id}`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+
+
+export const getGeoControllerGetDistrictQueryKey = (id?: string,) => {
+    return [
+    `/api/v1/districts/${id}`
+    ] as const;
+    }
+
+    
+export const getGeoControllerGetDistrictQueryOptions = <TData = Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGeoControllerGetDistrictQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof geoControllerGetDistrict>>> = ({ signal }) => geoControllerGetDistrict(id, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GeoControllerGetDistrictQueryResult = NonNullable<Awaited<ReturnType<typeof geoControllerGetDistrict>>>
+export type GeoControllerGetDistrictQueryError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto | ErrorResponseDto
+
+
+export function useGeoControllerGetDistrict<TData = Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof geoControllerGetDistrict>>,
+          TError,
+          Awaited<ReturnType<typeof geoControllerGetDistrict>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGeoControllerGetDistrict<TData = Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof geoControllerGetDistrict>>,
+          TError,
+          Awaited<ReturnType<typeof geoControllerGetDistrict>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGeoControllerGetDistrict<TData = Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get district by id
+ */
+
+export function useGeoControllerGetDistrict<TData = Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof geoControllerGetDistrict>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGeoControllerGetDistrictQueryOptions(id,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

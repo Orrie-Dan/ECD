@@ -23,15 +23,19 @@ import type {
 import type {
   ErrorResponseDto,
   MonitoringAttendanceResponseDto,
+  MonitoringComplianceResponseDto,
   MonitoringControllerAttendanceParams,
+  MonitoringControllerComplianceParams,
   MonitoringControllerFeedingParams,
   MonitoringControllerNutritionParams,
   MonitoringControllerReferralsParams,
   MonitoringControllerStedParams,
+  MonitoringControllerWashParams,
   MonitoringFeedingResponseDto,
   MonitoringNutritionResponseDto,
   MonitoringReferralsResponseDto,
-  MonitoringStedResponseDto
+  MonitoringStedResponseDto,
+  MonitoringWashResponseDto
 } from '../../models';
 
 import { customInstance } from '../../../client';
@@ -403,6 +407,192 @@ export function useMonitoringControllerSted<TData = Awaited<ReturnType<typeof mo
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getMonitoringControllerStedQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * National/district compliance assessment counts and status breakdown — SQL aggregates only.
+ * @summary Monitor compliance aggregates
+ */
+export const monitoringControllerCompliance = (
+    params?: MonitoringControllerComplianceParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MonitoringComplianceResponseDto>(
+      {url: `/api/v1/monitoring/compliance`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getMonitoringControllerComplianceQueryKey = (params?: MonitoringControllerComplianceParams,) => {
+    return [
+    `/api/v1/monitoring/compliance`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getMonitoringControllerComplianceQueryOptions = <TData = Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(params?: MonitoringControllerComplianceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMonitoringControllerComplianceQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof monitoringControllerCompliance>>> = ({ signal }) => monitoringControllerCompliance(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MonitoringControllerComplianceQueryResult = NonNullable<Awaited<ReturnType<typeof monitoringControllerCompliance>>>
+export type MonitoringControllerComplianceQueryError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto
+
+
+export function useMonitoringControllerCompliance<TData = Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params: undefined |  MonitoringControllerComplianceParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof monitoringControllerCompliance>>,
+          TError,
+          Awaited<ReturnType<typeof monitoringControllerCompliance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMonitoringControllerCompliance<TData = Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: MonitoringControllerComplianceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof monitoringControllerCompliance>>,
+          TError,
+          Awaited<ReturnType<typeof monitoringControllerCompliance>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMonitoringControllerCompliance<TData = Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: MonitoringControllerComplianceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Monitor compliance aggregates
+ */
+
+export function useMonitoringControllerCompliance<TData = Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: MonitoringControllerComplianceParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerCompliance>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMonitoringControllerComplianceQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * WASH reporting volume and latest-snapshot facility counts for the selected scope.
+ * @summary Monitor WASH aggregates
+ */
+export const monitoringControllerWash = (
+    params?: MonitoringControllerWashParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<MonitoringWashResponseDto>(
+      {url: `/api/v1/monitoring/wash`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getMonitoringControllerWashQueryKey = (params?: MonitoringControllerWashParams,) => {
+    return [
+    `/api/v1/monitoring/wash`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getMonitoringControllerWashQueryOptions = <TData = Awaited<ReturnType<typeof monitoringControllerWash>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(params?: MonitoringControllerWashParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerWash>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMonitoringControllerWashQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof monitoringControllerWash>>> = ({ signal }) => monitoringControllerWash(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerWash>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MonitoringControllerWashQueryResult = NonNullable<Awaited<ReturnType<typeof monitoringControllerWash>>>
+export type MonitoringControllerWashQueryError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto
+
+
+export function useMonitoringControllerWash<TData = Awaited<ReturnType<typeof monitoringControllerWash>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params: undefined |  MonitoringControllerWashParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerWash>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof monitoringControllerWash>>,
+          TError,
+          Awaited<ReturnType<typeof monitoringControllerWash>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMonitoringControllerWash<TData = Awaited<ReturnType<typeof monitoringControllerWash>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: MonitoringControllerWashParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerWash>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof monitoringControllerWash>>,
+          TError,
+          Awaited<ReturnType<typeof monitoringControllerWash>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMonitoringControllerWash<TData = Awaited<ReturnType<typeof monitoringControllerWash>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: MonitoringControllerWashParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerWash>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Monitor WASH aggregates
+ */
+
+export function useMonitoringControllerWash<TData = Awaited<ReturnType<typeof monitoringControllerWash>>, TError = ErrorResponseDto | ErrorResponseDto | ErrorResponseDto>(
+ params?: MonitoringControllerWashParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof monitoringControllerWash>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMonitoringControllerWashQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Landmark, Users } from 'lucide-react'
+import { Landmark, Shield, Users } from 'lucide-react'
 import { RoleSelectionCard } from '@/components/auth/RoleSelectionCard'
 import { auth } from '@/locales/rw/auth'
 
@@ -21,6 +21,13 @@ export function RoleSelector() {
         title={auth.roleSelection.districtOfficer.title}
         description={auth.roleSelection.districtOfficer.description}
         onSelect={() => navigate('/login/district')}
+      />
+      <RoleSelectionCard
+        icon={Shield}
+        accent="ncda"
+        title={auth.roleSelection.ncda.title}
+        description={auth.roleSelection.ncda.description}
+        onSelect={() => navigate('/login/ncda')}
       />
     </div>
   )

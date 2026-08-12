@@ -40,6 +40,7 @@ import {
 } from '@/lib/mock-data'
 import { env } from '@/config/env'
 import { useCenterDirectoryItem } from '@/features/centers'
+import { useDistrictCaregiversList } from '@/features/district/users/queries'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { useAuth } from '@/contexts/AppContext'
@@ -95,6 +96,74 @@ function formatDelta(delta: number, suffix = '') {
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
+}
+
+function CenterCaregiversSection({
+  centerId,
+  caregiversCount,
+}: {
+  centerId: string
+  caregiversCount: number | null
+}) {
+  const caregivers = useDistrictCaregiversList({
+    centerId,
+    page: 1,
+    pageSize: 10,
+  })
+  const items = caregivers.data?.items ?? caregivers.data?.data ?? []
+  const addHref = `/district/abakoresha?create=1&centerId=${encodeURIComponent(centerId)}`
+
+  return (
+    <Card padding="md" className="border-border space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-subheading font-semibold text-text">
+            {district.caregivers.centerDetailTitle}
+          </h2>
+          {caregiversCount != null ? (
+            <p className="text-caption text-text-secondary">
+              {district.caregivers.centerDetailCount}: {caregiversCount}
+            </p>
+          ) : null}
+        </div>
+        <Link to={addHref}>
+          <Button type="button" variant="primary" size="sm">
+            {district.caregivers.centerDetailAdd}
+          </Button>
+        </Link>
+      </div>
+
+      {caregivers.isError && !caregivers.data ? (
+        <div className="space-y-2">
+          <p className="text-body text-text-secondary">{district.caregivers.listError}</p>
+          <Button type="button" variant="secondary" onClick={() => void caregivers.refetch()}>
+            {district.caregivers.retry}
+          </Button>
+        </div>
+      ) : caregivers.isLoading && !caregivers.data ? (
+        <p className="text-body text-text-secondary">…</p>
+      ) : items.length === 0 ? (
+        <p className="text-body text-text-secondary">{district.caregivers.centerDetailEmpty}</p>
+      ) : (
+        <ul className="divide-y divide-border text-body">
+          {items.map((row) => (
+            <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+              <div>
+                <p className="font-medium text-text">{row.fullName}</p>
+                <p className="text-caption text-text-secondary">{row.username}</p>
+              </div>
+              <Link
+                to={`/district/abakoresha/${row.id}`}
+                className="text-primary font-semibold text-caption hover:underline"
+              >
+                {district.caregivers.viewDetail}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  )
 }
 
 export function CenterDetailPage() {
@@ -180,6 +249,17 @@ export function CenterDetailPage() {
               <LiveUnavailableState
                 title={district.centerDetail.notFound}
                 description={common.live.unavailableDesc}
+                action={
+                  liveCenterQ.isError ? (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={() => void liveCenterQ.refetch()}
+                    >
+                      {common.reset}
+                    </Button>
+                  ) : undefined
+                }
               />
               <Link to="/district/ibigo" className="text-primary font-semibold mt-4 inline-block">
                 ← {district.centerDetail.back}
@@ -218,6 +298,50 @@ export function CenterDetailPage() {
                 icon={<CheckCircle2 size={20} className="text-success" />}
               />
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <StatCard
+                compact
+                label={district.dashboard.presentToday}
+                value={live.attendancePresentToday ?? '—'}
+                icon={<TrendingUp size={20} className="text-success" />}
+                variant="success"
+              />
+              <StatCard
+                compact
+                label={district.attendanceMonitoring.absent}
+                value={live.attendanceAbsentToday ?? '—'}
+                icon={<UserMinus size={20} className="text-warning" />}
+                variant="warning"
+              />
+              <StatCard
+                compact
+                label={district.referrals.open}
+                value={live.pendingReferralsCount ?? '—'}
+                icon={<AlertTriangle size={20} className="text-warning" />}
+                variant="warning"
+              />
+            </div>
+            {(live.caregiversCount != null || live.phone) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {live.caregiversCount != null && (
+                  <StatCard
+                    compact
+                    label={district.centerDetail.teachers}
+                    value={live.caregiversCount}
+                    icon={<User size={20} className="text-primary" />}
+                  />
+                )}
+                {live.phone && (
+                  <StatCard
+                    compact
+                    label={district.centerDetail.phone}
+                    value={live.phone}
+                    icon={<Phone size={20} className="text-secondary" />}
+                  />
+                )}
+              </div>
+            )}
+            <CenterCaregiversSection centerId={live.id} caregiversCount={live.caregiversCount} />
             <LiveUnavailableState
               title={district.dashboard.recentActivity}
               description={common.live.unavailableDesc}

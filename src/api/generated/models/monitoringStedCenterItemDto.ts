@@ -7,9 +7,12 @@
  */
 
 export interface MonitoringStedCenterItemDto {
-  centerId: string;
-  centerName: string;
+  centerId?: string;
+  centerName?: string;
+  districtId?: string;
+  districtName?: string;
   assessmentsCompleted: number;
+  childrenAssessed?: number;
   /** @nullable */
   averageScore: number | null;
 }

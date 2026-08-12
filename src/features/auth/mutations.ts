@@ -11,11 +11,13 @@ import {
   referrals,
   monitoring,
   reporting,
+  district,
+  ncda,
 } from '@/api/query-keys'
 import { loginRequest } from '@/api/resources/auth'
 import { useApiAuth } from '@/api/auth/ApiAuthProvider'
 import { normalizeApiError } from '@/api/errors'
-import { hasRole } from '@/api/roles'
+import { hasRole, UnknownUserRoleError } from '@/api/roles'
 import type { AuthUserViewModel } from '@/models/auth'
 import type { UserRole } from '@/types'
 
@@ -62,6 +64,10 @@ export function useLogin() {
 
         return { success: true, role: session.user.role, user: session.user }
       } catch (error) {
+        if (error instanceof UnknownUserRoleError) {
+          apiAuth.clearSession()
+          return { success: false, error: 'invalid_credentials' }
+        }
         const apiError = normalizeApiError(error)
         if (apiError.isValidationError || apiError.isUnauthorized) {
           return { success: false, error: 'invalid_credentials' }
@@ -88,5 +94,7 @@ export function useLogout() {
     void queryClient.removeQueries({ queryKey: referrals.keys.all })
     void queryClient.removeQueries({ queryKey: monitoring.keys.all })
     void queryClient.removeQueries({ queryKey: reporting.keys.all })
+    void queryClient.removeQueries({ queryKey: district.keys.all })
+    void queryClient.removeQueries({ queryKey: ncda.keys.all })
   }
 }

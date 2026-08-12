@@ -7,6 +7,7 @@ import {
   nutritionControllerGetAlerts,
   nutritionControllerGetGrowthChart,
   nutritionControllerGetHistory,
+  nutritionControllerListScreenings,
 } from '@/api/generated/endpoints/nutrition/nutrition'
 import {
   mapGrowthChartToViewModel,
@@ -16,6 +17,7 @@ import {
 import {
   mapNutritionAlertsToViewModel,
   mapNutritionHistoryToViewModel,
+  mapPaginatedScreeningsToViewModel,
   mapScreeningCreateToDto,
   mapScreeningToNutritionAssessment,
 } from '@/api/mappers/nutrition.mapper'
@@ -31,6 +33,10 @@ import type {
   NutritionHistoryResult,
   NutritionScreeningCreateInput,
 } from '@/models/nutrition'
+import type {
+  NutritionScreeningListFilters,
+  NutritionScreeningListResult,
+} from '@/models/nutrition-screenings'
 
 export async function fetchNutritionHistory(childId: string): Promise<NutritionHistoryResult> {
   const dto = await nutritionControllerGetHistory(childId)
@@ -100,6 +106,22 @@ export async function fetchNutritionAlerts(
     nutritionStatus: filters.nutritionStatus,
   })
   return mapNutritionAlertsToViewModel(dto)
+}
+
+/** District operational screening list — GET /nutrition/screenings. */
+export async function fetchNutritionScreeningList(
+  filters: NutritionScreeningListFilters = {},
+): Promise<NutritionScreeningListResult> {
+  const dto = await nutritionControllerListScreenings({
+    centerId: filters.centerId,
+    childId: filters.childId,
+    from: filters.from,
+    to: filters.to,
+    nutritionStatus: filters.nutritionStatus,
+    page: filters.page ?? 1,
+    pageSize: filters.pageSize ?? 50,
+  })
+  return mapPaginatedScreeningsToViewModel(dto)
 }
 
 export async function fetchChildGrowthChart(childId: string): Promise<GrowthChartViewModel> {

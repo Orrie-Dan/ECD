@@ -27,7 +27,9 @@ export function LoginForm({ role }: LoginFormProps) {
 
   const title = hasRole({ role }, 'caretaker')
     ? auth.login.titleCaretaker
-    : auth.login.titleDistrictOfficer
+    : hasRole({ role }, 'ncda')
+      ? auth.login.titleNcda
+      : auth.login.titleDistrictOfficer
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

@@ -13,6 +13,10 @@ export type ChildrenControllerFindAllParams = {
  */
 centerId?: string;
 /**
+ * Filter by district (via center.districtId). NCDA may use nationally; district focal persons may only pass their own district.
+ */
+districtId?: string;
+/**
  * Filter by child status
  */
 status?: ApiChildStatus;

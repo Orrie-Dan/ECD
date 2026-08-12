@@ -76,6 +76,7 @@ export function useDistrictAttendanceReport(input: {
     summary: (env.isLive ? mapped?.summary : mock.summary) as AttendanceReportSummaryViewModel,
     isLoading: env.isLive && live.isLoading,
     isError: env.isLive && live.isError,
+    refetch: env.isLive ? live.refetch : undefined,
     source: env.isLive ? ('api' as const) : ('mock' as const),
   }
 }

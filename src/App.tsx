@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ApiProviders } from '@/api/providers/ApiProviders'
 import { ApiErrorBridge } from '@/api/providers/ApiErrorBridge'
 import { AuthProvider, DataProvider } from '@/contexts/AppContext'
+import { AppErrorBoundary } from '@/components/AppErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
@@ -32,9 +33,31 @@ import { DistrictAttendancePage } from '@/pages/district/AttendanceMonitoringPag
 import { GrowthMonitoringPage } from '@/pages/district/GrowthMonitoringPage'
 import { FeedingMonitoringPage } from '@/pages/district/FeedingMonitoringPage'
 import { StedMonitoringPage } from '@/pages/district/StedMonitoringPage'
+import { ReferralMonitoringPage } from '@/pages/district/ReferralMonitoringPage'
 import { GisAnalyticsPage } from '@/pages/district/GisAnalyticsPage'
 import { GukurikiranaPage } from '@/pages/district/GukurikiranaPage'
 import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
+import { DistrictCaregiversPage } from '@/pages/district/DistrictCaregiversPage'
+import { DistrictCaregiverDetailPage } from '@/pages/district/DistrictCaregiverDetailPage'
+import { NcdaLayout } from '@/layouts/NcdaLayout'
+import {
+  NcdaDashboardPage,
+  NcdaDistrictsPage,
+  NcdaDistrictDetailPage,
+  NcdaCentersPage,
+  NcdaCenterDetailPage,
+  NcdaChildrenPage,
+  NcdaChildDetailPage,
+  NcdaUsersPage,
+  NcdaUserDetailPage,
+  NcdaCompliancePage,
+  NcdaWashPage,
+  NcdaMonitoringPage,
+  NcdaReportsPage,
+  NcdaAuditLogsPage,
+  NcdaDevicesPage,
+  NcdaSyncPage,
+} from '@/pages/ncda/NcdaPages'
 import { useAuth } from '@/contexts/AppContext'
 import { homePathForUser } from '@/api/roles'
 
@@ -55,13 +78,14 @@ function HomeRoute() {
 
 export default function App() {
   return (
-    <ApiProviders>
-      <BrowserRouter>
-        <AuthProvider>
-          <DataProvider>
-            <ToastProvider>
-              <ApiErrorBridge />
-              <Routes>
+    <AppErrorBoundary>
+      <ApiProviders>
+        <BrowserRouter>
+          <AuthProvider>
+            <DataProvider>
+              <ToastProvider>
+                <ApiErrorBridge />
+                <Routes>
                 <Route path="/" element={<HomeRoute />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
                 <Route path="/login/:role" element={<LoginPage />} />
@@ -91,10 +115,13 @@ export default function App() {
                   <Route path="/district/ibigo/:id" element={<CenterDetailPage />} />
                   <Route path="/district/abana" element={<DistrictChildrenPage />} />
                   <Route path="/district/abana/:id" element={<DistrictChildDetailPage />} />
+                  <Route path="/district/abakoresha" element={<DistrictCaregiversPage />} />
+                  <Route path="/district/abakoresha/:userId" element={<DistrictCaregiverDetailPage />} />
                   <Route path="/district/attendance" element={<DistrictAttendancePage />} />
                   <Route path="/district/imikurire" element={<GrowthMonitoringPage />} />
                   <Route path="/district/imirire" element={<FeedingMonitoringPage />} />
                   <Route path="/district/sted" element={<StedMonitoringPage />} />
+                  <Route path="/district/referrals" element={<ReferralMonitoringPage />} />
                   <Route path="/district/raporo" element={<DistrictReportsPage />} />
                   <Route path="/district/ikarita" element={<GisAnalyticsPage />} />
                   <Route path="/district/gukurikirana" element={<GukurikiranaPage />} />
@@ -105,12 +132,37 @@ export default function App() {
                   <Route path="/district/igenamiterere" element={<DistrictSettingsPage />} />
                 </Route>
 
+                {/* Sprint 5.5B/5.5C — NCDA Admin shell + national dashboard */}
+                <Route element={<ProtectedRoute allowedRole="ncda" />}>
+                  <Route element={<NcdaLayout />}>
+                    <Route path="/ncda" element={<Navigate to="/ncda/dashboard" replace />} />
+                    <Route path="/ncda/dashboard" element={<NcdaDashboardPage />} />
+                    <Route path="/ncda/districts" element={<NcdaDistrictsPage />} />
+                    <Route path="/ncda/districts/:districtId" element={<NcdaDistrictDetailPage />} />
+                    <Route path="/ncda/centers" element={<NcdaCentersPage />} />
+                    <Route path="/ncda/centers/:centerId" element={<NcdaCenterDetailPage />} />
+                    <Route path="/ncda/children" element={<NcdaChildrenPage />} />
+                    <Route path="/ncda/children/:childId" element={<NcdaChildDetailPage />} />
+                    <Route path="/ncda/users" element={<NcdaUsersPage />} />
+                    <Route path="/ncda/users/:userId" element={<NcdaUserDetailPage />} />
+                    <Route path="/ncda/compliance" element={<NcdaCompliancePage />} />
+                    <Route path="/ncda/wash" element={<NcdaWashPage />} />
+                    <Route path="/ncda/monitoring" element={<NcdaMonitoringPage />} />
+                    <Route path="/ncda/reports" element={<NcdaReportsPage />} />
+                    <Route path="/ncda/audit-logs" element={<NcdaAuditLogsPage />} />
+                    <Route path="/ncda/devices" element={<NcdaDevicesPage />} />
+                    <Route path="/ncda/sync" element={<NcdaSyncPage />} />
+                    <Route path="/ncda/*" element={<Navigate to="/ncda/dashboard" replace />} />
+                  </Route>
+                </Route>
+
                 <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </ToastProvider>
-          </DataProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </ApiProviders>
+                </Routes>
+              </ToastProvider>
+            </DataProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ApiProviders>
+    </AppErrorBoundary>
   )
 }

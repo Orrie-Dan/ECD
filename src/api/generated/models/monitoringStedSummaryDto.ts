@@ -10,12 +10,18 @@ import type { MonitoringStedSummaryDtoOutcomeDistribution } from './monitoringSt
 
 export interface MonitoringStedSummaryDto {
   assessmentsCompleted: number;
+  /** Distinct children assessed in range */
+  childrenAssessed: number;
+  /** Distinct centers with assessments in range */
+  centersWithAssessments: number;
   activeChildren: number;
   /** @nullable */
   coverage: number | null;
   /** @nullable */
   averageScore: number | null;
   pendingFollowUps: number;
+  /** Centers in resolved scope */
+  centersInScope: number;
   /** Counts keyed by StedAgeBand */
   ageBandDistribution: MonitoringStedSummaryDtoAgeBandDistribution;
   /** Counts keyed by outcome classification */

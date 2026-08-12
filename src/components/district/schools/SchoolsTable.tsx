@@ -11,6 +11,8 @@ interface SchoolsTableProps {
   data: SchoolTableData[]
   searchQuery?: string
   onViewSchool?: (centerId: string) => void
+  /** When omitted, falls back to mock DISTRICT_NAME (MOCK demo only). */
+  districtLabel?: string
 }
 
 type MonitoringStatus = 'good' | 'followup' | 'critical'
@@ -19,6 +21,13 @@ function getMonitoringStatus(attentionStatus: SchoolTableData['attentionStatus']
   if (attentionStatus === 'high') return 'critical'
   if (attentionStatus === 'medium' || attentionStatus === 'low') return 'followup'
   return 'good'
+}
+
+function locationLabel(school: SchoolTableData, districtLabel: string) {
+  const parts = [districtLabel, school.sector, school.cell].filter(
+    (part) => part && part !== '—',
+  )
+  return parts.join(' / ')
 }
 
 function MonitoringBadge({ status }: { status: MonitoringStatus }) {
@@ -54,7 +63,12 @@ function MonitoringBadge({ status }: { status: MonitoringStatus }) {
   )
 }
 
-export function SchoolsTable({ data, searchQuery = '', onViewSchool }: SchoolsTableProps) {
+export function SchoolsTable({
+  data,
+  searchQuery = '',
+  onViewSchool,
+  districtLabel = DISTRICT_NAME,
+}: SchoolsTableProps) {
   const pagination = usePagination(data, {
     initialPageSize: 10,
     resetDeps: [searchQuery],
@@ -86,7 +100,7 @@ export function SchoolsTable({ data, searchQuery = '', onViewSchool }: SchoolsTa
                     {school.name}
                   </p>
                   <p className="text-caption text-text-muted mt-1">
-                    {DISTRICT_NAME} / {school.sector} / {school.cell}
+                    {locationLabel(school, districtLabel)}
                   </p>
                   <p className="text-caption text-text-muted mt-1">
                     {district.schools.lastUpdated}: {formatDate(school.lastActivity)}
@@ -167,7 +181,7 @@ export function SchoolsTable({ data, searchQuery = '', onViewSchool }: SchoolsTa
                   </td>
                   <td className="px-4 py-3 align-top">
                     <p className="text-body text-text wrap-break-word">
-                      {DISTRICT_NAME} / {school.sector} / {school.cell}
+                      {locationLabel(school, districtLabel)}
                     </p>
                   </td>
                   <td className="px-4 py-3 text-center align-top">

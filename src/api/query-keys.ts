@@ -193,6 +193,181 @@ function createCentersDirectoryKeys() {
   }
 }
 
+/**
+ * NCDA Admin React Query namespace (Sprint 5.5A/5.5C/5.5D convention).
+ * Canonical root: `ncda` — do not introduce a parallel `national.*` tree.
+ */
+function createNcdaKeys() {
+  const all = ['ncda'] as const
+  const dashboard = [...all, 'dashboard'] as const
+  const districts = [...all, 'districts'] as const
+  const centers = [...all, 'centers'] as const
+  const children = [...all, 'children'] as const
+  const users = [...all, 'users'] as const
+  const auditLogs = [...all, 'audit-logs'] as const
+  const compliance = [...all, 'compliance'] as const
+  const wash = [...all, 'wash'] as const
+  const monitoring = [...all, 'monitoring'] as const
+  const reporting = [...all, 'reporting'] as const
+  return {
+    all,
+    dashboard: {
+      all: dashboard,
+      overview: (filters: Record<string, unknown> = {}) =>
+        [...dashboard, 'overview', filters] as const,
+      kpis: (filters: Record<string, unknown> = {}) =>
+        [...dashboard, 'kpis', filters] as const,
+      network: (filters: Record<string, unknown> = {}) =>
+        [...dashboard, 'network', filters] as const,
+    },
+    districts: {
+      all: districts,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...districts, 'list', filters] as const,
+      detail: (id: string) => [...districts, 'detail', id] as const,
+      summary: (id: string, filters: Record<string, unknown> = {}) =>
+        [...districts, 'summary', id, filters] as const,
+      centers: (id: string, filters: Record<string, unknown> = {}) =>
+        [...districts, 'centers', id, filters] as const,
+      network: (filters: Record<string, unknown> = {}) =>
+        [...districts, 'network', filters] as const,
+    },
+    centers: {
+      all: centers,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...centers, 'list', filters] as const,
+      detail: (id: string) => [...centers, 'detail', id] as const,
+      summary: (id: string, filters: Record<string, unknown> = {}) =>
+        [...centers, 'summary', id, filters] as const,
+      children: (id: string, filters: Record<string, unknown> = {}) =>
+        [...centers, 'children', id, filters] as const,
+      attendance: (id: string, filters: Record<string, unknown> = {}) =>
+        [...centers, 'attendance', id, filters] as const,
+      nutrition: (id: string, filters: Record<string, unknown> = {}) =>
+        [...centers, 'nutrition', id, filters] as const,
+      feeding: (id: string, filters: Record<string, unknown> = {}) =>
+        [...centers, 'feeding', id, filters] as const,
+      referrals: (id: string, filters: Record<string, unknown> = {}) =>
+        [...centers, 'referrals', id, filters] as const,
+      network: (filters: Record<string, unknown> = {}) =>
+        [...centers, 'network', filters] as const,
+    },
+    children: {
+      all: children,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...children, 'list', filters] as const,
+      detail: (id: string) => [...children, 'detail', id] as const,
+      attendance: (id: string, filters: Record<string, unknown> = {}) =>
+        [...children, 'attendance', id, filters] as const,
+      nutrition: (id: string, filters: Record<string, unknown> = {}) =>
+        [...children, 'nutrition', id, filters] as const,
+      sted: (id: string, filters: Record<string, unknown> = {}) =>
+        [...children, 'sted', id, filters] as const,
+      referrals: (id: string, filters: Record<string, unknown> = {}) =>
+        [...children, 'referrals', id, filters] as const,
+      network: (filters: Record<string, unknown> = {}) =>
+        [...children, 'network', filters] as const,
+    },
+    users: {
+      all: users,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...users, 'list', filters] as const,
+      detail: (id: string) => [...users, 'detail', id] as const,
+      network: (filters: Record<string, unknown> = {}) =>
+        [...users, 'network', filters] as const,
+    },
+    auditLogs: {
+      all: auditLogs,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...auditLogs, 'list', filters] as const,
+    },
+    compliance: {
+      all: compliance,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...compliance, 'list', filters] as const,
+      detail: (id: string) => [...compliance, 'detail', id] as const,
+      standards: () => [...compliance, 'standards'] as const,
+    },
+    wash: {
+      all: wash,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...wash, 'list', filters] as const,
+      detail: (id: string) => [...wash, 'detail', id] as const,
+    },
+    monitoring: {
+      all: monitoring,
+      overview: (filters: Record<string, unknown> = {}) =>
+        [...monitoring, 'overview', filters] as const,
+      kpis: (filters: Record<string, unknown> = {}) =>
+        [...monitoring, 'kpis', filters] as const,
+      sted: (filters: Record<string, unknown> = {}) =>
+        [...monitoring, 'sted', filters] as const,
+      compliance: (filters: Record<string, unknown> = {}) =>
+        [...monitoring, 'compliance', filters] as const,
+      wash: (filters: Record<string, unknown> = {}) =>
+        [...monitoring, 'wash', filters] as const,
+    },
+    reporting: {
+      all: reporting,
+      district: (filters: Record<string, unknown> = {}) =>
+        [...reporting, 'district', filters] as const,
+      enrollment: (filters: Record<string, unknown> = {}) =>
+        [...reporting, 'enrollment', filters] as const,
+      dropouts: (filters: Record<string, unknown> = {}) =>
+        [...reporting, 'dropouts', filters] as const,
+      centers: (filters: Record<string, unknown> = {}) =>
+        [...reporting, 'centers', filters] as const,
+    },
+  }
+}
+
+/**
+ * District portal query namespace — online admin/monitoring reads.
+ * Prefer these for District pages; do not collide with caregiver LocalStore keys.
+ */
+function createDistrictKeys() {
+  const all = ['district'] as const
+  return {
+    all,
+    children: (...parts: unknown[]) => [...all, 'children', ...parts] as const,
+    child: (id: string) => [...all, 'child', id] as const,
+    attendance: {
+      all: [...all, 'attendance'] as const,
+      list: (filters: AttendanceListFilters = {}) =>
+        [...all, 'attendance', 'list', filters] as const,
+      centerDay: (centerId: string, date: string, page = 1) =>
+        [...all, 'attendance', 'center-day', centerId, date, page] as const,
+    },
+    growth: (...parts: unknown[]) => [...all, 'growth', ...parts] as const,
+    nutrition: {
+      all: [...all, 'nutrition'] as const,
+      alerts: (filters: NutritionAlertFilters = {}) =>
+        [...all, 'nutrition', 'alerts', filters] as const,
+      screenings: (filters: Record<string, unknown> = {}) =>
+        [...all, 'nutrition', 'screenings', filters] as const,
+    },
+    dashboard: (...parts: unknown[]) => [...all, 'dashboard', ...parts] as const,
+    monitoring: (...parts: unknown[]) => [...all, 'monitoring', ...parts] as const,
+    reporting: (...parts: unknown[]) => [...all, 'reporting', ...parts] as const,
+    referrals: {
+      all: [...all, 'referrals'] as const,
+      list: (filters: ReferralListFilters = {}) =>
+        [...all, 'referrals', 'list', filters] as const,
+    },
+    alerts: (filters: Record<string, unknown> = {}) => [...all, 'alerts', filters] as const,
+    centers: (...parts: unknown[]) => [...all, 'centers', ...parts] as const,
+    settings: (...parts: unknown[]) => [...all, 'settings', ...parts] as const,
+    users: {
+      all: [...all, 'users'] as const,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...all, 'users', 'list', filters] as const,
+      detail: (id: string) => [...all, 'users', 'detail', id] as const,
+      centerOptions: (filters: Record<string, unknown> = {}) =>
+        [...all, 'users', 'center-options', filters] as const,
+    },
+  }
+}
+
 export const queryKeys = {
   auth: createAuthKeys(),
   children: createChildrenKeys(),
@@ -205,6 +380,8 @@ export const queryKeys = {
   monitoring: createMonitoringKeys(),
   reporting: createReportingKeys(),
   centersDirectory: createCentersDirectoryKeys(),
+  district: createDistrictKeys(),
+  ncda: createNcdaKeys(),
 } as const
 
 export const auth = { keys: queryKeys.auth }
@@ -217,6 +394,8 @@ export const sted = { keys: queryKeys.sted }
 export const referrals = { keys: queryKeys.referrals }
 export const monitoring = { keys: queryKeys.monitoring }
 export const reporting = { keys: queryKeys.reporting }
+export const district = { keys: queryKeys.district }
+export const ncda = { keys: queryKeys.ncda }
 
 export const authKeys = queryKeys.auth
 export const childrenKeys = queryKeys.children
@@ -255,4 +434,25 @@ export const queryStaleTimes = {
   monitoringDashboard: 60_000,
   monitoringDomain: 60_000,
   reporting: 60_000,
+  /** National aggregates change slowly; 2m balances freshness vs load on ~39k centers. */
+  ncdaDashboard: 120_000,
+  /** District directory pages — short stale window; pagination params already key the cache. */
+  ncdaDistricts: 60_000,
+  /** Center directory pages — same cadence as districts; keys include page/filters. */
+  ncdaCenters: 60_000,
+  /** Child directory pages — pagination params already key the cache. */
+  ncdaChildren: 60_000,
+  /** User admin directory — short stale; mutations invalidate list/detail. */
+  ncdaUsers: 30_000,
+  /** Audit evidence — short stale; never mutate client-side. */
+  ncdaAuditLogs: 30_000,
+  /** Compliance / WASH operational browse — paginated; keys include filters. */
+  ncdaCompliance: 30_000,
+  ncdaWash: 30_000,
+  /** National monitoring aggregates (same cadence as dashboard). */
+  ncdaMonitoring: 120_000,
+  /** Report JSON summaries — period-scoped. */
+  ncdaReporting: 60_000,
+  /** District caregiver admin — short stale; mutations invalidate list/detail. */
+  districtUsers: 30_000,
 } as const

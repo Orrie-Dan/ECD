@@ -27,6 +27,10 @@ export interface ReferralListFilters {
   sourceType?: ReferralSourceType
   centerId?: string
   childId?: string
+  /** Inclusive referralDate start (YYYY-MM-DD). */
+  from?: string
+  /** Inclusive referralDate end (YYYY-MM-DD). */
+  to?: string
 }
 
 export interface ReferralListResult {

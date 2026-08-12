@@ -10,6 +10,10 @@ export const auth = {
       title: "Umukozi w'Akarere",
       description: "Abashinzwe gukurikirana no kugenzura ibigo bya ECD",
     },
+    ncda: {
+      title: 'NCDA Admin',
+      description: "Abashinzwe gucunga sisitemu ku rwego rw'igihugu",
+    },
   },
   login: {
     officialLabel: "REPUBULIKA Y'U RWANDA",
@@ -18,6 +22,7 @@ export const auth = {
     title: 'Injira muri Sisitemu',
     titleCaretaker: "Injira nk'Umurezi",
     titleDistrictOfficer: "Injira nk'Umukozi w'Akarere",
+    titleNcda: 'Injira nka NCDA Admin',
     subtitle: 'Andika amakuru yawe kugira ngo ukomeze.',
     backToRoleSelection: 'Subira inyuma',
     wrongRole: "Amakuru winjije ntabwo ari ay'icyiciro wahisemo. Reba neza cyangwa subira inyuma.",
@@ -35,5 +40,14 @@ export const auth = {
     governmentFooterLine1: "© Repubulika y'u Rwanda",
     governmentFooterLine2: '',
     governmentEmblemAlt: "Ikimenyetso cy'Igihugu cya Repubulika y'u Rwanda",
+  },
+  ncda: {
+    boundaryEyebrow: 'NCDA Admin',
+    boundaryTitle: "Imipaka y'uburenganzira yashyizweho",
+    boundaryBody:
+      "Umwanya wa NCDA Admin ufite layout n'inzira. Ibikorwa by'ubuyobozi bizaza mu byiciro bikurikira.",
+    signedInAs: 'Winjiye nka',
+    logout: 'Sohoka',
+    backHome: 'Ahabanza',
   },
 } as const

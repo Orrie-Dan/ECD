@@ -5,22 +5,27 @@
 import { analyticsControllerGetDashboard } from '@/api/generated/endpoints/analytics/analytics'
 import {
   monitoringControllerAttendance,
+  monitoringControllerCompliance,
   monitoringControllerFeeding,
   monitoringControllerNutrition,
   monitoringControllerReferrals,
   monitoringControllerSted,
+  monitoringControllerWash,
 } from '@/api/generated/endpoints/monitoring/monitoring'
 import {
   mapAttendanceMonitoringToViewModel,
+  mapComplianceMonitoringToViewModel,
   mapDashboardDtoToViewModel,
   mapFeedingMonitoringToViewModel,
   mapNutritionMonitoringToViewModel,
   mapReferralsMonitoringToViewModel,
   mapStedMonitoringToViewModel,
+  mapWashMonitoringToViewModel,
   toMonitoringQueryParams,
 } from '@/api/mappers/monitoring.mapper'
 import type {
   MonitoringAttendanceViewModel,
+  MonitoringComplianceViewModel,
   MonitoringDashboardViewModel,
   MonitoringDateFilters,
   MonitoringFeedingViewModel,
@@ -28,6 +33,7 @@ import type {
   MonitoringReferralsViewModel,
   MonitoringScopeFilters,
   MonitoringStedViewModel,
+  MonitoringWashViewModel,
 } from '@/models/monitoring'
 
 export async function fetchMonitoringDashboard(
@@ -68,6 +74,20 @@ export async function fetchMonitoringSted(
 ): Promise<MonitoringStedViewModel> {
   const dto = await monitoringControllerSted(toMonitoringQueryParams(filters))
   return mapStedMonitoringToViewModel(dto)
+}
+
+export async function fetchMonitoringCompliance(
+  filters: MonitoringScopeFilters = {},
+): Promise<MonitoringComplianceViewModel> {
+  const dto = await monitoringControllerCompliance(toMonitoringQueryParams(filters))
+  return mapComplianceMonitoringToViewModel(dto)
+}
+
+export async function fetchMonitoringWash(
+  filters: MonitoringScopeFilters = {},
+): Promise<MonitoringWashViewModel> {
+  const dto = await monitoringControllerWash(toMonitoringQueryParams(filters))
+  return mapWashMonitoringToViewModel(dto)
 }
 
 export async function fetchMonitoringReferrals(

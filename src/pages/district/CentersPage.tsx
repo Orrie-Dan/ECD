@@ -11,12 +11,15 @@ import {
 } from '@/components/district/schools'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import { Button } from '@/components/ui/Button'
 import {
+  DISTRICT_NAME,
   getSchoolsTableData,
   getUniqueSectors,
   type SchoolTableData,
 } from '@/lib/mock-data'
 import { env } from '@/config/env'
+import { useAuth } from '@/contexts/AppContext'
 import { useCentersDirectory } from '@/features/centers'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
@@ -46,10 +49,16 @@ function getPeriodCutoff(period: SchoolsFilters['period']) {
 }
 
 export function CentersPage() {
+  const { user } = useAuth()
   const [filters, setFilters] = useState<SchoolsFilters>(DEFAULT_FILTERS)
   const [previewCenterId, setPreviewCenterId] = useState<string | null>(null)
 
   const liveCenters = useCentersDirectory({ page: 1, pageSize: 100 }, env.isLive)
+
+  const liveDistrictLabel =
+    user?.districtName?.trim() ||
+    liveCenters.data?.items.find((c) => c.districtName)?.districtName ||
+    undefined
 
   const sectors = useMemo(() => {
     if (env.isLive) return [] as string[]
@@ -61,8 +70,8 @@ export function CentersPage() {
       return (liveCenters.data?.items ?? []).map((c) => ({
         id: c.id,
         name: c.name,
-        sector: c.districtName ?? '—',
-        cell: c.villageName ?? '—',
+        sector: c.villageName ?? '—',
+        cell: c.code || '—',
         children: c.activeChildrenCount,
         caretakers: 0,
         isActive: c.status === 'active',
@@ -149,12 +158,25 @@ export function CentersPage() {
               title={district.schools.title}
               description={common.live.unavailableDesc}
               className="mb-4"
+              action={
+                <Button type="button" variant="primary" onClick={() => void liveCenters.refetch()}>
+                  {common.reset}
+                </Button>
+              }
             />
           ) : null}
 
           {env.isLive ? (
             <p className="text-caption text-text-muted mb-4">
               {common.live.sectorFilterUnavailable} · {common.live.unavailableDesc}
+            </p>
+          ) : null}
+
+          {env.isLive &&
+          liveCenters.data &&
+          liveCenters.data.total > liveCenters.data.items.length ? (
+            <p className="text-caption text-warning mb-4" role="status">
+              {liveCenters.data.items.length} / {liveCenters.data.total} {district.nav.centers}
             </p>
           ) : null}
 
@@ -177,6 +199,7 @@ export function CentersPage() {
                   data={filteredSchoolsData}
                   searchQuery={`${filters.period}-${filters.month}-${filters.sector}-${filters.monitoringStatus}`}
                   onViewSchool={handleViewSchool}
+                  districtLabel={env.isLive ? liveDistrictLabel || '—' : DISTRICT_NAME}
                 />
               </div>
 
