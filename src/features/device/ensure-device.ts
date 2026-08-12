@@ -82,7 +82,7 @@ export async function ensureDeviceRegistered(options?: {
   try {
     const response = await devicesControllerRegister({
       deviceUuid,
-      platform: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 120) : 'web',
+      platform: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 50) : 'web',
       appVersion: '0.0.0',
     })
 
