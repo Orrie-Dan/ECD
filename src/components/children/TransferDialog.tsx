@@ -10,6 +10,7 @@ import { ECD_CENTERS } from '@/lib/mock-data'
 import { useCentersDirectory } from '@/features/centers'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, messages } from '@/locales/rw/common'
+import { messageForMutationFailure } from '@/offline/mutation-error-message'
 import type { Child, TransferReason } from '@/types'
 
 interface TransferDialogProps {
@@ -95,8 +96,7 @@ export function TransferDialog({ open, onClose, child }: TransferDialogProps) {
       showSuccess(messages.childTransferred)
       handleClose()
     } catch (err) {
-      const message = err instanceof Error ? err.message : messages.liveFeatureUnavailable
-      showError(message)
+      showError(messageForMutationFailure(err))
       setIsSubmitting(false)
     }
   }

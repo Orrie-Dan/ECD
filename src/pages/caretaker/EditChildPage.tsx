@@ -14,6 +14,7 @@ import { networkState } from '@/network/network-state'
 import {
   applyLocationCascade,
   childToForm,
+  firstChildFormStepWithErrors,
   formToChildPayload,
   validateChildFormStep,
 } from '@/lib/child-form'
@@ -101,6 +102,8 @@ export function EditChildPage() {
     }
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) {
+      const errorStep = firstChildFormStepWithErrors(activeForm)
+      if (errorStep) setStep(errorStep)
       showError(messages.formIncomplete)
       return
     }

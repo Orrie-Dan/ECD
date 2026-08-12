@@ -18,6 +18,7 @@ import { BottomNav, type NavItem } from '@/components/ui/BottomNav'
 import { NavDrawer } from '@/components/ui/NavDrawer'
 import { SidebarNavLink, isSidebarNavActive, type SidebarNavItem } from '@/components/ui/SidebarNavLink'
 import { SyncStatusIndicator } from '@/components/offline/SyncStatusIndicator'
+import { ProductionMockBanner } from '@/components/offline/ProductionMockBanner'
 import {
   LogoutPendingModal,
   LogoutSimpleModal,
@@ -343,6 +344,7 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
               </Button>
             </div>
           )}
+          <ProductionMockBanner className="mb-4" />
           {children}
         </main>
       </div>

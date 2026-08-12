@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/Toast'
 import { calculateAge } from '@/lib/mock-data'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, messages, gender } from '@/locales/rw/common'
+import { messageForMutationFailure } from '@/offline/mutation-error-message'
 import type { ArchiveReason, Child } from '@/types'
 
 interface ArchiveDialogProps {
@@ -59,8 +60,8 @@ export function ArchiveDialog({ open, onClose, child }: ArchiveDialogProps) {
       })
       showSuccess(messages.childArchived)
       handleClose()
-    } catch {
-      showError(messages.formIncomplete)
+    } catch (err) {
+      showError(messageForMutationFailure(err))
     } finally {
       setSubmitting(false)
     }

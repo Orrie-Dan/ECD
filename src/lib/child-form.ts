@@ -137,6 +137,25 @@ export function validateChildFormStep(
   return newErrors
 }
 
+/** Validate all wizard steps (1–3) before final submit. */
+export function validateChildForm(
+  form: ChildRegistrationForm,
+): Partial<Record<keyof ChildRegistrationForm, string>> {
+  return {
+    ...validateChildFormStep(form, 1),
+    ...validateChildFormStep(form, 2),
+    ...validateChildFormStep(form, 3),
+  }
+}
+
+/** First wizard step (1–3) that still has validation errors. */
+export function firstChildFormStepWithErrors(form: ChildRegistrationForm): number | null {
+  for (let step = 1; step <= 3; step++) {
+    if (Object.keys(validateChildFormStep(form, step)).length > 0) return step
+  }
+  return null
+}
+
 export function applyLocationCascade(
   prev: ChildRegistrationForm,
   key: keyof ChildRegistrationForm,

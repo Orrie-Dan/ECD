@@ -11,9 +11,12 @@ import {
   EMPTY_CHILD_FORM,
   applyLocationCascade,
   formToChildPayload,
+  firstChildFormStepWithErrors,
+  validateChildForm,
   validateChildFormStep,
 } from '@/lib/child-form'
 import { env } from '@/config/env'
+import { productionMockWriteBlockedMessage } from '@/lib/live-api-guard'
 import type { ChildRegistrationForm } from '@/types'
 
 export function RegisterChildPage() {
@@ -42,10 +45,22 @@ export function RegisterChildPage() {
   }
 
   const handleSubmit = async () => {
-    const newErrors = validateChildFormStep(form, 3)
+    if (env.isProductionMock) {
+      showError(productionMockWriteBlockedMessage)
+      return
+    }
+
+    const newErrors = validateChildForm(form)
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) {
+      const errorStep = firstChildFormStepWithErrors(form)
+      if (errorStep) setStep(errorStep)
       showError(messages.formIncomplete)
+      return
+    }
+
+    if (env.isLive && !user?.centerId) {
+      showError(messages.childRegisterNoCenter)
       return
     }
 

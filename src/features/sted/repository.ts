@@ -9,6 +9,7 @@ import { MOCK_STED_ASSESSMENTS } from '@/lib/mock-data'
 import { getLocalStore } from '@/storage'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { networkState } from '@/network/network-state'
+import { assertLiveApiWritesAvailable } from '@/lib/live-api-guard'
 import { tokenStorage } from '@/api/token-storage'
 import type { StedAssessmentCreateInput } from '@/models/sted'
 import type { StedAssessment, User } from '@/types'
@@ -38,6 +39,7 @@ export function useStedRepository(childIds: string[], user: User | null = null) 
 
   const createStedAssessment = useCallback(
     async (input: StedAssessmentCreateInput): Promise<StedAssessment> => {
+      assertLiveApiWritesAvailable()
       const noProblem =
         input.noProblem ?? isPhysicalClear(input.physical)
 

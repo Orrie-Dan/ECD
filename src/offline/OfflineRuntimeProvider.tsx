@@ -9,6 +9,7 @@ import { getSyncEngine } from '@/sync/sync-engine'
 import { ensureDeviceRegistered } from '@/features/device'
 import { unblockChildCreatesNeedingVillage } from '@/features/children/local-children'
 import { resolveHomeVillageId } from '@/api/resources/children'
+import { notifyDeviceRegistrationFailed } from '@/offline/DeviceRegistrationBridge'
 
 /**
  * LIVE-only offline runtime: bind local owner, device ensure, network listeners, sync.
@@ -73,6 +74,14 @@ export function OfflineRuntimeProvider({ children }: { children: ReactNode }) {
       if (cancelled || getActiveOwnerUserId() !== userId) return
       if (!result.ok && result.reason === 'unauthorized') {
         getSyncEngine().setAuthRequired(true)
+        return
+      }
+      if (!result.ok && result.reason === 'network') {
+        notifyDeviceRegistrationFailed('network')
+        return
+      }
+      if (!result.ok && result.reason === 'error') {
+        notifyDeviceRegistrationFailed('error')
         return
       }
       // Registration failure must not wipe local data; sync may be blocked until device exists.

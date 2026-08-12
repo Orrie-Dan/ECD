@@ -13,6 +13,7 @@ import { MOCK_ATTENDANCE } from '@/lib/mock-data'
 import { getLocalStore } from '@/storage'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { networkState } from '@/network/network-state'
+import { assertLiveApiWritesAvailable } from '@/lib/live-api-guard'
 import type { AttendanceViewModel } from '@/models/attendance'
 import type { AttendanceRecord, User } from '@/types'
 
@@ -71,6 +72,7 @@ export function useAttendanceRepository(user: User | null) {
 
   const recordAttendance = useCallback(
     async (record: Omit<AttendanceRecord, 'id'>) => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         setMockAttendance((prev) => {
           const filtered = prev.filter(
@@ -128,6 +130,7 @@ export function useAttendanceRepository(user: User | null) {
 
   const clearTodayAttendance = useCallback(
     async (childId: string) => {
+      assertLiveApiWritesAvailable()
       const today = todayIso()
 
       if (env.isMock) {

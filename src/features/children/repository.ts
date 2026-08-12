@@ -23,6 +23,8 @@ import { getLocalStore } from '@/storage'
 import { villageCacheKey } from '@/sync/child-sync-mapper'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { networkState } from '@/network/network-state'
+import { ChildRegistrationRequiresCenterError } from '@/offline/mutation-error-message'
+import { assertLiveApiWritesAvailable } from '@/lib/live-api-guard'
 import type { ChildViewModel } from '@/models/child'
 import type {
   ArchiveChildInput,
@@ -83,6 +85,7 @@ export function useChildrenRepository(user: User | null) {
 
   const addChild = useCallback(
     async (input: AddChildInput): Promise<Child> => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         const id = String(Date.now())
         const registeredAt = new Date().toISOString().split('T')[0]
@@ -100,7 +103,7 @@ export function useChildrenRepository(user: User | null) {
       }
 
       const centerId = input.centerId ?? user?.centerId
-      if (!centerId) throw new Error('centerId is required to register a child')
+      if (!centerId) throw new ChildRegistrationRequiresCenterError()
 
       const form: ChildRegistrationForm =
         input._form ??
@@ -169,6 +172,7 @@ export function useChildrenRepository(user: User | null) {
 
   const updateChild = useCallback(
     async (id: string, data: Partial<Child> & { _form?: ChildRegistrationForm }) => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         setMockChildren((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)))
         return
@@ -231,6 +235,7 @@ export function useChildrenRepository(user: User | null) {
 
   const transferChild = useCallback(
     async (id: string, data: TransferChildInput) => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         setMockChildren((prev) =>
           prev.map((c) =>
@@ -284,6 +289,7 @@ export function useChildrenRepository(user: User | null) {
 
   const archiveChild = useCallback(
     async (id: string, data: ArchiveChildInput) => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         setMockChildren((prev) =>
           prev.map((c) =>
@@ -312,6 +318,7 @@ export function useChildrenRepository(user: User | null) {
 
   const reactivateChild = useCallback(
     async (id: string) => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         setMockChildren((prev) =>
           prev.map((c) =>

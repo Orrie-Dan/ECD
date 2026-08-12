@@ -15,6 +15,7 @@ import { DEFAULT_CENTER_ID, MOCK_REFERRALS } from '@/lib/mock-data'
 import { getLocalStore } from '@/storage'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { networkState } from '@/network/network-state'
+import { assertLiveApiWritesAvailable } from '@/lib/live-api-guard'
 import { tokenStorage } from '@/api/token-storage'
 import type {
   ReferralCreateInput,
@@ -87,6 +88,7 @@ export function useReferralRepository(user: User | null, children: Child[]) {
 
   const createReferral = useCallback(
     async (input: ReferralCreateInput | Omit<Referral, 'id'>): Promise<ReferralViewModel> => {
+      assertLiveApiWritesAvailable()
       const assessmentId = input.assessmentId
 
       if (env.isMock) {
@@ -156,6 +158,7 @@ export function useReferralRepository(user: User | null, children: Child[]) {
       status: ReferralStatus,
       extras?: { implementedAt?: string; notes?: string },
     ): Promise<ReferralViewModel> => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         let updated: ReferralViewModel | undefined
         setMockReferrals((prev) =>
@@ -213,6 +216,7 @@ export function useReferralRepository(user: User | null, children: Child[]) {
 
   const updateReferral = useCallback(
     async (id: string, patch: ReferralPatchInput): Promise<ReferralViewModel> => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         let updated: ReferralViewModel | undefined
         setMockReferrals((prev) =>

@@ -190,6 +190,21 @@ export const messages = {
   childArchived: 'Umwana yashyizwe mu bubiko neza.',
   childReactivated: 'Umwana yasubijwe mu bana bakora neza.',
   formIncomplete: 'Hari amakuru atuzuye. Nyamuneka uzuza ibisabwa.',
+  childRegisterFailed: 'Ntibyashobotse kwandika umwana. Ongera ugerageze.',
+  childRegisterNoCenter:
+    'Ntabwo hashoboye kubona ikigo cyawe. Sohoka winjire ukundi, cyangwa ureba niba umukoresha afite ikigo.',
+  mutationFailed: 'Ntibyashobotse kubika. Ongera ugerageze.',
+  mutationNoCenter:
+    'Ntabwo hashoboye kubona ikigo cyawe. Sohoka winjire ukundi, cyangwa ureba niba umukoresha afite ikigo.',
+  mutationNoUser:
+    'Sesiyo yawe ntiyuzuye. Sohoka winjire ukundi.',
+  mutationNotFound: 'Ibyo ushaka ntibibonetse. Ongera ugerageze.',
+  transferAcceptUnavailable:
+    'Kwemera koherezwa ntibirashoboka muri ubu buryo bwo gukora. Bitegereje guhuza na sisitemu.',
+  deviceRegistrationFailed:
+    'Kwiyandikisha kw\'igikoresho byanze. Kohereza amakuru kuri seriveri birashobora guhagarikwa.',
+  deviceRegistrationUnauthorized:
+    'Sesiyo yarangiye. Injira ukundi kugira ngo amakuru ahuze na seriveri.',
   loginFailed: 'Izina cyangwa ijambo banga sibyo.',
   confirmLogout: 'Urashaka gusohoka?',
   liveFeatureUnavailable: 'Iki gikorwa ntabwo gishoboka kuri murongo.',

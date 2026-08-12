@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ApiProviders } from '@/api/providers/ApiProviders'
 import { ApiErrorBridge } from '@/api/providers/ApiErrorBridge'
+import { DeviceRegistrationBridge } from '@/offline/DeviceRegistrationBridge'
 import { AuthProvider, DataProvider } from '@/contexts/AppContext'
 import { AppErrorBoundary } from '@/components/AppErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -85,6 +86,7 @@ export default function App() {
             <DataProvider>
               <ToastProvider>
                 <ApiErrorBridge />
+                <DeviceRegistrationBridge />
                 <Routes>
                 <Route path="/" element={<HomeRoute />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />

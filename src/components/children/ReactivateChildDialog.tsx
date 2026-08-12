@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/Toast'
 import { calculateAge, formatDate } from '@/lib/mock-data'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, messages, gender } from '@/locales/rw/common'
+import { messageForMutationFailure } from '@/offline/mutation-error-message'
 import type { ArchiveReason, Child } from '@/types'
 
 interface ReactivateChildDialogProps {
@@ -32,8 +33,8 @@ export function ReactivateChildDialog({ open, onClose, child }: ReactivateChildD
       await reactivateChild(child.id)
       showSuccess(messages.childReactivated)
       onClose()
-    } catch {
-      showError(messages.formIncomplete)
+    } catch (err) {
+      showError(messageForMutationFailure(err))
     } finally {
       setSubmitting(false)
     }

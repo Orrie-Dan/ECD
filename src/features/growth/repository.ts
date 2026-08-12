@@ -12,6 +12,7 @@ import { MOCK_GROWTH_MEASUREMENTS } from '@/lib/mock-data'
 import { getLocalStore } from '@/storage'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { networkState } from '@/network/network-state'
+import { assertLiveApiWritesAvailable } from '@/lib/live-api-guard'
 import type { GrowthMeasurement, NutritionAssessment, User } from '@/types'
 
 /**
@@ -42,6 +43,7 @@ export function useGrowthRepository(childIds: string[], user: User | null = null
     async (
       record: Omit<GrowthMeasurement, 'id'>,
     ): Promise<{ measurement: GrowthMeasurement; assessment: NutritionAssessment }> => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         const id = `g${Date.now()}`
         const next: GrowthMeasurement = {
@@ -101,6 +103,7 @@ export function useGrowthRepository(childIds: string[], user: User | null = null
       id: string,
       data: Partial<Omit<GrowthMeasurement, 'id' | 'childId'>>,
     ): Promise<{ assessment: NutritionAssessment } | undefined> => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         const current = mockMeasurements.find((m) => m.id === id)
         if (!current) return undefined

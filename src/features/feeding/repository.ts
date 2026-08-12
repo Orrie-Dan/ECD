@@ -20,6 +20,7 @@ import { MOCK_FEEDING_DAYS, MOCK_FEEDING_SUMMARIES } from '@/lib/mock-data'
 import { getLocalStore } from '@/storage'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { networkState } from '@/network/network-state'
+import { assertLiveApiWritesAvailable } from '@/lib/live-api-guard'
 import type {
   FeedingDayUpsertInput,
   FeedingMonthSummaryUpsertInput,
@@ -85,6 +86,7 @@ export function useFeedingRepository(user: User | null) {
 
   const upsertFeedingDay = useCallback(
     async (input: FeedingDayUpsertInput): Promise<CenterFeedingDay> => {
+      assertLiveApiWritesAvailable()
       const nextBalanced = input.balancedMealServed
         ? isBalancedComposition(input.composition)
         : false
@@ -161,6 +163,7 @@ export function useFeedingRepository(user: User | null) {
     async (
       input: FeedingMonthSummaryUpsertInput,
     ): Promise<CenterFeedingMonthSummary> => {
+      assertLiveApiWritesAvailable()
       if (env.isMock) {
         let result: CenterFeedingMonthSummary = {
           id: `fs${Date.now()}`,
