@@ -35,8 +35,6 @@ export const auth = {
     invalidCredentials: "Nimero y'umukoresha cyangwa ijambo ry'ibanga sibyo.",
     apiUnavailable: 'Sisitemu ntabwo iboneka muri iki gihe. Ongera ugerageze nyuma.',
     submit: 'Injira',
-    registeringDevice: 'Turimo kwinjira…',
-    registeringDeviceHint: 'Tegereza gato…',
     helpLink: 'Ukeneye ubufasha?',
     helpMessage:
       "Saba umuyobozi w'ikigo cyangwa w'akarere kugira ngo agufashe kwinjira muri sisitemu.",

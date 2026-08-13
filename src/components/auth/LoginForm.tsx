@@ -99,9 +99,6 @@ export function LoginForm({ role }: LoginFormProps) {
           <Alert variant="warning">{auth.login.apiUnavailable}</Alert>
         )}
         {formError && <Alert variant="error">{formError}</Alert>}
-        {loading && env.isLive && (
-          <Alert variant="info">{auth.login.registeringDeviceHint}</Alert>
-        )}
 
         <InputField
           label={auth.login.username}
@@ -131,7 +128,7 @@ export function LoginForm({ role }: LoginFormProps) {
 
         <div className="pt-2">
           <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-            {loading && env.isLive ? auth.login.registeringDevice : auth.login.submit}
+            {auth.login.submit}
           </Button>
         </div>
       </form>
