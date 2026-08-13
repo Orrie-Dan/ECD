@@ -83,7 +83,7 @@ Tabs:
 | **Ubwitabire** | Which centers submitted today; rates; gaps |
 | **Imikurire** | Coverage, overdue measurements, at-risk MUAC |
 | **Imirire** | Feeding days / balanced meals reported |
-| **STED** | Screening coverage, referrals, follow-up due |
+| **STED** | Screening coverage, follow-up due |
 
 Use date and center filters. This is how you supervise the digital ECD Book without visiting every urugo every day.
 
@@ -93,9 +93,7 @@ Use date and center filters. This is how you supervise the digital ECD Book with
 
 Alerts are grouped (attendance, enrollment, data quality, operational, nutrition) with priority high / medium / low.
 
-Examples: low attendance, no submission, high-risk nutrition, missed assessment, referral required.
-
-**Kohereza (Ivuriro)** — `/district/referrals` (also linked from Gukurikirana): pending / completed / cancelled referrals from MUAC or STED.
+Examples: low attendance, no submission, high-risk nutrition, missed assessment.
 
 Act in the field (call the center, visit, support the umurezi). The app records the signal; it does not replace supervision visits.
 

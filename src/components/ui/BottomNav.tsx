@@ -19,10 +19,10 @@ export function BottomNav({ items }: BottomNavProps) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border shadow-lg lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border shadow-lg lg:hidden safe-area-bottom"
       aria-label={common.nav.mainNav}
     >
-      <div className="flex items-stretch justify-around max-w-lg mx-auto safe-area-bottom">
+      <div className="flex items-stretch justify-around max-w-lg mx-auto">
         {items.map((item) => {
           const Icon = item.icon
           const active = isSidebarNavActive(location.pathname, item as SidebarNavItem)

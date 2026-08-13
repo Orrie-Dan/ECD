@@ -467,7 +467,7 @@ function NcdaUsersLive() {
               ) : (
                 <>
                   <div className="mt-4 overflow-x-auto">
-                    <table className="w-full min-w-[44rem] text-left text-body">
+                    <table className="w-full min-w-0 sm:min-w-[44rem] text-left text-body responsive-table-cards">
                       <thead>
                         <tr className="border-b border-border text-caption text-text-secondary">
                           <th className="py-2 pr-3 font-semibold">{ncda.users.colUsername}</th>
@@ -481,18 +481,18 @@ function NcdaUsersLive() {
                       <tbody>
                         {items.map((row) => (
                           <tr key={row.id} className="border-b border-border/70">
-                            <td className="py-2.5 pr-3 font-medium text-text">{row.username}</td>
-                            <td className="py-2.5 pr-3 text-text-secondary">{row.fullName}</td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 font-medium text-text" data-label={ncda.users.colUsername}>{row.username}</td>
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.users.colFullName}>{row.fullName}</td>
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.users.colRole}>
                               {roleLabel(row.role)}
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.users.colStatus}>
                               {statusLabel(row.status)}
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.users.colScope}>
                               {row.center?.name ?? row.district?.name ?? '—'}
                             </td>
-                            <td className="py-2.5">
+                            <td className="py-2.5 td-actions" data-label={ncda.users.colAction}>
                               <Link
                                 to={`${NCDA_PATHS.users}/${row.id}`}
                                 className="text-primary font-semibold hover:underline"

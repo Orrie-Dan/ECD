@@ -9,7 +9,6 @@ export type NcdaMapLayerId =
   | 'growth'
   | 'wash'
   | 'inspections'
-  | 'referrals'
   | 'population'
 
 export type NcdaLayerAvailability = 'live' | 'unavailable'
@@ -77,13 +76,6 @@ export function buildNcdaMapLayers(): NcdaMapLayerDefinition[] {
       id: 'inspections',
       label: ncda.overview.layerInspections,
       description: ncda.overview.layerInspectionsDesc,
-      availability: 'unavailable',
-      enabled: false,
-    },
-    {
-      id: 'referrals',
-      label: ncda.overview.layerReferrals,
-      description: ncda.overview.layerReferralsDesc,
       availability: 'unavailable',
       enabled: false,
     },

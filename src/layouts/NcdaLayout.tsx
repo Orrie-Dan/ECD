@@ -124,7 +124,7 @@ export function NcdaLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-dvh bg-background flex">
       <aside className="hidden lg:flex flex-col w-72 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
         <NcdaBrand />
         <NcdaSidebarNav pathname={location.pathname} />
@@ -143,22 +143,6 @@ export function NcdaLayout() {
           >
             <LogOut size={20} aria-hidden="true" />
             {ncda.logout}
-          </button>
-        </div>
-      </aside>
-
-      <aside className="hidden md:flex lg:hidden flex-col w-16 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
-        <NcdaBrand collapsed />
-        <NcdaSidebarNav pathname={location.pathname} collapsed />
-        <div className="border-t border-border p-2">
-          <button
-            type="button"
-            onClick={() => setShowLogout(true)}
-            title={ncda.logout}
-            className="flex items-center justify-center w-full p-2.5 rounded-xl text-error hover:bg-error-light transition-colors"
-            aria-label={ncda.logout}
-          >
-            <LogOut size={20} aria-hidden="true" />
           </button>
         </div>
       </aside>
@@ -192,8 +176,8 @@ export function NcdaLayout() {
         </button>
       </NavDrawer>
 
-      <div className="flex-1 flex flex-col min-w-0 md:ml-16 lg:ml-72">
-        <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-72">
+        <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm safe-area-top">
           <div className="px-3 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <button
@@ -206,7 +190,7 @@ export function NcdaLayout() {
                 <Menu size={22} aria-hidden="true" />
               </button>
               <div className="min-w-0">
-                <p className="text-caption font-semibold uppercase tracking-wide text-accent truncate">
+                <p className="hidden sm:block text-caption font-semibold uppercase tracking-wide text-accent truncate">
                   {ncda.brand} · {ncda.brandSubtitle}
                 </p>
                 <h1 className="text-body font-bold text-text leading-tight truncate">{pageTitle}</h1>

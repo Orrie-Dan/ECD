@@ -21,14 +21,13 @@ export function Toast({ message, type, onClose, onUndo, undoLabel }: ToastProps)
     <div
       role="alert"
       className={`
-        fixed bottom-6 left-1/2 -translate-x-1/2 z-50
-        flex items-center gap-3 px-5 py-4 rounded-xl border shadow-lg
-        min-w-[300px] max-w-[90vw] text-body font-semibold
+        pointer-events-auto flex items-start gap-3 px-4 py-3 sm:px-5 sm:py-4 rounded-xl border shadow-lg
+        w-full text-body font-semibold
         ${type === 'success' ? 'bg-success-light border-success/30 text-success' : 'bg-error-light border-error/30 text-error'}
       `}
     >
-      <Icon size={22} className="shrink-0" aria-hidden="true" />
-      <span className="flex-1">{message}</span>
+      <Icon size={22} className="shrink-0 mt-0.5" aria-hidden="true" />
+      <span className="flex-1 min-w-0 wrap-break-word">{message}</span>
       {onUndo && undoLabel && (
         <button
           onClick={() => {
@@ -42,7 +41,7 @@ export function Toast({ message, type, onClose, onUndo, undoLabel }: ToastProps)
       )}
       <button
         onClick={onClose}
-        className="p-1 rounded-lg hover:opacity-70 transition-opacity"
+        className="touch-target flex items-center justify-center rounded-lg hover:opacity-70 transition-opacity shrink-0 -mr-1"
         aria-label={common.close}
       >
         ✕
@@ -57,8 +56,16 @@ interface ToastContainerProps {
 }
 
 export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
+  if (toasts.length === 0) return null
+
   return (
-    <>
+    <div
+      className="
+        pointer-events-none fixed z-50 left-1/2 -translate-x-1/2
+        bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] lg:bottom-6
+        flex flex-col gap-2 w-[min(24rem,calc(100vw-1.5rem))]
+      "
+    >
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
@@ -66,7 +73,7 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
           onClose={() => onRemove(toast.id)}
         />
       ))}
-    </>
+    </div>
   )
 }
 

@@ -40,11 +40,10 @@ describe('District portal information architecture', () => {
       expect(app).toContain('path="/district/imikorere/imirire"')
       expect(app).toContain('path="/district/imikorere/sted"')
       expect(app).toContain('path="/district/gukurikirana"')
-      expect(app).toContain('path="/district/referrals"')
       expect(app).toContain('path="/district/raporo"')
       expect(app).toContain('path="/district/igenamiterere"')
       expect(app).toContain('DistrictMonitoringPage')
-      expect(app).toContain('ReferralMonitoringPage')
+      expect(app).not.toContain('ReferralMonitoringPage')
     })
 
     it('redirects deprecated domain destinations into the new workspaces', () => {
@@ -52,7 +51,7 @@ describe('District portal information architecture', () => {
       expect(app).toContain('to={DISTRICT_PATHS.monitoringGrowth}')
       expect(app).toContain('to={DISTRICT_PATHS.monitoringFeeding}')
       expect(app).toContain('to={DISTRICT_PATHS.monitoringSted}')
-      expect(app).toContain('to={DISTRICT_PATHS.followupReferrals}')
+      expect(app).toContain('to={DISTRICT_PATHS.followup}')
       expect(app).toContain('to={DISTRICT_PATHS.dashboard}')
       expect(app).toContain('path="/district/ikarita"')
       expect(app).toContain('path="/district/referrals"')

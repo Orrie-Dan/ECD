@@ -36,7 +36,6 @@ import { DistrictAttendancePage } from '@/pages/district/AttendanceMonitoringPag
 import { GrowthMonitoringPage } from '@/pages/district/GrowthMonitoringPage'
 import { FeedingMonitoringPage } from '@/pages/district/FeedingMonitoringPage'
 import { StedMonitoringPage } from '@/pages/district/StedMonitoringPage'
-import { ReferralMonitoringPage } from '@/pages/district/ReferralMonitoringPage'
 import { GukurikiranaPage } from '@/pages/district/GukurikiranaPage'
 import { DistrictMonitoringPage } from '@/pages/district/DistrictMonitoringPage'
 import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
@@ -58,6 +57,7 @@ import {
   NcdaMonitoringPage,
   NcdaReportsPage,
   NcdaAuditLogsPage,
+  NcdaAuditLogDetailPage,
   NcdaRolesPage,
   NcdaSettingsPage,
 } from '@/pages/ncda/NcdaPages'
@@ -73,7 +73,7 @@ function HomeRoute() {
   const { isAuthenticated, user, isAuthLoading } = useAuth()
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-body text-text-secondary">
+      <div className="min-h-dvh flex items-center justify-center bg-background text-body text-text-secondary">
         …
       </div>
     )
@@ -133,7 +133,6 @@ export default function App() {
                     <Route path="/district/imikorere/imirire" element={<FeedingMonitoringPage />} />
                     <Route path="/district/imikorere/sted" element={<StedMonitoringPage />} />
                     <Route path="/district/gukurikirana" element={<GukurikiranaPage />} />
-                    <Route path="/district/referrals" element={<ReferralMonitoringPage />} />
                     <Route path="/district/raporo" element={<DistrictReportsPage />} />
                     <Route path="/district/igenamiterere" element={<DistrictSettingsPage />} />
                     <Route
@@ -153,8 +152,12 @@ export default function App() {
                       element={<RedirectWithSearch to={DISTRICT_PATHS.monitoringSted} />}
                     />
                     <Route
-                      path="/district/gukurikirana/kohereza"
-                      element={<RedirectWithSearch to={DISTRICT_PATHS.followupReferrals} />}
+                      path="/district/referrals"
+                      element={<Navigate to={DISTRICT_PATHS.followup} replace />}
+                    />
+                    <Route
+                      path="/district/gukurikirana/ivuriro"
+                      element={<Navigate to={DISTRICT_PATHS.followup} replace />}
                     />
                     <Route
                       path="/district/ikarita"
@@ -189,6 +192,7 @@ export default function App() {
                     <Route path="/ncda/roles" element={<NcdaRolesPage />} />
                     <Route path="/ncda/settings" element={<NcdaSettingsPage />} />
                     <Route path="/ncda/audit-logs" element={<NcdaAuditLogsPage />} />
+                    <Route path="/ncda/audit-logs/:logId" element={<NcdaAuditLogDetailPage />} />
                     <Route path="/ncda/districts" element={<NcdaDistrictsPage />} />
                     <Route path="/ncda/districts/:districtId" element={<NcdaDistrictDetailPage />} />
                     <Route path="/ncda/centers" element={<NcdaCentersPage />} />

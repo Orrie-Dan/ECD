@@ -75,8 +75,7 @@ Menu: **Imikurire**.
 - Reba abana **bagiye gupimwa**, **batereranye**, cyangwa **mu kaga cy’imirire**.  
 - Hitamo umwana → **Andika ipimo**.  
 - Andika **ibiro** na **MUAC** (cm).  
-- Sisitemu igaragaza: bisanzwe / mu kaga / bikabije / bikabije cyane.  
-- Niba MUAC iri munsi ya 12.5 cm, ushobora gukora **kohereza ku ivuriro**.
+- Sisitemu igaragaza: bisanzwe / mu kaga / bikabije / bikabije cyane.
 
 Urutonde rw’ukwezi: **Imikurire → Ukwezi** (nk’ifishi ya Form VII).
 
@@ -111,22 +110,12 @@ Ku mwana ufite **imyaka 1–6**:
 3. Itegereze **ibice 9 by’umubiri** (umutwe, ijosi, amaboko, …).  
 4. Emeza ikigero cy’imyaka (1–3 cyangwa 4–6).  
 5. Subiza **YEGO / OYA** ku bibazo byose.  
-6. Reba umwanzuro (nta kibazo, kohereza, inama, gusubiramo mu mezi 6).  
+6. Reba umwanzuro (nta kibazo, inama, gusubiramo mu mezi 6).  
 7. **Ohereza isuzuma**.
 
-Niba hari **OYA** cyangwa ikibazo ku mubiri, sisitemu isaba kohereza ku **Kigo Nderabuzima**.
-
 ---
 
-## 8. Kohereza no kwimura
-
-- **Kohereza ku ivuriro** bivuye ku MUAC cyangwa STED.  
-- Kurikirana: Bitegereje → Byakozwe / Byahagaritswe.  
-- **Kwimura umwana** ku kindi kigo bisaba **umurongo**. Ikigo giherwaho kimwemera.
-
----
-
-## 9. Guhuza n’umurongo (offline)
+## 8. Guhuza n’umurongo (offline)
 
 Hasi cyangwa mu **Igenamiterere** ureba imiterere:
 
@@ -134,13 +123,13 @@ Hasi cyangwa mu **Igenamiterere** ureba imiterere:
 |---|---|
 | Uri ku murongo | Hari interneti |
 | Nta murongo | Kora; byabikwa ku gikoresho |
-| Birimo guhuza… | Birimo koherezwa |
+| Birimo guhuza… | Birimo guhuzwa |
 | Impinduka N zitegereje | Hari byabitswe bitarageze kuri seriveri |
 | Byahujwe … | Byageze kuri seriveri |
 | Guhuza byanze | Amakuru agumye ku gikoresho — ongera ugerageze |
 | Birakeneye kwitabwaho | Hari amakuru ahuriye — seriveri ni yo ikoreshwa |
 
-**Huza ubu** iyo ushaka kohereza nonaha.
+**Huza ubu** iyo ushaka guhuza nonaha.
 
 ### Gusohoka
 
@@ -152,7 +141,7 @@ Niba hari impinduka zitarahujwe:
 
 ---
 
-## 10. Igenamiterere
+## 9. Igenamiterere
 
 - Izina ry’ikigo (reba)  
 - Amazina yawe na telefoni  

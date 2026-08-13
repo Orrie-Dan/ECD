@@ -31,10 +31,8 @@ const liveCategories = [
 const mockCategories = [
   { id: 'all', label: district.followup.filterAll },
   { id: 'attendance', label: district.followup.filterAttendance },
-  { id: 'enrollment', label: district.followup.filterEnrollment },
   { id: 'nutrition', label: district.followup.filterNutrition },
   { id: 'data_quality', label: district.followup.filterDataQuality },
-  { id: 'operational', label: district.followup.filterOperational },
 ] as const
 
 type LiveCategoryFilter = (typeof liveCategories)[number]['id']
@@ -224,7 +222,7 @@ function GukurikiranaPageLive() {
               <StatCard
                 compact
                 label={district.followup.highPriority}
-                value={counts?.high ?? 0}
+                value={items.filter((item) => item.priority === 'high').length}
                 variant="danger"
               />
               <StatCard
@@ -294,7 +292,12 @@ function GukurikiranaPageLive() {
 
 function GukurikiranaPageMock() {
   const [category, setCategory] = useState<MockCategoryFilter>('all')
-  const operationalAlerts = ACTION_ALERTS.filter((alert) => alert.type !== 'referral_required')
+  const operationalAlerts = ACTION_ALERTS.filter(
+    (alert) =>
+      alert.type !== 'referral_required' &&
+      alert.category !== 'enrollment' &&
+      alert.category !== 'operational',
+  )
   const visible =
     category === 'all'
       ? operationalAlerts
@@ -347,7 +350,7 @@ function GukurikiranaPageMock() {
             value={category}
             onChange={setCategory}
             aria-label={district.followup.title}
-            columns={3}
+            columns={4}
           />
         </Card>
 
@@ -388,23 +391,25 @@ function FollowUpCharts({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card padding="md" className="space-y-2">
+      <Card padding="md" className="space-y-2 bg-white">
         <h2 className="text-body font-semibold text-text">{district.followup.chartByCategory}</h2>
         <EnhancedPieChart
           data={categorySlices}
           ariaLabel={district.followup.chartByCategory}
           centerValue={String(categorySlices.reduce((sum, slice) => sum + slice.value, 0))}
           centerLabel={district.followup.totalAlerts}
+          tone="white"
           {...emptyChart}
         />
       </Card>
-      <Card padding="md" className="space-y-2">
+      <Card padding="md" className="space-y-2 bg-white">
         <h2 className="text-body font-semibold text-text">{district.followup.chartByPriority}</h2>
         <EnhancedPieChart
           data={prioritySlices}
           ariaLabel={district.followup.chartByPriority}
           centerValue={String(prioritySlices[0]?.value ?? 0)}
           centerLabel={district.followup.highPriority}
+          tone="white"
           {...emptyChart}
         />
       </Card>

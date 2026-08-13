@@ -5,27 +5,21 @@ import { NutritionStatusCard } from '@/components/growth/NutritionStatusCard'
 import { AssessmentReminderCard } from '@/components/growth/AssessmentReminderCard'
 import { MeasurementHistoryTable } from '@/components/growth/MeasurementHistoryTable'
 import { GrowthTrendChart } from '@/components/growth/GrowthTrendChart'
-import { ReferralCard } from '@/components/referrals/ReferralCard'
 import { caretaker } from '@/locales/rw/caretaker'
 import { sortMeasurementsDesc } from '@/lib/nutrition-utils'
 import type {
   Child,
   GrowthMeasurement,
   NutritionAssessment,
-  Referral,
 } from '@/types'
 
 interface ChildGrowthHistorySectionProps {
   child: Child
   measurements: GrowthMeasurement[]
   assessments: NutritionAssessment[]
-  referrals: Referral[]
   canEdit?: boolean
   onRecordMeasurement?: () => void
   onEditMeasurement?: (record: GrowthMeasurement) => void
-  onCompleteReferral?: (id: string, notes?: string) => void | Promise<void>
-  onMarkReferralImplemented?: (id: string) => void | Promise<void>
-  onSaveReferralNotes?: (id: string, notes: string) => void | Promise<void>
 }
 
 function formatDelta(value: number, unit: string): string {
@@ -37,13 +31,9 @@ export function ChildGrowthHistorySection({
   child,
   measurements,
   assessments,
-  referrals,
   canEdit = false,
   onRecordMeasurement,
   onEditMeasurement,
-  onCompleteReferral,
-  onMarkReferralImplemented,
-  onSaveReferralNotes,
 }: ChildGrowthHistorySectionProps) {
   const sorted = sortMeasurementsDesc(measurements)
   const latestMeasurement = sorted[0]
@@ -59,10 +49,6 @@ export function ChildGrowthHistorySection({
     latestMeasurement && previous
       ? Number((latestMeasurement.muacCm - previous.muacCm).toFixed(1))
       : null
-
-  const openReferrals = [...referrals]
-    .filter((r) => r.status !== 'completed')
-    .sort((a, b) => b.date.localeCompare(a.date))
 
   return (
     <div className="space-y-4">
@@ -124,38 +110,6 @@ export function ChildGrowthHistorySection({
         onEdit={onEditMeasurement}
         highlightLatest
       />
-
-      {/* Open referrals only — completed history lives on Referrals page */}
-      <Card padding="lg">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div>
-            <h3 className="text-label text-primary">{caretaker.childDetail.openReferralsTitle}</h3>
-            {openReferrals.length > 0 && (
-              <p className="text-caption text-warning font-medium mt-1">
-                {openReferrals.length} {caretaker.referral.pendingCount}
-              </p>
-            )}
-          </div>
-        </div>
-        {openReferrals.length === 0 ? (
-          <p className="text-body text-text-secondary text-center py-6 rounded-xl bg-background-subtle">
-            {caretaker.childDetail.noOpenReferrals}
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {openReferrals.map((referral) => (
-              <ReferralCard
-                key={referral.id}
-                referral={referral}
-                child={child}
-                onCompleteFollowUp={(notes) => onCompleteReferral?.(referral.id, notes)}
-                onMarkImplemented={() => onMarkReferralImplemented?.(referral.id)}
-                onSaveNotes={(notes) => onSaveReferralNotes?.(referral.id, notes)}
-              />
-            ))}
-          </div>
-        )}
-      </Card>
     </div>
   )
 }

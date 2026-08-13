@@ -12,7 +12,9 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
-import { useFeedingMonitoringView, roundPct } from '@/features/monitoring'
+import { useFeedingMonitoringView } from '@/features/monitoring'
+import { EnhancedBarChart, formatCountTick } from '@/components/charts'
+import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { getCurrentYearMonth } from '@/lib/feeding-utils'
@@ -58,7 +60,7 @@ function FeedingMonitoringPageShared({
       return {
         centersReporting: mockSummary.centersReporting,
         totalCenters: mockSummary.totalCenters,
-        completenessRate: mockSummary.completenessRate,
+        daysRecorded: mockSummary.avgMilkDays + mockSummary.avgBalancedDays,
         avgMilkDays: mockSummary.avgMilkDays,
         avgBalancedDays: mockSummary.avgBalancedDays,
       }
@@ -68,19 +70,17 @@ function FeedingMonitoringPageShared({
       return {
         centersReporting: 0,
         totalCenters: 0,
-        completenessRate: 0,
+        daysRecorded: 0,
         avgMilkDays: 0,
         avgBalancedDays: 0,
       }
     }
-    const denom = Math.max(1, s.reportingCenters)
     return {
       centersReporting: s.reportingCenters,
       totalCenters: s.centersInScope,
-      completenessRate: roundPct(s.feedingCoverage),
-      // Presentation of backend day totals — not recomputed from Form VI rows.
-      avgMilkDays: Math.round(s.daysWithMilk / denom),
-      avgBalancedDays: Math.round(s.daysWithBalancedMeal / denom),
+      daysRecorded: s.daysRecorded,
+      avgMilkDays: s.daysWithMilk,
+      avgBalancedDays: s.daysWithBalancedMeal,
     }
   }, [data?.summary, mockSummary, source])
 
@@ -159,9 +159,9 @@ function FeedingMonitoringPageShared({
             </div>
             <div className="h-full [&>div]:h-full">
               <StatCard
-                label={district.imirire.completeness}
-                value={`${summaryCards.completenessRate}%`}
-                variant={summaryCards.completenessRate >= 70 ? 'success' : 'warning'}
+                label={district.imirire.daysRecorded}
+                value={String(summaryCards.daysRecorded)}
+                variant="success"
                 compact
               />
             </div>
@@ -182,6 +182,28 @@ function FeedingMonitoringPageShared({
               />
             </div>
           </div>
+
+          <Card padding="lg">
+            <h2 className="text-subheading text-text mb-4">{district.imirire.chartTitle}</h2>
+            {tableRows.length === 0 ? (
+              <EmptyState title={district.imirire.noData} />
+            ) : (
+              <EnhancedBarChart
+                data={tableRows.slice(0, 12).map((entry) => ({
+                  name: entry.row.centerName,
+                  value:
+                    entry.kind === 'mock'
+                      ? entry.row.milkDays + entry.row.porridgeDays + entry.row.balancedDays
+                      : entry.row.daysRecorded,
+                }))}
+                ariaLabel={district.imirire.chartTitle}
+                color={CHART_METRIC_COLORS.feedingBalanced}
+                xAxisLabel={district.charts.axisCenter}
+                yAxisLabel={district.charts.axisCount}
+                yTickFormatter={formatCountTick}
+              />
+            )}
+          </Card>
 
           <Card padding="lg">
             <h2 className="text-subheading text-text mb-4">{district.imirire.centerComparison}</h2>
@@ -308,7 +330,7 @@ function FeedingMonitoringPageShared({
                             —
                           </td>
                           <td className="py-3 text-body" data-label={district.imirire.foodSource}>
-                            {row.coverage != null ? `${roundPct(row.coverage)}%` : '—'}
+                            —
                           </td>
                         </tr>
                       )

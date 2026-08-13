@@ -1,5 +1,7 @@
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { EnhancedBarChart, formatCountTick } from '@/components/charts'
+import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { BarChart3 } from 'lucide-react'
 import { district } from '@/locales/rw/district'
 import type { CoverageByCenterPoint, NutritionStatusCounts } from '@/lib/nutrition-utils'
@@ -18,11 +20,11 @@ const STATUS_LABEL: Record<string, string> = {
   severe: district.growth.statusSevere,
 }
 
-const STATUS_BAR: Record<string, string> = {
-  normal: 'bg-success',
-  at_risk: 'bg-warning',
-  moderate: 'bg-accent',
-  severe: 'bg-error',
+const STATUS_COLOR: Record<string, string> = {
+  normal: CHART_METRIC_COLORS.nutritionNormal,
+  at_risk: CHART_METRIC_COLORS.nutritionAtRisk,
+  moderate: CHART_METRIC_COLORS.nutritionModerate,
+  severe: CHART_METRIC_COLORS.nutritionSevere,
 }
 
 function ChartSkeleton() {
@@ -48,7 +50,16 @@ export function DistrictGrowthTrendSection({
 }: DistrictGrowthTrendSectionProps) {
   const statusSeries = buildStatusDistributionSeries(statusCounts)
   const statusTotal = statusSeries.reduce((sum, s) => sum + s.count, 0)
-  const maxCoverage = Math.max(...coverageSeries.map((c) => c.coverageRate), 1)
+  const statusBars = statusSeries.map((item) => ({
+    name: STATUS_LABEL[item.key],
+    value: item.count,
+    color: STATUS_COLOR[item.key],
+  }))
+  const centerBars = coverageSeries.map((row) => ({
+    name: row.centerName,
+    assessed: row.totalChildren,
+    atRisk: row.atRisk,
+  }))
 
   return (
     <Card padding="lg" className="transition-shadow duration-200 hover:shadow-md">
@@ -74,33 +85,13 @@ export function DistrictGrowthTrendSection({
             {statusTotal === 0 ? (
               <p className="text-body text-text-secondary">{district.growth.notAssessed}</p>
             ) : (
-              <ul className="space-y-3 list-none m-0 p-0">
-                {statusSeries.map((item) => {
-                  const percent = Math.round((item.count / statusTotal) * 100)
-                  return (
-                    <li
-                      key={item.key}
-                      className="rounded-lg p-2 -mx-2 transition-colors duration-150 hover:bg-background-subtle/80"
-                    >
-                      <div className="flex items-center justify-between gap-3 mb-1.5">
-                        <span className="text-body text-text">{STATUS_LABEL[item.key]}</span>
-                        <span className="text-body font-bold text-text shrink-0 tabular-nums">
-                          {item.count.toLocaleString()}{' '}
-                          <span className="text-caption font-medium text-text-muted">
-                            ({percent}%)
-                          </span>
-                        </span>
-                      </div>
-                      <div className="h-3 rounded-full bg-background-subtle overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ease-out ${STATUS_BAR[item.key]}`}
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
+              <EnhancedBarChart
+                data={statusBars}
+                ariaLabel={district.growth.statusDistribution}
+                xAxisLabel={district.charts.axisCategory}
+                yAxisLabel={district.charts.axisCount}
+                yTickFormatter={formatCountTick}
+              />
             )}
           </div>
 
@@ -111,31 +102,27 @@ export function DistrictGrowthTrendSection({
             {coverageSeries.length === 0 ? (
               <p className="text-body text-text-secondary">{district.growth.noCenters}</p>
             ) : (
-              <ul className="space-y-3 list-none m-0 p-0">
-                {coverageSeries.map((row) => (
-                  <li
-                    key={row.centerId}
-                    className="rounded-lg p-2 -mx-2 transition-colors duration-150 hover:bg-background-subtle/80"
-                  >
-                    <div className="flex items-center justify-between gap-3 mb-1.5">
-                      <span className="text-body text-text truncate">{row.centerName}</span>
-                      <span className="text-body font-bold text-text shrink-0 tabular-nums">
-                        {row.coverageRate}%
-                      </span>
-                    </div>
-                    <div className="h-3 rounded-full bg-background-subtle overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
-                        style={{ width: `${(row.coverageRate / maxCoverage) * 100}%` }}
-                      />
-                    </div>
-                    <p className="text-caption text-text-muted mt-1">
-                      {district.growth.atRisk}: {row.atRisk} · {district.growth.totalChildren}:{' '}
-                      {row.totalChildren}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              <EnhancedBarChart
+                data={centerBars}
+                series={[
+                  {
+                    dataKey: 'assessed',
+                    label: district.growth.assessed,
+                    color: CHART_METRIC_COLORS.schools,
+                  },
+                  {
+                    dataKey: 'atRisk',
+                    label: district.growth.atRisk,
+                    color: CHART_METRIC_COLORS.nutritionAtRisk,
+                  },
+                ]}
+                layout="vertical"
+                height={Math.max(240, Math.min(centerBars.length, 8) * 32 + 48)}
+                ariaLabel={district.growth.coverageChart}
+                xAxisLabel={district.charts.axisCount}
+                yAxisLabel={district.charts.axisCenter}
+                yTickFormatter={formatCountTick}
+              />
             )}
           </div>
         </div>

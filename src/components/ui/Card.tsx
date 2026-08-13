@@ -115,8 +115,8 @@ export function ActionCard({ icon, title, description, onClick, accent = 'green'
           {icon}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-subheading text-text mb-1">{title}</h3>
-          <p className="text-body text-text-secondary">{description}</p>
+          <h3 className="text-subheading text-text mb-1 wrap-break-word">{title}</h3>
+          <p className="text-body text-text-secondary wrap-break-word">{description}</p>
         </div>
         <ChevronRight
           size={22}
@@ -174,7 +174,7 @@ export function StatCard({
         >
           {label}
         </p>
-        <p className={`text-text ${compact ? 'text-heading mt-0.5' : 'text-display mt-0.5'}`}>
+        <p className={`text-text tabular-nums break-all ${compact ? 'text-heading mt-0.5' : 'text-display mt-0.5'}`}>
           {value}
         </p>
         {trend && <p className="text-caption mt-1">{trend}</p>}

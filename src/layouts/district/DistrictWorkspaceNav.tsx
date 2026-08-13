@@ -14,7 +14,7 @@ interface DistrictWorkspaceNavProps {
 export function DistrictWorkspaceNav({ items, ariaLabel }: DistrictWorkspaceNavProps) {
   return (
     <nav
-      className="flex flex-wrap gap-1 mb-4 border-b border-border"
+      className="flex flex-nowrap gap-1 mb-4 border-b border-border overflow-x-auto overscroll-x-contain -mx-3 px-3 sm:mx-0 sm:px-0"
       aria-label={ariaLabel}
     >
       {items.map((item) => (
@@ -24,7 +24,7 @@ export function DistrictWorkspaceNav({ items, ariaLabel }: DistrictWorkspaceNavP
           end={item.end === true}
           className={({ isActive }) =>
             [
-              'px-3 py-2 text-body font-medium rounded-t-lg border-b-2 -mb-px transition-colors',
+              'shrink-0 whitespace-nowrap min-h-11 inline-flex items-center px-3 py-2 text-body font-medium rounded-t-lg border-b-2 -mb-px transition-colors',
               isActive
                 ? 'border-primary text-primary'
                 : 'border-transparent text-text-secondary hover:text-text hover:border-border-strong',

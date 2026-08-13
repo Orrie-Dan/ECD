@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Clock,
   Layers,
-  Send,
   SlidersHorizontal,
   X,
 } from 'lucide-react'
@@ -201,7 +200,6 @@ export function DistrictOverviewCommand({
     : new Set(mockAlerts.map((a) => a.centerId)).size
   const followUpCount = env.isLive ? (alertsQ.data?.total ?? liveAlerts.length) : mockAlerts.length
   const overdueCount = growthOverdue ?? 0
-  const pendingReferrals = dashboard?.referrals.pending ?? null
 
   const attendanceRate = roundPct(dashboard?.attendance.rate)
   const totalChildren = dashboard?.children.active ?? dashboard?.children.total ?? 0
@@ -231,7 +229,7 @@ export function DistrictOverviewCommand({
           <ChartPeriodFilter
             value={periodFilter}
             onChange={setPeriodFilter}
-            className="max-w-md"
+            className="w-full md:max-w-md"
           />
         }
       />
@@ -541,14 +539,6 @@ export function DistrictOverviewCommand({
               variant="warning"
             />
           </Link>
-          <Link to={DISTRICT_PATHS.followupReferrals} className="block">
-            <StatCard
-              compact
-              label={district.overview.pendingReferrals}
-              value={pendingReferrals ?? '—'}
-              icon={<Send size={18} className="text-accent" />}
-            />
-          </Link>
         </div>
         <p className="text-caption text-text-muted mt-2">
           {district.overview.situationTitle}: {dashboard?.centersInScope ?? '—'} {district.nav.centers} ·{' '}
@@ -710,12 +700,6 @@ function CentrePreview({
         />
         <SummaryRow label={district.overview.attendance} value={attendance} />
         <SummaryRow label={district.schools.tableStatus} value={statusLabel} />
-        {liveCenter?.pendingReferralsCount != null ? (
-          <SummaryRow
-            label={district.overview.pendingReferrals}
-            value={String(liveCenter.pendingReferralsCount)}
-          />
-        ) : null}
       </dl>
       <p className="text-caption text-text-muted mt-3">{district.overview.lastAssessmentUnavailable}</p>
       <p className="text-caption text-text-muted">{district.overview.nutritionStatusUnavailable}</p>

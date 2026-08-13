@@ -89,15 +89,6 @@ describe('Sprint 5.3 District contract completion', () => {
     )
   })
 
-  it('Referral LIVE page wires date inputs', () => {
-    const filePath = path.resolve(__dirname, '../../pages/district/ReferralMonitoringPage.tsx')
-    const content = fs.readFileSync(filePath, 'utf8')
-    expect(content).toContain('fromDate')
-    expect(content).toContain('toDate')
-    expect(content).toContain('from: fromDate || undefined')
-    expect(content).toContain('to: toDate || undefined')
-  })
-
   it('District nutrition hooks do not import DataProvider', () => {
     const content = fs.readFileSync(
       path.resolve(__dirname, 'nutrition/queries.ts'),

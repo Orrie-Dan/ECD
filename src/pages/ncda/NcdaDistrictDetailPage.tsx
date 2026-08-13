@@ -6,7 +6,6 @@ import {
   Building2,
   Ruler,
   Search,
-  Share2,
   UserCheck,
   UserMinus,
   Utensils,
@@ -284,11 +283,6 @@ function NcdaDistrictDetailLive() {
                 icon={<Utensils size={18} />}
               />
               <StatCard
-                label={ncda.districts.referralsPending}
-                value={overview?.referrals.pending ?? '—'}
-                icon={<Share2 size={18} />}
-              />
-              <StatCard
                 label={ncda.districts.stedAssessments}
                 value={kpis?.stedAssessments ?? '—'}
                 icon={<ClipboardList size={18} />}
@@ -382,7 +376,7 @@ function NcdaDistrictDetailLive() {
               ) : (
                 <>
                   <div className="mt-4 overflow-x-auto">
-                    <table className="w-full min-w-[40rem] text-left text-body">
+                    <table className="w-full min-w-0 sm:min-w-[40rem] text-left text-body responsive-table-cards">
                       <thead>
                         <tr className="border-b border-border text-caption text-text-secondary">
                           <th className="py-2 pr-3 font-semibold">{ncda.districts.colCenter}</th>
@@ -395,7 +389,7 @@ function NcdaDistrictDetailLive() {
                       <tbody>
                         {centerItems.map((row) => (
                           <tr key={row.id} className="border-b border-border/70">
-                            <td className="py-2.5 pr-3 font-medium text-text">
+                            <td className="py-2.5 pr-3 font-medium text-text" data-label={ncda.districts.colCenter}>
                               <Link
                                 to={`${NCDA_PATHS.centers}/${row.id}`}
                                 className="text-primary font-semibold hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
@@ -403,16 +397,16 @@ function NcdaDistrictDetailLive() {
                                 {row.name}
                               </Link>
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">{row.code}</td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.districts.colCode}>{row.code}</td>
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.districts.colVillage}>
                               {row.villageName ?? '—'}
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.districts.colStatus}>
                               {row.status === 'active'
                                 ? ncda.districts.statusActive
                                 : ncda.districts.statusInactive}
                             </td>
-                            <td className="py-2.5 text-text-secondary">
+                            <td className="py-2.5 text-text-secondary" data-label={ncda.districts.colChildren}>
                               {row.activeChildrenCount}
                             </td>
                           </tr>

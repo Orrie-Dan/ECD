@@ -47,7 +47,7 @@ LIVE mode is required for most NCDA pages. In mock mode you will see **Ntabwo bi
 
 Use this as the national command surface: where centers are, what needs attention.
 
-Map **layers** are defined in product (centers, coverage, attendance, compliance, nutrition, growth, WASH, inspections, referrals). Only layers marked **live** have data. Others show as unavailable — that means no aggregate API, not “zero centers.”
+Map **layers** are defined in product (centers, coverage, attendance, compliance, nutrition, growth, WASH, inspections). Only layers marked **live** have data. Others show as unavailable — that means no aggregate API, not “zero centers.”
 
 Do not treat unavailable KPIs as 0% coverage.
 
@@ -55,7 +55,7 @@ Do not treat unavailable KPIs as 0% coverage.
 
 ## 4. Gukurikirana (national monitoring)
 
-Filtered national monitoring of operational domains (attendance, nutrition, feeding, STED, referrals, compliance as the APIs allow). Always apply district/center/date filters. The UI is built to **avoid loading the entire country unpaged**.
+Filtered national monitoring of operational domains (attendance, nutrition, feeding, STED, compliance as the APIs allow). Always apply district/center/date filters. The UI is built to **avoid loading the entire country unpaged**.
 
 ---
 

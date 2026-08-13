@@ -193,7 +193,7 @@ export function buildReferralFilterSummary(
   const viewClause = referralViewClause(view)
   if (viewClause) clauses.push(viewClause)
   if (clauses.length === 0) return null
-  return `Urimo kubona kohereza ${joinClauses(clauses)}.`
+  return `Urimo kubona ihererekanya ${joinClauses(clauses)}.`
 }
 
 export function formatResultsCount(count: number): string {

@@ -89,7 +89,7 @@ describe('Sprint 5.5E — NCDA centers management contract', () => {
       expect(detailPage).toContain('useNcdaCenterAttendance')
       expect(detailPage).toContain('useNcdaCenterNutrition')
       expect(detailPage).toContain('useNcdaCenterFeeding')
-      expect(detailPage).toContain('useNcdaCenterReferrals')
+      expect(detailPage).not.toContain('useNcdaCenterReferrals')
       expect(listPage).not.toMatch(/listCentersDirectory\(|loadCenters\(['"]all['"]\)/)
       expect(detailPage).not.toMatch(/loadCenters\(['"]all['"]\)/)
       expect(queries).not.toMatch(/for\s*\(.*center/)

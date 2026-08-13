@@ -287,7 +287,7 @@ function NcdaComplianceLive() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[40rem] text-left text-body">
+                <table className="w-full min-w-0 sm:min-w-[40rem] text-left text-body responsive-table-cards">
                   <thead>
                     <tr className="border-b border-border text-caption text-text-secondary">
                       <th className="py-2 pr-3 font-semibold">{ncda.compliance.colDate}</th>
@@ -301,12 +301,12 @@ function NcdaComplianceLive() {
                   <tbody>
                     {items.map((row) => (
                       <tr key={row.id} className="border-b border-border/70">
-                        <td className="py-2.5 pr-3">{formatDate(row.assessmentDate)}</td>
-                        <td className="py-2.5 pr-3">{row.centerName ?? row.centerId}</td>
-                        <td className="py-2.5 pr-3">{row.assessmentType}</td>
-                        <td className="py-2.5 pr-3">{row.status}</td>
-                        <td className="py-2.5 pr-3">{row.overallClassification ?? '—'}</td>
-                        <td className="py-2.5">
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colDate}>{formatDate(row.assessmentDate)}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colCenter}>{row.centerName ?? row.centerId}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colType}>{row.assessmentType}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colStatus}>{row.status}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colClass}>{row.overallClassification ?? '—'}</td>
+                        <td className="py-2.5 td-actions" data-label={ncda.compliance.colAction}>
                           <Button
                             type="button"
                             variant="secondary"

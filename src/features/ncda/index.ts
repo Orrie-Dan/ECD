@@ -49,7 +49,7 @@ export {
   useNcdaUpdateUser,
   useNcdaResetUserPassword,
 } from './users/queries'
-export { useNcdaAuditLogsList } from './audit-logs/queries'
+export { useNcdaAuditLogsList, useNcdaUserNames } from './audit-logs/queries'
 export {
   useNcdaComplianceAssessments,
   useNcdaComplianceAssessmentDetail,

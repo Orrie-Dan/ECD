@@ -36,9 +36,11 @@ export function PageHeader({
               {badge}
             </span>
           )}
-          <h1 className={compact ? 'text-heading text-text' : 'text-display text-text'}>{title}</h1>
+          <h1 className={`${compact ? 'text-heading text-text' : 'text-display text-text'} wrap-break-word`}>
+            {title}
+          </h1>
           {support && (
-            <p className={`text-text-secondary max-w-2xl ${compact ? 'text-body' : 'text-body-lg'}`}>
+            <p className={`text-text-secondary max-w-2xl wrap-break-word ${compact ? 'text-body' : 'text-body-lg'}`}>
               {support}
             </p>
           )}

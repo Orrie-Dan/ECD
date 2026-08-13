@@ -224,7 +224,7 @@ function NcdaCentersLive() {
               ) : (
                 <>
                   <div className="mt-4 overflow-x-auto">
-                    <table className="w-full min-w-[44rem] text-left text-body">
+                    <table className="w-full min-w-0 sm:min-w-[44rem] text-left text-body responsive-table-cards">
                       <thead>
                         <tr className="border-b border-border text-caption text-text-secondary">
                           <th className="py-2 pr-3 font-semibold">{ncda.centers.colCenter}</th>
@@ -239,23 +239,23 @@ function NcdaCentersLive() {
                       <tbody>
                         {items.map((row) => (
                           <tr key={row.id} className="border-b border-border/70">
-                            <td className="py-2.5 pr-3 font-medium text-text">{row.name}</td>
-                            <td className="py-2.5 pr-3 text-text-secondary">{row.code}</td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 font-medium text-text" data-label={ncda.centers.colCenter}>{row.name}</td>
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.centers.colCode}>{row.code}</td>
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.centers.colDistrict}>
                               {row.districtName ?? '—'}
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.centers.colVillage}>
                               {row.villageName ?? '—'}
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.centers.colStatus}>
                               {row.status === 'active'
                                 ? ncda.centers.statusActive
                                 : ncda.centers.statusInactive}
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.centers.colChildren}>
                               {row.activeChildrenCount}
                             </td>
-                            <td className="py-2.5">
+                            <td className="py-2.5 td-actions" data-label={ncda.centers.colAction}>
                               <Link
                                 to={`${NCDA_PATHS.centers}/${row.id}`}
                                 className="text-primary font-semibold hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"

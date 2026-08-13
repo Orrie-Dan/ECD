@@ -78,7 +78,7 @@ export function LoginForm({ role }: LoginFormProps) {
           to="/"
           aria-disabled={loading}
           tabIndex={loading ? -1 : undefined}
-          className={`inline-flex items-center gap-1.5 text-body text-text-secondary font-semibold hover:text-primary transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm ${
+          className={`touch-target inline-flex items-center gap-1.5 text-body text-text-secondary font-semibold hover:text-primary transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm ${
             loading ? 'pointer-events-none opacity-50' : ''
           }`}
         >

@@ -89,37 +89,34 @@ export const common = {
     emptyPreview: 'Nta makuru yo kugaragaza muri iyi raporo',
   },
   gis: {
-    waitingTitle: 'Waiting for GIS integrations',
+    waitingTitle: 'Ikarita irategerejwe',
     waitingBody:
-      'Ikarita n’ibikorwa bya GIS bizazana nyuma y’ubufatanye na sisitemu ya GIS. .',
+      'Ikarita n’ibikorwa bya GIS bizazana nyuma y’ubufatanye na sisitemu ya GIS.',
   },
   /** LIVE-mode honesty copy — never imply mock/fake success succeeded online. */
   live: {
-    unavailableTitle: 'Ntabwo biboneka kuri murongo',
-    unavailableDesc:
-      'Ibi makuru cyangwa iki gikorwa ntabwo bikoresha API iriho. Ntabwo dukoresha amakuru y’ikigerageza.',
-    exportUnavailable: 'Kuramo dosiye ntabwo bishoboka kuri murongo — nta endpoint yo kuramo.',
-    settingsSaveUnavailable:
-      'Kubika igenamiterere ntabwo bishoboka kuri murongo — nta persistence yo ku murongo.',
+    unavailableTitle: 'Aya makuru ntabwo aboneka muri iki gihe',
+    unavailableDesc: 'Aya makuru ntabwo aboneka muri iki gihe. Ongera ugerageze nyuma.',
+    exportUnavailable: 'Gukuramo dosiye ntabwo bishoboka muri iki gihe.',
+    settingsSaveUnavailable: 'Kubika igenamiterere ntabwo bishoboka muri iki gihe.',
     transferAcceptUnavailable:
-      'Kwemera koherezwa ntabwo bishoboka kuri murongo muri iki gihe (Transfers domain).',
+      'Kwemera kwimura ntabwo bishoboka kuri murongo muri iki gihe.',
     transferDestinationsLoading: 'Turimo gushaka ibigo...',
-    transferDestinationsEmpty: 'Nta kindi kigo kiboneka cyo kohereza.',
+    transferDestinationsEmpty: 'Nta kindi kigo kiboneka cyo kwimura.',
     transferDestinationsError: 'Ntibyashoboye gushaka urutonde rw’ibigo.',
     missingCenterId:
-      'Konti nta centerId ifite. Ongera ushyiremo ikigo cyangwa uhure n’ubuyobozi.',
+      'Konti yawe ntabwo ihujwe n’ikigo. Sohoka winjire ukundi, cyangwa uhure n’ubuyobozi.',
     syntheticAttendanceUnavailable:
-      'Urutonde rw’abana ku munsi ntabwo rwabonetse kuri API — ntabwo dukora amakuru y’ikigerageza.',
-    sectorFilterUnavailable: 'Akayunguruzo k’umurenge ntabwo gishoboka (nta makuru y’imirenge kuri API).',
-    enrollmentKpiLimited:
-      'Imibare y’iyandikwa ishingiye ku rutonde rwabonetse gusa (pagination).',
+      'Urutonde rw’abana ku munsi ntabwo rwabonetse. Ongera ugerageze.',
+    sectorFilterUnavailable: 'Akayunguruzo k’umurenge ntabwo gishoboka muri iki gihe.',
+    enrollmentKpiLimited: 'Imibare y’iyandikwa ishingiye ku rutonde rwabonetse gusa.',
   },
   sync: {
     online: 'Uri ku murongo',
     offline: 'Nta murongo',
     reconnecting: 'Turimo kongera guhuza…',
     syncing: 'Birimo guhuza…',
-    waitingToSync: 'Bitegereje koherezwa',
+    waitingToSync: 'Bitegereje guhuzwa',
     synced: 'Byahujwe na seriveri',
     failed: 'Guhuza byanze',
     conflict: 'Hari amakuru ahuriye',
@@ -127,11 +124,11 @@ export const common = {
     conflictCount: 'Impinduka {count} zikeneye kwitabwaho',
     couldntSync: 'Ntibyashoboye guhuza',
     signInRequired: 'Guhuza bisaba kwinjira',
-    devicePending: 'Guhuza bitegereje kwiyandikisha kw’igikoresho',
-    deviceBlocked: 'Guhuza byahagaritswe — ikibazo cy’igikoresho',
-    serverUnavailable: 'Guhuza byahagaritswe — seriveri ntiboneka',
+    devicePending: 'Tegereza gato…',
+    deviceBlocked: 'Ntibyashoboye guhuza. Ongera ugerageze.',
+    serverUnavailable: 'Ntibyashoboye guhuza. Ongera ugerageze.',
     pending: 'Impinduka {count} zitegereje',
-    pendingTitle: 'Impinduka zitegereje koherezwa',
+    pendingTitle: 'Impinduka zitegereje guhuzwa',
     lastSynced: 'Byahujwe {time}',
     lastSyncedNever: 'Ntabwo byarahujwe',
     tapToSync: 'Guhuza birimo gukora mu buryo bwikora',
@@ -159,7 +156,7 @@ export const common = {
     domainNutrition: 'Imikurire / Imirire',
     domainFeeding: 'Imirire y’ikigo',
     domainSted: 'STED',
-    domainReferral: 'Kohereza',
+    domainReferral: 'Ihererekanya',
     domainOther: 'Ibindi',
     storageFull:
       'Ububiko bw’iki gikoresho bwuzuye. Ntabwo byabitswe. Siba dosiye cyangwa uhure n’ubuyobozi.',
@@ -180,7 +177,7 @@ export const common = {
     failedCount: 'Impinduka {count} zananze',
     blockedCount: 'Impinduka {count} zitegereje izindi',
     blockedVillageCount: 'Impinduka {count} zitegereje amakuru y’umudugudu',
-    failedItem: '{label} — ntabwo byashoboye koherezwa',
+    failedItem: '{label} — ntabwo byashoboye guhuzwa',
     blockedItem: '{label} — itegereje indi mpinduka',
     blockedVillageItem: '{label} — amakuru y’umudugudu ntiboneka',
     blockedVillageHint:
@@ -200,7 +197,7 @@ export const messages = {
     'Ubwitabire bwabitswe kuri iki gikoresho. Buzahuza iyo murongo ugaruye.',
   childUpdated: 'Amakuru yahinduwe neza.',
   childTransferred: 'Umwana yoherejwe ku kindi kigo neza.',
-  childTransferAccepted: 'Koherezwa kwemerewe — umwana aba akora kuri iki kigo.',
+  childTransferAccepted: 'Kwimura kwemerewe — umwana aba akora kuri iki kigo.',
   childArchived: 'Umwana yashyizwe mu bubiko neza.',
   childReactivated: 'Umwana yasubijwe mu bana bakora neza.',
   formIncomplete: 'Hari amakuru atuzuye. Nyamuneka uzuza ibisabwa.',
@@ -214,11 +211,9 @@ export const messages = {
     'Sesiyo yawe ntiyuzuye. Sohoka winjire ukundi.',
   mutationNotFound: 'Ibyo ushaka ntibibonetse. Ongera ugerageze.',
   transferAcceptUnavailable:
-    'Kwemera koherezwa ntibirashoboka muri ubu buryo bwo gukora. Bitegereje guhuza na sisitemu.',
-  deviceRegistrationFailed:
-    'Kwiyandikisha kw\'igikoresho byanze. Kohereza amakuru kuri seriveri birashobora guhagarikwa.',
-  deviceRegistrationUnauthorized:
-    'Sesiyo yarangiye. Injira ukundi kugira ngo amakuru ahuze na seriveri.',
+    'Kwemera kwimura ntibirashoboka muri ubu buryo bwo gukora. Bitegereje guhuza na sisitemu.',
+  deviceRegistrationFailed: 'Hari ikibazo. Tegereza gato maze wongere ugerageze.',
+  deviceRegistrationUnauthorized: 'Sesiyo yarangiye. Injira ukundi.',
   loginFailed: 'Izina cyangwa ijambo banga sibyo.',
   confirmLogout: 'Urashaka gusohoka?',
   liveFeatureUnavailable: 'Iki gikorwa ntabwo gishoboka kuri murongo.',

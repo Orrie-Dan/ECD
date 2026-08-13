@@ -1270,7 +1270,12 @@ export function getHighPriorityAlerts(limit?: number) {
 }
 
 export function filterActionAlerts(category?: string) {
-  const operational = ACTION_ALERTS.filter((a) => a.type !== 'referral_required')
+  const operational = ACTION_ALERTS.filter(
+    (a) =>
+      a.type !== 'referral_required' &&
+      a.category !== 'enrollment' &&
+      a.category !== 'operational',
+  )
   if (!category || category === 'all') return operational
   return operational.filter((a) => a.category === category)
 }

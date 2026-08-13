@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
@@ -8,7 +9,16 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { env } from '@/config/env'
-import { useNcdaAuditLogsList } from '@/features/ncda/audit-logs/queries'
+import { useNcdaAuditLogsList, useNcdaUserNames } from '@/features/ncda/audit-logs/queries'
+import {
+  actionLabel,
+  collectUserIds,
+  entityDisplayName,
+  entityTypeLabel,
+  formatDateTime,
+  stashAuditLog,
+} from '@/features/ncda/audit-logs/format'
+import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 import type { PrismaAuditAction } from '@/api/generated/models'
@@ -23,15 +33,6 @@ function defaultFrom(): string {
 
 function defaultTo(): string {
   return new Date().toISOString().slice(0, 10)
-}
-
-function formatDate(iso: string | undefined): string {
-  if (!iso) return '—'
-  try {
-    return new Date(iso).toLocaleString()
-  } catch {
-    return iso.slice(0, 19)
-  }
 }
 
 /**
@@ -69,7 +70,6 @@ function NcdaAuditLogsLive() {
   const [userId, setUserId] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const filters = useMemo(
     () => ({
@@ -91,7 +91,12 @@ function NcdaAuditLogsLive() {
   const totalPages = list.data?.totalPages ?? 1
   const startIndex = total === 0 ? 0 : (page - 1) * pageSize + 1
   const endIndex = total === 0 ? 0 : Math.min(page * pageSize, total)
-  const selected = items.find((row) => row.id === selectedId) ?? null
+
+  const actorIds = useMemo(
+    () => items.flatMap((row) => collectUserIds(row)),
+    [items],
+  )
+  const { names, isLoading: namesLoading } = useNcdaUserNames(actorIds, items.length > 0)
 
   return (
     <PageContainer>
@@ -146,9 +151,9 @@ function NcdaAuditLogsLive() {
                 }}
               >
                 <option value="all">{ncda.auditLogs.actionAll}</option>
-                <option value="create">create</option>
-                <option value="update">update</option>
-                <option value="delete">delete</option>
+                <option value="create">{ncda.auditLogs.actions.create}</option>
+                <option value="update">{ncda.auditLogs.actions.update}</option>
+                <option value="delete">{ncda.auditLogs.actions.delete}</option>
               </SelectInput>
             </div>
             <div>
@@ -174,7 +179,6 @@ function NcdaAuditLogsLive() {
                   setEntityId(e.target.value)
                   setPage(1)
                 }}
-                placeholder="UUID"
               />
             </div>
             <div>
@@ -187,7 +191,6 @@ function NcdaAuditLogsLive() {
                   setUserId(e.target.value)
                   setPage(1)
                 }}
-                placeholder="UUID"
               />
             </div>
           </div>
@@ -212,7 +215,7 @@ function NcdaAuditLogsLive() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[44rem] text-left text-body">
+                <table className="w-full min-w-0 sm:min-w-[44rem] text-left text-body responsive-table-cards">
                   <thead>
                     <tr className="border-b border-border text-caption text-text-secondary">
                       <th className="py-2 pr-3 font-semibold">{ncda.auditLogs.colWhen}</th>
@@ -225,28 +228,45 @@ function NcdaAuditLogsLive() {
                   <tbody>
                     {items.map((row) => (
                       <tr key={row.id} className="border-b border-border/70">
-                        <td className="py-2.5 pr-3 text-text-secondary">
-                          {formatDate(row.changedAt)}
+                        <td
+                          className="py-2.5 pr-3 text-text-secondary"
+                          data-label={ncda.auditLogs.colWhen}
+                        >
+                          {formatDateTime(row.changedAt)}
                         </td>
-                        <td className="py-2.5 pr-3 font-medium text-text">{row.action}</td>
-                        <td className="py-2.5 pr-3 text-text-secondary">
-                          {row.entityType}
-                          <span className="block font-mono text-caption">
-                            {row.entityId.slice(0, 8)}…
+                        <td
+                          className="py-2.5 pr-3 font-medium text-text"
+                          data-label={ncda.auditLogs.colAction}
+                        >
+                          {actionLabel(row.action)}
+                        </td>
+                        <td
+                          className="py-2.5 pr-3 text-text-secondary"
+                          data-label={ncda.auditLogs.colEntity}
+                        >
+                          <span className="block font-medium text-text">{entityDisplayName(row)}</span>
+                          <span className="block text-caption">
+                            {entityTypeLabel(row.entityType)}
                           </span>
                         </td>
-                        <td className="py-2.5 pr-3 font-mono text-caption text-text-secondary">
-                          {row.changedById?.slice(0, 8) ?? '—'}
+                        <td
+                          className="py-2.5 pr-3 text-text"
+                          data-label={ncda.auditLogs.colActor}
+                        >
+                          {row.changedById
+                            ? (names.get(row.changedById) ??
+                              (namesLoading ? '…' : ncda.auditLogs.unknownActor))
+                            : ncda.auditLogs.unknownActor}
                         </td>
-                        <td className="py-2.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedId(row.id)}
+                        <td className="py-2.5 td-actions" data-label={ncda.auditLogs.colActionBtn}>
+                          <Link
+                            to={`${NCDA_PATHS.auditLogs}/${row.id}`}
+                            state={{ log: row }}
+                            onClick={() => stashAuditLog(row)}
+                            className="inline-flex items-center text-caption font-semibold text-primary hover:underline"
                           >
                             {ncda.auditLogs.viewDetail}
-                          </Button>
+                          </Link>
                         </td>
                       </tr>
                     ))}
@@ -272,59 +292,6 @@ function NcdaAuditLogsLive() {
             </>
           )}
         </Card>
-
-        {selected ? (
-          <Card padding="md" className="border-border mt-6 space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-subheading font-semibold text-text">
-                {ncda.auditLogs.detailTitle}
-              </h2>
-              <Button type="button" variant="secondary" size="sm" onClick={() => setSelectedId(null)}>
-                {ncda.auditLogs.closeDetail}
-              </Button>
-            </div>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-body">
-              <div>
-                <dt className="text-caption text-text-secondary">{ncda.auditLogs.colWhen}</dt>
-                <dd>{formatDate(selected.changedAt)}</dd>
-              </div>
-              <div>
-                <dt className="text-caption text-text-secondary">{ncda.auditLogs.colAction}</dt>
-                <dd>{selected.action}</dd>
-              </div>
-              <div>
-                <dt className="text-caption text-text-secondary">{ncda.auditLogs.entityType}</dt>
-                <dd>{selected.entityType}</dd>
-              </div>
-              <div>
-                <dt className="text-caption text-text-secondary">{ncda.auditLogs.entityId}</dt>
-                <dd className="font-mono text-caption break-all">{selected.entityId}</dd>
-              </div>
-              <div>
-                <dt className="text-caption text-text-secondary">{ncda.auditLogs.actorId}</dt>
-                <dd className="font-mono text-caption break-all">
-                  {selected.changedById ?? '—'}
-                </dd>
-              </div>
-            </dl>
-            <div>
-              <h3 className="text-caption font-semibold text-text-secondary mb-1">
-                {ncda.auditLogs.oldValues}
-              </h3>
-                              <pre className="overflow-x-auto rounded-md bg-surface border border-border p-3 text-caption">
-                {JSON.stringify(selected.oldValues ?? null, null, 2)}
-              </pre>
-            </div>
-            <div>
-              <h3 className="text-caption font-semibold text-text-secondary mb-1">
-                {ncda.auditLogs.newValues}
-              </h3>
-              <pre className="overflow-x-auto rounded-md bg-surface border border-border p-3 text-caption">
-                {JSON.stringify(selected.newValues ?? null, null, 2)}
-              </pre>
-            </div>
-          </Card>
-        ) : null}
       </PageContent>
     </PageContainer>
   )

@@ -40,6 +40,8 @@ export function GrowthTrendChart({
         },
       ]}
       height={height}
+      xAxisLabel={caretaker.growth.axisDate}
+      yAxisLabel={caretaker.growth.axisValue}
       emptyMessage={caretaker.growth.noMeasurements}
       emptyDescription={caretaker.growth.noMeasurementsDesc}
       ariaLabel={caretaker.growth.trendTitle}

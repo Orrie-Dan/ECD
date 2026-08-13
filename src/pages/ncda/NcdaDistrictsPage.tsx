@@ -204,7 +204,7 @@ function NcdaDistrictsLive() {
               ) : (
                 <>
                   <div className="mt-4 overflow-x-auto">
-                    <table className="w-full min-w-[36rem] text-left text-body">
+                    <table className="w-full min-w-0 sm:min-w-[36rem] text-left text-body responsive-table-cards">
                       <thead>
                         <tr className="border-b border-border text-caption text-text-secondary">
                           <th className="py-2 pr-3 font-semibold">{ncda.districts.colDistrict}</th>
@@ -217,17 +217,17 @@ function NcdaDistrictsLive() {
                       <tbody>
                         {items.map((row) => (
                           <tr key={row.id} className="border-b border-border/70">
-                            <td className="py-2.5 pr-3 font-medium text-text">{row.name}</td>
-                            <td className="py-2.5 pr-3 text-text-secondary">{row.code}</td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 font-medium text-text" data-label={ncda.districts.colDistrict}>{row.name}</td>
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.districts.colCode}>{row.code}</td>
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.districts.colStatus}>
                               {row.isActive
                                 ? ncda.districts.statusActive
                                 : ncda.districts.statusInactive}
                             </td>
-                            <td className="py-2.5 pr-3 text-text-secondary">
+                            <td className="py-2.5 pr-3 text-text-secondary" data-label={ncda.districts.colUpdated}>
                               {formatDate(row.updatedAt)}
                             </td>
-                            <td className="py-2.5">
+                            <td className="py-2.5 td-actions" data-label={ncda.districts.colAction}>
                               <Link
                                 to={`${NCDA_PATHS.districts}/${row.id}`}
                                 className="text-primary font-semibold hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"

@@ -48,7 +48,6 @@ export const DISTRICT_PATHS = {
   monitoringFeeding: '/district/imikorere/imirire',
   monitoringSted: '/district/imikorere/sted',
   followup: '/district/gukurikirana',
-  followupReferrals: '/district/referrals',
   reports: '/district/raporo',
   caregivers: '/district/abakoresha',
   settings: '/district/igenamiterere',

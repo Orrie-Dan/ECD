@@ -17,7 +17,12 @@ import {
 } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { EnhancedLineChart, ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
+import {
+  EnhancedLineChart,
+  ChartPeriodFilter,
+  formatCountTick,
+  type ChartPeriodFilterValue,
+} from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { toCenterEnrollmentChartData } from '@/lib/chart-data'
 import { filterByMonthLabel } from '@/lib/chart-period'
@@ -232,6 +237,9 @@ export function SchoolQuickPreview({ centerId, onClose }: SchoolQuickPreviewProp
             series={enrollmentSeries}
             xDataKey="label"
             height={200}
+            xAxisLabel={district.charts.axisDate}
+            yAxisLabel={district.charts.axisCount}
+            yTickFormatter={formatCountTick}
             ariaLabel={district.schools.recentRegistrations}
           />
         </Card>

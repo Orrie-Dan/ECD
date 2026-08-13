@@ -24,7 +24,12 @@ import { GisEmbed } from '@/components/district/GisEmbed'
 import { Button } from '@/components/ui/Button'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
-import { EnhancedLineChart, ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
+import {
+  EnhancedLineChart,
+  ChartPeriodFilter,
+  formatCountTick,
+  type ChartPeriodFilterValue,
+} from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { toAttendanceChartData, toCenterEnrollmentChartData } from '@/lib/chart-data'
 import { filterByMonthLabel } from '@/lib/chart-period'
@@ -194,7 +199,13 @@ export function CenterDetailPage() {
     return history
   }, [center, chartPeriod])
 
-  const attendanceChartData = useMemo(() => toAttendanceChartData(attendanceTrend), [attendanceTrend])
+  const attendanceChartData = useMemo(() => {
+    const enrolled = center?.children ?? 0
+    return toAttendanceChartData(attendanceTrend).map((row) => ({
+      ...row,
+      present: Math.round((Number(row.attendance) / 100) * enrolled),
+    }))
+  }, [attendanceTrend, center])
   const enrollmentChartData = useMemo(
     () => toCenterEnrollmentChartData(enrollmentHistory),
     [enrollmentHistory],
@@ -203,10 +214,9 @@ export function CenterDetailPage() {
   const attendanceSeries = useMemo(
     () => [
       {
-        dataKey: 'attendance',
-        label: district.charts.attendanceRate,
-        color: CHART_METRIC_COLORS.attendance,
-        valueFormatter: (v: number) => `${v}%`,
+        dataKey: 'present',
+        label: district.charts.present,
+        color: CHART_METRIC_COLORS.present,
       },
     ],
     [],
@@ -310,13 +320,6 @@ export function CenterDetailPage() {
                 label={district.attendanceMonitoring.absent}
                 value={live.attendanceAbsentToday ?? '—'}
                 icon={<UserMinus size={20} className="text-warning" />}
-                variant="warning"
-              />
-              <StatCard
-                compact
-                label={district.referrals.open}
-                value={live.pendingReferralsCount ?? '—'}
-                icon={<AlertTriangle size={20} className="text-warning" />}
                 variant="warning"
               />
             </div>
@@ -551,26 +554,27 @@ export function CenterDetailPage() {
               series={attendanceSeries}
               xDataKey="label"
               tooltipLabelKey="tooltipLabel"
-              yDomain={[0, 100]}
-              yTickFormatter={(v) => `${v}%`}
+              yTickFormatter={formatCountTick}
+              xAxisLabel={district.charts.axisDate}
+              yAxisLabel={district.charts.axisCount}
               height={280}
               ariaLabel={district.centerDetail.attendance30Days}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
               <MiniStat
-                label={district.centerDetail.attendanceAverage}
-                value={`${avgAttendance}%`}
+                label={district.charts.present}
+                value={String(Math.round((avgAttendance / 100) * center.children))}
                 icon={<TrendingUp size={16} className="text-success" />}
               />
               <MiniStat
                 label={district.centerDetail.bestDay}
-                value={`${best.rate}% • ${/^\d{4}-\d{2}-\d{2}$/.test(best.date) ? formatDate(best.date) : best.date}`}
+                value={`${Math.round((best.rate / 100) * center.children)} • ${/^\d{4}-\d{2}-\d{2}$/.test(best.date) ? formatDate(best.date) : best.date}`}
                 icon={<CheckCircle2 size={16} className="text-success" />}
               />
               <MiniStat
                 label={district.centerDetail.worstDay}
-                value={`${worst.rate}% • ${/^\d{4}-\d{2}-\d{2}$/.test(worst.date) ? formatDate(worst.date) : worst.date}`}
+                value={`${Math.round((worst.rate / 100) * center.children)} • ${/^\d{4}-\d{2}-\d{2}$/.test(worst.date) ? formatDate(worst.date) : worst.date}`}
                 icon={<AlertTriangle size={16} className="text-warning" />}
               />
             </div>
@@ -587,6 +591,9 @@ export function CenterDetailPage() {
               series={enrollmentSeries}
               xDataKey="label"
               height={280}
+              xAxisLabel={district.charts.axisDate}
+              yAxisLabel={district.charts.axisCount}
+              yTickFormatter={formatCountTick}
               ariaLabel={district.centerDetail.enrollmentCombined}
             />
           </Card>

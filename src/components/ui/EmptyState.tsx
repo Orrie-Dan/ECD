@@ -50,7 +50,7 @@ export function DataTable<T>({ columns, data, keyExtractor, emptyMessage = commo
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border shadow-card bg-surface">
-      <table className="w-full text-left">
+      <table className="w-full text-left responsive-table-cards">
         <thead>
           <tr className="bg-background-subtle border-b border-border">
             {columns.map((col) => (
@@ -71,7 +71,11 @@ export function DataTable<T>({ columns, data, keyExtractor, emptyMessage = commo
               className="border-b border-border last:border-b-0 hover:bg-background-subtle/60 transition-colors"
             >
               {columns.map((col) => (
-                <td key={col.key} className={`px-5 py-4 text-body ${col.className ?? ''}`}>
+                <td
+                  key={col.key}
+                  data-label={col.header}
+                  className={`px-5 py-4 text-body min-w-0 ${col.className ?? ''}`}
+                >
                   {col.render(row)}
                 </td>
               ))}

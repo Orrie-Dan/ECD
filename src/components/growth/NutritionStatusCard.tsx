@@ -1,6 +1,4 @@
-import { AlertTriangle } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { GrowthStatusBadge } from '@/components/growth/GrowthStatusBadge'
 import { caretaker } from '@/locales/rw/caretaker'
 import { formatDate } from '@/lib/mock-data'
@@ -47,12 +45,6 @@ export function NutritionStatusCard({
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <GrowthStatusBadge status={assessment.status} size="md" />
-            {assessment.requiresReferral && (
-              <Badge variant="danger" className="gap-1.5">
-                <AlertTriangle size={14} aria-hidden />
-                {caretaker.growth.requiresReferral}
-              </Badge>
-            )}
           </div>
           <dl className="grid grid-cols-2 gap-3">
             <div>

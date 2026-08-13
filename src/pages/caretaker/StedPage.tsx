@@ -39,7 +39,7 @@ import type { Child, StedAssessment } from '@/types'
 
 export function StedPage() {
   const { user } = useAuth()
-  const { children, stedAssessments, referrals } = useData()
+  const { children, stedAssessments } = useData()
   const navigate = useNavigate()
 
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -97,15 +97,6 @@ export function StedPage() {
 
   const hasActiveConfig = hasActiveStedFilters(filters, listFilter)
 
-  const referralForViewing = useMemo(() => {
-    if (!viewing) return null
-    return (
-      referrals.find(
-        (r) => r.sourceType === 'sted' && r.assessmentId === viewing.assessment.id,
-      ) ?? null
-    )
-  }, [referrals, viewing])
-
   const getChildMeta = useMemo(() => {
     return (child: Child): ChildPickerMeta => {
       const latest = getLatestStedAssessment(stedAssessments, child.id)
@@ -120,7 +111,6 @@ export function StedPage() {
   const viewOptions: ListViewOption[] = [
     { value: 'all', label: caretaker.sted.filterAll },
     { value: 'due', label: caretaker.sted.dueFollowUpCount },
-    { value: 'referred', label: caretaker.sted.referredCount },
     { value: 'assessed', label: caretaker.sted.assessed },
   ]
 
@@ -245,7 +235,6 @@ export function StedPage() {
                         ageBand={assessment?.ageBand ?? getStedAgeBand(child.dateOfBirth) ?? undefined}
                         lastAssessmentDate={assessment?.assessmentDate}
                         followUpDueDate={assessment?.outcome.followUpDueDate}
-                        referred={assessment?.outcome.referred}
                         outcomeNormal={assessment?.outcome.normal}
                         viewOnly={listFilter === 'assessed' && !dueIds.has(child.id)}
                         onAssess={() => startAssessment(child.id)}
@@ -297,7 +286,6 @@ export function StedPage() {
             open={!!viewing}
             child={viewing?.child ?? null}
             assessment={viewing?.assessment ?? null}
-            referral={referralForViewing}
             onClose={() => setViewing(null)}
           />
 

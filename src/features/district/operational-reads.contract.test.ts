@@ -146,16 +146,6 @@ describe('Sprint 5.2 District operational read contracts', () => {
   })
 
   describe('Referrals', () => {
-    it('LIVE page wires operational GET /referrals (not LiveUnavailable placeholder only)', () => {
-      const filePath = path.resolve(__dirname, '../../pages/district/ReferralMonitoringPage.tsx')
-      const content = fs.readFileSync(filePath, 'utf8')
-      expect(content).toContain('useDistrictReferralList')
-      expect(content).toContain('function ReferralMonitoringPageMock()')
-      expect(content).toContain(
-        'children={[] as Child[]}',
-      )
-    })
-
     it('fetchReferralList forwards status, sourceType, pagination', async () => {
       vi.mocked(referralsControllerFindAll).mockResolvedValue({
         items: [],

@@ -5,11 +5,12 @@ import { normalizeRole, UnknownUserRoleError } from '@/api/roles'
 import { isUnsafeProductionApiBaseUrl } from '@/config/env'
 
 describe('Sprint 5.4 District production readiness', () => {
-  it('ReferralMonitoringPage is registered in App routes', () => {
+  it('retired referral routes redirect into Gukurikirana', () => {
     const content = fs.readFileSync(path.resolve(__dirname, '../../App.tsx'), 'utf8')
-    expect(content).toContain('ReferralMonitoringPage')
+    expect(content).not.toContain('ReferralMonitoringPage')
     expect(content).toContain('path="/district/referrals"')
-    expect(content).toContain('path="/district/gukurikirana/kohereza"')
+    expect(content).toContain('path="/district/gukurikirana/ivuriro"')
+    expect(content).toContain('to={DISTRICT_PATHS.followup}')
   })
 
   it('District navigation groups monitoring domains under Imikorere', () => {
@@ -22,7 +23,7 @@ describe('Sprint 5.4 District production readiness', () => {
     expect(content).toContain("monitoringGrowth: '/district/imikorere/imikurire'")
     expect(content).toContain("monitoringFeeding: '/district/imikorere/imirire'")
     expect(content).toContain("monitoringSted: '/district/imikorere/sted'")
-    expect(content).toContain("followupReferrals: '/district/referrals'")
+    expect(content).not.toContain('followupReferrals')
   })
 
   it('App mounts an error boundary', () => {

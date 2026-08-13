@@ -22,9 +22,9 @@ import { usePagination } from '@/hooks/usePagination'
 import { caretaker } from '@/locales/rw/caretaker'
 import { formatDate } from '@/lib/mock-data'
 import { applySharedChildFilters, isRosterSearchActive } from '@/lib/child-filters'
-import type { Child, Referral, StedAssessment } from '@/types'
+import type { Child, StedAssessment } from '@/types'
 
-type HistoryFilter = 'all' | 'referred' | 'normal'
+type HistoryFilter = 'all' | 'normal'
 
 function outcomeLabel(assessment: StedAssessment): string {
   if (assessment.outcome.referred) return caretaker.sted.outcomeReferred
@@ -41,30 +41,15 @@ function outcomeBadgeVariant(
   return 'neutral'
 }
 
-function referralBadgeVariant(referral?: Referral): 'success' | 'warning' | 'neutral' {
-  if (!referral) return 'neutral'
-  if (referral.status === 'pending') return 'warning'
-  if (referral.status === 'completed') return 'success'
-  return 'neutral'
-}
-
-function referralStatusLabel(referral?: Referral): string {
-  if (!referral) return caretaker.sted.referralNone
-  if (referral.status === 'pending') return caretaker.referral.pending
-  if (referral.status === 'completed') return caretaker.referral.completed
-  return caretaker.referral.cancelled
-}
-
 export function StedHistoryPage() {
   const { user } = useAuth()
-  const { children, stedAssessments, referrals } = useData()
+  const { children, stedAssessments } = useData()
   const [listFilter, setListFilter] = useState<HistoryFilter>('all')
   const [filters, setFilters] = useState<RosterSearchFilters>(DEFAULT_ROSTER_SEARCH)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [viewing, setViewing] = useState<{
     child: Child
     assessment: StedAssessment
-    referral?: Referral
   } | null>(null)
 
   const centerChildren = useMemo(
@@ -77,18 +62,6 @@ export function StedHistoryPage() {
     [children, user?.centerId],
   )
 
-  const referralByAssessment = useMemo(() => {
-    const map = new Map<string, Referral>()
-    for (const referral of referrals) {
-      if (referral.sourceType !== 'sted') continue
-      const existing = map.get(referral.assessmentId)
-      if (!existing || referral.date >= existing.date) {
-        map.set(referral.assessmentId, referral)
-      }
-    }
-    return map
-  }, [referrals])
-
   const matchingChildIds = useMemo(
     () => new Set(applySharedChildFilters(centerChildren, filters).map((c) => c.id)),
     [centerChildren, filters],
@@ -100,11 +73,9 @@ export function StedHistoryPage() {
       .map((assessment) => ({
         assessment,
         child: children.find((c) => c.id === assessment.childId),
-        referral: referralByAssessment.get(assessment.id),
       }))
       .filter(({ assessment, child }) => {
         if (!matchingChildIds.has(assessment.childId)) return false
-        if (listFilter === 'referred' && !assessment.outcome.referred) return false
         if (listFilter === 'normal' && !assessment.outcome.normal) return false
         if (filters.childName.trim() && !child) return false
         return true
@@ -130,7 +101,6 @@ export function StedHistoryPage() {
     children,
     user?.centerId,
     listFilter,
-    referralByAssessment,
     matchingChildIds,
     filters.childName,
     filters.sort,
@@ -144,7 +114,6 @@ export function StedHistoryPage() {
 
   const viewOptions: ListViewOption[] = [
     { value: 'all', label: caretaker.sted.filterAll },
-    { value: 'referred', label: caretaker.sted.filterReferred },
     { value: 'normal', label: caretaker.sted.filterNormal },
   ]
 
@@ -231,9 +200,6 @@ export function StedHistoryPage() {
                           {caretaker.sted.stepOutcome}
                         </th>
                         <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
-                          {caretaker.sted.referralStatus}
-                        </th>
-                        <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
                           {caretaker.sted.nextFollowUp}
                         </th>
                         <th className="text-caption font-semibold text-text-muted pb-3">
@@ -242,18 +208,13 @@ export function StedHistoryPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pagination.items.map(({ assessment, child, referral }, index) => {
+                      {pagination.items.map(({ assessment, child }, index) => {
                         const isLatest = index === 0 && pagination.page === 1
-                        const referred = assessment.outcome.referred
                         return (
                           <tr
                             key={assessment.id}
                             className={`border-b border-border last:border-0 transition-colors hover:bg-background-subtle/60 ${
-                              isLatest
-                                ? 'bg-primary-light/30'
-                                : referred
-                                  ? 'bg-warning-light/15'
-                                  : ''
+                              isLatest ? 'bg-primary-light/30' : ''
                             }`}
                           >
                             <td
@@ -288,11 +249,6 @@ export function StedHistoryPage() {
                                 {outcomeLabel(assessment)}
                               </Badge>
                             </td>
-                            <td className="py-3 pr-4" data-label={caretaker.sted.referralStatus}>
-                              <Badge variant={referralBadgeVariant(referral)} size="sm">
-                                {referralStatusLabel(referral)}
-                              </Badge>
-                            </td>
                             <td
                               className="py-3 pr-4 text-body text-text-secondary"
                               data-label={caretaker.sted.nextFollowUp}
@@ -309,7 +265,7 @@ export function StedHistoryPage() {
                                 disabled={!child}
                                 onClick={() => {
                                   if (!child) return
-                                  setViewing({ child, assessment, referral })
+                                  setViewing({ child, assessment })
                                 }}
                                 aria-label={`${caretaker.sted.viewAssessment}: ${child?.fullName ?? assessment.childId}`}
                               >
@@ -343,7 +299,6 @@ export function StedHistoryPage() {
             open={!!viewing}
             child={viewing?.child ?? null}
             assessment={viewing?.assessment ?? null}
-            referral={viewing?.referral ?? null}
             onClose={() => setViewing(null)}
           />
 

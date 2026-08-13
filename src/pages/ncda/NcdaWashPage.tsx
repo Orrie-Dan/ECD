@@ -207,7 +207,7 @@ function NcdaWashLive() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[44rem] text-left text-body">
+                <table className="w-full min-w-0 sm:min-w-[44rem] text-left text-body responsive-table-cards">
                   <thead>
                     <tr className="border-b border-border text-caption text-text-secondary">
                       <th className="py-2 pr-3 font-semibold">{ncda.wash.colDate}</th>
@@ -222,13 +222,13 @@ function NcdaWashLive() {
                   <tbody>
                     {items.map((row) => (
                       <tr key={row.id} className="border-b border-border/70">
-                        <td className="py-2.5 pr-3">{formatDate(row.recordedDate)}</td>
-                        <td className="py-2.5 pr-3">{row.centerName ?? row.centerId}</td>
-                        <td className="py-2.5 pr-3">{yn(row.waterSourceAvailable)}</td>
-                        <td className="py-2.5 pr-3">{yn(row.sanitationFacilityAvailable)}</td>
-                        <td className="py-2.5 pr-3">{yn(row.handwashingFacilityAvailable)}</td>
-                        <td className="py-2.5 pr-3">{yn(row.wasteManagementAvailable)}</td>
-                        <td className="py-2.5">
+                        <td className="py-2.5 pr-3" data-label={ncda.wash.colDate}>{formatDate(row.recordedDate)}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.wash.colCenter}>{row.centerName ?? row.centerId}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.wash.colWater}>{yn(row.waterSourceAvailable)}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.wash.colSanitation}>{yn(row.sanitationFacilityAvailable)}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.wash.colHandwashing}>{yn(row.handwashingFacilityAvailable)}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.wash.colWaste}>{yn(row.wasteManagementAvailable)}</td>
+                        <td className="py-2.5 td-actions" data-label={ncda.wash.colAction}>
                           <Button
                             type="button"
                             variant="secondary"

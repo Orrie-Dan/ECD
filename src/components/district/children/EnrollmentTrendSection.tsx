@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Card } from '@/components/ui/Card'
-import { EnhancedLineChart } from '@/components/charts'
+import { EnhancedLineChart, formatCountTick } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { toEnrollmentChartData } from '@/lib/chart-data'
 import { district } from '@/locales/rw/district'
@@ -45,6 +45,9 @@ export function EnrollmentTrendSection({ data, periodLabel }: EnrollmentTrendSec
         series={series}
         xDataKey="label"
         height={280}
+        xAxisLabel={district.charts.axisDate}
+        yAxisLabel={district.charts.axisCount}
+        yTickFormatter={formatCountTick}
         ariaLabel={district.children.enrollmentTrend}
       />
     </Card>

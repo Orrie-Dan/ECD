@@ -217,17 +217,11 @@ export function DistrictLayout() {
   }))
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-dvh bg-background flex">
       <aside className="hidden lg:flex flex-col w-64 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
         <SidebarBrand districtName={districtName} />
         <DistrictSidebarNav pathname={location.pathname} />
         {renderSidebarFooter(false)}
-      </aside>
-
-      <aside className="hidden md:flex lg:hidden flex-col w-16 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
-        <SidebarBrand collapsed districtName={districtName} />
-        <DistrictSidebarNav pathname={location.pathname} collapsed />
-        {renderSidebarFooter(true)}
       </aside>
 
       <NavDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} title={common.appName}>
@@ -252,8 +246,8 @@ export function DistrictLayout() {
         </button>
       </NavDrawer>
 
-      <div className="flex-1 flex flex-col min-w-0 md:ml-16 lg:ml-64">
-        <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+        <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm safe-area-top">
           <div className="px-3 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <button
@@ -265,7 +259,7 @@ export function DistrictLayout() {
               >
                 <Menu size={22} aria-hidden="true" />
               </button>
-              <div className="flex items-center gap-3 min-w-0 md:hidden">
+              <div className="flex items-center gap-3 min-w-0 lg:hidden">
                 <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-border overflow-hidden shrink-0">
                   <img
                     src={ncdaLogo}

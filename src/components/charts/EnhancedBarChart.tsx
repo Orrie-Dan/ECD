@@ -29,9 +29,12 @@ export interface EnhancedBarChartProps {
   emptyDescription?: string
   yTickFormatter?: (value: number) => string
   xTickFormatter?: (value: string | number) => string
+  xAxisLabel?: string
+  yAxisLabel?: string
   className?: string
   ariaLabel?: string
   color?: string
+  tone?: 'muted' | 'white'
 }
 
 function EnhancedBarChartComponent({
@@ -46,10 +49,14 @@ function EnhancedBarChartComponent({
   emptyDescription = district.charts.emptyDesc,
   yTickFormatter,
   xTickFormatter,
+  xAxisLabel,
+  yAxisLabel,
   className = '',
   ariaLabel,
   color = CHART_METRIC_COLORS.schools,
+  tone = 'muted',
 }: EnhancedBarChartProps) {
+  const wellClass = tone === 'white' ? 'bg-white' : 'bg-background-subtle/30'
   const isVertical = layout === 'vertical'
   const keys = series?.map((s) => s.dataKey) ?? [dataKey]
   const hasData =
@@ -66,7 +73,7 @@ function EnhancedBarChartComponent({
   if (!hasData) {
     return (
       <div
-        className={`rounded-xl border border-border bg-background-subtle/30 ${className}`}
+        className={`rounded-xl border border-border ${wellClass} ${className}`}
         style={{ minHeight: height }}
       >
         <EmptyState
@@ -77,6 +84,12 @@ function EnhancedBarChartComponent({
       </div>
     )
   }
+
+  const axisLabelStyle = {
+    fontSize: 11,
+    fill: 'rgb(71 85 105)',
+    fontWeight: 600,
+  } as const
 
   const categoryAxis = (
     <XAxis
@@ -92,6 +105,16 @@ function EnhancedBarChartComponent({
       tickLine={false}
       axisLine={{ stroke: 'rgb(226 230 235)' }}
       minTickGap={8}
+      label={
+        xAxisLabel
+          ? {
+              value: xAxisLabel,
+              position: 'insideBottom',
+              offset: -12,
+              style: axisLabelStyle,
+            }
+          : undefined
+      }
     />
   )
 
@@ -101,19 +124,30 @@ function EnhancedBarChartComponent({
         ? {
             type: 'category' as const,
             dataKey: nameKey,
-            width: 88,
+            width: yAxisLabel ? 96 : 88,
             tickFormatter: xTickFormatter,
           }
-        : { type: 'number' as const, tickFormatter: yTickFormatter, width: 40 })}
+        : { type: 'number' as const, tickFormatter: yTickFormatter, width: yAxisLabel ? 58 : 40 })}
       tick={{ fontSize: 11, fill: 'rgb(100 116 139)' }}
       tickLine={false}
       axisLine={false}
+      label={
+        yAxisLabel
+          ? {
+              value: yAxisLabel,
+              angle: -90,
+              position: 'insideLeft',
+              offset: 8,
+              style: { ...axisLabelStyle, textAnchor: 'middle' },
+            }
+          : undefined
+      }
     />
   )
 
   return (
     <div
-      className={`w-full min-w-0 rounded-xl border border-border bg-background-subtle/30 p-2 sm:p-3 ${className}`}
+      className={`w-full min-w-0 rounded-xl border border-border ${wellClass} p-2 sm:p-3 ${className}`}
       role="img"
       aria-label={ariaLabel}
     >
@@ -121,7 +155,12 @@ function EnhancedBarChartComponent({
         <BarChart
           data={data}
           layout={isVertical ? 'vertical' : 'horizontal'}
-          margin={{ top: 8, right: 12, left: isVertical ? 4 : 0, bottom: 4 }}
+          margin={{
+            top: 8,
+            right: 12,
+            left: isVertical ? 4 : yAxisLabel ? 8 : 0,
+            bottom: xAxisLabel ? 18 : 4,
+          }}
         >
           {showGrid && (
             <CartesianGrid

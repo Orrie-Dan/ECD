@@ -5,7 +5,6 @@ import {
   Baby,
   Building2,
   Ruler,
-  Share2,
   UserCheck,
   Utensils,
 } from 'lucide-react'
@@ -27,7 +26,6 @@ import {
   useNcdaCenterDetail,
   useNcdaCenterFeeding,
   useNcdaCenterNutrition,
-  useNcdaCenterReferrals,
   useNcdaCenterSummary,
 } from '@/features/ncda/centers/queries'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
@@ -42,7 +40,6 @@ type OpsSection =
   | 'attendance'
   | 'nutrition'
   | 'feeding'
-  | 'referrals'
   | 'sted'
   | 'compliance'
   | 'wash'
@@ -130,12 +127,6 @@ function NcdaCenterDetailLive() {
     OPS_PAGE_SIZE,
     section === 'feeding' && Boolean(centerId),
   )
-  const referralsQ = useNcdaCenterReferrals(
-    centerId,
-    opsPage,
-    OPS_PAGE_SIZE,
-    section === 'referrals' && Boolean(centerId),
-  )
 
   const backLink = (
     <div className="flex flex-wrap items-center gap-3">
@@ -191,7 +182,6 @@ function NcdaCenterDetailLive() {
     { id: 'attendance', label: ncda.centers.sectionAttendance },
     { id: 'nutrition', label: ncda.centers.sectionNutrition },
     { id: 'feeding', label: ncda.centers.sectionFeeding },
-    { id: 'referrals', label: ncda.centers.sectionReferrals },
     { id: 'sted', label: ncda.centers.sectionSted },
     { id: 'compliance', label: ncda.centers.sectionCompliance },
     { id: 'wash', label: ncda.centers.sectionWash },
@@ -341,13 +331,6 @@ function NcdaCenterDetailLive() {
                     value={overview?.feeding.daysRecorded ?? '—'}
                     icon={<Utensils size={18} />}
                   />
-                  <StatCard
-                    label={ncda.centers.referralsPending}
-                    value={
-                      overview?.referrals.pending ?? detail.data?.pendingReferralsCount ?? '—'
-                    }
-                    icon={<Share2 size={18} />}
-                  />
                 </div>
               </NcdaDashboardSection>
             </>
@@ -451,29 +434,6 @@ function NcdaCenterDetailLive() {
             />
           ) : null}
 
-          {section === 'referrals' ? (
-            <OpsTableSection
-              title={ncda.centers.sectionReferrals}
-              query={referralsQ}
-              page={opsPage}
-              onPageChange={setOpsPage}
-              empty={ncda.centers.opsEmpty}
-              error={ncda.centers.opsError}
-              columns={[
-                ncda.centers.opsColDate,
-                ncda.centers.opsColStatus,
-                ncda.centers.opsColMeta,
-              ]}
-              rows={(referralsQ.data?.items ?? []).map((row) => [
-                row.date?.slice(0, 10) ?? '—',
-                row.status,
-                row.sourceType ?? '—',
-              ])}
-              total={referralsQ.data?.total ?? 0}
-              totalPages={referralsQ.data?.totalPages ?? 1}
-            />
-          ) : null}
-
           {section === 'sted' || section === 'compliance' || section === 'wash' ? (
             <Card padding="md" className="border-border">
               <h2 className="text-subheading font-semibold text-text mb-2">
@@ -547,7 +507,7 @@ function OpsTableSection({
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[28rem] text-left text-body">
+              <table className="w-full min-w-0 sm:min-w-[28rem] text-left text-body responsive-table-cards">
                 <thead>
                   <tr className="border-b border-border text-caption text-text-secondary">
                     {columns.map((col) => (
@@ -563,6 +523,7 @@ function OpsTableSection({
                       {row.map((cell, cIdx) => (
                         <td
                           key={cIdx}
+                          data-label={columns[cIdx]}
                           className={`py-2.5 pr-3 ${cIdx === 0 ? 'font-medium text-text' : 'text-text-secondary'}`}
                         >
                           {cell}

@@ -1,13 +1,9 @@
 import { useMemo } from 'react'
 import { Card } from '@/components/ui/Card'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { EnhancedLineChart } from '@/components/charts'
+import { EnhancedLineChart, formatCountTick } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
-import {
-  toEnrollmentChartData,
-  toSingleSeriesChartData,
-  toDistrictAttendanceChartData,
-} from '@/lib/chart-data'
+import { toEnrollmentChartData, toSingleSeriesChartData } from '@/lib/chart-data'
 import { formatDashboardChartTitle, type EffectiveDateRange } from '@/lib/chart-period'
 import {
   getDistrictAttendanceTrendForRange,
@@ -16,7 +12,10 @@ import {
   getDistrictTeachersTrendForRange,
   hasDashboardDataForRange,
 } from '@/lib/dashboard-period-data'
+import { DISTRICT_STATS } from '@/lib/mock-data'
 import { env } from '@/config/env'
+import { effectiveRangeToMonitoringDates, useMonitoringAttendance } from '@/features/monitoring'
+import { useEnrollmentReport } from '@/features/reporting/queries'
 import { district } from '@/locales/rw/district'
 
 interface DashboardTrendChartsProps {
@@ -24,38 +23,64 @@ interface DashboardTrendChartsProps {
   effectiveRange: EffectiveDateRange
 }
 
-export function DashboardTrendCharts({ compact = false, effectiveRange }: DashboardTrendChartsProps) {
-  if (env.isLive) {
-    return (
-      <LiveUnavailableState
-        compact={compact}
-        title={district.charts.enrollmentTrendTitle}
-        description={district.charts.emptyPeriodDesc}
-      />
-    )
-  }
+function formatChartDate(iso: string): string {
+  if (!iso || iso.length < 10) return iso
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+}
 
-  const hasData = hasDashboardDataForRange(effectiveRange)
+export function DashboardTrendCharts({ compact = false, effectiveRange }: DashboardTrendChartsProps) {
+  const dateFilters = useMemo(() => effectiveRangeToMonitoringDates(effectiveRange), [effectiveRange])
+  const attendanceQ = useMonitoringAttendance({ ...dateFilters, page: 1, pageSize: 1 }, env.isLive)
+  const enrollmentQ = useEnrollmentReport(dateFilters, env.isLive)
+
+  const hasMockData = !env.isLive && hasDashboardDataForRange(effectiveRange)
+
+  const liveEnrollment = useMemo(
+    () =>
+      (enrollmentQ.data?.trend ?? []).map((point) => ({
+        label: formatChartDate(point.date),
+        newRegistrations: point.newRegistrations,
+        dropouts: 0,
+      })),
+    [enrollmentQ.data?.trend],
+  )
+
+  const liveAttendance = useMemo(
+    () =>
+      (attendanceQ.data?.trend ?? []).map((point) => ({
+        date: formatChartDate(point.date),
+        present: point.present,
+        absent: point.absent,
+      })),
+    [attendanceQ.data?.trend],
+  )
 
   const enrollmentData = useMemo(() => {
-    if (!hasData) return []
+    if (!hasMockData) return []
     return toEnrollmentChartData(getDistrictEnrollmentTrendForRange(effectiveRange))
-  }, [effectiveRange, hasData])
+  }, [effectiveRange, hasMockData])
 
   const attendanceData = useMemo(() => {
-    if (!hasData) return []
-    return toDistrictAttendanceChartData(getDistrictAttendanceTrendForRange(effectiveRange))
-  }, [effectiveRange, hasData])
+    if (!hasMockData) return []
+    return getDistrictAttendanceTrendForRange(effectiveRange).map((point) => ({
+      label: point.label,
+      present: Math.round((point.rate / 100) * DISTRICT_STATS.totalChildren),
+      absent: Math.max(
+        0,
+        DISTRICT_STATS.totalChildren - Math.round((point.rate / 100) * DISTRICT_STATS.totalChildren),
+      ),
+    }))
+  }, [effectiveRange, hasMockData])
 
   const schoolsData = useMemo(() => {
-    if (!hasData) return []
+    if (!hasMockData) return []
     return toSingleSeriesChartData(getDistrictSchoolsTrendForRange(effectiveRange))
-  }, [effectiveRange, hasData])
+  }, [effectiveRange, hasMockData])
 
   const teachersData = useMemo(() => {
-    if (!hasData) return []
+    if (!hasMockData) return []
     return toSingleSeriesChartData(getDistrictTeachersTrendForRange(effectiveRange))
-  }, [effectiveRange, hasData])
+  }, [effectiveRange, hasMockData])
 
   const enrollmentTitle = formatDashboardChartTitle(
     district.charts.enrollmentTrendTitle,
@@ -67,7 +92,6 @@ export function DashboardTrendCharts({ compact = false, effectiveRange }: Dashbo
   )
   const schoolsTitle = formatDashboardChartTitle(district.charts.schoolsTrendTitle, effectiveRange)
   const teachersTitle = formatDashboardChartTitle(district.charts.teachersTrendTitle, effectiveRange)
-
   const emptyMessage = district.charts.emptyPeriodTitle
   const emptyDescription = district.charts.emptyPeriodDesc
 
@@ -90,10 +114,14 @@ export function DashboardTrendCharts({ compact = false, effectiveRange }: Dashbo
   const attendanceSeries = useMemo(
     () => [
       {
-        dataKey: 'attendance',
-        label: district.charts.attendanceRate,
-        color: CHART_METRIC_COLORS.attendance,
-        valueFormatter: (v: number) => `${v}%`,
+        dataKey: 'present',
+        label: district.charts.present,
+        color: CHART_METRIC_COLORS.present,
+      },
+      {
+        dataKey: 'absent',
+        label: district.charts.absent,
+        color: CHART_METRIC_COLORS.absent,
       },
     ],
     [],
@@ -121,6 +149,16 @@ export function DashboardTrendCharts({ compact = false, effectiveRange }: Dashbo
     [],
   )
 
+  if (env.isLive && attendanceQ.isError && enrollmentQ.isError) {
+    return (
+      <LiveUnavailableState
+        compact={compact}
+        title={district.charts.dashboardTrendsTitle}
+        description={district.charts.emptyPeriodDesc}
+      />
+    )
+  }
+
   return (
     <Card padding={compact ? 'md' : 'lg'} className="mb-3">
       <div className={`flex flex-col gap-1 ${compact ? 'mb-3' : 'mb-5'}`}>
@@ -133,62 +171,79 @@ export function DashboardTrendCharts({ compact = false, effectiveRange }: Dashbo
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div>
+        <div className="min-w-0">
           <h4 className="text-body font-semibold text-text mb-2">{enrollmentTitle}</h4>
           <EnhancedLineChart
-            data={enrollmentData}
-            series={enrollmentSeries}
+            data={env.isLive ? liveEnrollment : enrollmentData}
+            series={
+              env.isLive
+                ? enrollmentSeries.filter((s) => s.dataKey === 'newRegistrations')
+                : enrollmentSeries
+            }
             xDataKey="label"
             height={compact ? 220 : 260}
+            xAxisLabel={district.charts.axisDate}
+            yAxisLabel={district.charts.axisCount}
+            yTickFormatter={formatCountTick}
             ariaLabel={enrollmentTitle}
             emptyMessage={emptyMessage}
             emptyDescription={emptyDescription}
           />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <h4 className="text-body font-semibold text-text mb-2">{attendanceTitle}</h4>
           <EnhancedLineChart
-            data={attendanceData}
+            data={env.isLive ? liveAttendance : attendanceData}
             series={attendanceSeries}
-            xDataKey="label"
-            tooltipLabelKey="tooltipLabel"
-            yDomain={[0, 100]}
-            yTickFormatter={(v) => `${v}%`}
+            xDataKey={env.isLive ? 'date' : 'label'}
             height={compact ? 220 : 260}
+            xAxisLabel={district.charts.axisDate}
+            yAxisLabel={district.charts.axisCount}
+            yTickFormatter={formatCountTick}
             ariaLabel={attendanceTitle}
             emptyMessage={emptyMessage}
             emptyDescription={emptyDescription}
           />
         </div>
 
-        <div>
-          <h4 className="text-body font-semibold text-text mb-2">{schoolsTitle}</h4>
-          <EnhancedLineChart
-            data={schoolsData}
-            series={schoolsSeries}
-            xDataKey="label"
-            height={compact ? 200 : 240}
-            showLegend={false}
-            ariaLabel={schoolsTitle}
-            emptyMessage={emptyMessage}
-            emptyDescription={emptyDescription}
-          />
-        </div>
+        {env.isLive ? null : (
+          <>
+            <div className="min-w-0">
+              <h4 className="text-body font-semibold text-text mb-2">{schoolsTitle}</h4>
+              <EnhancedLineChart
+                data={schoolsData}
+                series={schoolsSeries}
+                xDataKey="label"
+                height={compact ? 200 : 240}
+                showLegend={false}
+                xAxisLabel={district.charts.axisDate}
+                yAxisLabel={district.charts.axisCount}
+                yTickFormatter={formatCountTick}
+                ariaLabel={schoolsTitle}
+                emptyMessage={emptyMessage}
+                emptyDescription={emptyDescription}
+              />
+            </div>
 
-        <div>
-          <h4 className="text-body font-semibold text-text mb-2">{teachersTitle}</h4>
-          <EnhancedLineChart
-            data={teachersData}
-            series={teachersSeries}
-            xDataKey="label"
-            height={compact ? 200 : 240}
-            showLegend={false}
-            ariaLabel={teachersTitle}
-            emptyMessage={emptyMessage}
-            emptyDescription={emptyDescription}
-          />
-        </div>
+            <div className="min-w-0">
+              <h4 className="text-body font-semibold text-text mb-2">{teachersTitle}</h4>
+              <EnhancedLineChart
+                data={teachersData}
+                series={teachersSeries}
+                xDataKey="label"
+                height={compact ? 200 : 240}
+                showLegend={false}
+                xAxisLabel={district.charts.axisDate}
+                yAxisLabel={district.charts.axisCount}
+                yTickFormatter={formatCountTick}
+                ariaLabel={teachersTitle}
+                emptyMessage={emptyMessage}
+                emptyDescription={emptyDescription}
+              />
+            </div>
+          </>
+        )}
       </div>
     </Card>
   )

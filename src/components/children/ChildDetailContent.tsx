@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, Clock, Send } from 'lucide-react'
+import { AlertTriangle, Clock } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ChildHeader } from '@/components/children/ChildHeader'
@@ -88,11 +88,8 @@ export function ChildDetailContent({
     getChildAttendance,
     getChildMeasurements,
     getChildAssessments,
-    getChildReferrals,
     recordMeasurement,
     updateMeasurement,
-    updateReferralStatus,
-    updateReferral,
   } = useData()
   const { showSuccess } = useToast()
 
@@ -121,7 +118,6 @@ export function ChildDetailContent({
 
   const measurements = getChildMeasurements(child.id)
   const assessments = getChildAssessments(child.id)
-  const referrals = getChildReferrals(child.id)
 
   const latestMeasurement = useMemo(
     () => sortMeasurementsDesc(measurements)[0],
@@ -135,11 +131,9 @@ export function ChildDetailContent({
     [assessments],
   )
   const assessmentDue = getAssessmentDueStatus(latestMeasurement?.date)
-  const openReferrals = referrals.filter((r) => r.status !== 'completed')
   const hasSpecialNeeds = Boolean(child.specialNeeds?.trim())
   const hasAlerts =
     hasSpecialNeeds ||
-    openReferrals.length > 0 ||
     assessmentDue === 'due' ||
     assessmentDue === 'overdue' ||
     assessmentDue === 'never'
@@ -233,24 +227,6 @@ export function ChildDetailContent({
                         {assessmentDue === 'overdue' || assessmentDue === 'never'
                           ? caretaker.growth.dueOverdue
                           : caretaker.growth.dueSoon}
-                      </p>
-                      <Button
-                        variant="tertiary"
-                        size="sm"
-                        className="mt-1 -ml-2"
-                        onClick={() => setTab('growth')}
-                      >
-                        {caretaker.childDetail.viewTab} {caretaker.childDetail.tabGrowth}
-                      </Button>
-                    </div>
-                  </li>
-                )}
-                {openReferrals.length > 0 && (
-                  <li className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning-light/40 px-3.5 py-3">
-                    <Send size={18} className="text-warning shrink-0 mt-0.5" aria-hidden />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-body font-semibold text-text">
-                        {caretaker.childDetail.openReferralsAlert}: {openReferrals.length}
                       </p>
                       <Button
                         variant="tertiary"
@@ -398,22 +374,9 @@ export function ChildDetailContent({
             child={child}
             measurements={measurements}
             assessments={assessments}
-            referrals={referrals}
             canEdit={actionsEnabled && child.status === 'active'}
             onRecordMeasurement={() => openMeasureDialog(null)}
             onEditMeasurement={(record) => openMeasureDialog(record)}
-            onCompleteReferral={async (id, notes) => {
-              await updateReferralStatus(id, 'completed', { notes })
-              showSuccess(caretaker.referral.statusUpdated)
-            }}
-            onMarkReferralImplemented={async (id) => {
-              await updateReferral(id, { implementedAt: new Date().toISOString().split('T')[0] })
-              showSuccess(caretaker.referral.implementedSaved)
-            }}
-            onSaveReferralNotes={async (id, notes) => {
-              await updateReferral(id, { notes })
-              showSuccess(caretaker.referral.notesSaved)
-            }}
           />
         </div>
       )}

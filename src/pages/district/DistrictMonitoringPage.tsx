@@ -11,18 +11,24 @@ import {
   ChartPeriodFilter,
   EnhancedBarChart,
   EnhancedLineChart,
+  formatCountTick,
   type ChartPeriodFilterValue,
 } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
 import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
 import { DISTRICT_MONITORING_TABS, DISTRICT_PATHS } from '@/layouts/district/navigation'
-import { roundPct } from '@/features/monitoring'
 import { useDistrictMonitoringHub } from '@/features/district/monitoring/useDistrictMonitoringHub'
+import { env } from '@/config/env'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
+
+function formatChartDate(iso: string): string {
+  if (!iso || iso.length < 10) return iso
+  return `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+}
 
 export function DistrictMonitoringPage() {
   return (
@@ -50,54 +56,52 @@ function DistrictMonitoringOverview() {
 
   const attendanceItems = hub.attendance?.items ?? []
   const ranked = useMemo(() => {
-    return [...attendanceItems]
-      .filter((row) => row.rate != null)
-      .sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0))
+    return [...attendanceItems].sort((a, b) => b.present - a.present)
   }, [attendanceItems])
   const best = ranked.slice(0, 5)
   const attention = [...ranked].reverse().slice(0, 5)
 
   const trend = (hub.attendance?.trend ?? []).map((point) => ({
-    date: point.date,
-    value: point.rate == null ? 0 : roundPct(point.rate),
+    date: formatChartDate(point.date),
+    present: point.present,
+    absent: point.absent,
   }))
 
   const domainCards = [
     {
       to: DISTRICT_PATHS.monitoringAttendance,
       label: district.nav.attendance,
-      value:
-        hub.attendance?.summary.attendanceRate == null
-          ? '—'
-          : `${roundPct(hub.attendance.summary.attendanceRate)}%`,
+      value: hub.attendance?.summary.present ?? '—',
       icon: <CalendarCheck size={20} className="text-accent" />,
     },
     {
       to: DISTRICT_PATHS.monitoringGrowth,
       label: district.nav.growth,
-      value:
-        hub.nutrition?.summary.screeningCoverage == null
-          ? '—'
-          : `${roundPct(hub.nutrition.summary.screeningCoverage)}%`,
+      value: hub.nutrition?.summary.screenings ?? '—',
       icon: <Ruler size={20} className="text-secondary" />,
     },
     {
       to: DISTRICT_PATHS.monitoringFeeding,
       label: district.nav.imirire,
-      value:
-        hub.feeding?.summary.feedingCoverage == null
-          ? '—'
-          : `${roundPct(hub.feeding.summary.feedingCoverage)}%`,
+      value: hub.feeding?.summary.daysRecorded ?? '—',
       icon: <Utensils size={20} className="text-primary" />,
     },
     {
       to: DISTRICT_PATHS.monitoringSted,
       label: district.nav.sted,
-      value:
-        hub.sted?.summary.coverage == null ? '—' : `${roundPct(hub.sted.summary.coverage)}%`,
+      value: hub.sted?.summary.assessmentsCompleted ?? '—',
       icon: <Accessibility size={20} className="text-secondary" />,
     },
   ]
+
+  if (!env.isLive) {
+    return (
+      <LiveUnavailableState
+        title={district.monitoringHub.mockOnlyTitle}
+        description={district.monitoringHub.mockOnlyBody}
+      />
+    )
+  }
 
   if (hub.isError) {
     return (
@@ -119,7 +123,7 @@ function DistrictMonitoringOverview() {
 
   return (
     <div className="space-y-6">
-      <ChartPeriodFilter value={periodFilter} onChange={setPeriodFilter} className="max-w-xl" />
+      <ChartPeriodFilter value={periodFilter} onChange={setPeriodFilter} className="w-full md:max-w-xl" />
 
       <section aria-labelledby="monitoring-kpis">
         <h2 id="monitoring-kpis" className="text-subheading text-text mb-2">
@@ -132,9 +136,6 @@ function DistrictMonitoringOverview() {
             </Link>
           ))}
         </div>
-        <p className="text-caption text-text-muted mt-2">
-          {district.monitoringHub.pendingReferrals}: {hub.referrals?.summary.pending ?? '—'}
-        </p>
       </section>
 
       <section aria-labelledby="monitoring-trends">
@@ -153,11 +154,19 @@ function DistrictMonitoringOverview() {
               xDataKey="date"
               series={[
                 {
-                  dataKey: 'value',
-                  label: district.nav.attendance,
-                  color: CHART_METRIC_COLORS.attendance,
+                  dataKey: 'present',
+                  label: district.monitoringHub.present,
+                  color: CHART_METRIC_COLORS.present,
+                },
+                {
+                  dataKey: 'absent',
+                  label: district.monitoringHub.absent,
+                  color: CHART_METRIC_COLORS.absent,
                 },
               ]}
+              xAxisLabel={district.charts.axisDate}
+              yAxisLabel={district.charts.axisCount}
+              yTickFormatter={formatCountTick}
               ariaLabel={district.monitoringHub.attendanceTrend}
             />
           )}
@@ -181,13 +190,11 @@ function DistrictMonitoringOverview() {
             title={district.monitoringHub.bestCenters}
             rows={best}
             empty={district.monitoringHub.noCenters}
-            color={CHART_METRIC_COLORS.attendance}
           />
           <CenterRankCard
             title={district.monitoringHub.attentionCenters}
             rows={attention}
             empty={district.monitoringHub.noCenters}
-            color={CHART_METRIC_COLORS.dropouts}
           />
         </div>
       </section>
@@ -199,12 +206,16 @@ function CenterRankCard({
   title,
   rows,
   empty,
-  color,
 }: {
   title: string
-  rows: Array<{ centerId: string; centerName: string; rate: number | null }>
+  rows: Array<{
+    centerId: string
+    centerName: string
+    present: number
+    absent: number
+    enrolledChildren: number
+  }>
   empty: string
-  color: string
 }) {
   return (
     <Card padding="md">
@@ -215,10 +226,25 @@ function CenterRankCard({
         <EnhancedBarChart
           data={rows.map((row) => ({
             name: row.centerName,
-            value: row.rate == null ? 0 : roundPct(row.rate),
+            present: row.present,
+            absent: row.absent,
           }))}
+          series={[
+            {
+              dataKey: 'present',
+              label: district.monitoringHub.present,
+              color: CHART_METRIC_COLORS.present,
+            },
+            {
+              dataKey: 'absent',
+              label: district.monitoringHub.absent,
+              color: CHART_METRIC_COLORS.absent,
+            },
+          ]}
+          xAxisLabel={district.charts.axisCenter}
+          yAxisLabel={district.charts.axisCount}
+          yTickFormatter={formatCountTick}
           ariaLabel={title}
-          color={color}
         />
       )}
       {rows.length > 0 ? (
@@ -232,7 +258,7 @@ function CenterRankCard({
                 {row.centerName}
               </Link>
               <span className="tabular-nums text-text font-semibold">
-                {row.rate == null ? '—' : `${roundPct(row.rate)}%`}
+                {row.present} / {row.enrolledChildren}
               </span>
             </li>
           ))}

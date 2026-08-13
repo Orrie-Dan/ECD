@@ -4,23 +4,18 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
 import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
 import { Card, StatCard } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
-import { useStedMonitoringView, roundPct } from '@/features/monitoring'
+import { useStedMonitoringView } from '@/features/monitoring'
+import { EnhancedBarChart, formatCountTick } from '@/components/charts'
+import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { env } from '@/config/env'
 import type { Child, Referral, StedAssessment } from '@/types'
-
-function coverageVariant(rate: number): 'success' | 'warning' | 'danger' {
-  if (rate >= 70) return 'success'
-  if (rate >= 50) return 'warning'
-  return 'danger'
-}
 
 export function StedMonitoringPage() {
   if (env.isLive) {
@@ -65,7 +60,7 @@ function StedMonitoringPageShared({
     if (source === 'mock' && mockTotals) {
       return {
         screened: mockTotals.screened,
-        coverageRate: mockTotals.coverageRate,
+        childrenAssessed: mockTotals.screened,
         oyaResponses: mockTotals.oyaResponses,
         referralsCreated: mockTotals.referralsCreated,
         referralsCompleted: mockTotals.referralsCompleted,
@@ -74,8 +69,7 @@ function StedMonitoringPageShared({
     const s = data?.summary
     return {
       screened: s?.assessmentsCompleted ?? 0,
-      coverageRate: roundPct(s?.coverage),
-      // OYA / referral created-completed are not on STED monitoring API — gap.
+      childrenAssessed: s?.childrenAssessed ?? 0,
       oyaResponses: 0,
       referralsCreated: 0,
       referralsCompleted: 0,
@@ -121,7 +115,7 @@ function StedMonitoringPageShared({
             />
           ) : (
             <>
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 items-stretch">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
             <div className="h-full [&>div]:h-full">
               <StatCard
                 label={district.sted.screened}
@@ -132,9 +126,9 @@ function StedMonitoringPageShared({
             </div>
             <div className="h-full [&>div]:h-full">
               <StatCard
-                label={district.sted.coverage}
-                value={`${totals.coverageRate}%`}
-                variant={totals.coverageRate >= 70 ? 'success' : 'warning'}
+                label={district.sted.assessed}
+                value={String(totals.childrenAssessed)}
+                variant="success"
                 compact
               />
             </div>
@@ -146,23 +140,26 @@ function StedMonitoringPageShared({
                 compact
               />
             </div>
-            <div className="h-full [&>div]:h-full">
-              <StatCard
-                label={district.sted.referralsCreated}
-                value={source === 'api' ? '—' : String(totals.referralsCreated)}
-                variant="warning"
-                compact
-              />
-            </div>
-            <div className="h-full [&>div]:h-full col-span-2 lg:col-span-1">
-              <StatCard
-                label={district.sted.referralsCompleted}
-                value={source === 'api' ? '—' : String(totals.referralsCompleted)}
-                variant="success"
-                compact
-              />
-            </div>
           </div>
+
+          <Card padding="lg">
+            <h2 className="text-subheading text-text mb-4">{district.sted.chartTitle}</h2>
+            {comparisons.length === 0 ? (
+              <EmptyState title={district.sted.noData} />
+            ) : (
+              <EnhancedBarChart
+                data={comparisons.slice(0, 12).map((row) => ({
+                  name: row.centerName,
+                  value: row.screened,
+                }))}
+                ariaLabel={district.sted.chartTitle}
+                color={CHART_METRIC_COLORS.schools}
+                xAxisLabel={district.charts.axisCenter}
+                yAxisLabel={district.charts.axisCount}
+                yTickFormatter={formatCountTick}
+              />
+            )}
+          </Card>
 
           <Card padding="lg">
             <h2 className="text-subheading text-text mb-4">{district.sted.centerComparison}</h2>
@@ -183,7 +180,7 @@ function StedMonitoringPageShared({
                         {district.sted.screened}
                       </th>
                       <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
-                        {district.sted.coverage}
+                        {district.sted.assessed}
                       </th>
                       <th className="text-caption font-semibold text-text-muted pb-3">
                         {district.sted.oyaResponses}
@@ -192,25 +189,16 @@ function StedMonitoringPageShared({
                   </thead>
                   <tbody>
                     {comparisons.map((row) => {
-                      const coverage =
-                        'coverageRate' in row && typeof row.coverageRate === 'number'
-                          ? row.coverageRate
-                          : 0
                       const sector = 'sector' in row ? String(row.sector) : '—'
-                      const screened =
-                        'screened' in row
-                          ? row.screened
-                          : (row as { assessmentsCompleted?: number }).assessmentsCompleted ?? 0
+                      const screened = row.screened
+                      const assessed =
+                        'eligible' in row && row.eligible > 0 ? row.eligible : screened
                       const oya =
                         source === 'api'
-                          ? '—'
-                          : String('oyaResponses' in row ? row.oyaResponses : 0)
-                      const score =
-                        source === 'api' &&
-                        'averageScore' in row &&
-                        row.averageScore != null
-                          ? String(row.averageScore)
-                          : oya
+                          ? row.averageScore != null
+                            ? String(row.averageScore)
+                            : '—'
+                          : String(row.oyaResponses)
 
                       return (
                         <tr
@@ -229,21 +217,11 @@ function StedMonitoringPageShared({
                           <td className="py-3 pr-4 text-body" data-label={district.sted.screened}>
                             {screened}
                           </td>
-                          <td className="py-3 pr-4" data-label={district.sted.coverage}>
-                            {source === 'api' ? (
-                              <span className="text-body">
-                                {'averageScore' in row && row.averageScore != null
-                                  ? String(row.averageScore)
-                                  : '—'}
-                              </span>
-                            ) : (
-                              <Badge variant={coverageVariant(coverage)} size="sm">
-                                {coverage}%
-                              </Badge>
-                            )}
+                          <td className="py-3 pr-4 text-body" data-label={district.sted.assessed}>
+                            {assessed}
                           </td>
                           <td className="py-3 text-body" data-label={district.sted.oyaResponses}>
-                            {source === 'api' ? score : oya}
+                            {oya}
                           </td>
                         </tr>
                       )

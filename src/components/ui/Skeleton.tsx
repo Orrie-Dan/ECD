@@ -112,7 +112,7 @@ export function SkeletonPage({
 }: SkeletonPageProps) {
   return (
     <div className={`space-y-4 ${className}`} role="status" aria-busy="true" aria-label={label}>
-      <div className={`grid gap-4 ${stats <= 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'}`}>
+      <div className={`grid gap-4 ${stats <= 2 ? 'grid-cols-2' : stats === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
         {Array.from({ length: stats }).map((_, i) => (
           <Skeleton key={i} height="6rem" rounded="lg" className="w-full" />
         ))}

@@ -33,12 +33,10 @@ export const auth = {
     usernameRequired: "Nimero y'umukoresha irakenewe.",
     passwordRequired: "Ijambo ry'ibanga rirakenewe.",
     invalidCredentials: "Nimero y'umukoresha cyangwa ijambo ry'ibanga sibyo.",
-    apiUnavailable:
-      "Sisitemu ntiyihuje na API. Abakoresha b'ukuri (nk'ncda_admin) ntibashobora kwinjira — reba VITE_API_MODE=live na VITE_API_BASE_URL mu buryo bwo gutanga porogaramu.",
+    apiUnavailable: 'Sisitemu ntabwo iboneka muri iki gihe. Ongera ugerageze nyuma.',
     submit: 'Injira',
-    registeringDevice: 'Turimo kwiyandikisha igikoresho…',
-    registeringDeviceHint:
-      'Ntushobora kwinjira kugeza iki gikoresho cyanditswe kuri seriveri. Turacyagerageza.',
+    registeringDevice: 'Turimo kwinjira…',
+    registeringDeviceHint: 'Tegereza gato…',
     helpLink: 'Ukeneye ubufasha?',
     helpMessage:
       "Saba umuyobozi w'ikigo cyangwa w'akarere kugira ngo agufashe kwinjira muri sisitemu.",

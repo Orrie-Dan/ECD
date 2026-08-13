@@ -1,4 +1,4 @@
-import { Users, Accessibility, Clock, AlertTriangle, TrendingUp } from 'lucide-react'
+import { Users, Accessibility, Clock, TrendingUp } from 'lucide-react'
 import { StatCard } from '@/components/ui/Card'
 import { caretaker } from '@/locales/rw/caretaker'
 import type { StedCenterSummaryStats, StedListFilter } from '@/lib/sted-utils'
@@ -22,7 +22,7 @@ export function StedSummaryCards({
 
   return (
     <div
-      className={`grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4 items-stretch ${className}`}
+      className={`grid grid-cols-2 sm:grid-cols-4 gap-4 items-stretch ${className}`}
       role="group"
       aria-label={caretaker.sted.summaryTitle}
     >
@@ -59,17 +59,6 @@ export function StedSummaryCards({
         />
       </div>
       <div className="h-full [&>button]:h-full [&>div]:h-full">
-        <StatCard
-          label={caretaker.sted.referredCount}
-          value={stats.referred}
-          icon={<AlertTriangle size={compact ? 18 : 22} className="text-error" />}
-          variant="danger"
-          compact={compact}
-          selected={activeFilter === 'referred'}
-          onClick={clickable ? () => onFilterChange('referred') : undefined}
-        />
-      </div>
-      <div className="h-full [&>button]:h-full [&>div]:h-full col-span-2 sm:col-span-1">
         <StatCard
           label={caretaker.sted.coverage}
           value={`${stats.coverageRate}%`}

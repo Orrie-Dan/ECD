@@ -35,14 +35,14 @@ export function AttendanceViewSheet({ open, child, record, onClose }: Attendance
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="attendance-view-title"
     >
       <div className="absolute inset-0 bg-text/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
 
-      <Card padding="none" className="relative w-full max-w-lg shadow-lg" elevated>
+      <Card padding="none" className="relative w-full max-w-lg max-h-[min(90vh,100dvh)] flex flex-col shadow-lg rounded-t-2xl sm:rounded-xl" elevated>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -56,7 +56,7 @@ export function AttendanceViewSheet({ open, child, record, onClose }: Attendance
             <button
               type="button"
               onClick={onClose}
-              className="flex items-center justify-center w-10 h-10 rounded-xl text-text-muted hover:bg-surface-muted focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 shrink-0"
+              className="touch-target flex items-center justify-center rounded-xl text-text-muted hover:bg-surface-muted focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 shrink-0"
               aria-label={common.close}
             >
               <X size={22} />
@@ -64,7 +64,7 @@ export function AttendanceViewSheet({ open, child, record, onClose }: Attendance
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 overflow-y-auto min-h-0">
           {record.present ? (
             <>
               <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-muted/60 border border-border">
@@ -118,7 +118,7 @@ export function AttendanceViewSheet({ open, child, record, onClose }: Attendance
           </div>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:pb-4">
           <Button variant="secondary" size="lg" fullWidth onClick={onClose}>
             {caretaker.attendance.close}
           </Button>

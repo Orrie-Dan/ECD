@@ -49,11 +49,11 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
         className={`
           relative w-full ${sizeClasses[size]} bg-surface
           rounded-t-2xl sm:rounded-xl border border-border shadow-lg
-          max-h-[90vh] flex flex-col
+          max-h-[min(90vh,100dvh)] flex flex-col
         `}
       >
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-border shrink-0 bg-surface gap-3">
-          <h2 id="modal-title" className="text-heading text-text min-w-0">
+          <h2 id="modal-title" className="text-heading text-text min-w-0 wrap-break-word">
             {title}
           </h2>
           <button
@@ -66,7 +66,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: M
         </div>
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">{children}</div>
         {footer && (
-          <div className="shrink-0 px-4 sm:px-6 py-4 sm:py-5 border-t border-border bg-surface shadow-[0_-4px_16px_rgb(28_35_48/0.06)]">
+          <div className="shrink-0 px-4 sm:px-6 py-4 sm:py-5 border-t border-border bg-surface shadow-[0_-4px_16px_rgb(28_35_48/0.06)] pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:pb-5">
             {footer}
           </div>
         )}

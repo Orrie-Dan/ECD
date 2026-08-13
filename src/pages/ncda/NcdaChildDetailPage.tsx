@@ -14,7 +14,6 @@ import {
   useNcdaChildAttendance,
   useNcdaChildDetail,
   useNcdaChildNutrition,
-  useNcdaChildReferrals,
   useNcdaChildSted,
 } from '@/features/ncda/children/queries'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
@@ -27,9 +26,7 @@ type OpsSection =
   | 'attendance'
   | 'nutrition'
   | 'sted'
-  | 'referrals'
   | 'feeding'
-  | 'transfers'
 
 function formatDate(iso: string | undefined | null): string {
   if (!iso) return '—'
@@ -90,12 +87,6 @@ function NcdaChildDetailLive() {
     OPS_PAGE_SIZE,
     section === 'sted' && Boolean(childId),
   )
-  const referralsQ = useNcdaChildReferrals(
-    childId,
-    opsPage,
-    OPS_PAGE_SIZE,
-    section === 'referrals' && Boolean(childId),
-  )
 
   const backLink = (
     <Link
@@ -139,9 +130,7 @@ function NcdaChildDetailLive() {
     { id: 'attendance', label: ncda.children.sectionAttendance },
     { id: 'nutrition', label: ncda.children.sectionNutrition },
     { id: 'sted', label: ncda.children.sectionSted },
-    { id: 'referrals', label: ncda.children.sectionReferrals },
     { id: 'feeding', label: ncda.children.sectionFeeding },
-    { id: 'transfers', label: ncda.children.sectionTransfers },
   ]
 
   return (
@@ -316,35 +305,10 @@ function NcdaChildDetailLive() {
             />
           ) : null}
 
-          {section === 'referrals' ? (
-            <OpsTableSection
-              title={ncda.children.sectionReferrals}
-              query={referralsQ}
-              page={opsPage}
-              onPageChange={setOpsPage}
-              empty={ncda.children.opsEmpty}
-              error={ncda.children.opsError}
-              columns={[
-                ncda.children.opsColDate,
-                ncda.children.opsColStatus,
-                ncda.children.opsColMeta,
-              ]}
-              rows={(referralsQ.data?.items ?? []).map((row) => [
-                row.date?.slice(0, 10) ?? '—',
-                row.status,
-                row.sourceType ?? '—',
-              ])}
-              total={referralsQ.data?.total ?? 0}
-              totalPages={referralsQ.data?.totalPages ?? 1}
-            />
-          ) : null}
-
-          {section === 'feeding' || section === 'transfers' ? (
+          {section === 'feeding' ? (
             <Card padding="md" className="border-border">
               <h2 className="text-subheading font-semibold text-text mb-2">
-                {section === 'feeding'
-                  ? ncda.children.sectionFeeding
-                  : ncda.children.sectionTransfers}
+                {ncda.children.sectionFeeding}
               </h2>
               <p className="text-body text-text-secondary">{ncda.children.sectionUnavailable}</p>
             </Card>
@@ -426,7 +390,7 @@ function OpsTableSection({
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[28rem] text-left text-body">
+              <table className="w-full min-w-0 sm:min-w-[28rem] text-left text-body responsive-table-cards">
                 <thead>
                   <tr className="border-b border-border text-caption text-text-secondary">
                     {columns.map((col) => (
@@ -442,6 +406,7 @@ function OpsTableSection({
                       {row.map((cell, cIdx) => (
                         <td
                           key={cIdx}
+                          data-label={columns[cIdx]}
                           className={`py-2.5 pr-3 ${cIdx === 0 ? 'font-medium text-text' : 'text-text-secondary'}`}
                         >
                           {cell}

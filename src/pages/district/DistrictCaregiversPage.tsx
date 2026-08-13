@@ -351,7 +351,7 @@ function DistrictCaregiversLive() {
               ) : (
                 <>
                   <div className="overflow-x-auto">
-                    <table className="w-full min-w-[40rem] text-left text-body">
+                    <table className="w-full min-w-0 sm:min-w-[40rem] text-left text-body responsive-table-cards">
                       <thead>
                         <tr className="border-b border-border text-caption text-text-secondary">
                           <th className="py-2 pr-3 font-semibold">
@@ -374,15 +374,15 @@ function DistrictCaregiversLive() {
                       <tbody>
                         {items.map((row) => (
                           <tr key={row.id} className="border-b border-border/70">
-                            <td className="py-2.5 pr-3 font-medium">{row.fullName}</td>
-                            <td className="py-2.5 pr-3">{row.username}</td>
-                            <td className="py-2.5 pr-3">
+                            <td className="py-2.5 pr-3 font-medium" data-label={district.caregivers.colFullName}>{row.fullName}</td>
+                            <td className="py-2.5 pr-3" data-label={district.caregivers.colUsername}>{row.username}</td>
+                            <td className="py-2.5 pr-3" data-label={district.caregivers.colCenter}>
                               {row.center
                                 ? `${row.center.name} (${row.center.code})`
                                 : '—'}
                             </td>
-                            <td className="py-2.5 pr-3">{row.status}</td>
-                            <td className="py-2.5">
+                            <td className="py-2.5 pr-3" data-label={district.caregivers.colStatus}>{row.status}</td>
+                            <td className="py-2.5 td-actions" data-label={district.caregivers.colAction}>
                               <Link
                                 to={`${CAREGIVERS_PATH}/${row.id}`}
                                 className="text-primary font-semibold hover:underline"

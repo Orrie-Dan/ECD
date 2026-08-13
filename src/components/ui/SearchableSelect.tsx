@@ -322,6 +322,7 @@ export function SearchableSelect({
               className="
                 relative z-10 flex max-h-[min(85vh,640px)] flex-col overflow-hidden
                 rounded-t-2xl border border-border bg-surface shadow-lg searchable-select-sheet
+                pb-[env(safe-area-inset-bottom,0px)]
               "
             >
               <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -336,7 +337,7 @@ export function SearchableSelect({
                 <button
                   type="button"
                   onClick={close}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-text-muted hover:bg-background-subtle"
+                  className="touch-target flex shrink-0 items-center justify-center rounded-xl text-text-muted hover:bg-background-subtle"
                   aria-label={common.close}
                 >
                   <X size={20} />

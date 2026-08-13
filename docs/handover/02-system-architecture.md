@@ -98,7 +98,6 @@ Bottom nav: Ahabanza, Abana, Ubwitabire, Imikurire, Ibindi.
 | `/district/abana` | Children |
 | `/district/imikorere` | Monitoring hub + attendance / growth / feeding / STED tabs |
 | `/district/gukurikirana` | Follow-up alerts |
-| `/district/referrals` | Referral monitoring |
 | `/district/raporo` | Reports |
 | `/district/abakoresha` | Caregiver users |
 | `/district/igenamiterere` | Settings |

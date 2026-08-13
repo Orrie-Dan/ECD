@@ -303,25 +303,26 @@ function DistrictReportsPageShared({
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <Card padding="md"><p className="text-caption text-text-muted">Dropouts</p><p className="text-subheading">{s.dropouts}</p></Card>
-            <Card padding="md"><p className="text-caption text-text-muted">Transfers out</p><p className="text-subheading">{s.transfersOut}</p></Card>
           </div>
           {items.length > 0 && (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-border text-caption text-text-muted">
-                  <th className="pb-2 pr-3">Child</th>
-                  <th className="pb-2">Center</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.childId} className="border-b border-border/60">
-                    <td className="py-2 pr-3 text-body">{item.childName}</td>
-                    <td className="py-2 text-body">{item.centerName}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left responsive-table-cards">
+                <thead>
+                  <tr className="border-b border-border text-caption text-text-muted">
+                    <th className="pb-2 pr-3">Child</th>
+                    <th className="pb-2">Center</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.childId} className="border-b border-border/60">
+                      <td className="py-2 pr-3 text-body" data-label="Child">{item.childName}</td>
+                      <td className="py-2 text-body" data-label="Center">{item.centerName}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )
@@ -330,24 +331,26 @@ function DistrictReportsPageShared({
     if (key === 'centers' && previewData.centers) {
       const items = previewData.centers.items.slice(0, 8)
       return (
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-border text-caption text-text-muted">
-              <th className="pb-2 pr-3">Center</th>
-              <th className="pb-2 pr-3">Children</th>
-              <th className="pb-2">Rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.centerId} className="border-b border-border/60">
-                <td className="py-2 pr-3 text-body">{item.centerName}</td>
-                <td className="py-2 pr-3 text-body">{item.enrolledChildren}</td>
-                <td className="py-2 text-body">{roundPct(item.attendance.rate)}%</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left responsive-table-cards">
+            <thead>
+              <tr className="border-b border-border text-caption text-text-muted">
+                <th className="pb-2 pr-3">Center</th>
+                <th className="pb-2 pr-3">Children</th>
+                <th className="pb-2">Rate</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.centerId} className="border-b border-border/60">
+                  <td className="py-2 pr-3 text-body" data-label="Center">{item.centerName}</td>
+                  <td className="py-2 pr-3 text-body" data-label="Children">{item.enrolledChildren}</td>
+                  <td className="py-2 text-body" data-label="Rate">{roundPct(item.attendance.rate)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )
     }
 
@@ -369,24 +372,26 @@ function DistrictReportsPageShared({
             <Card padding="md"><p className="text-caption text-text-muted">Overdue</p><p className="text-subheading">{s.overdueScreenings}</p></Card>
           </div>
           {key === 'nutritionCenters' && items.length > 0 && (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-border text-caption text-text-muted">
-                  <th className="pb-2 pr-3">Center</th>
-                  <th className="pb-2 pr-3">Screenings</th>
-                  <th className="pb-2">Severe</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.centerId} className="border-b border-border/60">
-                    <td className="py-2 pr-3 text-body">{item.centerName}</td>
-                    <td className="py-2 pr-3 text-body">{item.screenings}</td>
-                    <td className="py-2 text-body">{item.severe}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left responsive-table-cards">
+                <thead>
+                  <tr className="border-b border-border text-caption text-text-muted">
+                    <th className="pb-2 pr-3">Center</th>
+                    <th className="pb-2 pr-3">Screenings</th>
+                    <th className="pb-2">Severe</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.centerId} className="border-b border-border/60">
+                      <td className="py-2 pr-3 text-body" data-label="Center">{item.centerName}</td>
+                      <td className="py-2 pr-3 text-body" data-label="Screenings">{item.screenings}</td>
+                      <td className="py-2 text-body" data-label="Severe">{item.severe}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )

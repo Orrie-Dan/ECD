@@ -15,6 +15,7 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
   const usersPage = fs.readFileSync(root('../../pages/ncda/NcdaUsersPage.tsx'), 'utf8')
   const userDetail = fs.readFileSync(root('../../pages/ncda/NcdaUserDetailPage.tsx'), 'utf8')
   const auditPage = fs.readFileSync(root('../../pages/ncda/NcdaAuditLogsPage.tsx'), 'utf8')
+  const auditDetail = fs.readFileSync(root('../../pages/ncda/NcdaAuditLogDetailPage.tsx'), 'utf8')
   const pages = fs.readFileSync(root('../../pages/ncda/NcdaPages.tsx'), 'utf8')
   const settingsPage = fs.readFileSync(root('../../pages/ncda/NcdaSettingsPage.tsx'), 'utf8')
   const usersQueries = fs.readFileSync(root('./users/queries.ts'), 'utf8')
@@ -28,6 +29,8 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
       expect(app).toContain('path="/ncda/users"')
       expect(app).toContain('path="/ncda/users/:userId"')
       expect(app).toContain('path="/ncda/audit-logs"')
+      expect(app).toContain('path="/ncda/audit-logs/:logId"')
+      expect(findNcdaNavItem('/ncda/audit-logs/abc')?.id).toBe('audit-logs')
       expect(homePathForRole('ncda')).toBe('/ncda')
       expect(hasRole({ role: 'ncda' }, 'ncda')).toBe(true)
       expect(hasRole({ role: 'districtOfficer' }, 'ncda')).toBe(false)
@@ -86,6 +89,13 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
       expect(auditPage).not.toContain('useMutation')
       expect(auditPage).not.toMatch(/deleteAudit|updateAudit|PATCH/)
       expect(pages).toContain("export { NcdaAuditLogsPage } from './NcdaAuditLogsPage'")
+      expect(pages).toContain("export { NcdaAuditLogDetailPage } from './NcdaAuditLogDetailPage'")
+      expect(auditPage).toContain('stashAuditLog')
+      expect(auditPage).toContain('state={{ log: row }}')
+      expect(auditDetail).toContain('snapshotToRows')
+      expect(auditDetail).not.toContain('JSON.stringify')
+      expect(auditDetail).not.toContain('<pre')
+      expect(auditDetail).not.toContain('useMutation')
     })
   })
 
@@ -103,7 +113,7 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
 
   describe('LIVE isolation', () => {
     it('avoids LocalStore, useData, and mock fallback', () => {
-      for (const src of [usersPage, userDetail, auditPage, usersQueries, auditQueries]) {
+      for (const src of [usersPage, userDetail, auditPage, auditDetail, usersQueries, auditQueries]) {
         expect(src).not.toMatch(/\buseData\(|LocalStore|SyncEngine|MOCK_DATA/)
         expect(src).not.toMatch(/if\s*\(!.*\)\s*return\s+MOCK/)
         expect(src).not.toMatch(/from ['"]@\/pages\/district/)

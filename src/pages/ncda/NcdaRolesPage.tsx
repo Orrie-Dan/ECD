@@ -51,7 +51,7 @@ export function NcdaRolesPage() {
         <p className="mb-4 text-caption text-text-muted">{ncda.rolesPage.noRbacApi}</p>
 
         <Card padding="md" className="border-border overflow-x-auto">
-          <table className="w-full min-w-[40rem] text-left text-body">
+          <table className="w-full min-w-0 sm:min-w-[40rem] text-left text-body responsive-table-cards">
             <thead>
               <tr className="border-b border-border text-caption text-text-secondary">
                 <th className="py-2 pr-3 font-semibold">{ncda.rolesPage.colRole}</th>
@@ -64,11 +64,11 @@ export function NcdaRolesPage() {
             <tbody>
               {ROLES.map((role) => (
                 <tr key={role.id} className="border-b border-border/70 align-top">
-                  <td className="py-2.5 pr-3 font-medium">{role.label}</td>
-                  <td className="py-2.5 pr-3">{role.portal}</td>
-                  <td className="py-2.5 pr-3">{role.scope}</td>
-                  <td className="py-2.5 pr-3">{role.create}</td>
-                  <td className="py-2.5 text-text-secondary">{role.notes}</td>
+                  <td className="py-2.5 pr-3 font-medium" data-label={ncda.rolesPage.colRole}>{role.label}</td>
+                  <td className="py-2.5 pr-3" data-label={ncda.rolesPage.colPortal}>{role.portal}</td>
+                  <td className="py-2.5 pr-3" data-label={ncda.rolesPage.colScope}>{role.scope}</td>
+                  <td className="py-2.5 pr-3" data-label={ncda.rolesPage.colCreate}>{role.create}</td>
+                  <td className="py-2.5 text-text-secondary" data-label={ncda.rolesPage.colNotes}>{role.notes}</td>
                 </tr>
               ))}
             </tbody>

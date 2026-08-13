@@ -23,6 +23,8 @@ export interface EnhancedPieChartProps {
   ariaLabel?: string
   centerLabel?: string
   centerValue?: string
+  /** Chart well background. `white` is used on Gukurikirana. */
+  tone?: 'muted' | 'white'
 }
 
 function EnhancedPieChartComponent({
@@ -36,7 +38,9 @@ function EnhancedPieChartComponent({
   ariaLabel,
   centerLabel,
   centerValue,
+  tone = 'muted',
 }: EnhancedPieChartProps) {
+  const wellClass = tone === 'white' ? 'bg-white' : 'bg-background-subtle/30'
   const slices = useMemo(
     () =>
       data
@@ -51,11 +55,13 @@ function EnhancedPieChartComponent({
     () => slices.reduce((sum, slice) => sum + Number(slice.value), 0),
     [slices],
   )
+  const scaledOuter = Math.min(outerRadius, Math.max(52, Math.round(height * 0.34)))
+  const scaledInner = Math.min(innerRadius, Math.round(scaledOuter * 0.66))
 
   if (slices.length === 0 || total <= 0) {
     return (
       <div
-        className={`rounded-xl border border-border bg-background-subtle/30 ${className}`}
+        className={`rounded-xl border border-border ${wellClass} ${className}`}
         style={{ minHeight: height }}
       >
         <EmptyState
@@ -69,7 +75,7 @@ function EnhancedPieChartComponent({
 
   return (
     <div
-      className={`w-full min-w-0 rounded-xl border border-border bg-background-subtle/30 p-2 sm:p-3 ${className}`}
+      className={`w-full min-w-0 rounded-xl border border-border ${wellClass} p-2 sm:p-3 ${className}`}
       role="img"
       aria-label={ariaLabel}
     >
@@ -82,8 +88,8 @@ function EnhancedPieChartComponent({
               nameKey="name"
               cx="50%"
               cy="50%"
-              innerRadius={innerRadius}
-              outerRadius={outerRadius}
+              innerRadius={scaledInner}
+              outerRadius={scaledOuter}
               paddingAngle={2}
               stroke="none"
             >

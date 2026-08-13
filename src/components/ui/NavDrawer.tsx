@@ -44,7 +44,7 @@ export function NavDrawer({ open, onClose, title, children }: NavDrawerProps) {
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="relative h-full w-[min(100%,18rem)] bg-surface border-r border-border shadow-lg flex flex-col nav-drawer-panel outline-none"
+        className="relative h-full w-[min(100%,18rem)] bg-surface border-r border-border shadow-lg flex flex-col nav-drawer-panel outline-none safe-area-top safe-area-bottom"
         role="dialog"
         aria-modal="true"
         aria-label={title ?? common.nav.mainNav}

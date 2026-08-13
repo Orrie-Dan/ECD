@@ -35,8 +35,17 @@ export interface EnhancedLineChartProps {
   emptyDescription?: string
   yDomain?: [number | 'auto', number | 'auto']
   yTickFormatter?: (value: number) => string
+  xAxisLabel?: string
+  yAxisLabel?: string
   className?: string
   ariaLabel?: string
+}
+
+/** Hide fractional ticks so count charts stay whole numbers. */
+export function formatCountTick(value: number): string {
+  if (!Number.isFinite(value)) return ''
+  if (Math.abs(value - Math.round(value)) > 0.05) return ''
+  return String(Math.round(value))
 }
 
 function EnhancedLineChartComponent({
@@ -51,6 +60,8 @@ function EnhancedLineChartComponent({
   emptyDescription = district.charts.emptyDesc,
   yDomain,
   yTickFormatter,
+  xAxisLabel,
+  yAxisLabel,
   className = '',
   ariaLabel,
 }: EnhancedLineChartProps) {
@@ -81,7 +92,15 @@ function EnhancedLineChartComponent({
       aria-label={ariaLabel}
     >
       <ResponsiveContainer width="100%" height={height}>
-        <LineChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+        <LineChart
+          data={data}
+          margin={{
+            top: 8,
+            right: 12,
+            left: yAxisLabel ? 8 : 0,
+            bottom: xAxisLabel ? 18 : 4,
+          }}
+        >
           {showGrid && (
             <CartesianGrid
               strokeDasharray="4 6"
@@ -96,14 +115,40 @@ function EnhancedLineChartComponent({
             axisLine={{ stroke: 'rgb(226 230 235)' }}
             interval={tickInterval}
             minTickGap={12}
+            label={
+              xAxisLabel
+                ? {
+                    value: xAxisLabel,
+                    position: 'insideBottom',
+                    offset: -12,
+                    style: { fontSize: 11, fill: 'rgb(71 85 105)', fontWeight: 600 },
+                  }
+                : undefined
+            }
           />
           <YAxis
             domain={yDomain ?? ['auto', 'auto']}
             tick={{ fontSize: 11, fill: 'rgb(100 116 139)' }}
             tickLine={false}
             axisLine={false}
-            width={40}
+            width={yAxisLabel ? 58 : 48}
             tickFormatter={yTickFormatter}
+            label={
+              yAxisLabel
+                ? {
+                    value: yAxisLabel,
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 8,
+                    style: {
+                      textAnchor: 'middle',
+                      fontSize: 11,
+                      fill: 'rgb(71 85 105)',
+                      fontWeight: 600,
+                    },
+                  }
+                : undefined
+            }
           />
           <Tooltip
             content={
@@ -114,7 +159,6 @@ function EnhancedLineChartComponent({
           {showLegend && (
             <Legend
               verticalAlign="bottom"
-              height={32}
               iconType="circle"
               iconSize={8}
               wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }}

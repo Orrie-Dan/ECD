@@ -100,15 +100,19 @@ export function SyncStatusIndicator() {
       onClick={() => {
         if (!busy) void sync.syncNow()
       }}
-      className="flex flex-col items-end max-w-[12rem] text-right px-2 py-1 rounded-lg hover:bg-background-subtle transition-colors disabled:opacity-70"
-      title={sync.lastError ?? (busy ? common.sync.syncingBusy : common.sync.tapToSync)}
+      className="touch-target flex flex-col items-end justify-center max-w-[6.5rem] sm:max-w-[12rem] text-right px-1.5 sm:px-2 py-1 rounded-lg hover:bg-background-subtle transition-colors disabled:opacity-70"
+      title={busy ? common.sync.syncingBusy : common.sync.tapToSync}
       aria-label={common.sync.statusPanelTitle}
     >
-      <span className={`text-caption font-medium leading-tight ${tone}`}>{label}</span>
-      {pending && <span className="text-[11px] text-text-muted leading-tight">{pending}</span>}
-      {conflict && <span className="text-[11px] text-warning leading-tight">{conflict}</span>}
+      <span className={`text-caption font-medium leading-tight truncate max-w-full ${tone}`}>{label}</span>
+      {pending && (
+        <span className="hidden sm:block text-[11px] text-text-muted leading-tight">{pending}</span>
+      )}
+      {conflict && (
+        <span className="hidden sm:block text-[11px] text-warning leading-tight">{conflict}</span>
+      )}
       {sync.pendingCount === 0 && sync.failedCount === 0 && sync.status === 'IDLE' ? (
-        <span className="text-[11px] text-text-muted leading-tight">
+        <span className="hidden sm:block text-[11px] text-text-muted leading-tight">
           {common.sync.lastSynced.replace('{time}', formatTime(sync.lastSyncedAt))}
         </span>
       ) : null}
@@ -255,11 +259,6 @@ export function PendingSyncPanel({ className = '' }: { className?: string }) {
             ))}
           </ul>
         </div>
-      )}
-      {sync.lastError && (
-        <p className="text-caption text-error mt-3" role="alert">
-          {sync.lastError}
-        </p>
       )}
       <Button
         variant="primary"

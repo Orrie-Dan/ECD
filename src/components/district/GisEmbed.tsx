@@ -22,7 +22,7 @@ function MapPlaceholder({ height, compact }: { height: string; compact?: boolean
   return (
     <GisPendingPlaceholder
       compact={compact}
-      className="w-full aspect-[4/3] sm:aspect-auto"
+      className="w-full min-h-[12rem]"
       style={{ minHeight: height }}
     />
   )
@@ -139,7 +139,7 @@ export function GisEmbed({
 
       {fullscreen && (
         <div
-          className="fixed inset-0 z-50 bg-background flex flex-col"
+          className="fixed inset-0 z-50 bg-background flex flex-col safe-area-top safe-area-bottom"
           role="dialog"
           aria-modal="true"
           aria-label={title}

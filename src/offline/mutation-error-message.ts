@@ -19,6 +19,9 @@ function messageFromErrorText(message: string): string | undefined {
   if (message.includes('authenticated user id is required')) return messages.mutationNoUser
   if (message.includes('Child not found')) return messages.mutationNotFound
   if (message.includes('Transfers domain migration')) return messages.transferAcceptUnavailable
+  if (/device|x-device|not registered|local owner/i.test(message)) {
+    return messages.mutationFailed
+  }
   return undefined
 }
 

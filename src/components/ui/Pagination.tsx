@@ -57,8 +57,8 @@ export function Pagination({
       </p>
 
       <div className="flex flex-col gap-3 order-1 sm:order-2 sm:flex-row sm:items-center sm:gap-4">
-        <div className="flex items-center gap-2">
-          <label htmlFor={pageSizeSelectId} className="text-caption font-semibold text-text-secondary whitespace-nowrap">
+        <div className="flex items-center gap-2 min-w-0">
+          <label htmlFor={pageSizeSelectId} className="sr-only sm:not-sr-only text-caption font-semibold text-text-secondary whitespace-nowrap">
             {common.pagination.perPage}
           </label>
           <SelectInput
@@ -77,7 +77,7 @@ export function Pagination({
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center justify-between sm:justify-start gap-2">
             <Button
               variant="secondary"
               size="sm"
@@ -90,7 +90,11 @@ export function Pagination({
               <span className="sr-only sm:not-sr-only">{common.pagination.previous}</span>
             </Button>
 
-            <ul className="flex items-center gap-1" role="list">
+            <p className="sm:hidden text-caption font-semibold text-text-secondary tabular-nums whitespace-nowrap">
+              {common.pagination.page} {page} {common.pagination.of} {totalPages}
+            </p>
+
+            <ul className="hidden sm:flex items-center gap-1" role="list">
               {pageNumbers.map((pageNumber, index) =>
                 pageNumber === 'ellipsis' ? (
                   <li
@@ -108,7 +112,7 @@ export function Pagination({
                       aria-label={common.pagination.goToPage.replace('{page}', String(pageNumber))}
                       aria-current={pageNumber === page ? 'page' : undefined}
                       className={`
-                        flex items-center justify-center min-w-11 h-11 sm:min-w-8 sm:h-8 px-2 rounded-lg text-body font-semibold
+                        flex items-center justify-center min-w-8 h-8 px-2 rounded-lg text-body font-semibold
                         transition-colors duration-200
                         focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2
                         ${

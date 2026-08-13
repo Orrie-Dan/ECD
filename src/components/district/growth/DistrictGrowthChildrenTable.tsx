@@ -90,9 +90,6 @@ export function DistrictGrowthChildrenTable({
               <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
                 {common.labels.status}
               </th>
-              <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
-                {district.growth.referral}
-              </th>
               <th className="text-caption font-semibold text-text-muted pb-3">
                 {common.labels.actions}
               </th>
@@ -137,15 +134,6 @@ export function DistrictGrowthChildrenTable({
                     <Badge variant="neutral" size="sm">
                       {district.growth.notAssessed}
                     </Badge>
-                  )}
-                </td>
-                <td className="py-3 pr-4" data-label={district.growth.referral}>
-                  {row.requiresReferral ? (
-                    <Badge variant="danger" size="sm">
-                      {district.growth.yes}
-                    </Badge>
-                  ) : (
-                    <span className="text-body text-text-secondary">{district.growth.no}</span>
                   )}
                 </td>
                 <td className="py-3 td-actions" data-label="">

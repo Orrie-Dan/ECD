@@ -13,7 +13,6 @@ import {
 } from '@/lib/sted-utils'
 import type {
   Child,
-  Referral,
   StedAgeBand,
   StedAssessment,
   StedPhysicalPart,
@@ -57,7 +56,6 @@ interface StedAssessmentViewSheetProps {
   open: boolean
   child: Child | null
   assessment: StedAssessment | null
-  referral?: Referral | null
   onClose: () => void
 }
 
@@ -65,7 +63,6 @@ export function StedAssessmentViewSheet({
   open,
   child,
   assessment,
-  referral = null,
   onClose,
 }: StedAssessmentViewSheetProps) {
   useEffect(() => {
@@ -91,7 +88,7 @@ export function StedAssessmentViewSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="sted-view-title"
@@ -104,7 +101,7 @@ export function StedAssessmentViewSheet({
 
       <Card
         padding="none"
-        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col shadow-lg"
+        className="relative w-full max-w-2xl max-h-[min(90vh,100dvh)] flex flex-col shadow-lg rounded-t-2xl sm:rounded-xl"
         elevated
       >
         <CardHeader className="shrink-0">
@@ -288,37 +285,7 @@ export function StedAssessmentViewSheet({
                     : '—'}
                 </dd>
               </div>
-              {assessment.outcome.referred && (
-                <>
-                  <div>
-                    <dt className="text-caption text-text-muted">{caretaker.sted.referralReason}</dt>
-                    <dd className="text-body text-text mt-0.5">
-                      {assessment.referralReason ?? '—'}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-caption text-text-muted">
-                      {caretaker.sted.referralDestination}
-                    </dt>
-                    <dd className="text-body text-text mt-0.5">
-                      {assessment.referralDestination ?? '—'}
-                    </dd>
-                  </div>
-                </>
-              )}
-              <div>
-                <dt className="text-caption text-text-muted">{caretaker.sted.referralStatus}</dt>
-                <dd className="text-body text-text mt-0.5">
-                  {!referral
-                    ? caretaker.sted.referralNone
-                    : referral.status === 'pending'
-                      ? caretaker.referral.pending
-                      : referral.status === 'completed'
-                        ? caretaker.referral.completed
-                        : caretaker.referral.cancelled}
-                </dd>
-              </div>
-                  {assessment.notes && (
+              {assessment.notes && (
                 <div>
                   <dt className="text-caption text-text-muted">{caretaker.referral.notes}</dt>
                   <dd className="text-body text-text mt-0.5">{assessment.notes}</dd>

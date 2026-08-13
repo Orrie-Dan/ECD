@@ -82,7 +82,7 @@ describe('Sprint 5.5F — NCDA children management contract', () => {
       expect(detailPage).toContain('useNcdaChildAttendance')
       expect(detailPage).toContain('useNcdaChildNutrition')
       expect(detailPage).toContain('useNcdaChildSted')
-      expect(detailPage).toContain('useNcdaChildReferrals')
+      expect(detailPage).not.toContain('useNcdaChildReferrals')
       expect(listPage).not.toMatch(/loadChildren\(['"]all['"]\)/)
       expect(detailPage).not.toMatch(/loadChildren\(['"]all['"]\)/)
       expect(queries).not.toContain('fetchAllAttendance')
@@ -93,11 +93,11 @@ describe('Sprint 5.5F — NCDA children management contract', () => {
   })
 
   describe('detail sections + unavailable contracts', () => {
-    it('shows profile and marks feeding/transfers unavailable', () => {
+    it('shows profile and marks feeding unavailable', () => {
       expect(detailPage).toContain('identityTitle')
       expect(detailPage).toContain('sectionUnavailable')
       expect(detailPage).toContain("section === 'feeding'")
-      expect(detailPage).toContain("section === 'transfers'")
+      expect(detailPage).not.toContain("section === 'transfers'")
       expect(detailPage).toContain('notFound')
       expect(detailPage).toContain('detail.refetch')
     })

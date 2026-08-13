@@ -20,7 +20,7 @@ export function NcdaUserMenu({ onRequestLogout }: NcdaUserMenuProps) {
 
   useEffect(() => {
     if (!open) return
-    const onPointerDown = (event: MouseEvent) => {
+    const onPointerDown = (event: PointerEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) {
         setOpen(false)
       }
@@ -28,10 +28,10 @@ export function NcdaUserMenu({ onRequestLogout }: NcdaUserMenuProps) {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false)
     }
-    window.addEventListener('mousedown', onPointerDown)
+    window.addEventListener('pointerdown', onPointerDown)
     window.addEventListener('keydown', onKeyDown)
     return () => {
-      window.removeEventListener('mousedown', onPointerDown)
+      window.removeEventListener('pointerdown', onPointerDown)
       window.removeEventListener('keydown', onKeyDown)
     }
   }, [open])
@@ -42,7 +42,7 @@ export function NcdaUserMenu({ onRequestLogout }: NcdaUserMenuProps) {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        className="inline-flex items-center gap-2 max-w-[14rem] rounded-xl border border-border bg-surface px-2.5 py-1.5 text-left hover:bg-background-subtle transition-colors focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2"
+        className="touch-target inline-flex items-center gap-2 max-w-[14rem] rounded-xl border border-border bg-surface px-2.5 py-1.5 text-left hover:bg-background-subtle transition-colors focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
@@ -63,7 +63,7 @@ export function NcdaUserMenu({ onRequestLogout }: NcdaUserMenuProps) {
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-surface shadow-lg z-50 overflow-hidden"
+          className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] rounded-xl border border-border bg-surface shadow-lg z-50 overflow-hidden"
         >
           <div className="px-3 py-2.5 border-b border-border bg-background-subtle">
             <p className="text-caption text-text-muted">{ncda.signedInAs}</p>

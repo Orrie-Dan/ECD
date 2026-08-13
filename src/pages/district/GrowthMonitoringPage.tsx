@@ -355,7 +355,7 @@ function GrowthMonitoringPageShared({
               />
 
               <div
-                className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-4 items-stretch"
+                className="grid grid-cols-2 sm:grid-cols-4 gap-4 items-stretch"
                 role="group"
                 aria-label={district.growth.nutritionSummary}
               >
@@ -391,15 +391,6 @@ function GrowthMonitoringPageShared({
                     label={district.growth.statusSevere}
                     value={statusCounts.severe}
                     icon={<ShieldAlert size={18} className="text-error" />}
-                    variant="danger"
-                    compact
-                  />
-                </div>
-                <div className="h-full [&>div]:h-full">
-                  <StatCard
-                    label={district.growth.requiresReferral}
-                    value={statusCounts.requiresReferral}
-                    icon={<AlertTriangle size={18} className="text-error" />}
                     variant="danger"
                     compact
                   />
@@ -551,7 +542,7 @@ function GrowthMonitoringPageShared({
                         {district.growth.atRisk}
                       </th>
                       <th className="text-caption font-semibold text-text-muted pb-3">
-                        {district.growth.coverage}
+                        {district.growth.assessed}
                       </th>
                     </tr>
                   </thead>
@@ -587,9 +578,9 @@ function GrowthMonitoringPageShared({
                         </td>
                         <td
                           className="py-3 text-body font-semibold"
-                          data-label={district.growth.coverage}
+                          data-label={district.growth.assessed}
                         >
-                          {nutritionMonitoring.source === 'api' ? '—' : `${row.coverageRate}%`}
+                          {row.assessed}
                         </td>
                       </tr>
                     ))}

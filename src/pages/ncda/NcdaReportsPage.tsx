@@ -237,11 +237,6 @@ function NcdaReportsLive() {
               />
               <StatCard
                 compact
-                label={ncda.reports.pendingReferrals}
-                value={districtReport.data?.kpis.pendingReferrals ?? '—'}
-              />
-              <StatCard
-                compact
                 label={ncda.reports.stedAssessments}
                 value={districtReport.data?.kpis.stedAssessments ?? '—'}
               />
@@ -256,7 +251,7 @@ function NcdaReportsLive() {
             isError={enrollment.isError && !enrollment.data}
             onRetry={() => void enrollment.refetch()}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               <StatCard
                 compact
                 label={ncda.reports.enrolledTotal}
@@ -271,11 +266,6 @@ function NcdaReportsLive() {
                 compact
                 label={ncda.reports.enrolledArchived}
                 value={enrollment.data?.summary.archived ?? '—'}
-              />
-              <StatCard
-                compact
-                label={ncda.reports.enrolledTransferred}
-                value={enrollment.data?.summary.transferred ?? '—'}
               />
               <StatCard
                 compact
@@ -300,11 +290,6 @@ function NcdaReportsLive() {
                 label={ncda.reports.dropouts}
                 value={dropouts.data?.summary.dropouts ?? '—'}
               />
-              <StatCard
-                compact
-                label={ncda.reports.transfersOut}
-                value={dropouts.data?.summary.transfersOut ?? '—'}
-              />
             </div>
             {!showDropoutsTable ? (
               <p className="text-caption text-text-secondary">{ncda.reports.dropoutsNeedDistrict}</p>
@@ -315,7 +300,7 @@ function NcdaReportsLive() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[36rem] text-left text-body">
+                  <table className="w-full min-w-0 sm:min-w-[36rem] text-left text-body responsive-table-cards">
                     <thead>
                       <tr className="border-b border-border text-caption text-text-secondary">
                         <th className="py-2 pr-3 font-semibold">{ncda.reports.colChild}</th>
@@ -327,12 +312,12 @@ function NcdaReportsLive() {
                     <tbody>
                       {dropoutItems.map((row) => (
                         <tr key={row.childId} className="border-b border-border/70">
-                          <td className="py-2.5 pr-3">{row.childName}</td>
-                          <td className="py-2.5 pr-3">{row.centerName}</td>
-                          <td className="py-2.5 pr-3">
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colChild}>{row.childName}</td>
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colCenter}>{row.centerName}</td>
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colArchived}>
                             {row.archivedAt?.slice(0, 10) ?? '—'}
                           </td>
-                          <td className="py-2.5">{row.archiveReason ?? '—'}</td>
+                          <td className="py-2.5" data-label={ncda.reports.colReason}>{row.archiveReason ?? '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -376,7 +361,7 @@ function NcdaReportsLive() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[48rem] text-left text-body">
+                  <table className="w-full min-w-0 sm:min-w-[48rem] text-left text-body responsive-table-cards">
                     <thead>
                       <tr className="border-b border-border text-caption text-text-secondary">
                         <th className="py-2 pr-3 font-semibold">{ncda.reports.colCenter}</th>
@@ -384,18 +369,16 @@ function NcdaReportsLive() {
                         <th className="py-2 pr-3 font-semibold">{ncda.reports.colEnrolled}</th>
                         <th className="py-2 pr-3 font-semibold">{ncda.reports.colAttendance}</th>
                         <th className="py-2 pr-3 font-semibold">{ncda.reports.colNutrition}</th>
-                        <th className="py-2 font-semibold">{ncda.reports.colReferrals}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {centersItems.map((row) => (
                         <tr key={row.centerId} className="border-b border-border/70">
-                          <td className="py-2.5 pr-3 font-medium">{row.centerName}</td>
-                          <td className="py-2.5 pr-3">{row.status}</td>
-                          <td className="py-2.5 pr-3">{row.enrolledChildren}</td>
-                          <td className="py-2.5 pr-3">{formatRate(row.attendance.rate)}</td>
-                          <td className="py-2.5 pr-3">{row.nutritionSevereScreenings}</td>
-                          <td className="py-2.5">{row.referralsPending}</td>
+                          <td className="py-2.5 pr-3 font-medium" data-label={ncda.reports.colCenter}>{row.centerName}</td>
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colStatus}>{row.status}</td>
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colEnrolled}>{row.enrolledChildren}</td>
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colAttendance}>{formatRate(row.attendance.rate)}</td>
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colNutrition}>{row.nutritionSevereScreenings}</td>
                         </tr>
                       ))}
                     </tbody>

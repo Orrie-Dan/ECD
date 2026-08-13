@@ -1,4 +1,5 @@
 import axios, { type AxiosError, isAxiosError } from 'axios'
+import { common, messages } from '@/locales/rw/common'
 
 /** Normalized API error used across interceptors, React Query, and UI. */
 export interface ApiError {
@@ -177,20 +178,30 @@ export function shouldToastApiError(error: unknown): boolean {
   return true
 }
 
+function isInternalErrorCopy(message: string): boolean {
+  return /device|x-device|uuid|local owner|not registered|identity must be|VITE_|endpoint|outbox|centerId/i.test(
+    message,
+  )
+}
+
 /** User-facing copy helper; keeps conflict/version messaging consistent. */
 export function formatApiErrorMessage(error: unknown): string {
   const apiError = normalizeApiError(error)
+  const raw = apiError.message || ''
+  if (isInternalErrorCopy(raw)) {
+    return messages.mutationFailed
+  }
   if (apiError.isConflict) {
-    return apiError.message || 'This record was updated elsewhere. Refresh and try again.'
+    return raw || common.sync.conflict
   }
   if (apiError.isNetworkError) {
-    return apiError.message || 'Network error. Check your connection and try again.'
+    return raw || common.sync.requiresInternetTitle
   }
   if (apiError.isNotFound) {
-    return apiError.message || 'The requested record was not found.'
+    return raw || messages.mutationNotFound
   }
   if (apiError.isForbidden) {
-    return apiError.message || 'You do not have permission to perform this action.'
+    return raw || messages.mutationFailed
   }
-  return apiError.message
+  return raw || messages.mutationFailed
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { TrendingUp, Ruler, Share2, ClipboardList } from 'lucide-react'
+import { TrendingUp, Ruler, ClipboardList } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { StatCard, Card } from '@/components/ui/Card'
@@ -12,6 +12,7 @@ import {
   ChartPeriodFilter,
   EnhancedBarChart,
   EnhancedPieChart,
+  formatCountTick,
   type ChartPeriodFilterValue,
 } from '@/components/charts'
 import { CHART_METRIC_COLORS, CHART_PALETTE } from '@/lib/chart-theme'
@@ -20,7 +21,6 @@ import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { NcdaDashboardSection } from '@/components/ncda/NcdaDashboardSection'
 import { env } from '@/config/env'
 import { effectiveRangeToMonitoringDates } from '@/features/monitoring'
-import { roundPct } from '@/features/monitoring'
 import {
   useNcdaMonitoringCompliance,
   useNcdaMonitoringDistrictOptions,
@@ -34,11 +34,6 @@ import { type PageSizeOption } from '@/types'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
 const STED_DEFAULT_PAGE_SIZE: PageSizeOption = 50
-
-function formatRate(rate: number | null | undefined): string {
-  if (rate == null) return ncda.monitoring.noRate
-  return `${roundPct(rate)}%`
-}
 
 function labelFromMap(key: string, map: Record<string, string>): string {
   return map[key] ?? map[key.toLowerCase()] ?? key.replaceAll('_', '–')
@@ -124,6 +119,7 @@ function NcdaMonitoringLive() {
   const emptyChart = {
     emptyMessage: ncda.monitoring.chartEmpty,
     emptyDescription: ncda.monitoring.chartEmptyDesc,
+    tone: 'white' as const,
   }
 
   const attendancePie = useMemo(
@@ -168,27 +164,6 @@ function NcdaMonitoringLive() {
     [overview.data?.nutrition],
   )
 
-  const referralsPie = useMemo(
-    () => [
-      {
-        name: ncda.monitoring.referralsPending,
-        value: overview.data?.referrals.pending ?? 0,
-        color: CHART_METRIC_COLORS.referralPending,
-      },
-      {
-        name: ncda.monitoring.referralsCompleted,
-        value: overview.data?.referrals.completed ?? 0,
-        color: CHART_METRIC_COLORS.referralCompleted,
-      },
-      {
-        name: ncda.monitoring.referralsCancelled,
-        value: overview.data?.referrals.cancelled ?? 0,
-        color: CHART_METRIC_COLORS.referralCancelled,
-      },
-    ],
-    [overview.data?.referrals],
-  )
-
   const feedingBars = useMemo(
     () => [
       {
@@ -221,11 +196,6 @@ function NcdaMonitoringLive() {
         name: ncda.monitoring.childrenArchived,
         value: overview.data?.children.archived ?? 0,
         color: CHART_METRIC_COLORS.childrenArchived,
-      },
-      {
-        name: ncda.monitoring.childrenTransferred,
-        value: overview.data?.children.transferred ?? 0,
-        color: CHART_METRIC_COLORS.childrenTransferred,
       },
     ],
     [overview.data?.children],
@@ -265,9 +235,7 @@ function NcdaMonitoringLive() {
           name: stedIsDistrict
             ? (row.districtName ?? row.districtId ?? '—')
             : (row.centerName ?? row.centerId ?? '—'),
-          value: row.childrenAssessed
-            ? roundPct(stedCoverage(row))
-            : Number(row.averageScore ?? 0),
+          value: row.assessmentsCompleted,
         })),
     [stedIsDistrict, stedItems],
   )
@@ -392,8 +360,8 @@ function NcdaMonitoringLive() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               <StatCard
                 compact
-                label={ncda.monitoring.attendanceRate}
-                value={formatRate(overview.data?.attendance.rate)}
+                label={ncda.monitoring.present}
+                value={overview.data?.attendance.present ?? '—'}
                 icon={<TrendingUp size={20} className="text-secondary" />}
                 variant="success"
               />
@@ -406,15 +374,8 @@ function NcdaMonitoringLive() {
               />
               <StatCard
                 compact
-                label={ncda.monitoring.referralsPending}
-                value={overview.data?.referrals.pending ?? '—'}
-                icon={<Share2 size={20} className="text-secondary" />}
-                variant="warning"
-              />
-              <StatCard
-                compact
-                label={ncda.monitoring.stedCoverage}
-                value={formatRate(sted.data?.summary.coverage)}
+                label={ncda.monitoring.stedCompleted}
+                value={sted.data?.summary.assessmentsCompleted ?? '—'}
                 icon={<ClipboardList size={20} className="text-secondary" />}
               />
             </div>
@@ -438,8 +399,8 @@ function NcdaMonitoringLive() {
                 <EnhancedPieChart
                   data={attendancePie}
                   ariaLabel={ncda.monitoring.chartAttendance}
-                  centerValue={formatRate(overview.data?.attendance.rate)}
-                  centerLabel={ncda.monitoring.attendanceRate}
+                  centerValue={String(overview.data?.attendance.present ?? 0)}
+                  centerLabel={ncda.monitoring.present}
                   {...emptyChart}
                 />
               </ChartPanel>
@@ -452,19 +413,13 @@ function NcdaMonitoringLive() {
                   {...emptyChart}
                 />
               </ChartPanel>
-              <ChartPanel title={ncda.monitoring.chartReferrals}>
-                <EnhancedPieChart
-                  data={referralsPie}
-                  ariaLabel={ncda.monitoring.chartReferrals}
-                  centerValue={String(overview.data?.referrals.pending ?? 0)}
-                  centerLabel={ncda.monitoring.referralsPending}
-                  {...emptyChart}
-                />
-              </ChartPanel>
               <ChartPanel title={ncda.monitoring.chartFeeding}>
                 <EnhancedBarChart
                   data={feedingBars}
                   ariaLabel={ncda.monitoring.chartFeeding}
+                  xAxisLabel={ncda.monitoring.axisCategory}
+                  yAxisLabel={ncda.monitoring.axisCount}
+                  yTickFormatter={formatCountTick}
                   {...emptyChart}
                 />
               </ChartPanel>
@@ -495,6 +450,9 @@ function NcdaMonitoringLive() {
                 <EnhancedBarChart
                   data={programBars}
                   ariaLabel={ncda.monitoring.performanceTitle}
+                  xAxisLabel={ncda.monitoring.axisCategory}
+                  yAxisLabel={ncda.monitoring.axisCount}
+                  yTickFormatter={formatCountTick}
                   {...emptyChart}
                 />
               </ChartPanel>
@@ -543,7 +501,11 @@ function NcdaMonitoringLive() {
                     layout="vertical"
                     height={Math.max(240, Math.min(stedCompareBars.length, 12) * 28 + 48)}
                     ariaLabel={ncda.monitoring.comparisonsTitle}
-                    yTickFormatter={(v) => `${v}%`}
+                    xAxisLabel={ncda.monitoring.axisCount}
+                    yAxisLabel={
+                      stedIsDistrict ? ncda.monitoring.axisDistrict : ncda.monitoring.axisCenter
+                    }
+                    yTickFormatter={formatCountTick}
                     {...emptyChart}
                   />
                 </ChartPanel>
@@ -605,6 +567,9 @@ function NcdaMonitoringLive() {
                 <EnhancedBarChart
                   data={washBars}
                   ariaLabel={ncda.monitoring.chartWash}
+                  xAxisLabel={ncda.monitoring.axisCategory}
+                  yAxisLabel={ncda.monitoring.axisCount}
+                  yTickFormatter={formatCountTick}
                   {...emptyChart}
                 />
               </ChartPanel>
@@ -657,20 +622,9 @@ function ChartPanel({
   )
 }
 
-function stedCoverage(row: {
-  assessmentsCompleted: number
-  childrenAssessed?: number
-  averageScore: number | null
-}): number {
-  if (row.childrenAssessed && row.childrenAssessed > 0) {
-    return row.assessmentsCompleted / row.childrenAssessed
-  }
-  return row.averageScore ?? 0
-}
-
 function compareStedDesc(
-  a: { assessmentsCompleted: number; childrenAssessed?: number; averageScore: number | null },
-  b: { assessmentsCompleted: number; childrenAssessed?: number; averageScore: number | null },
+  a: { assessmentsCompleted: number },
+  b: { assessmentsCompleted: number },
 ) {
-  return stedCoverage(b) - stedCoverage(a)
+  return b.assessmentsCompleted - a.assessmentsCompleted
 }

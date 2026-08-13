@@ -213,17 +213,17 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
   }, [location.pathname])
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    function handleClickOutside(e: PointerEvent) {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setShowProfileMenu(false)
       }
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('pointerdown', handleClickOutside)
+    return () => document.removeEventListener('pointerdown', handleClickOutside)
   }, [])
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-dvh bg-background flex">
       {/* Labeled sidebar only — never icon-only (design.md) */}
       <aside className="hidden lg:flex flex-col w-56 xl:w-60 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
         <SidebarBrand centerName={user?.centerName} />
@@ -250,7 +250,7 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
       </NavDrawer>
 
       <div className="flex-1 flex flex-col min-w-0 lg:ml-56 xl:ml-60">
-        <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
+        <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm safe-area-top">
           <div className="px-3 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-3">
             <div className="min-w-0 flex items-center gap-2">
               <button

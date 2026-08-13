@@ -1,11 +1,13 @@
 import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
 import { ncda, queryStaleTimes } from '@/api/query-keys'
 import {
   listAuditLogsPage,
   type AuditLogsListFilters,
 } from '@/api/resources/audit-logs'
+import { getUser } from '@/api/resources/users'
+import type { AuditNameMap } from './format'
 
 export type NcdaAuditLogsListFilters = AuditLogsListFilters
 
@@ -46,4 +48,45 @@ export function useNcdaAuditLogsList(
     enabled: env.isLive && enabled && Boolean(listFilters.from && listFilters.to),
     staleTime: queryStaleTimes.ncdaAuditLogs,
   })
+}
+
+/** Resolve actor / created-by UUIDs to display names for the current page. */
+export function useNcdaUserNames(userIds: Array<string | null | undefined>, enabled = true) {
+  const idsKey = userIds
+    .map((id) => id?.trim())
+    .filter((id): id is string => Boolean(id))
+    .sort()
+    .join('|')
+  const ids = useMemo(
+    () => (idsKey ? idsKey.split('|') : []),
+    [idsKey],
+  )
+
+  const results = useQueries({
+    queries: ids.map((id) => ({
+      queryKey: ncda.keys.users.detail(id),
+      queryFn: () => getUser(id),
+      enabled: env.isLive && enabled,
+      staleTime: queryStaleTimes.ncdaUsers,
+      retry: false,
+    })),
+  })
+
+  const names = useMemo(() => {
+    const map: AuditNameMap = new Map()
+    ids.forEach((id, index) => {
+      const user = results[index]?.data
+      const label = user?.fullName?.trim() || user?.username?.trim()
+      if (label) map.set(id, label)
+      const createdBy = user?.createdBy
+      const createdLabel = createdBy?.fullName?.trim() || createdBy?.username?.trim()
+      if (createdBy?.id && createdLabel) map.set(createdBy.id, createdLabel)
+    })
+    return map
+  }, [ids, results])
+
+  return {
+    names,
+    isLoading: results.some((result) => result.isLoading),
+  }
 }

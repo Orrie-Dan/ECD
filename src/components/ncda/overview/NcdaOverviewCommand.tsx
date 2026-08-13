@@ -208,7 +208,7 @@ export function NcdaOverviewCommand() {
           <ChartPeriodFilter
             value={periodFilter}
             onChange={setPeriodFilter}
-            className="max-w-md"
+            className="w-full md:max-w-md"
           />
         }
       />
@@ -560,19 +560,9 @@ export function NcdaOverviewCommand() {
             tone={inactiveDistricts.length > 0 ? 'warning' : 'neutral'}
           />
           <InsightChip
-            label={ncda.overview.pendingReferrals}
-            value={overview?.referrals.pending ?? '—'}
-            tone="warning"
-          />
-          <InsightChip
             label={ncda.overview.severeNutrition}
             value={overview?.nutrition.severe ?? '—'}
             tone="danger"
-          />
-          <InsightChip
-            label={ncda.overview.requiresReferral}
-            value={overview?.nutrition.requiresReferral ?? '—'}
-            tone="warning"
           />
         </div>
         <details className="rounded-lg border border-border bg-surface px-4 py-3">
@@ -758,10 +748,6 @@ function DistrictPanelBody({
         value={summary?.overview.nutrition.severe ?? '—'}
       />
       <SummaryRow
-        label={ncda.overview.panelReferrals}
-        value={summary?.overview.referrals.pending ?? '—'}
-      />
-      <SummaryRow
         label={ncda.overview.panelSted}
         value={summary?.kpis.kpis.stedAssessments ?? '—'}
       />
@@ -840,10 +826,6 @@ function CenterPanelBody({
       <SummaryRow
         label={ncda.overview.panelNutrition}
         value={summary?.nutrition.severe ?? '—'}
-      />
-      <SummaryRow
-        label={ncda.overview.panelReferrals}
-        value={center.pendingReferralsCount ?? summary?.referrals.pending ?? '—'}
       />
       <SummaryRow label={ncda.overview.panelCaregivers} value={center.caregiversCount ?? '—'} />
       <SummaryRow label={ncda.overview.panelCapacity} value={center.capacity ?? '—'} />

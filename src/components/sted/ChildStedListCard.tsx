@@ -21,7 +21,6 @@ interface ChildStedListCardProps {
   ageBand?: StedAgeBand
   lastAssessmentDate?: string
   followUpDueDate?: string
-  referred?: boolean
   outcomeNormal?: boolean
   onAssess: () => void
   onView: () => void
@@ -35,7 +34,6 @@ export function ChildStedListCard({
   ageBand,
   lastAssessmentDate,
   followUpDueDate,
-  referred = false,
   outcomeNormal = false,
   onAssess,
   onView,
@@ -87,12 +85,7 @@ export function ChildStedListCard({
                 {ageBandLabel}
               </Badge>
             )}
-            {referred && (
-              <Badge variant="warning" size="sm">
-                {caretaker.sted.outcomeReferred}
-              </Badge>
-            )}
-            {!referred && outcomeNormal && (
+            {outcomeNormal && (
               <Badge variant="success" size="sm">
                 {caretaker.sted.outcomeNormal}
               </Badge>
