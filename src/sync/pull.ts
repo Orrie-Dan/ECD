@@ -324,9 +324,12 @@ export async function pullAll(
     }
     const { hasMore } = await pullOnce(store, { deviceId: options?.deviceId })
     if (!hasMore) return
-    // Guard against hasMore without a usable nextCursor spinning forever.
+    // Stop paging and let the cycle continue to push. Throwing here used to
+    // abort the whole UI sync before outbox push (caregiver pull was flooded
+    // with district-wide ecd_center rows).
     if (hasMore && page === maxPages - 1) {
-      throw new Error('Pull pagination exceeded max pages')
+      console.warn('[sync] pull pagination reached max pages; continuing to push')
+      return
     }
   }
 }

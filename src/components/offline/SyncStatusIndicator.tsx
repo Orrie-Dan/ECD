@@ -96,9 +96,9 @@ export function SyncStatusIndicator() {
   return (
     <button
       type="button"
-      disabled={busy || sync.status === 'DEVICE_PENDING'}
+      disabled={busy}
       onClick={() => {
-        if (!busy && sync.status !== 'DEVICE_PENDING') void sync.syncNow()
+        if (!busy) void sync.syncNow()
       }}
       className="flex flex-col items-end max-w-[12rem] text-right px-2 py-1 rounded-lg hover:bg-background-subtle transition-colors disabled:opacity-70"
       title={sync.lastError ?? (busy ? common.sync.syncingBusy : common.sync.tapToSync)}
@@ -265,7 +265,7 @@ export function PendingSyncPanel({ className = '' }: { className?: string }) {
         variant="primary"
         className="mt-4"
         fullWidth
-        disabled={busy || network.status === 'OFFLINE' || sync.status === 'AUTH_REQUIRED' || sync.status === 'DEVICE_PENDING'}
+        disabled={busy || network.status === 'OFFLINE' || sync.status === 'AUTH_REQUIRED'}
         onClick={() => void sync.syncNow()}
       >
         {busy ? common.sync.syncingBusy : common.sync.syncNow}

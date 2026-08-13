@@ -11,6 +11,7 @@ import { unblockChildCreatesNeedingVillage } from '@/features/children/local-chi
 import { resolveHomeVillageId } from '@/api/resources/children'
 import { notifyDeviceRegistrationFailed } from '@/offline/DeviceRegistrationBridge'
 import { SYNC_HEARTBEAT_MS } from '@/sync/sync-types'
+import { tokenStorage } from '@/api/token-storage'
 
 /**
  * LIVE-only offline runtime: bind local owner, device ensure, network listeners, sync.
@@ -79,6 +80,11 @@ export function OfflineRuntimeProvider({ children }: { children: ReactNode }) {
       if (cancelled) return
       if (getActiveOwnerUserId() !== userId) return
 
+      const existingDevice = await getLocalStore().getDevice()
+      if (existingDevice?.id) {
+        tokenStorage.setDeviceId(existingDevice.id)
+      }
+
       const result = await ensureDeviceRegistered({
         userId,
         centerId: apiAuth.apiUser?.centerId ?? undefined,
@@ -90,19 +96,19 @@ export function OfflineRuntimeProvider({ children }: { children: ReactNode }) {
       }
       if (!result.ok && result.reason === 'network') {
         notifyDeviceRegistrationFailed('network')
-        return
+        // Fall through — workspace device id may already be restored.
       }
       if (!result.ok && result.reason === 'error') {
         notifyDeviceRegistrationFailed('error')
-        return
       }
-      // Registration failure must not wipe local data; sync may be blocked until device exists.
-      if (result.ok) {
-        engine.setAuthRequired(false)
-        await unblockChildCreatesNeedingVillage(getLocalStore(), resolveHomeVillageId)
-        if (cancelled || getActiveOwnerUserId() !== userId) return
-        await engine.syncNow()
-      }
+      // Registration failure must not wipe local data. If a workspace device
+      // id exists, sync anyway (harness always had a device id; UI logout
+      // used to leave DEVICE_PENDING with the button disabled).
+      engine.setAuthRequired(false)
+      await unblockChildCreatesNeedingVillage(getLocalStore(), resolveHomeVillageId)
+      if (cancelled || getActiveOwnerUserId() !== userId) return
+      await engine.waitUntilIdle()
+      await engine.syncNow()
     })()
 
     return () => {

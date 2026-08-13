@@ -95,6 +95,11 @@ export function mapPullChildToLocal(
   }
 }
 
+function toSyncGender(gender: string): 'male' | 'female' {
+  if (gender === 'Umukobwa' || gender === 'female') return 'female'
+  return 'male'
+}
+
 export function buildChildCreateSyncPayload(child: LocalChildRecord): Record<string, unknown> {
   return {
     registrationNumber: child.registrationNumber,
@@ -103,7 +108,7 @@ export function buildChildCreateSyncPayload(child: LocalChildRecord): Record<str
     lastName: child.lastName ?? null,
     centerId: child.centerId,
     dateOfBirth: child.dateOfBirth,
-    gender: child.gender,
+    gender: toSyncGender(child.gender),
     status: child.status,
     specialNeeds: child.specialNeeds ?? null,
     guardianName: child.guardianName,

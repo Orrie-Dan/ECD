@@ -86,12 +86,15 @@ describe('device identity isolation', () => {
 
     clearBrowserDeviceIdentity()
     tokenStorage.clearTokens()
+    expect(tokenStorage.getDeviceId()).toBeNull()
 
     const second = await ensureDeviceRegistered({ userId: 'user-a', store })
+    expect(tokenStorage.getDeviceId()).toBe(first.deviceId)
     expect(second.ok).toBe(true)
     if (!second.ok) return
     expect(second.deviceId).toBe(first.deviceId)
     expect(second.deviceUuid).toBe(first.deviceUuid)
+    expect(tokenStorage.getDeviceId()).toBe(first.deviceId)
   })
 
   it('409 from another user mints a new uuid and registers', async () => {

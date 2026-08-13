@@ -100,6 +100,13 @@ export async function ensureDeviceRegistered(options?: {
     Boolean(options?.userId) &&
     localDevice!.userId === options!.userId
 
+  // Logout clears localStorage device keys. Restore from this workspace so
+  // sync is not stuck DEVICE_PENDING while /devices/register is in flight.
+  if (sameUser && localDevice) {
+    tokenStorage.setDeviceId(localDevice.id)
+    writeDeviceUuid(localDevice.deviceUuid)
+  }
+
   let deviceUuid = sameUser ? localDevice!.deviceUuid : mintDeviceUuid()
 
   const tryRegister = async (uuid: string): Promise<EnsureDeviceResult> => {

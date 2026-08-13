@@ -73,10 +73,18 @@ export function mapPullFeedingDayToLocal(
 export function buildFeedingDaySyncPayload(
   row: LocalFeedingDayRecord,
 ): Record<string, unknown> {
+  const recordedDate = asDateOnly(row.date)
+  if (!recordedDate) {
+    throw new Error('feeding day requires date before sync')
+  }
+  const recordedById = asString(row.recordedById).trim()
+  if (!recordedById) {
+    throw new Error('feeding day requires recordedById before sync')
+  }
   return {
     centerId: row.centerId,
-    recordedDate: row.date,
-    date: row.date,
+    recordedDate,
+    date: recordedDate,
     milkServed: row.milkServed,
     porridgeServed: row.porridgeServed,
     balancedMealServed: row.balancedMealServed,
@@ -86,8 +94,8 @@ export function buildFeedingDaySyncPayload(
     animalProducts: row.animalProducts,
     fruitsVegetables: row.fruitsVegetables,
     addedFat: row.addedFat,
-    recordedBy: row.recordedById,
-    recordedById: row.recordedById,
+    recordedBy: recordedById,
+    recordedById,
   }
 }
 

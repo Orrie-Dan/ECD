@@ -140,10 +140,11 @@ export async function resolveHomeVillageId(location: {
     throw new Error(`Sector not found: ${location.sector}`)
   }
 
+  // Cells/villages are parent-scoped; production rows often have districtId=null.
+  // Passing districtId here returns [] and blocks every caregiver child create.
   const cells = await geoControllerListAdminUnits({
     level: 'cell',
     parentId: sector.id,
-    districtId: district.id,
   })
   const cell = matchName(cells, location.cell)
   if (!cell) {
@@ -153,7 +154,6 @@ export async function resolveHomeVillageId(location: {
   const villages = await geoControllerListAdminUnits({
     level: 'village',
     parentId: cell.id,
-    districtId: district.id,
   })
   const village = matchName(villages, location.village)
   if (!village) {

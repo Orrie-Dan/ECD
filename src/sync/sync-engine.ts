@@ -171,8 +171,15 @@ export class SyncEngine {
     await this.emitAsync()
 
     try {
-      const deviceId =
+      let deviceId =
         tokenStorage.getDeviceId() ?? (await cycleStore.getMeta(META_KEYS.deviceId))
+      if (!deviceId) {
+        const row = await cycleStore.getDevice()
+        deviceId = row?.id ?? null
+      }
+      if (deviceId && !tokenStorage.getDeviceId()) {
+        tokenStorage.setDeviceId(deviceId)
+      }
       if (!deviceId) {
         this.lastError = 'Device not registered'
         this.status = 'DEVICE_PENDING'
