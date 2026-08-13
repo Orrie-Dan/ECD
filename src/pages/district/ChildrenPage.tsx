@@ -1,13 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SearchFiltersPanel } from '@/components/ui/SearchFiltersPanel'
 import { DistrictChildrenFilterBar } from '@/components/district/children/DistrictChildrenFilterBar'
 import { DistrictChildrenAppliedFilters } from '@/components/district/children/DistrictChildrenAppliedFilters'
-import { ChildrenSummaryCards } from '@/components/district/children/ChildrenSummaryCards'
-import { EnrollmentTrendSection } from '@/components/district/children/EnrollmentTrendSection'
-import { ChildrenDistribution } from '@/components/district/children/ChildrenDistribution'
 import { ChildrenTableSection } from '@/components/district/children/ChildrenTableSection'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
@@ -19,13 +15,8 @@ import {
   isChildrenSearchActive,
   type ChildrenSearchFilters,
 } from '@/lib/child-filters'
-import {
-  filterDistrictChildren,
-  computeChildrenDistribution,
-  getDistrictChildrenSummary,
-  getDistrictEnrollmentTrend,
-} from '@/lib/district-children-utils'
-import { MOCK_CHILDREN, CHILDREN_DISTRIBUTION } from '@/lib/mock-data'
+import { filterDistrictChildren } from '@/lib/district-children-utils'
+import { MOCK_CHILDREN } from '@/lib/mock-data'
 import { env } from '@/config/env'
 import { useData } from '@/contexts/AppContext'
 import { district } from '@/locales/rw/district'
@@ -34,13 +25,6 @@ import type { EnrollmentPeriod } from '@/types'
 import { DEFAULT_PAGE_SIZE } from '@/types'
 import { useDistrictChildrenList } from '@/features/district/children/queries'
 import type { ChildrenListFilters } from '@/models/child'
-
-const periodLabels: Record<EnrollmentPeriod, string> = {
-  today: district.children.periodToday,
-  week: district.children.periodWeek,
-  month: district.children.periodMonth,
-  year: district.children.periodYear,
-}
 
 const DEFAULT_PERIOD: EnrollmentPeriod = 'month'
 
@@ -124,26 +108,6 @@ function DistrictChildrenPageLive() {
 
   const hasActiveFilters = isChildrenSearchActive(liveFilters)
 
-  const filteredCount = total
-  const allCount = total
-
-  const summary = useMemo(
-    () =>
-      getDistrictChildrenSummary(period, filteredCount, allCount, liveFilters, yearMonth),
-    [period, filteredCount, allCount, liveFilters, yearMonth],
-  )
-
-  const trendData = useMemo(
-    () =>
-      getDistrictEnrollmentTrend(period, filteredCount, allCount, liveFilters, yearMonth),
-    [period, filteredCount, allCount, liveFilters, yearMonth],
-  )
-
-  const distribution = useMemo(() => computeChildrenDistribution(sortedChildren), [sortedChildren])
-
-  const trendPeriodLabel =
-    period === 'year' && yearMonth ? `${periodLabels.year} — ${yearMonth}` : periodLabels[period]
-
   const hasAdvancedFilters = isChildrenSearchActive(liveFilters, {
     ...DEFAULT_CHILDREN_SEARCH,
     childName: '',
@@ -183,7 +147,7 @@ function DistrictChildrenPageLive() {
   const hasNext = serverPage < totalPages
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.children.title} subtitle={district.children.subtitle} />
         <PageContent>
@@ -246,14 +210,6 @@ function DistrictChildrenPageLive() {
 
           {!childrenQuery.isLoading ? (
             <>
-              <ChildrenSummaryCards summary={summary} isLoading={isSearchPending} />
-
-              <div className="mb-4">
-                <EnrollmentTrendSection period={period} data={trendData} periodLabel={trendPeriodLabel} />
-              </div>
-
-              <ChildrenDistribution distribution={distribution} />
-
               <ChildrenTableSection
                 children={sortedChildren}
                 searchQuery={debouncedChildName}
@@ -288,7 +244,7 @@ function DistrictChildrenPageLive() {
           />
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }
 
@@ -315,47 +271,11 @@ function DistrictChildrenPageMock() {
     [childrenSource, effectiveFilters],
   )
 
-  const summary = useMemo(
-    () =>
-      getDistrictChildrenSummary(
-        period,
-        filteredChildren.length,
-        childrenSource.length,
-        effectiveFilters,
-        yearMonth,
-      ),
-    [period, filteredChildren.length, childrenSource.length, effectiveFilters, yearMonth],
-  )
-
-  const trendData = useMemo(
-    () =>
-      getDistrictEnrollmentTrend(
-        period,
-        filteredChildren.length,
-        childrenSource.length,
-        effectiveFilters,
-        yearMonth,
-      ),
-    [period, filteredChildren.length, childrenSource.length, effectiveFilters, yearMonth],
-  )
-
   const hasActiveFilters = isChildrenSearchActive(effectiveFilters)
-
-  const distribution = useMemo(() => {
-    // MOCK: preserve existing behavior: if advanced filters are active we compute
-    // distribution from the roster; otherwise we keep the hardcoded mock distribution.
-    if (hasActiveFilters) {
-      return computeChildrenDistribution(filteredChildren)
-    }
-    return CHILDREN_DISTRIBUTION
-  }, [filteredChildren, hasActiveFilters])
 
   const pagination = usePagination(filteredChildren, {
     resetDeps: [effectiveFilters, period, yearMonth],
   })
-
-  const trendPeriodLabel =
-    period === 'year' && yearMonth ? `${periodLabels.year} — ${yearMonth}` : periodLabels[period]
 
   const hasAdvancedFilters = isChildrenSearchActive(filters, {
     ...DEFAULT_CHILDREN_SEARCH,
@@ -388,7 +308,7 @@ function DistrictChildrenPageMock() {
   }, [])
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.children.title} subtitle={district.children.subtitle} />
         <PageContent>
@@ -435,14 +355,6 @@ function DistrictChildrenPageMock() {
 
           {!childrenLoading ? (
             <>
-              <ChildrenSummaryCards summary={summary} isLoading={isSearchPending} />
-
-              <div className="mb-4">
-                <EnrollmentTrendSection period={period} data={trendData} periodLabel={trendPeriodLabel} />
-              </div>
-
-              <ChildrenDistribution distribution={distribution} />
-
               <ChildrenTableSection
                 children={pagination.items}
                 searchQuery={debouncedChildName}
@@ -471,6 +383,6 @@ function DistrictChildrenPageMock() {
           />
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

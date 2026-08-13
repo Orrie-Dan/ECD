@@ -64,14 +64,22 @@ describe('Sprint 5.5C — NCDA national dashboard contract', () => {
     })
 
     it('does not invoke unsafe national operational/list aggregations', () => {
+      const overview = fs.readFileSync(
+        root('../../components/ncda/overview/NcdaOverviewCommand.tsx'),
+        'utf8',
+      )
       expect(queries).not.toMatch(
-        /fetchMonitoringAttendance|fetchMonitoringSted|fetchMonitoringNutrition|fetchMonitoringFeeding|fetchMonitoringReferrals/,
+        /fetchMonitoringAttendance|fetchMonitoringNutrition|fetchMonitoringFeeding|fetchMonitoringReferrals/,
       )
       expect(queries).not.toMatch(/fetchEnrollmentReport|fetchDropoutsReport|fetchCentersReport/)
       expect(dashboardPage).not.toMatch(
         /\buseDashboardMonitoring\b|\buseData\(|LocalStore|SyncEngine|MOCK_DATA/,
       )
+      expect(overview).not.toMatch(
+        /\buseDashboardMonitoring\b|\buseData\(|LocalStore|SyncEngine|MOCK_DATA/,
+      )
       expect(dashboardPage).not.toMatch(/from ['"]@\/pages\/district/)
+      expect(overview).not.toMatch(/from ['"]@\/pages\/district/)
     })
   })
 
@@ -92,12 +100,16 @@ describe('Sprint 5.5C — NCDA national dashboard contract', () => {
     })
 
     it('renders unsupported section and section retry affordances', () => {
-      expect(dashboardPage).toContain('NCDA_UNSUPPORTED_METRICS')
-      expect(dashboardPage).toContain('NcdaDashboardSection')
-      expect(dashboardPage).toContain('onRetry')
-      expect(dashboardPage).toContain('ncda.dashboard.retry')
+      const overview = fs.readFileSync(
+        root('../../components/ncda/overview/NcdaOverviewCommand.tsx'),
+        'utf8',
+      )
+      expect(overview).toContain('NCDA_UNSUPPORTED_METRICS')
+      expect(overview).toContain('useNcdaDashboard')
+      expect(overview).toContain('ncda.dashboard.retry')
+      expect(overview).toContain('trendsUnavailable')
       expect(dashboardPage).toContain('LiveUnavailableState')
-      expect(dashboardPage).toContain('trendsUnavailable')
+      expect(dashboardPage).toContain('NcdaOverviewCommand')
     })
 
     it('does not treat MOCK as LIVE fallback', () => {
@@ -108,9 +120,10 @@ describe('Sprint 5.5C — NCDA national dashboard contract', () => {
   })
 
   describe('shell residual placeholders', () => {
-    it('keeps non-dashboard NCDA pages as Coming Soon without API imports', () => {
-      expect(pages).toContain('NcdaComingSoonPage')
+    it('keeps the NCDA page barrel free of data-layer imports', () => {
       expect(pages).toContain("export { NcdaDashboardPage } from './NcdaDashboardPage'")
+      expect(pages).toContain("export { NcdaRolesPage } from './NcdaRolesPage'")
+      expect(pages).toContain("export { NcdaSettingsPage } from './NcdaSettingsPage'")
       expect(pages).not.toMatch(/useQuery|@\/api\/resources|@\/api\/generated/)
     })
   })

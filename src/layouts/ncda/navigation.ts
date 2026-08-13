@@ -1,14 +1,16 @@
 import {
   LayoutDashboard,
+  Activity,
+  ClipboardCheck,
+  FileText,
+  Users,
+  Shield,
+  Settings,
+  ScrollText,
   MapPinned,
   Building2,
   Baby,
-  ClipboardCheck,
   Droplets,
-  Activity,
-  Users,
-  ScrollText,
-  FileText,
   Smartphone,
   RefreshCw,
   type LucideIcon,
@@ -17,15 +19,18 @@ import { ncda } from '@/locales/rw/ncda'
 
 export type NcdaSectionId =
   | 'dashboard'
+  | 'monitoring'
+  | 'inspections'
+  | 'reports'
+  | 'users'
+  | 'roles'
+  | 'settings'
+  | 'audit-logs'
   | 'districts'
   | 'centers'
   | 'children'
-  | 'users'
   | 'compliance'
   | 'wash'
-  | 'monitoring'
-  | 'reports'
-  | 'audit-logs'
   | 'devices'
   | 'sync'
 
@@ -44,89 +49,63 @@ export interface NcdaNavGroup {
   items: NcdaNavItem[]
 }
 
-/** Canonical NCDA route paths (Sprint 5.5B shell). */
+/** Canonical NCDA route paths. */
 export const NCDA_PATHS = {
   root: '/ncda',
   dashboard: '/ncda/dashboard',
+  overview: '/ncda/overview',
+  monitoring: '/ncda/monitoring',
+  inspections: '/ncda/inspections',
+  reports: '/ncda/reports',
+  users: '/ncda/users',
+  roles: '/ncda/roles',
+  settings: '/ncda/settings',
+  auditLogs: '/ncda/audit-logs',
   districts: '/ncda/districts',
   centers: '/ncda/centers',
   children: '/ncda/children',
-  users: '/ncda/users',
   compliance: '/ncda/compliance',
   wash: '/ncda/wash',
-  monitoring: '/ncda/monitoring',
-  reports: '/ncda/reports',
-  auditLogs: '/ncda/audit-logs',
   devices: '/ncda/devices',
   sync: '/ncda/sync',
 } as const
 
+const overviewItem: NcdaNavItem = {
+  id: 'dashboard',
+  path: NCDA_PATHS.dashboard,
+  label: ncda.nav.overview,
+  icon: LayoutDashboard,
+  matchPaths: [NCDA_PATHS.dashboard, NCDA_PATHS.overview],
+}
+
 /**
- * NCDA information architecture — distinct from District operational nav.
- * Domain pages are shell placeholders only until later sprints.
+ * Primary information architecture — GIS command centre, analytics,
+ * operational follow-up, evidence, then administration.
  */
 export const NCDA_NAV_GROUPS: NcdaNavGroup[] = [
   {
-    id: 'overview',
-    label: ncda.groups.overview,
+    id: 'command',
+    label: ncda.groups.command,
     items: [
-      {
-        id: 'dashboard',
-        path: NCDA_PATHS.dashboard,
-        label: ncda.nav.dashboard,
-        icon: LayoutDashboard,
-        matchPaths: [NCDA_PATHS.dashboard],
-      },
-    ],
-  },
-  {
-    id: 'program',
-    label: ncda.groups.program,
-    items: [
-      {
-        id: 'districts',
-        path: NCDA_PATHS.districts,
-        label: ncda.nav.districts,
-        icon: MapPinned,
-        matchPaths: [NCDA_PATHS.districts],
-      },
-      {
-        id: 'centers',
-        path: NCDA_PATHS.centers,
-        label: ncda.nav.centers,
-        icon: Building2,
-        matchPaths: [NCDA_PATHS.centers],
-      },
-      {
-        id: 'children',
-        path: NCDA_PATHS.children,
-        label: ncda.nav.children,
-        icon: Baby,
-        matchPaths: [NCDA_PATHS.children],
-      },
-    ],
-  },
-  {
-    id: 'quality',
-    label: ncda.groups.quality,
-    items: [
-      {
-        id: 'compliance',
-        path: NCDA_PATHS.compliance,
-        label: ncda.nav.compliance,
-        icon: ClipboardCheck,
-      },
-      {
-        id: 'wash',
-        path: NCDA_PATHS.wash,
-        label: ncda.nav.wash,
-        icon: Droplets,
-      },
+      overviewItem,
       {
         id: 'monitoring',
         path: NCDA_PATHS.monitoring,
         label: ncda.nav.monitoring,
         icon: Activity,
+      },
+      {
+        id: 'inspections',
+        path: NCDA_PATHS.inspections,
+        label: ncda.nav.inspections,
+        icon: ClipboardCheck,
+        matchPaths: [NCDA_PATHS.inspections, NCDA_PATHS.compliance],
+      },
+      {
+        id: 'reports',
+        path: NCDA_PATHS.reports,
+        label: ncda.nav.reports,
+        icon: FileText,
       },
     ],
   },
@@ -142,6 +121,19 @@ export const NCDA_NAV_GROUPS: NcdaNavGroup[] = [
         matchPaths: [NCDA_PATHS.users],
       },
       {
+        id: 'roles',
+        path: NCDA_PATHS.roles,
+        label: ncda.nav.roles,
+        icon: Shield,
+      },
+      {
+        id: 'settings',
+        path: NCDA_PATHS.settings,
+        label: ncda.nav.settings,
+        icon: Settings,
+        matchPaths: [NCDA_PATHS.settings, NCDA_PATHS.devices, NCDA_PATHS.sync],
+      },
+      {
         id: 'audit-logs',
         path: NCDA_PATHS.auditLogs,
         label: ncda.nav.auditLogs,
@@ -150,46 +142,73 @@ export const NCDA_NAV_GROUPS: NcdaNavGroup[] = [
       },
     ],
   },
+]
+
+/**
+ * Deep-linkable geographic / operational surfaces that are no longer
+ * primary destinations. Kept for titles, redirects, and contract tests.
+ */
+export const NCDA_CONTEXTUAL_ITEMS: NcdaNavItem[] = [
   {
-    id: 'reporting',
-    label: ncda.groups.reporting,
-    items: [
-      {
-        id: 'reports',
-        path: NCDA_PATHS.reports,
-        label: ncda.nav.reports,
-        icon: FileText,
-      },
-    ],
+    id: 'districts',
+    path: NCDA_PATHS.districts,
+    label: ncda.nav.districts,
+    icon: MapPinned,
+    matchPaths: [NCDA_PATHS.districts],
   },
   {
-    id: 'platform',
-    label: ncda.groups.platform,
-    items: [
-      {
-        id: 'devices',
-        path: NCDA_PATHS.devices,
-        label: ncda.nav.devices,
-        icon: Smartphone,
-      },
-      {
-        id: 'sync',
-        path: NCDA_PATHS.sync,
-        label: ncda.nav.sync,
-        icon: RefreshCw,
-      },
-    ],
+    id: 'centers',
+    path: NCDA_PATHS.centers,
+    label: ncda.nav.centers,
+    icon: Building2,
+    matchPaths: [NCDA_PATHS.centers],
+  },
+  {
+    id: 'children',
+    path: NCDA_PATHS.children,
+    label: ncda.nav.children,
+    icon: Baby,
+    matchPaths: [NCDA_PATHS.children],
+  },
+  {
+    id: 'compliance',
+    path: NCDA_PATHS.compliance,
+    label: ncda.nav.inspections,
+    icon: ClipboardCheck,
+    matchPaths: [NCDA_PATHS.compliance],
+  },
+  {
+    id: 'wash',
+    path: NCDA_PATHS.wash,
+    label: ncda.nav.wash,
+    icon: Droplets,
+    matchPaths: [NCDA_PATHS.wash],
+  },
+  {
+    id: 'devices',
+    path: NCDA_PATHS.devices,
+    label: ncda.nav.devices,
+    icon: Smartphone,
+    matchPaths: [NCDA_PATHS.devices],
+  },
+  {
+    id: 'sync',
+    path: NCDA_PATHS.sync,
+    label: ncda.nav.sync,
+    icon: RefreshCw,
+    matchPaths: [NCDA_PATHS.sync],
   },
 ]
 
 export const NCDA_NAV_ITEMS: NcdaNavItem[] = NCDA_NAV_GROUPS.flatMap((g) => g.items)
 
+const NCDA_RESOLVE_ITEMS: NcdaNavItem[] = [...NCDA_NAV_ITEMS, ...NCDA_CONTEXTUAL_ITEMS]
+
 export function findNcdaNavItem(pathname: string): NcdaNavItem | undefined {
   if (pathname === NCDA_PATHS.root) {
     return NCDA_NAV_ITEMS.find((item) => item.id === 'dashboard')
   }
-  // Prefer the longest matching path so /ncda does not steal /ncda/users.
-  const ranked = [...NCDA_NAV_ITEMS].sort((a, b) => b.path.length - a.path.length)
+  const ranked = [...NCDA_RESOLVE_ITEMS].sort((a, b) => b.path.length - a.path.length)
   return ranked.find((item) => {
     if (item.matchPaths?.length) {
       return item.matchPaths.some(
@@ -202,4 +221,12 @@ export function findNcdaNavItem(pathname: string): NcdaNavItem | undefined {
 
 export function getNcdaPageTitle(pathname: string): string {
   return findNcdaNavItem(pathname)?.label ?? ncda.brand
+}
+
+export function isNcdaOverviewPath(pathname: string): boolean {
+  return (
+    pathname === NCDA_PATHS.dashboard ||
+    pathname === NCDA_PATHS.overview ||
+    pathname === NCDA_PATHS.root
+  )
 }

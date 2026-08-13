@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ApiProviders } from '@/api/providers/ApiProviders'
 import { ApiErrorBridge } from '@/api/providers/ApiErrorBridge'
 import { DeviceRegistrationBridge } from '@/offline/DeviceRegistrationBridge'
@@ -24,6 +24,8 @@ import { StedWizardPage } from '@/pages/caretaker/StedWizardPage'
 import { StedHistoryPage } from '@/pages/caretaker/StedHistoryPage'
 import { SettingsPage } from '@/pages/caretaker/SettingsPage'
 import { MorePage } from '@/pages/caretaker/MorePage'
+import { DistrictLayout } from '@/layouts/DistrictLayout'
+import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { DistrictDashboardPage } from '@/pages/district/DashboardPage'
 import { CentersPage } from '@/pages/district/CentersPage'
 import { CenterDetailPage } from '@/pages/district/CenterDetailPage'
@@ -35,8 +37,8 @@ import { GrowthMonitoringPage } from '@/pages/district/GrowthMonitoringPage'
 import { FeedingMonitoringPage } from '@/pages/district/FeedingMonitoringPage'
 import { StedMonitoringPage } from '@/pages/district/StedMonitoringPage'
 import { ReferralMonitoringPage } from '@/pages/district/ReferralMonitoringPage'
-import { GisAnalyticsPage } from '@/pages/district/GisAnalyticsPage'
 import { GukurikiranaPage } from '@/pages/district/GukurikiranaPage'
+import { DistrictMonitoringPage } from '@/pages/district/DistrictMonitoringPage'
 import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
 import { DistrictCaregiversPage } from '@/pages/district/DistrictCaregiversPage'
 import { DistrictCaregiverDetailPage } from '@/pages/district/DistrictCaregiverDetailPage'
@@ -56,11 +58,16 @@ import {
   NcdaMonitoringPage,
   NcdaReportsPage,
   NcdaAuditLogsPage,
-  NcdaDevicesPage,
-  NcdaSyncPage,
+  NcdaRolesPage,
+  NcdaSettingsPage,
 } from '@/pages/ncda/NcdaPages'
 import { useAuth } from '@/contexts/AppContext'
 import { homePathForUser } from '@/api/roles'
+
+function RedirectWithSearch({ to }: { to: string }) {
+  const { search } = useLocation()
+  return <Navigate to={`${to}${search}`} replace />
+}
 
 function HomeRoute() {
   const { isAuthenticated, user, isAuthLoading } = useAuth()
@@ -112,48 +119,95 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRole="districtOfficer" />}>
-                  <Route path="/district" element={<DistrictDashboardPage />} />
-                  <Route path="/district/ibigo" element={<CentersPage />} />
-                  <Route path="/district/ibigo/:id" element={<CenterDetailPage />} />
-                  <Route path="/district/abana" element={<DistrictChildrenPage />} />
-                  <Route path="/district/abana/:id" element={<DistrictChildDetailPage />} />
-                  <Route path="/district/abakoresha" element={<DistrictCaregiversPage />} />
-                  <Route path="/district/abakoresha/:userId" element={<DistrictCaregiverDetailPage />} />
-                  <Route path="/district/attendance" element={<DistrictAttendancePage />} />
-                  <Route path="/district/imikurire" element={<GrowthMonitoringPage />} />
-                  <Route path="/district/imirire" element={<FeedingMonitoringPage />} />
-                  <Route path="/district/sted" element={<StedMonitoringPage />} />
-                  <Route path="/district/referrals" element={<ReferralMonitoringPage />} />
-                  <Route path="/district/raporo" element={<DistrictReportsPage />} />
-                  <Route path="/district/ikarita" element={<GisAnalyticsPage />} />
-                  <Route path="/district/gukurikirana" element={<GukurikiranaPage />} />
-                  <Route
-                    path="/district/ibikurikiranywa"
-                    element={<Navigate to="/district/gukurikirana" replace />}
-                  />
-                  <Route path="/district/igenamiterere" element={<DistrictSettingsPage />} />
+                  <Route element={<DistrictLayout />}>
+                    <Route path="/district" element={<DistrictDashboardPage />} />
+                    <Route path="/district/ibigo" element={<CentersPage />} />
+                    <Route path="/district/ibigo/:id" element={<CenterDetailPage />} />
+                    <Route path="/district/abana" element={<DistrictChildrenPage />} />
+                    <Route path="/district/abana/:id" element={<DistrictChildDetailPage />} />
+                    <Route path="/district/abakoresha" element={<DistrictCaregiversPage />} />
+                    <Route path="/district/abakoresha/:userId" element={<DistrictCaregiverDetailPage />} />
+                    <Route path="/district/imikorere" element={<DistrictMonitoringPage />} />
+                    <Route path="/district/imikorere/ubwitabire" element={<DistrictAttendancePage />} />
+                    <Route path="/district/imikorere/imikurire" element={<GrowthMonitoringPage />} />
+                    <Route path="/district/imikorere/imirire" element={<FeedingMonitoringPage />} />
+                    <Route path="/district/imikorere/sted" element={<StedMonitoringPage />} />
+                    <Route path="/district/gukurikirana" element={<GukurikiranaPage />} />
+                    <Route path="/district/referrals" element={<ReferralMonitoringPage />} />
+                    <Route path="/district/raporo" element={<DistrictReportsPage />} />
+                    <Route path="/district/igenamiterere" element={<DistrictSettingsPage />} />
+                    <Route
+                      path="/district/attendance"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.monitoringAttendance} />}
+                    />
+                    <Route
+                      path="/district/imikurire"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.monitoringGrowth} />}
+                    />
+                    <Route
+                      path="/district/imirire"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.monitoringFeeding} />}
+                    />
+                    <Route
+                      path="/district/sted"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.monitoringSted} />}
+                    />
+                    <Route
+                      path="/district/gukurikirana/kohereza"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.followupReferrals} />}
+                    />
+                    <Route
+                      path="/district/ikarita"
+                      element={<Navigate to={DISTRICT_PATHS.dashboard} replace />}
+                    />
+                    <Route
+                      path="/district/ibikurikiranywa"
+                      element={<Navigate to={DISTRICT_PATHS.followup} replace />}
+                    />
+                    <Route
+                      path="/district/monitoring"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.monitoring} />}
+                    />
+                    <Route
+                      path="/district/follow-up"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.followup} />}
+                    />
+                  </Route>
                 </Route>
 
                 {/* Sprint 5.5B/5.5C — NCDA Admin shell + national dashboard */}
                 <Route element={<ProtectedRoute allowedRole="ncda" />}>
                   <Route element={<NcdaLayout />}>
                     <Route path="/ncda" element={<Navigate to="/ncda/dashboard" replace />} />
+                    <Route path="/ncda/overview" element={<NcdaDashboardPage />} />
                     <Route path="/ncda/dashboard" element={<NcdaDashboardPage />} />
+                    <Route path="/ncda/monitoring" element={<NcdaMonitoringPage />} />
+                    <Route path="/ncda/inspections" element={<NcdaCompliancePage />} />
+                    <Route path="/ncda/reports" element={<NcdaReportsPage />} />
+                    <Route path="/ncda/users" element={<NcdaUsersPage />} />
+                    <Route path="/ncda/users/:userId" element={<NcdaUserDetailPage />} />
+                    <Route path="/ncda/roles" element={<NcdaRolesPage />} />
+                    <Route path="/ncda/settings" element={<NcdaSettingsPage />} />
+                    <Route path="/ncda/audit-logs" element={<NcdaAuditLogsPage />} />
                     <Route path="/ncda/districts" element={<NcdaDistrictsPage />} />
                     <Route path="/ncda/districts/:districtId" element={<NcdaDistrictDetailPage />} />
                     <Route path="/ncda/centers" element={<NcdaCentersPage />} />
                     <Route path="/ncda/centers/:centerId" element={<NcdaCenterDetailPage />} />
                     <Route path="/ncda/children" element={<NcdaChildrenPage />} />
                     <Route path="/ncda/children/:childId" element={<NcdaChildDetailPage />} />
-                    <Route path="/ncda/users" element={<NcdaUsersPage />} />
-                    <Route path="/ncda/users/:userId" element={<NcdaUserDetailPage />} />
-                    <Route path="/ncda/compliance" element={<NcdaCompliancePage />} />
+                    <Route
+                      path="/ncda/compliance"
+                      element={<RedirectWithSearch to="/ncda/inspections" />}
+                    />
                     <Route path="/ncda/wash" element={<NcdaWashPage />} />
-                    <Route path="/ncda/monitoring" element={<NcdaMonitoringPage />} />
-                    <Route path="/ncda/reports" element={<NcdaReportsPage />} />
-                    <Route path="/ncda/audit-logs" element={<NcdaAuditLogsPage />} />
-                    <Route path="/ncda/devices" element={<NcdaDevicesPage />} />
-                    <Route path="/ncda/sync" element={<NcdaSyncPage />} />
+                    <Route
+                      path="/ncda/devices"
+                      element={<RedirectWithSearch to="/ncda/settings" />}
+                    />
+                    <Route
+                      path="/ncda/sync"
+                      element={<RedirectWithSearch to="/ncda/settings" />}
+                    />
                     <Route path="/ncda/*" element={<Navigate to="/ncda/dashboard" replace />} />
                   </Route>
                 </Route>

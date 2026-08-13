@@ -1,6 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ChildDetailContent } from '@/components/children/ChildDetailContent'
 import { SkeletonCard } from '@/components/ui/Skeleton'
@@ -26,9 +25,9 @@ function DistrictChildDetailPageLive() {
 
   if (detailQuery.isLoading && !child) {
     return (
-      <DistrictLayout>
+      <>
         <SkeletonCard lines={6} />
-      </DistrictLayout>
+      </>
     )
   }
 
@@ -36,7 +35,7 @@ function DistrictChildDetailPageLive() {
     const notFound = isNotFoundError(detailQuery.error)
     if (notFound) {
       return (
-        <DistrictLayout>
+        <>
           <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
           <Link
             to="/district/abana"
@@ -45,11 +44,11 @@ function DistrictChildDetailPageLive() {
             <ArrowLeft size={18} aria-hidden />
             {common.back}
           </Link>
-        </DistrictLayout>
+        </>
       )
     }
     return (
-      <DistrictLayout>
+      <>
         <EmptyState title={common.error} description={common.live.unavailableDesc} />
         <Button
           type="button"
@@ -59,13 +58,13 @@ function DistrictChildDetailPageLive() {
         >
           {common.reset}
         </Button>
-      </DistrictLayout>
+      </>
     )
   }
 
   if (!child) {
     return (
-      <DistrictLayout>
+      <>
         <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
         <Link
           to="/district/abana"
@@ -74,12 +73,12 @@ function DistrictChildDetailPageLive() {
           <ArrowLeft size={18} aria-hidden />
           {common.back}
         </Link>
-      </DistrictLayout>
+      </>
     )
   }
 
   return (
-    <DistrictLayout>
+    <>
       <Link
         to="/district/abana"
         className="inline-flex items-center gap-2 text-body font-semibold text-text-secondary hover:text-primary transition-colors mb-4"
@@ -88,7 +87,7 @@ function DistrictChildDetailPageLive() {
         {common.back}
       </Link>
       <ChildDetailContent child={child} showActions={false} />
-    </DistrictLayout>
+    </>
   )
 }
 
@@ -100,7 +99,7 @@ function DistrictChildDetailPageMock() {
 
   if (!child) {
     return (
-      <DistrictLayout>
+      <>
         <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
         <Link
           to="/district/abana"
@@ -109,12 +108,12 @@ function DistrictChildDetailPageMock() {
           <ArrowLeft size={18} aria-hidden />
           {common.back}
         </Link>
-      </DistrictLayout>
+      </>
     )
   }
 
   return (
-    <DistrictLayout>
+    <>
       <Link
         to="/district/abana"
         className="inline-flex items-center gap-2 text-body font-semibold text-text-secondary hover:text-primary transition-colors mb-4"
@@ -123,6 +122,6 @@ function DistrictChildDetailPageMock() {
         {common.back}
       </Link>
       <ChildDetailContent child={child} showActions={false} />
-    </DistrictLayout>
+    </>
   )
 }

@@ -71,3 +71,52 @@ export function getVillages(
 export function toLocationOptions(names: string[]) {
   return names.map((name) => ({ value: name, label: name }))
 }
+
+/** All districts grouped by province key, in display order. */
+export function getDistrictsByProvince(): Array<{
+  provinceKey: string
+  provinceName: string
+  districts: string[]
+}> {
+  return PROVINCES.map((province) => ({
+    provinceKey: province.id,
+    provinceName: province.name,
+    districts: getDistricts(province.id),
+  }))
+}
+
+/** Resolve which province a district name belongs to (case-insensitive). */
+export function getProvinceKeyForDistrict(districtName: string): string | null {
+  const needle = districtName.trim().toLowerCase()
+  if (!needle) return null
+  for (const province of PROVINCES) {
+    const match = getDistricts(province.id).find((name) => name.toLowerCase() === needle)
+    if (match) return province.id
+  }
+  return null
+}
+
+/**
+ * Best-effort sector lookup from a village name within a district.
+ * Used when center DTOs expose villageName but not sectorId.
+ */
+export function findSectorForVillage(
+  districtName: string,
+  villageName: string,
+): string | null {
+  const provinceKey = getProvinceKeyForDistrict(districtName)
+  if (!provinceKey || !villageName.trim()) return null
+  const villageNeedle = villageName.trim().toLowerCase()
+  const districtKey =
+    getDistricts(provinceKey).find((name) => name.toLowerCase() === districtName.trim().toLowerCase()) ??
+    districtName
+  for (const sector of getSectors(provinceKey, districtKey)) {
+    for (const cell of getCells(provinceKey, districtKey, sector)) {
+      const hit = getVillages(provinceKey, districtKey, sector, cell).find(
+        (village) => village.toLowerCase() === villageNeedle,
+      )
+      if (hit) return sector
+    }
+  }
+  return null
+}

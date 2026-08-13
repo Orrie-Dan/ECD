@@ -117,13 +117,21 @@ function NcdaDistrictDetailLive() {
   )
 
   const backLink = (
-    <Link
-      to={NCDA_PATHS.districts}
-      className="inline-flex items-center gap-1.5 text-caption font-semibold text-primary hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
-    >
-      <ArrowLeft size={14} aria-hidden />
-      {ncda.districts.backToList}
-    </Link>
+    <div className="flex flex-wrap items-center gap-3">
+      <Link
+        to={NCDA_PATHS.districts}
+        className="inline-flex items-center gap-1.5 text-caption font-semibold text-primary hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
+      >
+        <ArrowLeft size={14} aria-hidden />
+        {ncda.districts.backToList}
+      </Link>
+      <Link
+        to={`${NCDA_PATHS.dashboard}?district=${encodeURIComponent(districtId)}`}
+        className="text-caption font-semibold text-primary hover:underline"
+      >
+        {ncda.overview.openOnMap}
+      </Link>
+    </div>
   )
 
   if (detail.isError && !detail.data) {

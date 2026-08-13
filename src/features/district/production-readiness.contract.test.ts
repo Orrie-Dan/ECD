@@ -9,18 +9,20 @@ describe('Sprint 5.4 District production readiness', () => {
     const content = fs.readFileSync(path.resolve(__dirname, '../../App.tsx'), 'utf8')
     expect(content).toContain('ReferralMonitoringPage')
     expect(content).toContain('path="/district/referrals"')
+    expect(content).toContain('path="/district/gukurikirana/kohereza"')
   })
 
-  it('District layout exposes monitoring routes in sidebar nav', () => {
+  it('District navigation groups monitoring domains under Imikorere', () => {
     const content = fs.readFileSync(
-      path.resolve(__dirname, '../../layouts/DistrictLayout.tsx'),
+      path.resolve(__dirname, '../../layouts/district/navigation.ts'),
       'utf8',
     )
-    expect(content).toContain("path: '/district/attendance'")
-    expect(content).toContain("path: '/district/imikurire'")
-    expect(content).toContain("path: '/district/imirire'")
-    expect(content).toContain("path: '/district/sted'")
-    expect(content).toContain("path: '/district/referrals'")
+    expect(content).toContain("monitoring: '/district/imikorere'")
+    expect(content).toContain("monitoringAttendance: '/district/imikorere/ubwitabire'")
+    expect(content).toContain("monitoringGrowth: '/district/imikorere/imikurire'")
+    expect(content).toContain("monitoringFeeding: '/district/imikorere/imirire'")
+    expect(content).toContain("monitoringSted: '/district/imikorere/sted'")
+    expect(content).toContain("followupReferrals: '/district/referrals'")
   })
 
   it('App mounts an error boundary', () => {

@@ -90,6 +90,14 @@ function NcdaCentersLive() {
         title={ncda.sections.centers.title}
         subtitle={ncda.centers.subtitle}
         size="compact"
+        action={
+          <Link
+            to={NCDA_PATHS.dashboard}
+            className="text-caption font-semibold text-primary hover:underline"
+          >
+            {ncda.overview.openOnMap}
+          </Link>
+        }
       />
 
       <PageContent>

@@ -17,7 +17,6 @@ import {
   ClipboardList,
   Activity,
 } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card, StatCard } from '@/components/ui/Card'
@@ -232,18 +231,18 @@ export function CenterDetailPage() {
   if (env.isLive) {
     if (liveCenterQ.isLoading) {
       return (
-        <DistrictLayout>
+        <>
           <PageContainer>
             <SkeletonPage label={district.centerDetail.schoolInfo} stats={4} />
           </PageContainer>
-        </DistrictLayout>
+        </>
       )
     }
 
     const live = liveCenterQ.data
     if (liveCenterQ.isError || !live) {
       return (
-        <DistrictLayout>
+        <>
           <PageContainer>
             <PageContent>
               <LiveUnavailableState
@@ -266,12 +265,12 @@ export function CenterDetailPage() {
               </Link>
             </PageContent>
           </PageContainer>
-        </DistrictLayout>
+        </>
       )
     }
 
     return (
-      <DistrictLayout>
+      <>
         <PageContainer>
           <PageHeader
             title={live.name}
@@ -355,18 +354,18 @@ export function CenterDetailPage() {
             </Link>
           </PageContent>
         </PageContainer>
-      </DistrictLayout>
+      </>
     )
   }
 
   if (!center) {
     return (
-      <DistrictLayout>
+      <>
         <p className="text-body-lg text-text-secondary">{district.centerDetail.notFound}</p>
         <Link to="/district/ibigo" className="text-primary font-semibold mt-4 inline-block">
           ← {district.centerDetail.back}
         </Link>
-      </DistrictLayout>
+      </>
     )
   }
 
@@ -463,7 +462,7 @@ export function CenterDetailPage() {
   ]
 
   return (
-    <DistrictLayout>
+    <>
       <Link
         to="/district/ibigo"
         className="inline-flex items-center gap-2 text-body font-semibold text-primary hover:underline mb-4"
@@ -694,7 +693,7 @@ export function CenterDetailPage() {
           description={center.name}
           height="220px"
           headerAction={
-            <Link to="/district/ikarita">
+            <Link to="/district">
               <Button variant="tertiary" size="sm" icon={<Map size={16} />}>
                 {district.centerDetail.viewLargeMap}
               </Button>
@@ -721,7 +720,7 @@ export function CenterDetailPage() {
           ))}
         </ul>
       </Card>
-    </DistrictLayout>
+    </>
   )
 }
 

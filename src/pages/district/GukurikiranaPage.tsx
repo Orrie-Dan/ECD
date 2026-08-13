@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, StatCard } from '@/components/ui/Card'
@@ -10,12 +9,24 @@ import { SegmentedTabs } from '@/components/ui/SegmentedTabs'
 import { ActionAlertsList } from '@/components/district/ActionAlertCard'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { SkeletonPage } from '@/components/ui/Skeleton'
+import { EnhancedPieChart } from '@/components/charts'
+import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { env } from '@/config/env'
 import { ACTION_ALERTS } from '@/lib/mock-data'
 import { useFollowUpAlerts } from '@/features/alerts'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
+import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import type { FollowUpAlertCategory, FollowUpAlertViewModel } from '@/models/alerts'
+
+const OPERATIONAL_CATEGORIES = ['attendance', 'nutrition', 'data_quality'] as const
+
+const liveCategories = [
+  { id: 'all', label: district.followup.filterAll },
+  { id: 'attendance', label: district.followup.filterAttendance },
+  { id: 'nutrition', label: district.followup.filterNutrition },
+  { id: 'data_quality', label: district.followup.filterDataQuality },
+] as const
 
 const mockCategories = [
   { id: 'all', label: district.followup.filterAll },
@@ -26,16 +37,14 @@ const mockCategories = [
   { id: 'operational', label: district.followup.filterOperational },
 ] as const
 
-const liveCategories = [
-  { id: 'all', label: district.followup.filterAll },
-  { id: 'attendance', label: district.followup.filterAttendance },
-  { id: 'nutrition', label: district.followup.filterNutrition },
-  { id: 'referral', label: district.nav.referrals },
-  { id: 'data_quality', label: district.followup.filterDataQuality },
-] as const
-
 type LiveCategoryFilter = (typeof liveCategories)[number]['id']
 type MockCategoryFilter = (typeof mockCategories)[number]['id']
+
+const liveCategoryLabels: Record<(typeof OPERATIONAL_CATEGORIES)[number], string> = {
+  attendance: district.followup.filterAttendance,
+  nutrition: district.followup.filterNutrition,
+  data_quality: district.followup.filterDataQuality,
+}
 
 const priorityStyles = {
   high: { emoji: '🔴', badge: 'bg-error-light text-error border-error/30' },
@@ -43,22 +52,53 @@ const priorityStyles = {
   low: { emoji: '🟢', badge: 'bg-success-light text-success border-success/30' },
 } as const
 
+function isOperationalCategory(
+  category: FollowUpAlertCategory,
+): category is (typeof OPERATIONAL_CATEGORIES)[number] {
+  return (OPERATIONAL_CATEGORIES as readonly string[]).includes(category)
+}
+
+function suggestedActionFor(alert: FollowUpAlertViewModel): string {
+  if (alert.category === 'attendance') return district.followup.contactCenter
+  if (alert.category === 'nutrition') return district.followup.reviewNutrition
+  if (alert.category === 'data_quality') return district.followup.verifyRecords
+  return district.followup.supportCaretaker
+}
+
+function formatDetectedAt(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('rw-RW', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 function LiveFollowUpAlertCard({ alert }: { alert: FollowUpAlertViewModel }) {
   const style = priorityStyles[alert.priority]
+  const categoryLabel = isOperationalCategory(alert.category)
+    ? liveCategoryLabels[alert.category]
+    : alert.category
+  const childHref = alert.childId ? `${DISTRICT_PATHS.children}/${alert.childId}` : null
+  const centerHref = alert.centerId ? `${DISTRICT_PATHS.centers}/${alert.centerId}` : null
+
   const body = (
     <div className="p-5">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-lg shrink-0" aria-hidden>
-            {style.emoji}
-          </span>
+        <div className="min-w-0">
           <h3 className="text-body font-bold text-text truncate">
             {alert.centerName ?? alert.title}
           </h3>
+          <p className="text-caption text-text-secondary mt-1">
+            {categoryLabel}
+            {alert.detectedAt ? ` · ${district.followup.detectedAt} ${formatDetectedAt(alert.detectedAt)}` : ''}
+          </p>
         </div>
         <span
           className={`text-caption font-semibold px-2.5 py-1 rounded-full border shrink-0 ${style.badge}`}
         >
+          <span aria-hidden>{style.emoji} </span>
           {alert.priority === 'high'
             ? district.followup.priorityHigh
             : alert.priority === 'medium'
@@ -66,10 +106,18 @@ function LiveFollowUpAlertCard({ alert }: { alert: FollowUpAlertViewModel }) {
               : district.followup.priorityLow}
         </span>
       </div>
-      <p className="text-caption text-text-secondary mb-3">{alert.title}</p>
-      <p className="text-body text-text mb-4">{alert.description}</p>
-      {alert.metrics.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
+
+      <p className="text-body text-text mb-3">{alert.description || alert.title}</p>
+
+      {alert.childName ? (
+        <p className="text-caption text-text-secondary mb-3">
+          {district.followup.childLabel}:{' '}
+          <span className="font-semibold text-text">{alert.childName}</span>
+        </p>
+      ) : null}
+
+      {alert.metrics.length > 0 ? (
+        <div className="flex flex-wrap gap-2 mb-4">
           {alert.metrics.map((metric) => (
             <span
               key={`${metric.label}-${metric.value}`}
@@ -80,35 +128,53 @@ function LiveFollowUpAlertCard({ alert }: { alert: FollowUpAlertViewModel }) {
             </span>
           ))}
         </div>
-      )}
-      <p className="text-caption text-text-muted mt-3">
-        Read-only — nta dismiss/acknowledge kuri API.
-      </p>
+      ) : null}
+
+      <div className="rounded-lg border border-primary/20 bg-primary-light/30 px-4 py-3">
+        <p className="text-caption font-semibold text-primary mb-1">
+          {district.followup.suggestedAction}
+        </p>
+        <p className="text-body text-text">{suggestedActionFor(alert)}</p>
+      </div>
     </div>
   )
 
-  if (!alert.centerId) {
+  const footer = (label: string) => (
+    <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-background-subtle/50 rounded-b-xl">
+      <span className="text-caption font-semibold text-primary">{label}</span>
+      <ChevronRight
+        size={16}
+        className="text-primary opacity-60 group-hover:opacity-100"
+        aria-hidden
+      />
+    </div>
+  )
+
+  if (childHref) {
     return (
-      <div className="rounded-xl border border-border bg-surface">{body}</div>
+      <Link
+        to={childHref}
+        className="block rounded-xl border border-border bg-surface hover:border-primary/40 hover:shadow-md transition-all group"
+      >
+        {body}
+        {footer(district.followup.viewChild)}
+      </Link>
     )
   }
 
-  return (
-    <Link
-      to={`/district/ibigo/${alert.centerId}`}
-      className="block rounded-xl border border-border bg-surface hover:border-primary/40 hover:shadow-md transition-all group"
-    >
-      {body}
-      <div className="flex items-center justify-between px-5 py-3 border-t border-border bg-background-subtle/50 rounded-b-xl">
-        <span className="text-caption font-semibold text-primary">{district.followup.viewCenter}</span>
-        <ChevronRight
-          size={16}
-          className="text-primary opacity-60 group-hover:opacity-100"
-          aria-hidden
-        />
-      </div>
-    </Link>
-  )
+  if (centerHref) {
+    return (
+      <Link
+        to={centerHref}
+        className="block rounded-xl border border-border bg-surface hover:border-primary/40 hover:shadow-md transition-all group"
+      >
+        {body}
+        {footer(district.followup.viewCenter)}
+      </Link>
+    )
+  }
+
+  return <div className="rounded-xl border border-border bg-surface">{body}</div>
 }
 
 function GukurikiranaPageLive() {
@@ -122,135 +188,227 @@ function GukurikiranaPageLive() {
   )
   const alertsQ = useFollowUpAlerts(filters)
 
-  const items = alertsQ.data?.items ?? []
+  const items = useMemo(
+    () => (alertsQ.data?.items ?? []).filter((item) => isOperationalCategory(item.category)),
+    [alertsQ.data?.items],
+  )
   const counts = alertsQ.data?.counts
+  const operationalTotal =
+    (counts?.attendance ?? 0) + (counts?.nutrition ?? 0) + (counts?.data_quality ?? 0)
 
   return (
-    <DistrictLayout>
-      <PageContainer>
-        <PageHeader title={district.followup.title} subtitle={district.followup.subtitle} />
-        <PageContent className="space-y-6">
-          {alertsQ.isError ? (
-            <LiveUnavailableState
-              title={common.error}
-              description="Ntibyashoboye kubona ibyitonderwa kuri API. Ongera ugerageze."
-              action={
-                <Button type="button" variant="primary" onClick={() => void alertsQ.refetch()}>
-                  {common.reset}
-                </Button>
-              }
+    <PageContainer>
+      <PageHeader title={district.followup.title} subtitle={district.followup.subtitle} />
+      <PageContent className="space-y-6">
+        {alertsQ.isError ? (
+          <LiveUnavailableState
+            title={common.error}
+            description={district.followup.loadError}
+            action={
+              <Button type="button" variant="primary" onClick={() => void alertsQ.refetch()}>
+                {common.reset}
+              </Button>
+            }
+          />
+        ) : alertsQ.isLoading ? (
+          <SkeletonPage label={district.followup.title} stats={4} />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
+              <StatCard
+                compact
+                label={district.followup.totalAlerts}
+                value={operationalTotal || items.length}
+                variant="info"
+              />
+              <StatCard
+                compact
+                label={district.followup.highPriority}
+                value={counts?.high ?? 0}
+                variant="danger"
+              />
+              <StatCard
+                compact
+                label={district.followup.filterAttendance}
+                value={counts?.attendance ?? 0}
+              />
+              <StatCard
+                compact
+                label={district.followup.filterNutrition}
+                value={counts?.nutrition ?? 0}
+                variant="warning"
+              />
+            </div>
+
+            <FollowUpCharts
+              categorySlices={[
+                {
+                  name: district.followup.filterAttendance,
+                  value: counts?.attendance ?? 0,
+                  color: CHART_METRIC_COLORS.attendance,
+                },
+                {
+                  name: district.followup.filterNutrition,
+                  value: counts?.nutrition ?? 0,
+                  color: CHART_METRIC_COLORS.nutritionSevere,
+                },
+                {
+                  name: district.followup.filterDataQuality,
+                  value: counts?.data_quality ?? 0,
+                  color: CHART_METRIC_COLORS.teachers,
+                },
+              ]}
+              items={items}
             />
-          ) : alertsQ.isLoading ? (
-            <SkeletonPage label={district.followup.title} stats={3} />
-          ) : (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
-                <div className="h-full [&>div]:h-full">
-                  <StatCard
-                    compact
-                    label={district.followup.totalAlerts}
-                    value={alertsQ.data?.total ?? items.length}
-                    variant="info"
-                  />
-                </div>
-                <div className="h-full [&>div]:h-full">
-                  <StatCard
-                    compact
-                    label={district.followup.highPriority}
-                    value={counts?.high ?? 0}
-                    variant="danger"
-                  />
-                </div>
-                <div className="h-full [&>div]:h-full">
-                  <StatCard
-                    compact
-                    label={district.followup.filterAttendance}
-                    value={counts?.attendance ?? 0}
-                  />
-                </div>
-              </div>
 
-              <Card padding="lg">
-                <SegmentedTabs
-                  options={[...liveCategories]}
-                  value={category}
-                  onChange={setCategory}
-                  aria-label={district.followup.title}
-                  columns={3}
-                />
+            <Card padding="lg">
+              <SegmentedTabs
+                options={[...liveCategories]}
+                value={category}
+                onChange={setCategory}
+                aria-label={district.followup.title}
+                columns={4}
+              />
+            </Card>
+
+            {items.length === 0 ? (
+              <Card padding="lg" className="border-success/20 bg-success-light/20">
+                <p className="text-body font-semibold text-success">{district.followup.empty}</p>
+                <p className="text-caption text-text-secondary mt-1">
+                  {district.followup.emptyDesc}
+                </p>
               </Card>
-
-              {items.length === 0 ? (
-                <Card padding="lg" className="border-success/20 bg-success-light/20">
-                  <p className="text-body font-semibold text-success">{district.followup.empty}</p>
-                  <p className="text-caption text-text-secondary mt-1">
-                    {district.followup.emptyDesc}
-                  </p>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {items.map((alert) => (
-                    <LiveFollowUpAlertCard key={alert.id} alert={alert} />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-        </PageContent>
-      </PageContainer>
-    </DistrictLayout>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {items.map((alert) => (
+                  <LiveFollowUpAlertCard key={alert.id} alert={alert} />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </PageContent>
+    </PageContainer>
   )
 }
 
 function GukurikiranaPageMock() {
   const [category, setCategory] = useState<MockCategoryFilter>('all')
-  const highCount = ACTION_ALERTS.filter((a) => a.priority === 'high').length
+  const operationalAlerts = ACTION_ALERTS.filter((alert) => alert.type !== 'referral_required')
+  const visible =
+    category === 'all'
+      ? operationalAlerts
+      : operationalAlerts.filter((alert) => alert.category === category)
+  const highCount = operationalAlerts.filter((a) => a.priority === 'high').length
 
   return (
-    <DistrictLayout>
-      <PageContainer>
-        <PageHeader title={district.followup.title} subtitle={district.followup.subtitle} />
-        <PageContent className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">
-            <div className="h-full [&>div]:h-full">
-              <StatCard
-                compact
-                label={district.followup.totalAlerts}
-                value={ACTION_ALERTS.length}
-                variant="info"
-              />
-            </div>
-            <div className="h-full [&>div]:h-full">
-              <StatCard
-                compact
-                label={district.followup.highPriority}
-                value={highCount}
-                variant="danger"
-              />
-            </div>
-            <div className="h-full [&>div]:h-full">
-              <StatCard
-                compact
-                label={district.followup.filterAttendance}
-                value={ACTION_ALERTS.filter((a) => a.category === 'attendance').length}
-              />
-            </div>
-          </div>
+    <PageContainer>
+      <PageHeader title={district.followup.title} subtitle={district.followup.subtitle} />
+      <PageContent className="space-y-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
+          <StatCard
+            compact
+            label={district.followup.totalAlerts}
+            value={operationalAlerts.length}
+            variant="info"
+          />
+          <StatCard
+            compact
+            label={district.followup.highPriority}
+            value={highCount}
+            variant="danger"
+          />
+          <StatCard
+            compact
+            label={district.followup.filterAttendance}
+            value={operationalAlerts.filter((a) => a.category === 'attendance').length}
+          />
+          <StatCard
+            compact
+            label={district.followup.filterNutrition}
+            value={operationalAlerts.filter((a) => a.category === 'nutrition').length}
+            variant="warning"
+          />
+        </div>
 
-          <Card padding="lg">
-            <SegmentedTabs
-              options={[...mockCategories]}
-              value={category}
-              onChange={setCategory}
-              aria-label={district.followup.title}
-              columns={3}
-            />
-          </Card>
+        <FollowUpCharts
+          categorySlices={mockCategories
+            .filter((c) => c.id !== 'all')
+            .map((c) => ({
+              name: c.label,
+              value: operationalAlerts.filter((a) => a.category === c.id).length,
+            }))}
+          items={visible}
+        />
 
-          <ActionAlertsList category={category} />
-        </PageContent>
-      </PageContainer>
-    </DistrictLayout>
+        <Card padding="lg">
+          <SegmentedTabs
+            options={[...mockCategories]}
+            value={category}
+            onChange={setCategory}
+            aria-label={district.followup.title}
+            columns={3}
+          />
+        </Card>
+
+        <ActionAlertsList category={category} />
+      </PageContent>
+    </PageContainer>
+  )
+}
+
+function FollowUpCharts({
+  categorySlices,
+  items,
+}: {
+  categorySlices: Array<{ name: string; value: number; color?: string }>
+  items: Array<{ priority: 'high' | 'medium' | 'low' }>
+}) {
+  const prioritySlices = [
+    {
+      name: district.followup.priorityHigh,
+      value: items.filter((item) => item.priority === 'high').length,
+      color: CHART_METRIC_COLORS.dropouts,
+    },
+    {
+      name: district.followup.priorityMedium,
+      value: items.filter((item) => item.priority === 'medium').length,
+      color: CHART_METRIC_COLORS.alerts,
+    },
+    {
+      name: district.followup.priorityLow,
+      value: items.filter((item) => item.priority === 'low').length,
+      color: CHART_METRIC_COLORS.attendance,
+    },
+  ]
+  const emptyChart = {
+    emptyMessage: district.followup.chartEmpty,
+    emptyDescription: district.followup.chartEmptyDesc,
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <Card padding="md" className="space-y-2">
+        <h2 className="text-body font-semibold text-text">{district.followup.chartByCategory}</h2>
+        <EnhancedPieChart
+          data={categorySlices}
+          ariaLabel={district.followup.chartByCategory}
+          centerValue={String(categorySlices.reduce((sum, slice) => sum + slice.value, 0))}
+          centerLabel={district.followup.totalAlerts}
+          {...emptyChart}
+        />
+      </Card>
+      <Card padding="md" className="space-y-2">
+        <h2 className="text-body font-semibold text-text">{district.followup.chartByPriority}</h2>
+        <EnhancedPieChart
+          data={prioritySlices}
+          ariaLabel={district.followup.chartByPriority}
+          centerValue={String(prioritySlices[0]?.value ?? 0)}
+          centerLabel={district.followup.highPriority}
+          {...emptyChart}
+        />
+      </Card>
+    </div>
   )
 }
 

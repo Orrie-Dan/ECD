@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { ArrowLeft, Building2, CalendarDays, CheckCircle2, Eye, AlertTriangle, XCircle } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
+import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -226,11 +227,15 @@ function DistrictAttendancePageShared({
   }
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader
           title={district.attendanceMonitoring.title}
           subtitle={district.attendanceMonitoring.subtitle}
+        />
+        <DistrictWorkspaceNav
+          items={DISTRICT_MONITORING_TABS}
+          ariaLabel={district.monitoringHub.title}
         />
         <PageContent>
       <Card padding="lg" className="mb-6 space-y-5">
@@ -650,6 +655,6 @@ function DistrictAttendancePageShared({
       )}
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

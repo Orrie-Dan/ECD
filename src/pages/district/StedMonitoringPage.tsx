@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
+import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -98,9 +99,13 @@ function StedMonitoringPageShared({
   }, [data?.items, mockComparisons, source])
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.sted.title} description={district.sted.subtitle} />
+        <DistrictWorkspaceNav
+          items={DISTRICT_MONITORING_TABS}
+          ariaLabel={district.monitoringHub.title}
+        />
         <PageContent className="space-y-6">
           {isLoading ? (
             <SkeletonPage label={district.sted.title} stats={5} />
@@ -252,6 +257,6 @@ function StedMonitoringPageShared({
           )}
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

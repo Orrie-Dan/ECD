@@ -36,6 +36,13 @@ export type EnsureDeviceResult =
   | { ok: true; deviceId: string; deviceUuid: string }
   | { ok: false; reason: 'mock' | 'network' | 'unauthorized' | 'error'; error?: string }
 
+const DEVICE_REGISTER_RETRY_MS = 800
+const DEVICE_REGISTER_RETRY_MAX_MS = 8_000
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 async function persistBinding(
   store: LocalStore,
   response: {
@@ -86,6 +93,11 @@ export async function ensureDeviceRegistered(options?: {
   userId?: string
   centerId?: string
   store?: LocalStore
+  /**
+   * When true, a cached same-user device is not treated as success — the
+   * server must acknowledge POST /devices/register. Used by LIVE login.
+   */
+  requireServerAck?: boolean
 }): Promise<EnsureDeviceResult> {
   if (env.isMock) {
     return { ok: false, reason: 'mock' }
@@ -120,7 +132,7 @@ export async function ensureDeviceRegistered(options?: {
         return { ok: false, reason: 'unauthorized', error: apiError.message }
       }
       if (apiError.isNetworkError) {
-        if (sameUser && localDevice) {
+        if (sameUser && localDevice && !options?.requireServerAck) {
           tokenStorage.setDeviceId(localDevice.id)
           return { ok: true, deviceId: localDevice.id, deviceUuid: localDevice.deviceUuid }
         }
@@ -140,6 +152,39 @@ export async function ensureDeviceRegistered(options?: {
   }
 
   return result
+}
+
+/**
+ * Keep calling `ensureDeviceRegistered` until the server (or allowed cache)
+ * succeeds. Stops immediately on 401 / MOCK. Login uses `requireServerAck`
+ * so a cached id is not enough to enter the app.
+ */
+export async function ensureDeviceRegisteredUntilOk(options: {
+  userId: string
+  centerId?: string
+  store?: LocalStore
+  requireServerAck?: boolean
+  signal?: AbortSignal
+  maxAttempts?: number
+  sleepFn?: (ms: number) => Promise<void>
+}): Promise<EnsureDeviceResult> {
+  const wait = options.sleepFn ?? sleep
+  let delay = DEVICE_REGISTER_RETRY_MS
+  let attempt = 0
+  let last: EnsureDeviceResult = { ok: false, reason: 'error', error: 'not attempted' }
+
+  for (;;) {
+    if (options.signal?.aborted) {
+      return last.ok ? last : { ok: false, reason: 'error', error: 'aborted' }
+    }
+    attempt += 1
+    last = await ensureDeviceRegistered(options)
+    if (last.ok) return last
+    if (last.reason === 'unauthorized' || last.reason === 'mock') return last
+    if (options.maxAttempts !== undefined && attempt >= options.maxAttempts) return last
+    await wait(delay)
+    delay = Math.min(delay * 2, DEVICE_REGISTER_RETRY_MAX_MS)
+  }
 }
 
 /** Stable client device UUID for the current account session (not the registry id). */

@@ -1,16 +1,6 @@
-import { useMemo, useState } from 'react'
-import {
-  Building2,
-  Baby,
-  UserCheck,
-  UserMinus,
-  TrendingUp,
-  Ruler,
-  Utensils,
-  Share2,
-  ClipboardList,
-  AlertTriangle,
-} from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { TrendingUp, Ruler, Share2, ClipboardList } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { StatCard, Card } from '@/components/ui/Card'
@@ -18,7 +8,13 @@ import { Button } from '@/components/ui/Button'
 import { SelectInput } from '@/components/ui/FormField'
 import { Pagination } from '@/components/ui/Pagination'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
+import {
+  ChartPeriodFilter,
+  EnhancedBarChart,
+  EnhancedPieChart,
+  type ChartPeriodFilterValue,
+} from '@/components/charts'
+import { CHART_METRIC_COLORS, CHART_PALETTE } from '@/lib/chart-theme'
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { NcdaDashboardSection } from '@/components/ncda/NcdaDashboardSection'
@@ -26,7 +22,6 @@ import { env } from '@/config/env'
 import { effectiveRangeToMonitoringDates } from '@/features/monitoring'
 import { roundPct } from '@/features/monitoring'
 import {
-  NCDA_MONITORING_UNAVAILABLE,
   useNcdaMonitoringCompliance,
   useNcdaMonitoringDistrictOptions,
   useNcdaMonitoringKpis,
@@ -35,13 +30,30 @@ import {
   useNcdaMonitoringWash,
 } from '@/features/ncda/monitoring/queries'
 import { ncda } from '@/locales/rw/ncda'
-import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
+import { type PageSizeOption } from '@/types'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
+const STED_DEFAULT_PAGE_SIZE: PageSizeOption = 50
 
 function formatRate(rate: number | null | undefined): string {
   if (rate == null) return ncda.monitoring.noRate
   return `${roundPct(rate)}%`
+}
+
+function labelFromMap(key: string, map: Record<string, string>): string {
+  return map[key] ?? map[key.toLowerCase()] ?? key.replaceAll('_', '–')
+}
+
+function recordToBars(
+  record: Record<string, number> | undefined,
+  labels: Record<string, string>,
+): Array<{ name: string; value: number; color: string }> {
+  if (!record) return []
+  return Object.entries(record).map(([key, value], index) => ({
+    name: labelFromMap(key, labels),
+    value: Number(value) || 0,
+    color: CHART_PALETTE[index % CHART_PALETTE.length],
+  }))
 }
 
 /**
@@ -70,10 +82,11 @@ export function NcdaMonitoringPage() {
 }
 
 function NcdaMonitoringLive() {
+  const [params] = useSearchParams()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
-  const [districtId, setDistrictId] = useState('all')
+  const [districtId, setDistrictId] = useState(() => params.get('district')?.trim() || 'all')
   const [stedPage, setStedPage] = useState(1)
-  const [stedPageSize, setStedPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
+  const [stedPageSize, setStedPageSize] = useState<PageSizeOption>(STED_DEFAULT_PAGE_SIZE)
   const effectiveRange = useMemo(
     () => resolveEffectiveDateRange(periodFilter),
     [periodFilter],
@@ -108,6 +121,221 @@ function NcdaMonitoringLive() {
   const stedEnd = stedTotal === 0 ? 0 : Math.min(stedPage * stedPageSize, stedTotal)
   const stedIsDistrict = sted.data?.granularity === 'district'
 
+  const emptyChart = {
+    emptyMessage: ncda.monitoring.chartEmpty,
+    emptyDescription: ncda.monitoring.chartEmptyDesc,
+  }
+
+  const attendancePie = useMemo(
+    () => [
+      {
+        name: ncda.monitoring.present,
+        value: overview.data?.attendance.present ?? 0,
+        color: CHART_METRIC_COLORS.present,
+      },
+      {
+        name: ncda.monitoring.absent,
+        value: overview.data?.attendance.absent ?? 0,
+        color: CHART_METRIC_COLORS.absent,
+      },
+    ],
+    [overview.data?.attendance.absent, overview.data?.attendance.present],
+  )
+
+  const nutritionPie = useMemo(
+    () => [
+      {
+        name: ncda.monitoring.nutritionNormal,
+        value: overview.data?.nutrition.normal ?? 0,
+        color: CHART_METRIC_COLORS.nutritionNormal,
+      },
+      {
+        name: ncda.monitoring.nutritionAtRisk,
+        value: overview.data?.nutrition.atRisk ?? 0,
+        color: CHART_METRIC_COLORS.nutritionAtRisk,
+      },
+      {
+        name: ncda.monitoring.nutritionModerate,
+        value: overview.data?.nutrition.moderate ?? 0,
+        color: CHART_METRIC_COLORS.nutritionModerate,
+      },
+      {
+        name: ncda.monitoring.nutritionSevere,
+        value: overview.data?.nutrition.severe ?? 0,
+        color: CHART_METRIC_COLORS.nutritionSevere,
+      },
+    ],
+    [overview.data?.nutrition],
+  )
+
+  const referralsPie = useMemo(
+    () => [
+      {
+        name: ncda.monitoring.referralsPending,
+        value: overview.data?.referrals.pending ?? 0,
+        color: CHART_METRIC_COLORS.referralPending,
+      },
+      {
+        name: ncda.monitoring.referralsCompleted,
+        value: overview.data?.referrals.completed ?? 0,
+        color: CHART_METRIC_COLORS.referralCompleted,
+      },
+      {
+        name: ncda.monitoring.referralsCancelled,
+        value: overview.data?.referrals.cancelled ?? 0,
+        color: CHART_METRIC_COLORS.referralCancelled,
+      },
+    ],
+    [overview.data?.referrals],
+  )
+
+  const feedingBars = useMemo(
+    () => [
+      {
+        name: ncda.monitoring.feedingMilk,
+        value: overview.data?.feeding.daysWithMilk ?? 0,
+        color: CHART_METRIC_COLORS.feedingMilk,
+      },
+      {
+        name: ncda.monitoring.feedingPorridge,
+        value: overview.data?.feeding.daysWithPorridge ?? 0,
+        color: CHART_METRIC_COLORS.feedingPorridge,
+      },
+      {
+        name: ncda.monitoring.feedingBalanced,
+        value: overview.data?.feeding.daysWithBalancedMeal ?? 0,
+        color: CHART_METRIC_COLORS.feedingBalanced,
+      },
+    ],
+    [overview.data?.feeding],
+  )
+
+  const childrenPie = useMemo(
+    () => [
+      {
+        name: ncda.monitoring.activeChildren,
+        value: overview.data?.children.active ?? 0,
+        color: CHART_METRIC_COLORS.childrenActive,
+      },
+      {
+        name: ncda.monitoring.childrenArchived,
+        value: overview.data?.children.archived ?? 0,
+        color: CHART_METRIC_COLORS.childrenArchived,
+      },
+      {
+        name: ncda.monitoring.childrenTransferred,
+        value: overview.data?.children.transferred ?? 0,
+        color: CHART_METRIC_COLORS.childrenTransferred,
+      },
+    ],
+    [overview.data?.children],
+  )
+
+  const programBars = useMemo(
+    () => [
+      {
+        name: ncda.monitoring.newRegistrations,
+        value: kpis.data?.kpis.newRegistrations ?? 0,
+        color: CHART_METRIC_COLORS.newRegistrations,
+      },
+      {
+        name: ncda.monitoring.dropouts,
+        value: kpis.data?.kpis.dropouts ?? 0,
+        color: CHART_METRIC_COLORS.dropouts,
+      },
+      {
+        name: ncda.monitoring.stedAssessments,
+        value: kpis.data?.kpis.stedAssessments ?? 0,
+        color: CHART_METRIC_COLORS.schools,
+      },
+      {
+        name: ncda.monitoring.complianceAssessments,
+        value: compliance.data?.summary.totalAssessments ?? 0,
+        color: CHART_METRIC_COLORS.alerts,
+      },
+    ],
+    [compliance.data?.summary.totalAssessments, kpis.data?.kpis],
+  )
+
+  const stedCompareBars = useMemo(
+    () =>
+      [...stedItems]
+        .sort(compareStedDesc)
+        .map((row) => ({
+          name: stedIsDistrict
+            ? (row.districtName ?? row.districtId ?? '—')
+            : (row.centerName ?? row.centerId ?? '—'),
+          value: row.childrenAssessed
+            ? roundPct(stedCoverage(row))
+            : Number(row.averageScore ?? 0),
+        })),
+    [stedIsDistrict, stedItems],
+  )
+
+  const stedAgeBars = useMemo(
+    () =>
+      recordToBars(sted.data?.summary.ageBandDistribution, {
+        '1_3': ncda.monitoring.stedAge1_3,
+        '4_6': ncda.monitoring.stedAge4_6,
+      }),
+    [sted.data?.summary.ageBandDistribution],
+  )
+
+  const stedOutcomePie = useMemo(
+    () =>
+      recordToBars(sted.data?.summary.outcomeDistribution, {
+        normal: ncda.monitoring.stedNormal,
+        referred: ncda.monitoring.stedReferred,
+        NORMAL: ncda.monitoring.stedNormal,
+        REFERRED: ncda.monitoring.stedReferred,
+      }),
+    [sted.data?.summary.outcomeDistribution],
+  )
+
+  const compliancePie = useMemo(
+    () =>
+      recordToBars(compliance.data?.summary.byStatus, {
+        draft: ncda.monitoring.statusDraft,
+        submitted: ncda.monitoring.statusSubmitted,
+        verified: ncda.monitoring.statusVerified,
+        rejected: ncda.monitoring.statusRejected,
+        DRAFT: ncda.monitoring.statusDraft,
+        SUBMITTED: ncda.monitoring.statusSubmitted,
+        VERIFIED: ncda.monitoring.statusVerified,
+        REJECTED: ncda.monitoring.statusRejected,
+      }),
+    [compliance.data?.summary.byStatus],
+  )
+
+  const washSnapshot = wash.data?.summary.latestSnapshot
+  const washBars = useMemo(
+    () => [
+      {
+        name: ncda.monitoring.washWater,
+        value: washSnapshot?.waterSourceAvailable ?? 0,
+        color: CHART_METRIC_COLORS.washWater,
+      },
+      {
+        name: ncda.monitoring.washSanitation,
+        value: washSnapshot?.sanitationFacilityAvailable ?? 0,
+        color: CHART_METRIC_COLORS.washSanitation,
+      },
+      {
+        name: ncda.monitoring.washHandwashing,
+        value: washSnapshot?.handwashingFacilityAvailable ?? 0,
+        color: CHART_METRIC_COLORS.washHandwashing,
+      },
+      {
+        name: ncda.monitoring.washWaste,
+        value: washSnapshot?.wasteManagementAvailable ?? 0,
+        color: CHART_METRIC_COLORS.washWaste,
+      },
+    ],
+    [washSnapshot],
+  )
+
+  const washCentersReporting = wash.data?.summary.reporting.centersReporting
+
   return (
     <PageContainer>
       <PageHeader
@@ -116,9 +344,6 @@ function NcdaMonitoringLive() {
         size="compact"
       />
       <PageContent>
-        <p className="mb-2 text-caption text-text-secondary">{ncda.monitoring.scopeLabel}</p>
-        <p className="mb-4 text-caption text-text-muted">{ncda.monitoring.nationalNote}</p>
-
         <div className="mb-4 space-y-3">
           <ChartPeriodFilter
             value={periodFilter}
@@ -131,7 +356,10 @@ function NcdaMonitoringLive() {
             </label>
             <SelectInput
               value={districtId}
-              onChange={(e) => setDistrictId(e.target.value)}
+              onChange={(e) => {
+                setDistrictId(e.target.value)
+                setStedPage(1)
+              }}
             >
               <option value="all">{ncda.monitoring.districtAll}</option>
               {(districts.data?.items ?? []).map((d) => (
@@ -149,135 +377,132 @@ function NcdaMonitoringLive() {
         <div className="space-y-8">
           <NcdaDashboardSection
             title={ncda.monitoring.overviewTitle}
-            isLoading={overview.isLoading && !overview.data && !overview.isError}
-            isError={overview.isError && !overview.data}
-            onRetry={() => void overview.refetch()}
+            isLoading={
+              (overview.isLoading && !overview.data && !overview.isError) ||
+              (sted.isLoading && !sted.data && !sted.isError)
+            }
+            isError={
+              overview.isError && !overview.data && sted.isError && !sted.data
+            }
+            onRetry={() => {
+              void overview.refetch()
+              void sted.refetch()
+            }}
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
               <StatCard
                 compact
-                label={ncda.monitoring.centers}
-                value={overview.data?.centersInScope ?? '—'}
-                icon={<Building2 size={20} className="text-secondary" />}
+                label={ncda.monitoring.attendanceRate}
+                value={formatRate(overview.data?.attendance.rate)}
+                icon={<TrendingUp size={20} className="text-secondary" />}
+                variant="success"
               />
               <StatCard
                 compact
-                label={ncda.monitoring.activeChildren}
-                value={overview.data?.children.active ?? '—'}
-                icon={<Baby size={20} className="text-secondary" />}
+                label={ncda.monitoring.nutritionSevere}
+                value={overview.data?.nutrition.severe ?? '—'}
+                icon={<Ruler size={20} className="text-secondary" />}
+                variant="danger"
               />
               <StatCard
                 compact
-                label={ncda.monitoring.childrenTotal}
-                value={overview.data?.children.total ?? '—'}
-                icon={<UserCheck size={20} className="text-secondary" />}
+                label={ncda.monitoring.referralsPending}
+                value={overview.data?.referrals.pending ?? '—'}
+                icon={<Share2 size={20} className="text-secondary" />}
+                variant="warning"
               />
               <StatCard
                 compact
-                label={ncda.monitoring.newRegistrations}
-                value={kpis.data?.kpis.newRegistrations ?? '—'}
+                label={ncda.monitoring.stedCoverage}
+                value={formatRate(sted.data?.summary.coverage)}
+                icon={<ClipboardList size={20} className="text-secondary" />}
               />
             </div>
           </NcdaDashboardSection>
 
           <NcdaDashboardSection
-            title={ncda.monitoring.performanceTitle}
+            title={ncda.monitoring.analyticsTitle}
+            variant="charts"
             isLoading={
               (overview.isLoading && !overview.data && !overview.isError) ||
               (kpis.isLoading && !kpis.data && !kpis.isError)
             }
-            isError={
-              (overview.isError && !overview.data) && (kpis.isError && !kpis.data)
-            }
+            isError={overview.isError && !overview.data && kpis.isError && !kpis.data}
             onRetry={() => {
               void overview.refetch()
               void kpis.refetch()
             }}
           >
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-                <StatCard
-                  compact
-                  label={ncda.monitoring.attendanceRate}
-                  value={formatRate(overview.data?.attendance.rate)}
-                  icon={<TrendingUp size={20} className="text-secondary" />}
-                  variant="success"
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChartPanel title={ncda.monitoring.chartAttendance}>
+                <EnhancedPieChart
+                  data={attendancePie}
+                  ariaLabel={ncda.monitoring.chartAttendance}
+                  centerValue={formatRate(overview.data?.attendance.rate)}
+                  centerLabel={ncda.monitoring.attendanceRate}
+                  {...emptyChart}
                 />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.present}
-                  value={overview.data?.attendance.present ?? '—'}
+              </ChartPanel>
+              <ChartPanel title={ncda.monitoring.chartNutrition}>
+                <EnhancedPieChart
+                  data={nutritionPie}
+                  ariaLabel={ncda.monitoring.chartNutrition}
+                  centerValue={String(overview.data?.nutrition.screenings ?? 0)}
+                  centerLabel={ncda.monitoring.nutritionScreenings}
+                  {...emptyChart}
                 />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.absent}
-                  value={overview.data?.attendance.absent ?? '—'}
-                  icon={<UserMinus size={20} className="text-secondary" />}
-                  variant="warning"
+              </ChartPanel>
+              <ChartPanel title={ncda.monitoring.chartReferrals}>
+                <EnhancedPieChart
+                  data={referralsPie}
+                  ariaLabel={ncda.monitoring.chartReferrals}
+                  centerValue={String(overview.data?.referrals.pending ?? 0)}
+                  centerLabel={ncda.monitoring.referralsPending}
+                  {...emptyChart}
                 />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.centersReporting}
-                  value={overview.data?.attendance.centersReporting ?? '—'}
+              </ChartPanel>
+              <ChartPanel title={ncda.monitoring.chartFeeding}>
+                <EnhancedBarChart
+                  data={feedingBars}
+                  ariaLabel={ncda.monitoring.chartFeeding}
+                  {...emptyChart}
                 />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-                <StatCard
-                  compact
-                  label={ncda.monitoring.nutritionScreenings}
-                  value={overview.data?.nutrition.screenings ?? '—'}
-                  icon={<Ruler size={20} className="text-secondary" />}
+              </ChartPanel>
+            </div>
+          </NcdaDashboardSection>
+
+          <NcdaDashboardSection
+            title={ncda.monitoring.secondarySnapshot}
+            variant="charts"
+            isLoading={
+              (overview.isLoading && !overview.data && !overview.isError) ||
+              (kpis.isLoading && !kpis.data && !kpis.isError)
+            }
+            isError={overview.isError && !overview.data}
+            onRetry={() => void overview.refetch()}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChartPanel title={ncda.monitoring.chartChildren}>
+                <EnhancedPieChart
+                  data={childrenPie}
+                  ariaLabel={ncda.monitoring.chartChildren}
+                  centerValue={String(overview.data?.children.total ?? 0)}
+                  centerLabel={ncda.monitoring.childrenTotal}
+                  {...emptyChart}
                 />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.nutritionSevere}
-                  value={overview.data?.nutrition.severe ?? '—'}
-                  variant="danger"
+              </ChartPanel>
+              <ChartPanel title={ncda.monitoring.performanceTitle}>
+                <EnhancedBarChart
+                  data={programBars}
+                  ariaLabel={ncda.monitoring.performanceTitle}
+                  {...emptyChart}
                 />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.feedingDays}
-                  value={overview.data?.feeding.daysRecorded ?? '—'}
-                  icon={<Utensils size={20} className="text-secondary" />}
-                />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.referralsPending}
-                  value={overview.data?.referrals.pending ?? '—'}
-                  icon={<Share2 size={20} className="text-secondary" />}
-                  variant="warning"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-                <StatCard
-                  compact
-                  label={ncda.monitoring.stedAssessments}
-                  value={kpis.data?.kpis.stedAssessments ?? '—'}
-                  icon={<ClipboardList size={20} className="text-secondary" />}
-                />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.dropouts}
-                  value={kpis.data?.kpis.dropouts ?? '—'}
-                />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.complianceAssessments}
-                  value={compliance.data?.summary.totalAssessments ?? '—'}
-                  icon={<AlertTriangle size={20} className="text-secondary" />}
-                />
-                <StatCard
-                  compact
-                  label={ncda.monitoring.washCentersReporting}
-                  value={wash.data?.summary.reporting.centersReporting ?? '—'}
-                />
-              </div>
+              </ChartPanel>
             </div>
           </NcdaDashboardSection>
 
           <Card padding="md" className="border-border space-y-4">
             <h2 className="text-subheading font-semibold text-text">{ncda.monitoring.stedTitle}</h2>
-            <p className="text-caption text-text-muted">{ncda.monitoring.stedHint}</p>
             {sted.isError && !sted.data ? (
               <div className="space-y-3">
                 <p className="text-body text-text-secondary">{ncda.monitoring.stedError}</p>
@@ -286,111 +511,112 @@ function NcdaMonitoringLive() {
                 </Button>
               </div>
             ) : sted.isLoading && !sted.data ? (
-              <Skeleton height="6rem" className="w-full" rounded="md" />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Skeleton height="16rem" className="w-full" rounded="lg" />
+                <Skeleton height="16rem" className="w-full" rounded="lg" />
+              </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-                  <StatCard
-                    compact
-                    label={ncda.monitoring.stedCompleted}
-                    value={sted.data?.summary.assessmentsCompleted ?? '—'}
-                  />
-                  <StatCard
-                    compact
-                    label={ncda.monitoring.stedChildrenAssessed}
-                    value={sted.data?.summary.childrenAssessed ?? '—'}
-                  />
-                  <StatCard
-                    compact
-                    label={ncda.monitoring.stedCoverage}
-                    value={formatRate(sted.data?.summary.coverage)}
-                  />
-                  <StatCard
-                    compact
-                    label={ncda.monitoring.stedAvgScore}
-                    value={sted.data?.summary.averageScore ?? '—'}
-                  />
-                </div>
-                {stedItems.length === 0 ? (
-                  <p className="text-body text-text-secondary">{ncda.monitoring.stedEmpty}</p>
-                ) : (
-                  <>
-                    <div className="overflow-x-auto">
-                      <table className="w-full min-w-[36rem] text-left text-body">
-                        <thead>
-                          <tr className="border-b border-border text-caption text-text-secondary">
-                            <th className="py-2 pr-3 font-semibold">
-                              {stedIsDistrict
-                                ? ncda.monitoring.colDistrict
-                                : ncda.monitoring.colCenter}
-                            </th>
-                            <th className="py-2 pr-3 font-semibold">
-                              {ncda.monitoring.stedCompleted}
-                            </th>
-                            {stedIsDistrict ? (
-                              <th className="py-2 pr-3 font-semibold">
-                                {ncda.monitoring.stedChildrenAssessed}
-                              </th>
-                            ) : null}
-                            <th className="py-2 font-semibold">{ncda.monitoring.stedAvgScore}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {stedItems.map((row) => (
-                            <tr
-                              key={row.districtId ?? row.centerId ?? row.assessmentsCompleted}
-                              className="border-b border-border/70"
-                            >
-                              <td className="py-2.5 pr-3 font-medium">
-                                {stedIsDistrict
-                                  ? row.districtName ?? row.districtId
-                                  : row.centerName ?? row.centerId}
-                              </td>
-                              <td className="py-2.5 pr-3">{row.assessmentsCompleted}</td>
-                              {stedIsDistrict ? (
-                                <td className="py-2.5 pr-3">{row.childrenAssessed ?? '—'}</td>
-                              ) : null}
-                              <td className="py-2.5">{row.averageScore ?? '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <Pagination
-                      page={stedPage}
-                      pageSize={stedPageSize}
-                      total={stedTotal}
-                      totalPages={stedTotalPages}
-                      startIndex={stedStart}
-                      endIndex={stedEnd}
-                      hasPrevious={stedPage > 1}
-                      hasNext={stedPage < stedTotalPages}
-                      onPageChange={setStedPage}
-                      onPageSizeChange={(size) => {
-                        setStedPageSize(size as PageSizeOption)
-                        setStedPage(1)
-                      }}
-                      pageSizeSelectId="ncda-monitoring-sted-page-size"
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <ChartPanel title={ncda.monitoring.stedAgeTitle}>
+                    <EnhancedPieChart
+                      data={stedAgeBars}
+                      ariaLabel={ncda.monitoring.stedAgeTitle}
+                      centerValue={String(sted.data?.summary.childrenAssessed ?? 0)}
+                      centerLabel={ncda.monitoring.stedChildrenAssessed}
+                      {...emptyChart}
                     />
-                  </>
-                )}
+                  </ChartPanel>
+                  <ChartPanel title={ncda.monitoring.stedOutcomeTitle}>
+                    <EnhancedPieChart
+                      data={stedOutcomePie}
+                      ariaLabel={ncda.monitoring.stedOutcomeTitle}
+                      centerValue={String(sted.data?.summary.assessmentsCompleted ?? 0)}
+                      centerLabel={ncda.monitoring.stedCompleted}
+                      {...emptyChart}
+                    />
+                  </ChartPanel>
+                </div>
+                <ChartPanel title={ncda.monitoring.comparisonsTitle}>
+                  <EnhancedBarChart
+                    data={stedCompareBars}
+                    layout="vertical"
+                    height={Math.max(240, Math.min(stedCompareBars.length, 12) * 28 + 48)}
+                    ariaLabel={ncda.monitoring.comparisonsTitle}
+                    yTickFormatter={(v) => `${v}%`}
+                    {...emptyChart}
+                  />
+                </ChartPanel>
+                {stedItems.length > 0 && stedTotalPages > 1 ? (
+                  <Pagination
+                    page={stedPage}
+                    pageSize={stedPageSize}
+                    total={stedTotal}
+                    totalPages={stedTotalPages}
+                    startIndex={stedStart}
+                    endIndex={stedEnd}
+                    hasPrevious={stedPage > 1}
+                    hasNext={stedPage < stedTotalPages}
+                    onPageChange={setStedPage}
+                    onPageSizeChange={(size) => {
+                      setStedPageSize(size as PageSizeOption)
+                      setStedPage(1)
+                    }}
+                    pageSizeSelectId="ncda-monitoring-sted-page-size"
+                  />
+                ) : null}
               </>
             )}
           </Card>
 
-          <Card padding="md" className="border-border space-y-2">
-            <h2 className="text-subheading font-semibold text-text">
-              {ncda.monitoring.unavailableTitle}
-            </h2>
-            <p className="text-caption text-text-secondary">{ncda.monitoring.unavailableIntro}</p>
-            <ul className="list-disc pl-5 text-body text-text-secondary space-y-1">
-              {NCDA_MONITORING_UNAVAILABLE.map((item) => (
-                <li key={item.id}>
-                  <span className="font-medium">{item.id}</span>: {item.reason}
-                </li>
-              ))}
-            </ul>
-            {(overview.isError || kpis.isError) && (overview.data || kpis.data) ? (
+          <NcdaDashboardSection
+            title={ncda.monitoring.chartCompliance}
+            variant="charts"
+            isLoading={
+              (compliance.isLoading && !compliance.data && !compliance.isError) ||
+              (wash.isLoading && !wash.data && !wash.isError)
+            }
+            isError={
+              compliance.isError && !compliance.data && wash.isError && !wash.data
+            }
+            onRetry={() => {
+              void compliance.refetch()
+              void wash.refetch()
+            }}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <ChartPanel title={ncda.monitoring.chartCompliance}>
+                <EnhancedPieChart
+                  data={compliancePie}
+                  ariaLabel={ncda.monitoring.chartCompliance}
+                  centerValue={String(compliance.data?.summary.totalAssessments ?? 0)}
+                  centerLabel={ncda.monitoring.complianceAssessments}
+                  {...emptyChart}
+                />
+              </ChartPanel>
+              <ChartPanel
+                title={ncda.monitoring.chartWash}
+                hint={
+                  washCentersReporting != null
+                    ? `${ncda.monitoring.washCentersReporting}: ${washCentersReporting}`
+                    : undefined
+                }
+              >
+                <EnhancedBarChart
+                  data={washBars}
+                  ariaLabel={ncda.monitoring.chartWash}
+                  {...emptyChart}
+                />
+              </ChartPanel>
+            </div>
+          </NcdaDashboardSection>
+
+          {(overview.isError || kpis.isError) && (overview.data || kpis.data) ? (
+            <Card padding="md" className="border-border space-y-2">
+              <h2 className="text-subheading font-semibold text-text">
+                {ncda.monitoring.unavailableTitle}
+              </h2>
+              <p className="text-caption text-text-secondary">{ncda.monitoring.unavailableIntro}</p>
               <div className="pt-2">
                 <Button
                   type="button"
@@ -403,10 +629,48 @@ function NcdaMonitoringLive() {
                   {ncda.monitoring.retry}
                 </Button>
               </div>
-            ) : null}
-          </Card>
+            </Card>
+          ) : null}
         </div>
       </PageContent>
     </PageContainer>
   )
+}
+
+function ChartPanel({
+  title,
+  hint,
+  children,
+}: {
+  title: string
+  hint?: string
+  children: ReactNode
+}) {
+  return (
+    <div className="min-w-0 space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-body font-semibold text-text">{title}</h3>
+        {hint ? <p className="text-caption text-text-muted">{hint}</p> : null}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function stedCoverage(row: {
+  assessmentsCompleted: number
+  childrenAssessed?: number
+  averageScore: number | null
+}): number {
+  if (row.childrenAssessed && row.childrenAssessed > 0) {
+    return row.assessmentsCompleted / row.childrenAssessed
+  }
+  return row.averageScore ?? 0
+}
+
+function compareStedDesc(
+  a: { assessmentsCompleted: number; childrenAssessed?: number; averageScore: number | null },
+  b: { assessmentsCompleted: number; childrenAssessed?: number; averageScore: number | null },
+) {
+  return stedCoverage(b) - stedCoverage(a)
 }

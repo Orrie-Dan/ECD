@@ -4,10 +4,13 @@
  */
 import {
   geoControllerGetDistrict,
+  geoControllerListAdminUnits,
   geoControllerListDistricts,
 } from '@/api/generated/endpoints/geo/geo'
 import { centersControllerFindAll } from '@/api/generated/endpoints/centers/centers'
 import type {
+  AdministrativeLevel,
+  AdminUnitResponseDto,
   DistrictResponseDto,
   EcdCenterStatus,
   PaginatedCentersResponseDto,
@@ -96,6 +99,19 @@ export async function listCentersByDistrictPage(
     status: filters.status,
     page: filters.page ?? 1,
     pageSize: clampPageSize(filters.pageSize),
+  })
+}
+
+/** Admin units (sector / cell / village) — bounded by district or parent. */
+export async function listAdminUnits(params: {
+  districtId?: string
+  parentId?: string
+  level?: AdministrativeLevel
+}): Promise<AdminUnitResponseDto[]> {
+  return geoControllerListAdminUnits({
+    districtId: params.districtId,
+    parentId: params.parentId,
+    level: params.level,
   })
 }
 

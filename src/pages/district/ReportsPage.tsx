@@ -8,7 +8,6 @@ import {
   Eye,
   FileText,
 } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
@@ -402,7 +401,7 @@ function DistrictReportsPageShared({
   }
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.reports.title} subtitle={district.reports.attendanceSubtitle} />
         <PageContent>
@@ -840,6 +839,6 @@ function DistrictReportsPageShared({
       />
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

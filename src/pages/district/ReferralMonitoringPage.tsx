@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card, StatCard } from '@/components/ui/Card'
@@ -224,7 +223,7 @@ function ReferralMonitoringPageShared({
   }
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.referrals.title} description={district.referrals.subtitle} />
         <PageContent className="space-y-6">
@@ -571,6 +570,6 @@ function ReferralMonitoringPageShared({
           </Card>
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

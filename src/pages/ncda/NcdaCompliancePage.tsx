@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
@@ -16,6 +17,7 @@ import {
   useNcdaComplianceDistrictOptions,
   useNcdaComplianceStandards,
 } from '@/features/ncda/compliance/queries'
+import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 import type { AssessmentStatus } from '@/api/generated/models'
@@ -36,8 +38,8 @@ export function NcdaCompliancePage() {
     return (
       <PageContainer>
         <PageHeader
-          title={ncda.sections.compliance.title}
-          subtitle={ncda.compliance.subtitle}
+          title={ncda.sections.inspections.title}
+          subtitle={ncda.inspections.subtitle}
           size="compact"
         />
         <PageContent>
@@ -54,8 +56,9 @@ export function NcdaCompliancePage() {
 }
 
 function NcdaComplianceLive() {
-  const [districtId, setDistrictId] = useState('all')
-  const [centerId, setCenterId] = useState('all')
+  const [params] = useSearchParams()
+  const [districtId, setDistrictId] = useState(() => params.get('district')?.trim() || 'all')
+  const [centerId, setCenterId] = useState(() => params.get('center')?.trim() || 'all')
   const [centerSearch, setCenterSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [from, setFrom] = useState('')
@@ -104,19 +107,55 @@ function NcdaComplianceLive() {
   return (
     <PageContainer>
       <PageHeader
-        title={ncda.sections.compliance.title}
-        subtitle={ncda.compliance.subtitle}
+        title={ncda.sections.inspections.title}
+        subtitle={ncda.inspections.subtitle}
         size="compact"
       />
       <PageContent>
         <p className="mb-2 text-caption text-text-secondary">{ncda.compliance.scopeLabel}</p>
         <p className="mb-4 text-caption text-text-muted">{ncda.compliance.nationalNote}</p>
 
+        <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label={ncda.inspections.bucketsTitle}>
+          {(
+            [
+              ['all', ncda.inspections.bucketAll],
+              ['draft', ncda.inspections.bucketDraft],
+              ['submitted', ncda.inspections.bucketSubmitted],
+              ['verified', ncda.inspections.bucketVerified],
+              ['rejected', ncda.inspections.bucketRejected],
+            ] as const
+          ).map(([value, label]) => (
+            <Button
+              key={value}
+              type="button"
+              variant={status === value ? 'primary' : 'secondary'}
+              onClick={() => {
+                setStatus(value)
+                setPage(1)
+              }}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+
         <Card padding="md" className="mb-4 border-border bg-background-subtle/40">
           <p className="text-body-sm font-semibold text-text">{ncda.compliance.aggregatesUnavailableTitle}</p>
           <p className="mt-1 text-caption text-text-secondary">
             {ncda.compliance.aggregatesUnavailableBody}
           </p>
+          <p className="mt-2 text-body-sm font-semibold text-text">
+            {ncda.inspections.followUpUnavailableTitle}
+          </p>
+          <p className="mt-1 text-caption text-text-secondary">
+            {ncda.inspections.followUpUnavailableBody}
+          </p>
+          <Link
+            to={NCDA_PATHS.wash}
+            className="mt-2 inline-block text-caption font-semibold text-primary hover:underline"
+          >
+            {ncda.inspections.relatedWash}
+          </Link>
         </Card>
 
         <Card padding="md" className="mb-4 border-border space-y-4">
@@ -375,6 +414,21 @@ function NcdaComplianceLive() {
                     <dd>{detail.data.standardsVersion}</dd>
                   </div>
                 </dl>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    to={`${NCDA_PATHS.centers}/${detail.data.centerId}`}
+                    className="text-caption font-semibold text-primary hover:underline"
+                  >
+                    {ncda.inspections.openCenter}
+                  </Link>
+                  <Link
+                    to={`${NCDA_PATHS.dashboard}?centre=${encodeURIComponent(detail.data.centerId)}`}
+                    className="text-caption font-semibold text-primary hover:underline"
+                  >
+                    {ncda.inspections.openOnMap}
+                  </Link>
+                </div>
+                <p className="text-caption text-text-muted">{ncda.inspections.criticalHint}</p>
                 <h3 className="text-body font-semibold">{ncda.compliance.itemsTitle}</h3>
                 {(detail.data.items?.length ?? 0) === 0 ? (
                   <p className="text-caption text-text-secondary">{ncda.compliance.itemsEmpty}</p>

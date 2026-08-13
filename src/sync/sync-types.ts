@@ -39,8 +39,27 @@ export const SESSION_POLL_STALL_ATTEMPTS = 40
 export const SESSION_POLL_MAX_ATTEMPTS = SESSION_POLL_STALL_ATTEMPTS
 /** Wall-clock cap while the session is still making progress. */
 export const SESSION_POLL_MAX_WALL_MS = 120_000
-/** Periodic sync while unsynced work remains and the app is online. */
-export const SYNC_HEARTBEAT_MS = 60_000
+/** Interval between automatic sync cycles while the session is healthy. */
+export const SYNC_HEARTBEAT_MS = 3_000
+/** Faster retry while work remains or device/sync is recovering. */
+export const SYNC_RETRY_MS = 1_500
+/** Back off when the API is down so we do not hammer it. */
+export const SYNC_SERVER_BACKOFF_MS = 8_000
+
+/** Delay before the next automatic sync cycle. */
+export function nextSyncDelay(status: SyncEngineStatus): number {
+  if (status === 'SERVER_UNAVAILABLE') return SYNC_SERVER_BACKOFF_MS
+  if (
+    status === 'PENDING' ||
+    status === 'DEVICE_PENDING' ||
+    status === 'DEVICE_BLOCKED' ||
+    status === 'SYNC_ERROR' ||
+    status === 'CONFLICT_PRESENT'
+  ) {
+    return SYNC_RETRY_MS
+  }
+  return SYNC_HEARTBEAT_MS
+}
 
 /**
  * Client-side recovery window for ops stuck in `syncing` (or pending with a

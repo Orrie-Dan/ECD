@@ -36,6 +36,9 @@ export const auth = {
     apiUnavailable:
       "Sisitemu ntiyihuje na API. Abakoresha b'ukuri (nk'ncda_admin) ntibashobora kwinjira — reba VITE_API_MODE=live na VITE_API_BASE_URL mu buryo bwo gutanga porogaramu.",
     submit: 'Injira',
+    registeringDevice: 'Turimo kwiyandikisha igikoresho…',
+    registeringDeviceHint:
+      'Ntushobora kwinjira kugeza iki gikoresho cyanditswe kuri seriveri. Turacyagerageza.',
     helpLink: 'Ukeneye ubufasha?',
     helpMessage:
       "Saba umuyobozi w'ikigo cyangwa w'akarere kugira ngo agufashe kwinjira muri sisitemu.",

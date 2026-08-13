@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
+import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -103,9 +104,13 @@ function FeedingMonitoringPageShared({
   }, [data?.items, mockComparisons, search, source])
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.imirire.title} description={district.imirire.subtitle} />
+        <DistrictWorkspaceNav
+          items={DISTRICT_MONITORING_TABS}
+          ariaLabel={district.monitoringHub.title}
+        />
         <PageContent className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <FormField label={district.imirire.selectMonth}>
@@ -317,6 +322,6 @@ function FeedingMonitoringPageShared({
           )}
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from 'react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import {
@@ -53,7 +52,10 @@ export function CentersPage() {
   const [filters, setFilters] = useState<SchoolsFilters>(DEFAULT_FILTERS)
   const [previewCenterId, setPreviewCenterId] = useState<string | null>(null)
 
-  const liveCenters = useCentersDirectory({ page: 1, pageSize: 100 }, env.isLive)
+  const liveCenters = useCentersDirectory(
+    { page: 1, pageSize: 100, districtId: user?.districtId },
+    env.isLive,
+  )
 
   const liveDistrictLabel =
     user?.districtName?.trim() ||
@@ -145,7 +147,7 @@ export function CentersPage() {
   }, [filteredSchoolsData])
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.schools.title} subtitle={district.schools.subtitle} />
         <PageContent>
@@ -235,6 +237,6 @@ export function CentersPage() {
           ) : null}
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

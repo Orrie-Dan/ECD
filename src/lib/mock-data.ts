@@ -1207,7 +1207,7 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'high_risk_nutrition',
     priority: 'high',
     description: 'Abana benshi bafite ikibazo cy\'imirire',
-    suggestedAction: 'Suzuma imipimo y\'imikurire no kohereza abakeneye ubufasha.',
+    suggestedAction: 'Suzuma imipimo y\'imikurire kandi ukurikirane abana bari mu kaga.',
     metrics: [
       { label: 'Abakeneye gufashwa', value: '8' },
       { label: 'Igerageza', value: 'MUAC' },
@@ -1231,11 +1231,11 @@ export const ACTION_ALERTS: ActionAlert[] = [
     centerName: 'ECD Kanyinya',
     sector: 'Kinyinya',
     category: 'nutrition',
-    type: 'referral_required',
+    type: 'high_risk_nutrition',
     priority: 'medium',
-    description: 'Hari abana basaba koherezwa ku kigo nderabuzima',
-    suggestedAction: 'Komeza gukurikirana abana bakeneye koherezwa.',
-    metrics: [{ label: 'Koherezwa', value: '3' }],
+    description: 'Hari abana bari mu kaga cy\'imirire bakenewe gukurikiranwa',
+    suggestedAction: 'Suzuma imikurire y\'abana b\'iki kigo kandi ukurikirane abari mu kaga.',
+    metrics: [{ label: 'Mu kaga', value: '3' }],
   },
 ]
 
@@ -1270,8 +1270,9 @@ export function getHighPriorityAlerts(limit?: number) {
 }
 
 export function filterActionAlerts(category?: string) {
-  if (!category || category === 'all') return ACTION_ALERTS
-  return ACTION_ALERTS.filter((a) => a.category === category)
+  const operational = ACTION_ALERTS.filter((a) => a.type !== 'referral_required')
+  if (!category || category === 'all') return operational
+  return operational.filter((a) => a.category === category)
 }
 
 export function getCenterEnrollmentHistory(centerId: string) {

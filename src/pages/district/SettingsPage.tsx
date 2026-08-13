@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
@@ -85,7 +84,7 @@ export function DistrictSettingsPage() {
   }
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.nav.settings} subtitle={district.settings.subtitle} />
         <PageContent>
@@ -186,6 +185,6 @@ export function DistrictSettingsPage() {
           </div>
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

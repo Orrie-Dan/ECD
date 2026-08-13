@@ -14,23 +14,14 @@ import {
   district,
   ncda,
 } from '@/api/query-keys'
-import { loginRequest } from '@/api/resources/auth'
 import { useApiAuth } from '@/api/auth/ApiAuthProvider'
 import { normalizeApiError } from '@/api/errors'
-import { hasRole, UnknownUserRoleError } from '@/api/roles'
-import type { AuthUserViewModel } from '@/models/auth'
+import { UnknownUserRoleError } from '@/api/roles'
+import { completeLiveLogin } from '@/features/auth/complete-live-login'
 import type { UserRole } from '@/types'
+import type { LoginError, LoginResult } from '@/features/auth/login-result'
 
-export type LoginError =
-  | 'username_required'
-  | 'password_required'
-  | 'invalid_credentials'
-  | 'wrong_role'
-  | 'api_unavailable'
-
-export type LoginResult =
-  | { success: true; role: UserRole; user: AuthUserViewModel }
-  | { success: false; error: LoginError }
+export type { LoginError, LoginResult }
 
 /**
  * LIVE login against the auth resource. MOCK callers should use demo credentials path instead.
@@ -53,21 +44,14 @@ export function useLogin() {
       }
 
       try {
-        const session = await loginRequest({
-          username: trimmedUsername,
-          password: input.password,
-        })
-        apiAuth.setSession(
-          { accessToken: session.accessToken, refreshToken: session.refreshToken },
-          undefined,
+        return await completeLiveLogin(
+          {
+            username: trimmedUsername,
+            password: input.password,
+            expectedRole: input.expectedRole,
+          },
+          apiAuth,
         )
-
-        if (!hasRole(session.user, input.expectedRole)) {
-          apiAuth.clearSession()
-          return { success: false, error: 'wrong_role' }
-        }
-
-        return { success: true, role: session.user.role, user: session.user }
       } catch (error) {
         if (error instanceof UnknownUserRoleError) {
           apiAuth.clearSession()

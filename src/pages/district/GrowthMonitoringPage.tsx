@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, HeartPulse, ShieldAlert } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
+import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { FilterResultsBar } from '@/components/ui/FilterResultsBar'
@@ -315,9 +316,13 @@ function GrowthMonitoringPageShared({
   }, [])
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={district.growth.title} description={district.growth.subtitle} />
+        <DistrictWorkspaceNav
+          items={DISTRICT_MONITORING_TABS}
+          ariaLabel={district.monitoringHub.title}
+        />
         <PageContent className="space-y-6">
           {nutritionMonitoring.isError ? (
             <LiveUnavailableState
@@ -595,6 +600,6 @@ function GrowthMonitoringPageShared({
           </Card>
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

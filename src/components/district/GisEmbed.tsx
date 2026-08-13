@@ -4,6 +4,7 @@ import { Map, Maximize2, X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { SelectInput } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
+import { GisPendingPlaceholder } from '@/components/gis/GisPendingPlaceholder'
 import { district } from '@/locales/rw/district'
 
 interface GisEmbedProps {
@@ -17,17 +18,13 @@ interface GisEmbedProps {
   headerAction?: React.ReactNode
 }
 
-function MapPlaceholder({ height, title }: { height: string; title: string }) {
+function MapPlaceholder({ height, compact }: { height: string; compact?: boolean }) {
   return (
-    <div
-      className="rounded-lg border border-dashed border-border-strong bg-background-subtle flex flex-col items-center justify-center w-full aspect-[4/3] sm:aspect-auto"
+    <GisPendingPlaceholder
+      compact={compact}
+      className="w-full aspect-[4/3] sm:aspect-auto"
       style={{ minHeight: height }}
-      role="img"
-      aria-label={title}
-    >
-      <Map size={28} className="text-text-muted opacity-50 mb-2" aria-hidden />
-      <p className="text-caption font-semibold text-text-secondary">{district.gis.embedPlaceholder}</p>
-    </div>
+    />
   )
 }
 
@@ -94,7 +91,7 @@ export function GisEmbed({
   const content = (
     <>
       {filters}
-      <MapPlaceholder height={mapHeight} title={title} />
+      <MapPlaceholder height={mapHeight} compact={compact} />
     </>
   )
 
@@ -162,7 +159,7 @@ export function GisEmbed({
           <div className="flex-1 p-3 sm:p-4 overflow-auto min-h-0">
             <div className="max-w-7xl mx-auto h-full min-h-[50vh] sm:min-h-[60vh]">
               {filters}
-              <MapPlaceholder height="min(75vh, 640px)" title={title} />
+              <MapPlaceholder height="min(75vh, 640px)" />
             </div>
           </div>
         </div>
@@ -179,7 +176,7 @@ export function DashboardGisPreview() {
       showViewLevels
       allowFullscreen
       headerAction={
-        <Link to="/district/ikarita" className="text-caption font-semibold text-primary hover:underline">
+        <Link to="/district" className="text-caption font-semibold text-primary hover:underline">
           {district.gis.title} →
         </Link>
       }

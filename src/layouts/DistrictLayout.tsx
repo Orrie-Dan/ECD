@@ -1,93 +1,45 @@
-import { useLocation, useNavigate } from 'react-router-dom'
-import {
-  LayoutDashboard,
-  Building2,
-  Baby,
-  FileText,
-  Map,
-  AlertTriangle,
-  Settings,
-  LogOut,
-  Menu,
-  CalendarCheck,
-  Activity,
-  Utensils,
-  Accessibility,
-  Send,
-  UserCog,
-} from 'lucide-react'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { LogOut, Menu } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { LogoutPendingModal } from '@/components/offline/LogoutPendingModal'
 import { DistrictRequiresOnlineBanner } from '@/components/offline/DistrictRequiresOnlineBanner'
-import { BottomNav, type NavItem } from '@/components/ui/BottomNav'
+import { BottomNav } from '@/components/ui/BottomNav'
 import { NavDrawer } from '@/components/ui/NavDrawer'
 import { SidebarNavLink, isSidebarNavActive, type SidebarNavItem } from '@/components/ui/SidebarNavLink'
 import { useState } from 'react'
 import { common, messages } from '@/locales/rw/common'
-import { district } from '@/locales/rw/district'
 import { env } from '@/config/env'
 import {
   evaluateLogoutPolicy,
   applyLogoutDataPolicy,
   type LogoutAction,
 } from '@/offline/logout-policy'
+import {
+  DISTRICT_NAV_GROUPS,
+  DISTRICT_MOBILE_NAV,
+  isDistrictOverviewPath,
+  type DistrictNavItem,
+} from '@/layouts/district/navigation'
+import { useDistrictScope } from '@/features/district/overview/useDistrictScope'
 import ncdaLogo from '@/assets/ncda-logo.png'
 
-interface DistrictLayoutProps {
-  children: React.ReactNode
+function toSidebarItem(item: DistrictNavItem): SidebarNavItem {
+  return {
+    path: item.path,
+    label: item.label,
+    icon: item.icon,
+    matchPaths: item.matchPaths,
+  }
 }
 
-const sidebarNavItems: SidebarNavItem[] = [
-  { path: '/district', label: district.nav.dashboard, icon: LayoutDashboard },
-  { path: '/district/abana', label: district.nav.children, icon: Baby },
-  {
-    path: '/district/ibigo',
-    label: district.nav.centers,
-    icon: Building2,
-    matchPaths: ['/district/ibigo'],
-  },
-  {
-    path: '/district/abakoresha',
-    label: district.nav.caregivers,
-    icon: UserCog,
-    matchPaths: ['/district/abakoresha'],
-  },
-  { path: '/district/attendance', label: district.nav.attendance, icon: CalendarCheck },
-  { path: '/district/imikurire', label: district.nav.growth, icon: Activity },
-  { path: '/district/imirire', label: district.nav.imirire, icon: Utensils },
-  { path: '/district/sted', label: district.nav.sted, icon: Accessibility },
-  { path: '/district/referrals', label: district.nav.referrals, icon: Send },
-  {
-    path: '/district/gukurikirana',
-    label: district.nav.followup,
-    icon: AlertTriangle,
-    matchPaths: ['/district/gukurikirana'],
-  },
-  { path: '/district/raporo', label: district.nav.reports, icon: FileText },
-  { path: '/district/ikarita', label: district.nav.gis, icon: Map },
-  { path: '/district/igenamiterere', label: district.nav.settings, icon: Settings },
-]
-
-const mobileNavItems: NavItem[] = [
-  { path: '/district', label: district.nav.dashboard, icon: LayoutDashboard },
-  { path: '/district/abana', label: district.nav.children, icon: Baby },
-  {
-    path: '/district/ibigo',
-    label: district.nav.centers,
-    icon: Building2,
-    matchPaths: ['/district/ibigo'],
-  },
-  {
-    path: '/district/gukurikirana',
-    label: district.nav.followup,
-    icon: AlertTriangle,
-    matchPaths: ['/district/gukurikirana'],
-  },
-  { path: '/district/ikarita', label: district.nav.gis, icon: Map },
-]
-
-function SidebarBrand({ collapsed = false, districtName }: { collapsed?: boolean; districtName?: string }) {
+function SidebarBrand({
+  collapsed = false,
+  districtName,
+}: {
+  collapsed?: boolean
+  districtName?: string | null
+}) {
   return (
     <div className={`border-b border-border ${collapsed ? 'p-3' : 'p-4'}`}>
       <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
@@ -111,35 +63,51 @@ function SidebarBrand({ collapsed = false, districtName }: { collapsed?: boolean
   )
 }
 
-function SidebarNavList({
-  items,
+function DistrictSidebarNav({
   pathname,
   collapsed = false,
   onNavigate,
 }: {
-  items: SidebarNavItem[]
   pathname: string
   collapsed?: boolean
   onNavigate?: () => void
 }) {
   return (
-    <nav className={`flex-1 overflow-y-auto space-y-0.5 ${collapsed ? 'p-2' : 'p-3'}`} aria-label={common.nav.mainNav}>
-      {items.map((item) => (
-        <SidebarNavLink
-          key={item.path}
-          item={item}
-          active={isSidebarNavActive(pathname, item)}
-          collapsed={collapsed}
-          onNavigate={onNavigate}
-          activeStyle="tinted"
-        />
+    <nav
+      className={`flex-1 overflow-y-auto ${collapsed ? 'p-2' : 'p-3'} space-y-4`}
+      aria-label={common.nav.mainNav}
+    >
+      {DISTRICT_NAV_GROUPS.map((group) => (
+        <div key={group.id}>
+          {!collapsed && (
+            <p className="px-3 mb-1.5 text-caption font-bold uppercase tracking-wide text-text-muted">
+              {group.label}
+            </p>
+          )}
+          <div className="space-y-0.5" role="group" aria-label={group.label}>
+            {group.items.map((item) => {
+              const sidebarItem = toSidebarItem(item)
+              return (
+                <SidebarNavLink
+                  key={item.path}
+                  item={sidebarItem}
+                  active={isSidebarNavActive(pathname, sidebarItem)}
+                  collapsed={collapsed}
+                  onNavigate={onNavigate}
+                  activeStyle="tinted"
+                />
+              )
+            })}
+          </div>
+        </div>
       ))}
     </nav>
   )
 }
 
-export function DistrictLayout({ children }: DistrictLayoutProps) {
+export function DistrictLayout() {
   const { user, logout } = useAuth()
+  const scope = useDistrictScope()
   const location = useLocation()
   const navigate = useNavigate()
   const [showLogout, setShowLogout] = useState(false)
@@ -153,6 +121,8 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
     setDrawerPathname(location.pathname)
     setDrawerOpen(false)
   }
+
+  const districtName = scope.districtName ?? user?.districtName
 
   const openLogoutModal = async () => {
     if (!env.isLive) {
@@ -239,17 +209,24 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
     </div>
   )
 
+  const mobileNavItems = DISTRICT_MOBILE_NAV.map((item) => ({
+    path: item.path,
+    label: item.label,
+    icon: item.icon,
+    matchPaths: item.matchPaths,
+  }))
+
   return (
     <div className="min-h-screen bg-background flex">
       <aside className="hidden lg:flex flex-col w-64 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
-        <SidebarBrand districtName={user?.districtName} />
-        <SidebarNavList items={sidebarNavItems} pathname={location.pathname} />
+        <SidebarBrand districtName={districtName} />
+        <DistrictSidebarNav pathname={location.pathname} />
         {renderSidebarFooter(false)}
       </aside>
 
       <aside className="hidden md:flex lg:hidden flex-col w-16 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
-        <SidebarBrand collapsed districtName={user?.districtName} />
-        <SidebarNavList items={sidebarNavItems} pathname={location.pathname} collapsed />
+        <SidebarBrand collapsed districtName={districtName} />
+        <DistrictSidebarNav pathname={location.pathname} collapsed />
         {renderSidebarFooter(true)}
       </aside>
 
@@ -257,10 +234,9 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
         <div className="mb-4 px-2 py-3 rounded-xl bg-background-subtle">
           <p className="text-caption text-text-muted">{common.ui.systemUser}</p>
           <p className="text-body font-semibold text-text mt-0.5">{user?.name}</p>
-          <p className="text-caption text-text-secondary mt-0.5">{user?.districtName}</p>
+          <p className="text-caption text-text-secondary mt-0.5">{districtName}</p>
         </div>
-        <SidebarNavList
-          items={sidebarNavItems}
+        <DistrictSidebarNav
           pathname={location.pathname}
           onNavigate={() => setDrawerOpen(false)}
         />
@@ -301,7 +277,7 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-body font-bold text-text leading-tight truncate">{common.appName}</h1>
-                  <p className="text-caption truncate">{user?.districtName}</p>
+                  <p className="text-caption truncate">{districtName}</p>
                 </div>
               </div>
             </div>
@@ -317,9 +293,13 @@ export function DistrictLayout({ children }: DistrictLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 lg:p-6 xl:px-8 pb-24 lg:pb-6 min-w-0">
+        <main
+          className={`flex-1 w-full mx-auto p-3 sm:p-5 lg:p-6 xl:px-8 pb-24 lg:pb-6 min-w-0 ${
+            isDistrictOverviewPath(location.pathname) ? 'max-w-[96rem]' : 'max-w-7xl'
+          }`}
+        >
           <DistrictRequiresOnlineBanner className="mb-3" />
-          {children}
+          <Outlet />
         </main>
 
         <BottomNav items={mobileNavItems} />

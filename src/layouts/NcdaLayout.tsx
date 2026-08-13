@@ -10,6 +10,7 @@ import {
   NCDA_NAV_GROUPS,
   NCDA_PATHS,
   getNcdaPageTitle,
+  isNcdaOverviewPath,
   type NcdaNavItem,
 } from '@/layouts/ncda/navigation'
 import { common, messages } from '@/locales/rw/common'
@@ -215,7 +216,11 @@ export function NcdaLayout() {
           </div>
         </header>
 
-        <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-5 lg:p-6 xl:px-8 pb-8 min-w-0">
+        <main
+          className={`flex-1 w-full mx-auto p-3 sm:p-5 lg:p-6 xl:px-8 pb-8 min-w-0 ${
+            isNcdaOverviewPath(location.pathname) ? 'max-w-[96rem]' : 'max-w-7xl'
+          }`}
+        >
           <Outlet />
         </main>
       </div>

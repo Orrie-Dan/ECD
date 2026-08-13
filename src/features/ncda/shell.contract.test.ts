@@ -37,18 +37,22 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
       expect(app).toContain('NcdaLayout')
       expect(app).toContain('path="/ncda"')
       expect(app).toContain('path="/ncda/dashboard"')
+      expect(app).toContain('path="/ncda/overview"')
+      expect(app).toContain('path="/ncda/monitoring"')
+      expect(app).toContain('path="/ncda/inspections"')
+      expect(app).toContain('path="/ncda/reports"')
+      expect(app).toContain('path="/ncda/users"')
+      expect(app).toContain('path="/ncda/roles"')
+      expect(app).toContain('path="/ncda/settings"')
+      expect(app).toContain('path="/ncda/audit-logs"')
       expect(app).toContain('path="/ncda/districts"')
       expect(app).toContain('path="/ncda/centers"')
       expect(app).toContain('path="/ncda/children"')
-      expect(app).toContain('path="/ncda/users"')
       expect(app).toContain('path="/ncda/compliance"')
       expect(app).toContain('path="/ncda/wash"')
-      expect(app).toContain('path="/ncda/monitoring"')
-      expect(app).toContain('path="/ncda/reports"')
-      expect(app).toContain('path="/ncda/audit-logs"')
-      expect(app).toContain('path="/ncda/devices"')
-      expect(app).toContain('path="/ncda/sync"')
       expect(app).toContain('Navigate to="/ncda/dashboard"')
+      expect(app).toContain('RedirectWithSearch to="/ncda/inspections"')
+      expect(app).toContain('RedirectWithSearch to="/ncda/settings"')
     })
 
     it('does not import District pages into NCDA routes', () => {
@@ -69,23 +73,27 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
   })
 
   describe('navigation IA', () => {
-    it('exposes grouped navigation covering every shell path', () => {
-      expect(NCDA_NAV_GROUPS.length).toBeGreaterThanOrEqual(5)
+    it('exposes GIS-first primary navigation without CRUD geo destinations', () => {
+      expect(NCDA_NAV_GROUPS.length).toBe(2)
       const paths = NCDA_NAV_ITEMS.map((item) => item.path)
       expect(paths).toEqual(
         expect.arrayContaining([
           NCDA_PATHS.dashboard,
+          NCDA_PATHS.monitoring,
+          NCDA_PATHS.inspections,
+          NCDA_PATHS.reports,
+          NCDA_PATHS.users,
+          NCDA_PATHS.roles,
+          NCDA_PATHS.settings,
+          NCDA_PATHS.auditLogs,
+        ]),
+      )
+      expect(paths).not.toEqual(
+        expect.arrayContaining([
           NCDA_PATHS.districts,
           NCDA_PATHS.centers,
           NCDA_PATHS.children,
-          NCDA_PATHS.users,
-          NCDA_PATHS.compliance,
           NCDA_PATHS.wash,
-          NCDA_PATHS.monitoring,
-          NCDA_PATHS.reports,
-          NCDA_PATHS.auditLogs,
-          NCDA_PATHS.devices,
-          NCDA_PATHS.sync,
         ]),
       )
       expect(new Set(paths).size).toBe(paths.length)
@@ -95,8 +103,9 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
       expect(findNcdaNavItem('/ncda/dashboard')?.id).toBe('dashboard')
       expect(findNcdaNavItem('/ncda')?.id).toBe('dashboard')
       expect(findNcdaNavItem('/ncda/users')?.id).toBe('users')
-      expect(getNcdaPageTitle('/ncda/compliance')).toBe(
-        NCDA_NAV_ITEMS.find((i) => i.id === 'compliance')!.label,
+      expect(findNcdaNavItem('/ncda/inspections')?.id).toBe('inspections')
+      expect(getNcdaPageTitle('/ncda/inspections')).toBe(
+        NCDA_NAV_ITEMS.find((i) => i.id === 'inspections')!.label,
       )
     })
 
@@ -130,8 +139,8 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
       expect(comingSoon).not.toMatch(/LiveUnavailableState/)
     })
 
-    it('dashboard is a real national page (not Coming Soon) and not a District clone', () => {
-      expect(dashboardPage).toContain('useNcdaDashboard')
+    it('dashboard is a real national GIS overview (not Coming Soon) and not a District clone', () => {
+      expect(dashboardPage).toContain('NcdaOverviewCommand')
       expect(dashboardPage).not.toContain('NcdaComingSoonPage')
       expect(dashboardPage).not.toMatch(/\buseDashboardMonitoring\b|\buseData\(/)
       expect(dashboardPage).not.toMatch(/from ['"]@\/pages\/district/)

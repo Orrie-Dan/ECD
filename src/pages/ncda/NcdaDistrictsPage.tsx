@@ -94,6 +94,14 @@ function NcdaDistrictsLive() {
         title={ncda.sections.districts.title}
         subtitle={ncda.districts.subtitle}
         size="compact"
+        action={
+          <Link
+            to={NCDA_PATHS.dashboard}
+            className="text-caption font-semibold text-primary hover:underline"
+          >
+            {ncda.overview.openOnMap}
+          </Link>
+        }
       />
 
       <PageContent>

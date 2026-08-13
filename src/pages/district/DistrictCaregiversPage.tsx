@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
@@ -34,7 +33,7 @@ const CAREGIVERS_PATH = '/district/abakoresha'
 export function DistrictCaregiversPage() {
   if (!env.isLive) {
     return (
-      <DistrictLayout>
+      <>
         <PageContainer>
           <PageHeader
             title={district.caregivers.title}
@@ -48,7 +47,7 @@ export function DistrictCaregiversPage() {
             />
           </PageContent>
         </PageContainer>
-      </DistrictLayout>
+      </>
     )
   }
 
@@ -149,7 +148,7 @@ function DistrictCaregiversLive() {
   }
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader
           title={district.caregivers.title}
@@ -418,6 +417,6 @@ function DistrictCaregiversLive() {
           </div>
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }

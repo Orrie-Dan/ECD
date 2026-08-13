@@ -118,11 +118,10 @@ export function useNcdaMonitoringDistrictOptions(enabled = true) {
 export const NCDA_MONITORING_UNAVAILABLE = [
   {
     id: 'per-center-monitoring-tables',
-    reason:
-      'GET /monitoring/attendance|nutrition|feeding|referrals still hydrate all centers nationally',
+    reason: 'Per-center monitoring tables are not shown at national scope',
   },
   {
     id: 'time-series-trends',
-    reason: 'No national-safe enrollment/monitoring trend contract',
+    reason: 'Time-series trends are not available in this view',
   },
 ] as const

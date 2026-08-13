@@ -7,16 +7,23 @@ import {
   authControllerMe,
   authControllerRefresh,
 } from '@/api/generated/endpoints/auth/auth'
-import type { LoginDto, RefreshTokenDto } from '@/api/generated/models'
+import type {
+  AuthUserResponseDto,
+  LoginDto,
+  RefreshTokenDto,
+} from '@/api/generated/models'
 import { mapAuthUserToViewModel } from '@/api/mappers/auth.mapper'
 import type { AuthTokensViewModel, AuthUserViewModel } from '@/models/auth'
 
-export async function loginRequest(credentials: LoginDto): Promise<AuthTokensViewModel> {
+export type LoginSession = AuthTokensViewModel & { apiUser: AuthUserResponseDto }
+
+export async function loginRequest(credentials: LoginDto): Promise<LoginSession> {
   const data = await authControllerLogin(credentials)
   return {
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
     user: mapAuthUserToViewModel(data.user),
+    apiUser: data.user,
   }
 }
 

@@ -19,6 +19,7 @@ export function mapAuthUserToViewModel(user: ApiAuthUser): AuthUserViewModel {
     role: normalizeRole(user.role),
     centerId: user.centerId ?? undefined,
     centerName: user.center?.name ?? undefined,
+    districtId: user.districtId ?? undefined,
     districtName: undefined,
   }
 }

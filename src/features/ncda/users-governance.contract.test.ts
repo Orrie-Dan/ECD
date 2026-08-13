@@ -16,6 +16,7 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
   const userDetail = fs.readFileSync(root('../../pages/ncda/NcdaUserDetailPage.tsx'), 'utf8')
   const auditPage = fs.readFileSync(root('../../pages/ncda/NcdaAuditLogsPage.tsx'), 'utf8')
   const pages = fs.readFileSync(root('../../pages/ncda/NcdaPages.tsx'), 'utf8')
+  const settingsPage = fs.readFileSync(root('../../pages/ncda/NcdaSettingsPage.tsx'), 'utf8')
   const usersQueries = fs.readFileSync(root('./users/queries.ts'), 'utf8')
   const auditQueries = fs.readFileSync(root('./audit-logs/queries.ts'), 'utf8')
   const usersResource = fs.readFileSync(root('../../api/resources/users.ts'), 'utf8')
@@ -89,12 +90,14 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
   })
 
   describe('devices / sync remain unsupported', () => {
-    it('keeps devices and sync as Coming Soon placeholders', () => {
-      expect(pages).toContain('NcdaDevicesPage')
-      expect(pages).toContain('NcdaSyncPage')
-      expect(pages).toContain('NcdaComingSoonPage')
-      const devicesBlock = pages.slice(pages.indexOf('NcdaDevicesPage'))
-      expect(devicesBlock).toContain('NcdaComingSoonPage')
+    it('routes devices and sync into System Settings as honest contract gaps', () => {
+      expect(app).toContain('path="/ncda/settings"')
+      expect(app).toContain('RedirectWithSearch to="/ncda/settings"')
+      expect(pages).toContain("export { NcdaSettingsPage } from './NcdaSettingsPage'")
+      expect(settingsPage).toContain('nationalSettingsBody')
+      expect(settingsPage).toContain('devicesBody')
+      expect(settingsPage).toContain('syncBody')
+      expect(settingsPage).not.toMatch(/useQuery|@\/api\/resources|@\/api\/generated/)
     })
   })
 

@@ -231,6 +231,8 @@ function createNcdaKeys() {
         [...districts, 'centers', id, filters] as const,
       network: (filters: Record<string, unknown> = {}) =>
         [...districts, 'network', filters] as const,
+      adminUnits: (filters: Record<string, unknown> = {}) =>
+        [...districts, 'admin-units', filters] as const,
     },
     centers: {
       all: centers,
@@ -355,6 +357,13 @@ function createDistrictKeys() {
         [...all, 'referrals', 'list', filters] as const,
     },
     alerts: (filters: Record<string, unknown> = {}) => [...all, 'alerts', filters] as const,
+    overview: {
+      identity: (id: string) => [...all, 'overview', 'identity', id] as const,
+      adminUnits: (filters: Record<string, unknown> = {}) =>
+        [...all, 'overview', 'admin-units', filters] as const,
+      centers: (filters: Record<string, unknown> = {}) =>
+        [...all, 'overview', 'centers', filters] as const,
+    },
     centers: (...parts: unknown[]) => [...all, 'centers', ...parts] as const,
     settings: (...parts: unknown[]) => [...all, 'settings', ...parts] as const,
     users: {
@@ -455,4 +464,6 @@ export const queryStaleTimes = {
   ncdaReporting: 60_000,
   /** District caregiver admin — short stale; mutations invalidate list/detail. */
   districtUsers: 30_000,
+  /** District Incamake geo identity / sectors / centres. */
+  districtOverview: 60_000,
 } as const

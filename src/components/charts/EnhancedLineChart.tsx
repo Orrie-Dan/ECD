@@ -12,6 +12,7 @@ import {
 import { EmptyState } from '@/components/ui/EmptyState'
 import { BarChart3 } from 'lucide-react'
 import { district } from '@/locales/rw/district'
+import { ChartTooltip } from './ChartTooltip'
 
 export interface ChartSeriesConfig {
   dataKey: string
@@ -36,59 +37,6 @@ export interface EnhancedLineChartProps {
   yTickFormatter?: (value: number) => string
   className?: string
   ariaLabel?: string
-}
-
-function ChartTooltip({
-  active,
-  payload,
-  label,
-  series,
-  tooltipLabelKey,
-}: {
-  active?: boolean
-  payload?: Array<{
-    dataKey?: string | number
-    value?: number | string
-    payload?: Record<string, string | number>
-  }>
-  label?: string | number
-  series: ChartSeriesConfig[]
-  tooltipLabelKey?: string
-}) {
-  if (!active || !payload?.length) return null
-
-  const header =
-    (tooltipLabelKey && payload[0]?.payload?.[tooltipLabelKey]) ||
-    label ||
-    payload[0]?.payload?.label
-
-  return (
-    <div className="rounded-xl border border-border bg-surface px-3 py-2.5 shadow-lg max-w-[14rem]">
-      <p className="text-caption font-bold text-text mb-2">{String(header)}</p>
-      <ul className="space-y-1">
-        {payload.map((entry: { dataKey?: string | number; value?: number | string }) => {
-          const config = series.find((s) => s.dataKey === entry.dataKey)
-          if (!config || entry.value == null) return null
-          const numeric = Number(entry.value)
-          const display = config.valueFormatter
-            ? config.valueFormatter(numeric)
-            : String(entry.value)
-          return (
-            <li key={entry.dataKey} className="flex items-center gap-2 text-caption text-text-secondary">
-              <span
-                className="w-2.5 h-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: config.color }}
-                aria-hidden
-              />
-              <span>
-                {config.label}: <strong className="text-text">{display}</strong>
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
 }
 
 function EnhancedLineChartComponent({

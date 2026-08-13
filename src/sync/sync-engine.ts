@@ -140,9 +140,26 @@ export class SyncEngine {
     }
 
     if (this.deviceBlocked) {
-      this.status = 'DEVICE_BLOCKED'
-      await this.emitAsync()
-      return
+      const blockedOwner = getActiveOwnerUserId()
+      if (blockedOwner) {
+        try {
+          const repaired = await ensureDeviceRegistered({
+            userId: blockedOwner,
+            store: this.store,
+          })
+          if (repaired.ok) {
+            this.deviceBlocked = false
+            this.lastError = null
+          }
+        } catch {
+          /* keep blocked; the automatic loop retries */
+        }
+      }
+      if (this.deviceBlocked) {
+        this.status = 'DEVICE_BLOCKED'
+        await this.emitAsync()
+        return
+      }
     }
 
     if (!tokenStorage.getAccessToken() && !tokenStorage.getRefreshToken()) {
@@ -179,6 +196,19 @@ export class SyncEngine {
       }
       if (deviceId && !tokenStorage.getDeviceId()) {
         tokenStorage.setDeviceId(deviceId)
+      }
+      if (!deviceId) {
+        try {
+          const registered = await ensureDeviceRegistered({
+            userId: ownerUserId,
+            store: cycleStore,
+          })
+          if (registered.ok) {
+            deviceId = registered.deviceId
+          }
+        } catch {
+          /* fall through to DEVICE_PENDING */
+        }
       }
       if (!deviceId) {
         this.lastError = 'Device not registered'

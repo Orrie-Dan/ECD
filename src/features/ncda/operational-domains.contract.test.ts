@@ -29,13 +29,15 @@ describe('Sprint 5.5H / 5.5I — NCDA operational domains contract', () => {
   describe('routing + authorization', () => {
     it('registers operational domains under ncda ProtectedRoute', () => {
       expect(app).toContain('allowedRole="ncda"')
+      expect(app).toContain('path="/ncda/inspections"')
       expect(app).toContain('path="/ncda/compliance"')
       expect(app).toContain('path="/ncda/wash"')
       expect(app).toContain('path="/ncda/monitoring"')
       expect(app).toContain('path="/ncda/reports"')
       expect(homePathForRole('ncda')).toBe('/ncda')
       expect(hasRole({ role: 'ncda' }, 'ncda')).toBe(true)
-      expect(findNcdaNavItem('/ncda/compliance')?.id).toBe('compliance')
+      expect(findNcdaNavItem('/ncda/inspections')?.id).toBe('inspections')
+      expect(findNcdaNavItem('/ncda/compliance')?.id).toBe('inspections')
       expect(findNcdaNavItem('/ncda/wash')?.id).toBe('wash')
       expect(findNcdaNavItem('/ncda/monitoring')?.id).toBe('monitoring')
       expect(findNcdaNavItem('/ncda/reports')?.id).toBe('reports')

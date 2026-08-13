@@ -88,6 +88,11 @@ export const common = {
     previewRows: 'Byerekanwa {count} muri {total}',
     emptyPreview: 'Nta makuru yo kugaragaza muri iyi raporo',
   },
+  gis: {
+    waitingTitle: 'Waiting for GIS integrations',
+    waitingBody:
+      'Ikarita n’ibikorwa bya GIS bizazana nyuma y’ubufatanye na sisitemu ya GIS. .',
+  },
   /** LIVE-mode honesty copy — never imply mock/fake success succeeded online. */
   live: {
     unavailableTitle: 'Ntabwo biboneka kuri murongo',
@@ -129,7 +134,7 @@ export const common = {
     pendingTitle: 'Impinduka zitegereje koherezwa',
     lastSynced: 'Byahujwe {time}',
     lastSyncedNever: 'Ntabwo byarahujwe',
-    tapToSync: 'Kanda kugira ngo uhuzanye',
+    tapToSync: 'Guhuza birimo gukora mu buryo bwikora',
     syncNow: 'Huza ubu',
     syncingBusy: 'Guhuza birimo gukora…',
     saved: 'Byabitswe',

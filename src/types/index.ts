@@ -7,6 +7,7 @@ export interface User {
   role: UserRole
   centerId?: string
   centerName?: string
+  districtId?: string
   districtName?: string
 }
 

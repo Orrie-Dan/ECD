@@ -57,9 +57,12 @@ export function NcdaReportsPage() {
   return <NcdaReportsLive />
 }
 
+type ReportId = 'national' | 'enrollment' | 'dropouts' | 'centers'
+
 function NcdaReportsLive() {
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
   const [districtId, setDistrictId] = useState('all')
+  const [reportId, setReportId] = useState<ReportId | null>(null)
   const [centersPage, setCentersPage] = useState(1)
   const [centersPageSize, setCentersPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [dropoutsPage, setDropoutsPage] = useState(1)
@@ -78,20 +81,23 @@ function NcdaReportsLive() {
   )
 
   const districts = useNcdaReportingDistrictOptions()
-  const districtReport = useNcdaDistrictReport(scope)
-  const enrollment = useNcdaEnrollmentReport(scope)
-  const dropouts = useNcdaDropoutsReport({
-    ...scope,
-    page: dropoutsPage,
-    pageSize: dropoutsPageSize,
-  })
+  const districtReport = useNcdaDistrictReport(scope, reportId === 'national')
+  const enrollment = useNcdaEnrollmentReport(scope, reportId === 'enrollment')
+  const dropouts = useNcdaDropoutsReport(
+    {
+      ...scope,
+      page: dropoutsPage,
+      pageSize: dropoutsPageSize,
+    },
+    reportId === 'dropouts',
+  )
   const centersReport = useNcdaCentersReport(
     {
       ...scope,
       page: centersPage,
       pageSize: centersPageSize,
     },
-    true,
+    reportId === 'centers',
   )
 
   const showDropoutsTable = districtId !== 'all'
@@ -117,7 +123,42 @@ function NcdaReportsLive() {
       />
       <PageContent>
         <p className="mb-2 text-caption text-text-secondary">{ncda.reports.scopeLabel}</p>
-        <p className="mb-4 text-caption text-text-muted">{ncda.reports.nationalNote}</p>
+        <p className="mb-4 text-caption text-text-muted">{ncda.reports.catalogHint}</p>
+
+        <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          <ReportCatalogCard
+            category={ncda.reports.catNational}
+            title={ncda.reports.nationalPerformance}
+            hint={ncda.reports.nationalPerformanceHint}
+            selected={reportId === 'national'}
+            onSelect={() => setReportId('national')}
+          />
+          <ReportCatalogCard
+            category={ncda.reports.catNational}
+            title={ncda.reports.enrollmentTitle}
+            hint={ncda.reports.enrollmentHint}
+            selected={reportId === 'enrollment'}
+            onSelect={() => setReportId('enrollment')}
+          />
+          <ReportCatalogCard
+            category={ncda.reports.catDistrict}
+            title={ncda.reports.dropoutsTitle}
+            hint={ncda.reports.dropoutsHint}
+            selected={reportId === 'dropouts'}
+            onSelect={() => setReportId('dropouts')}
+          />
+          <ReportCatalogCard
+            category={ncda.reports.catDomain}
+            title={ncda.reports.centersTitle}
+            hint={ncda.reports.centersHint}
+            selected={reportId === 'centers'}
+            onSelect={() => setReportId('centers')}
+          />
+        </div>
+
+        {!reportId ? (
+          <p className="mb-4 text-body text-text-secondary">{ncda.reports.chooseReport}</p>
+        ) : null}
 
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-3 flex-1">
@@ -156,6 +197,7 @@ function NcdaReportsLive() {
         </div>
 
         <div className="space-y-8">
+          {reportId === 'national' ? (
           <NcdaDashboardSection
             title={ncda.reports.districtKpisTitle}
             isLoading={districtReport.isLoading && !districtReport.data && !districtReport.isError}
@@ -205,7 +247,9 @@ function NcdaReportsLive() {
               />
             </div>
           </NcdaDashboardSection>
+          ) : null}
 
+          {reportId === 'enrollment' ? (
           <NcdaDashboardSection
             title={ncda.reports.enrollmentTitle}
             isLoading={enrollment.isLoading && !enrollment.data && !enrollment.isError}
@@ -241,7 +285,9 @@ function NcdaReportsLive() {
             </div>
             <p className="mt-3 text-caption text-text-muted">{ncda.reports.trendUnavailable}</p>
           </NcdaDashboardSection>
+          ) : null}
 
+          {reportId === 'dropouts' ? (
           <NcdaDashboardSection
             title={ncda.reports.dropoutsTitle}
             isLoading={dropouts.isLoading && !dropouts.data && !dropouts.isError}
@@ -311,7 +357,9 @@ function NcdaReportsLive() {
               </>
             )}
           </NcdaDashboardSection>
+          ) : null}
 
+          {reportId === 'centers' ? (
           <Card padding="md" className="border-border space-y-4">
             <h2 className="text-subheading font-semibold text-text">{ncda.reports.centersTitle}</h2>
             {centersReport.isError && !centersReport.data ? (
@@ -372,6 +420,7 @@ function NcdaReportsLive() {
               </>
             )}
           </Card>
+          ) : null}
 
           <Card padding="md" className="border-border space-y-2">
             <h2 className="text-subheading font-semibold text-text">
@@ -388,5 +437,36 @@ function NcdaReportsLive() {
         </div>
       </PageContent>
     </PageContainer>
+  )
+}
+
+function ReportCatalogCard({
+  category,
+  title,
+  hint,
+  selected,
+  onSelect,
+}: {
+  category: string
+  title: string
+  hint: string
+  selected: boolean
+  onSelect: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`rounded-lg border p-4 text-left transition-colors ${
+        selected
+          ? 'border-primary bg-primary-light/40'
+          : 'border-border bg-surface hover:border-primary/40'
+      }`}
+      aria-pressed={selected}
+    >
+      <p className="text-caption font-bold uppercase tracking-wide text-text-muted">{category}</p>
+      <p className="mt-1 text-body font-semibold text-text">{title}</p>
+      <p className="mt-1 text-caption text-text-secondary">{hint}</p>
+    </button>
   )
 }

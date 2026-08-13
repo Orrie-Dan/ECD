@@ -19,7 +19,7 @@ export function SectorPerformance({ compact = false, maxItems }: SectorPerforman
           {district.dashboard.sectorPerformance}
         </h3>
         {compact && (
-          <Link to="/district/ikarita" className="text-caption font-semibold text-primary hover:underline shrink-0">
+          <Link to="/district" className="text-caption font-semibold text-primary hover:underline shrink-0">
             {district.gis.title} →
           </Link>
         )}

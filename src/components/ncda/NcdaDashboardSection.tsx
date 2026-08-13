@@ -12,6 +12,7 @@ export function NcdaDashboardSection({
   onRetry,
   children,
   className = '',
+  variant = 'stats',
 }: {
   title: string
   isLoading: boolean
@@ -19,6 +20,7 @@ export function NcdaDashboardSection({
   onRetry?: () => void
   children: ReactNode
   className?: string
+  variant?: 'stats' | 'charts'
 }) {
   return (
     <section className={`space-y-3 ${className}`.trim()} aria-labelledby={`ncda-sec-${title}`}>
@@ -37,11 +39,19 @@ export function NcdaDashboardSection({
           ) : null}
         </Card>
       ) : isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3" aria-busy="true">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} height="4.5rem" className="w-full" rounded="lg" />
-          ))}
-        </div>
+        variant === 'charts' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" aria-busy="true">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} height="16rem" className="w-full" rounded="lg" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3" aria-busy="true">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} height="4.5rem" className="w-full" rounded="lg" />
+            ))}
+          </div>
+        )
       ) : (
         children
       )}

@@ -18,6 +18,7 @@ describe('Sprint 5.5J — District caregiver governance contract', () => {
   const districtQueries = fs.readFileSync(root('./users/queries.ts'), 'utf8')
   const usersResource = fs.readFileSync(root('../../api/resources/users.ts'), 'utf8')
   const districtLayout = fs.readFileSync(root('../../layouts/DistrictLayout.tsx'), 'utf8')
+  const districtNav = fs.readFileSync(root('../../layouts/district/navigation.ts'), 'utf8')
 
   describe('routing + authorization', () => {
     it('registers caregiver routes under districtOfficer ProtectedRoute', () => {
@@ -31,8 +32,9 @@ describe('Sprint 5.5J — District caregiver governance contract', () => {
     })
 
     it('adds Abakoresha to district navigation', () => {
-      expect(districtLayout).toContain('/district/abakoresha')
-      expect(districtLayout).toContain('district.nav.caregivers')
+      expect(districtNav).toContain("caregivers: '/district/abakoresha'")
+      expect(districtNav).toContain('district.nav.caregivers')
+      expect(districtLayout).toContain('DISTRICT_NAV_GROUPS')
     })
   })
 

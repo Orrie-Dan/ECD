@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
@@ -38,7 +37,7 @@ function formatDate(iso: string | undefined): string {
 export function DistrictCaregiverDetailPage() {
   if (!env.isLive) {
     return (
-      <DistrictLayout>
+      <>
         <PageContainer>
           <PageHeader
             title={district.caregivers.title}
@@ -52,7 +51,7 @@ export function DistrictCaregiverDetailPage() {
             />
           </PageContent>
         </PageContainer>
-      </DistrictLayout>
+      </>
     )
   }
 
@@ -79,7 +78,7 @@ function DistrictCaregiverDetailLive() {
     const is404 =
       (detail.error as { response?: { status?: number } } | null)?.response?.status === 404
     return (
-      <DistrictLayout>
+      <>
         <PageContainer>
           <PageHeader
             title={district.caregivers.title}
@@ -99,14 +98,14 @@ function DistrictCaregiverDetailLive() {
             />
           </PageContent>
         </PageContainer>
-      </DistrictLayout>
+      </>
     )
   }
 
   const title = detail.data?.fullName ?? district.caregivers.title
 
   return (
-    <DistrictLayout>
+    <>
       <PageContainer>
         <PageHeader title={title} subtitle={district.caregivers.detailSubtitle} size="compact" />
         <PageContent>
@@ -169,7 +168,7 @@ function DistrictCaregiverDetailLive() {
           </div>
         </PageContent>
       </PageContainer>
-    </DistrictLayout>
+    </>
   )
 }
 

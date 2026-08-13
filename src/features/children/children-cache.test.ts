@@ -1,7 +1,7 @@
 /**
  * Sprint 5.9 — children list must refresh after sync pull writes LocalStore.
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import {
   resetOfflineDbForTests,
   resetLocalStoreForTests,
@@ -72,7 +72,6 @@ describe('Sprint 5.9 children UI/API cache', () => {
       deletedAt: null,
       lastModifiedAt: now,
       _localStatus: 'clean',
-      _updatedAtLocal: now,
     })
     await store.setMeta(META_KEYS.hasLocalSnapshot, 'true')
 

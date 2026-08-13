@@ -76,7 +76,11 @@ export function LoginForm({ role }: LoginFormProps) {
       <div className="mb-5">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-body text-text-secondary font-semibold hover:text-primary transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
+          aria-disabled={loading}
+          tabIndex={loading ? -1 : undefined}
+          className={`inline-flex items-center gap-1.5 text-body text-text-secondary font-semibold hover:text-primary transition-colors duration-150 focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm ${
+            loading ? 'pointer-events-none opacity-50' : ''
+          }`}
         >
           <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" />
           {auth.login.backToRoleSelection}
@@ -95,6 +99,9 @@ export function LoginForm({ role }: LoginFormProps) {
           <Alert variant="warning">{auth.login.apiUnavailable}</Alert>
         )}
         {formError && <Alert variant="error">{formError}</Alert>}
+        {loading && env.isLive && (
+          <Alert variant="info">{auth.login.registeringDeviceHint}</Alert>
+        )}
 
         <InputField
           label={auth.login.username}
@@ -124,7 +131,7 @@ export function LoginForm({ role }: LoginFormProps) {
 
         <div className="pt-2">
           <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-            {auth.login.submit}
+            {loading && env.isLive ? auth.login.registeringDevice : auth.login.submit}
           </Button>
         </div>
       </form>

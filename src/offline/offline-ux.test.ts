@@ -27,6 +27,20 @@ vi.mock('@/api/generated/endpoints/sync/sync', () => ({
   syncControllerSessionStatus: vi.fn(),
 }))
 
+vi.mock('@/api/generated/endpoints/devices/devices', () => ({
+  devicesControllerRegister: vi.fn().mockRejectedValue({
+    statusCode: 0,
+    message: 'Network error',
+    messages: ['Network error'],
+    isUnauthorized: false,
+    isForbidden: false,
+    isConflict: false,
+    isNetworkError: true,
+    isValidationError: false,
+    isNotFound: false,
+  }),
+}))
+
 import { syncControllerPull, syncControllerPush } from '@/api/generated/endpoints/sync/sync'
 
 const USER = 'ux-hardening-user'
