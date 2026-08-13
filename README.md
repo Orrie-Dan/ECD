@@ -108,6 +108,14 @@ Select a role on the home screen, then sign in with these demo credentials:
 | `/district/ibigo` | District | ECD centers |
 | `/district/ikarita` | District | GIS analytics |
 
+## Documentation (handover)
+
+Stakeholder / NCDA pack (technical doc, architecture, codebook, user manuals):
+
+- [`docs/handover/00-handover-index.md`](docs/handover/00-handover-index.md)
+
+Engineering notes: `docs/adr-*.md`, `docs/frontend-api-pattern.md`, `docs/offline-operations.md`.
+
 ## License
 
 Private project — not published to npm.
