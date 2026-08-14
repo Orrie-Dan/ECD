@@ -1,6 +1,5 @@
 import {
   Apple,
-  Check,
   CheckCircle2,
   Droplets,
   Egg,
@@ -10,8 +9,10 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { BalancedMealComposition } from '@/types'
+import { Button } from '@/components/ui/Button'
+import { SelectTile } from '@/components/feeding/SelectTile'
 import { caretaker } from '@/locales/rw/caretaker'
-import { FOOD_GROUP_KEYS } from '@/lib/feeding-utils'
+import { completeComposition, FOOD_GROUP_KEYS } from '@/lib/feeding-utils'
 
 const LABELS: Record<keyof BalancedMealComposition, string> = {
   cerealsOrTubers: caretaker.imirire.cerealsOrTubers,
@@ -100,61 +101,30 @@ export function BalancedMealChecklist({
         />
       </div>
 
+      {!complete && (
+        <Button
+          variant="secondary"
+          size="md"
+          fullWidth
+          onClick={() => onChange(completeComposition())}
+        >
+          {caretaker.imirire.selectAllGroups}
+        </Button>
+      )}
+
       <div className="grid gap-2 sm:grid-cols-2">
         {FOOD_GROUP_KEYS.map((key) => {
           const checked = value[key]
           const missing = showValidation && !checked
           return (
-            <label
+            <SelectTile
               key={key}
-              className={`flex items-center gap-3 rounded-xl border p-3 min-h-14 cursor-pointer transition-colors ${
-                missing
-                  ? 'border-error bg-error-light/30'
-                  : checked
-                    ? 'border-success/35 bg-success-light/25'
-                    : 'border-border bg-surface hover:bg-background-subtle/80'
-              }`}
-            >
-              <span
-                className={`flex items-center justify-center w-9 h-9 rounded-lg shrink-0 ${
-                  missing
-                    ? 'bg-error-light text-error'
-                    : checked
-                      ? 'bg-success-light text-success'
-                      : 'bg-background-subtle text-text-muted'
-                }`}
-                aria-hidden
-              >
-                {ICONS[key]}
-              </span>
-              <span
-                className={`flex-1 text-body min-w-0 ${
-                  missing ? 'text-error font-semibold' : 'text-text font-medium'
-                }`}
-              >
-                {LABELS[key]}
-              </span>
-              <span className="relative shrink-0">
-                <input
-                  type="checkbox"
-                  className="peer sr-only"
-                  checked={checked}
-                  onChange={(e) => onChange({ ...value, [key]: e.target.checked })}
-                />
-                <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-md border-2 transition-colors peer-focus-visible:outline-3 peer-focus-visible:outline-primary peer-focus-visible:outline-offset-2 ${
-                    checked
-                      ? 'border-success bg-success text-white'
-                      : missing
-                        ? 'border-error bg-surface'
-                        : 'border-border bg-surface'
-                  }`}
-                  aria-hidden
-                >
-                  {checked && <Check size={14} strokeWidth={3} />}
-                </span>
-              </span>
-            </label>
+              label={LABELS[key]}
+              selected={checked}
+              missing={missing}
+              onChange={(next) => onChange({ ...value, [key]: next })}
+              icon={ICONS[key]}
+            />
           )
         })}
       </div>

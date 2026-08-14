@@ -1,11 +1,11 @@
-import { Check, Milk, Soup, UtensilsCrossed } from 'lucide-react'
+import { Milk, Soup, UtensilsCrossed } from 'lucide-react'
 import { FormField, TextInput } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
 import { BalancedMealChecklist } from '@/components/feeding/BalancedMealChecklist'
+import { SelectTile } from '@/components/feeding/SelectTile'
 import { caretaker } from '@/locales/rw/caretaker'
 import { isBalancedComposition } from '@/lib/feeding-utils'
 import type { BalancedMealComposition } from '@/types'
-import type { ReactNode } from 'react'
 
 interface FeedingDayFormProps {
   date: string
@@ -24,51 +24,6 @@ interface FeedingDayFormProps {
   dateLocked?: boolean
   /** Highlight incomplete food groups after a blocked save attempt. */
   showBalancedValidation?: boolean
-}
-
-function ToggleRow({
-  label,
-  checked,
-  onChange,
-  icon,
-}: {
-  label: string
-  checked: boolean
-  onChange: (v: boolean) => void
-  icon: ReactNode
-}) {
-  return (
-    <label
-      className={`flex items-center justify-between gap-3 rounded-xl border p-4 min-h-[3.5rem] cursor-pointer transition-colors ${
-        checked
-          ? 'border-success/40 bg-success-light/30'
-          : 'border-border bg-surface hover:bg-background-subtle/80'
-      }`}
-    >
-      <span className="flex items-center gap-3 min-w-0">
-        <span
-          className={`flex items-center justify-center w-10 h-10 rounded-lg shrink-0 ${
-            checked ? 'bg-success-light text-success' : 'bg-background-subtle text-text-muted'
-          }`}
-          aria-hidden
-        >
-          {icon}
-        </span>
-        <span className="text-body font-semibold text-text">{label}</span>
-      </span>
-      <span className="inline-flex items-center gap-2 shrink-0">
-        {checked && (
-          <Check size={16} className="text-success" strokeWidth={2.5} aria-hidden />
-        )}
-        <input
-          type="checkbox"
-          className="h-6 w-6 accent-primary touch-target"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-      </span>
-    </label>
-  )
 }
 
 export function FeedingDayForm({
@@ -97,24 +52,26 @@ export function FeedingDayForm({
           disabled={dateLocked}
         />
       </FormField>
-      <ToggleRow
-        label={caretaker.imirire.milk}
-        checked={milkServed}
-        onChange={onMilkChange}
-        icon={<Milk size={20} />}
-      />
-      <ToggleRow
-        label={caretaker.imirire.porridge}
-        checked={porridgeServed}
-        onChange={onPorridgeChange}
-        icon={<Soup size={20} />}
-      />
-      <ToggleRow
-        label={caretaker.imirire.balancedMeal}
-        checked={balancedMealServed}
-        onChange={onBalancedChange}
-        icon={<UtensilsCrossed size={20} />}
-      />
+      <div className="space-y-2" role="group" aria-label={caretaker.imirire.dailyLog}>
+        <SelectTile
+          label={caretaker.imirire.milk}
+          selected={milkServed}
+          onChange={onMilkChange}
+          icon={<Milk size={20} />}
+        />
+        <SelectTile
+          label={caretaker.imirire.porridge}
+          selected={porridgeServed}
+          onChange={onPorridgeChange}
+          icon={<Soup size={20} />}
+        />
+        <SelectTile
+          label={caretaker.imirire.balancedMeal}
+          selected={balancedMealServed}
+          onChange={onBalancedChange}
+          icon={<UtensilsCrossed size={20} />}
+        />
+      </div>
       {balancedMealServed && (
         <BalancedMealChecklist
           value={composition}

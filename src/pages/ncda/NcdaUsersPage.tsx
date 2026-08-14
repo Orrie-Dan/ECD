@@ -161,8 +161,6 @@ function NcdaUsersLive() {
         size="compact"
       />
       <PageContent>
-        <p className="mb-4 text-caption text-text-secondary">{ncda.users.scopeLabel}</p>
-
         <div className="space-y-8">
           <NcdaDashboardSection
             title={ncda.users.networkTitle}

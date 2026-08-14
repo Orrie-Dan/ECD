@@ -369,3 +369,8 @@ export function setPhysicalPart(
 ): StedPhysicalCheck {
   return { ...physical, [part]: status }
 }
+
+/** Reset all body parts to normal (bulk action in physical step). */
+export function markAllPhysicalNormal(): StedPhysicalCheck {
+  return emptyPhysicalCheck()
+}

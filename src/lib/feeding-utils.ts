@@ -25,9 +25,25 @@ export function emptyComposition(): BalancedMealComposition {
   }
 }
 
+export function completeComposition(): BalancedMealComposition {
+  return {
+    cerealsOrTubers: true,
+    legumes: true,
+    dairy: true,
+    animalProducts: true,
+    fruitsVegetables: true,
+    addedFat: true,
+  }
+}
+
 export function isBalancedComposition(composition?: BalancedMealComposition): boolean {
   if (!composition) return false
   return FOOD_GROUP_KEYS.every((key) => composition[key])
+}
+
+export function hasAnyFoodGroup(composition?: BalancedMealComposition): boolean {
+  if (!composition) return false
+  return FOOD_GROUP_KEYS.some((key) => composition[key])
 }
 
 export function getFeedingDay(

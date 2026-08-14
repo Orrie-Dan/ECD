@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { attendance, queryStaleTimes } from '@/api/query-keys'
+import { attendance, localFirstQueryOptions, queryStaleTimes } from '@/api/query-keys'
 import { fetchAllAttendance, fetchAttendanceList } from '@/api/resources/attendance'
 import { getLocalStore } from '@/storage'
 import {
@@ -62,6 +62,7 @@ export function useAttendanceList(filters: AttendanceListFilters = {}, enabled =
     },
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.attendanceList,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -93,6 +94,7 @@ export function useAttendanceWindow(
     },
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.attendanceList,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -119,5 +121,6 @@ export function useChildAttendance(
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.attendanceChild,
+    ...localFirstQueryOptions,
   })
 }

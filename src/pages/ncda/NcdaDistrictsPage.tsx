@@ -105,8 +105,6 @@ function NcdaDistrictsLive() {
       />
 
       <PageContent>
-        <p className="mb-4 text-caption text-text-secondary">{ncda.districts.scopeLabel}</p>
-
         <div className="space-y-8">
           <NcdaDashboardSection
             title={ncda.districts.networkTitle}
@@ -126,7 +124,6 @@ function NcdaDistrictsLive() {
                 icon={<MapPinned size={18} />}
               />
             </div>
-            <p className="mt-2 text-caption text-text-muted">{ncda.districts.nationalNote}</p>
           </NcdaDashboardSection>
 
           <section className="space-y-3" aria-labelledby="ncda-districts-list">

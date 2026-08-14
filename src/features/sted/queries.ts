@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { sted, queryStaleTimes } from '@/api/query-keys'
+import { localFirstQueryOptions, sted, queryStaleTimes } from '@/api/query-keys'
 import {
   fetchAllChildStedHistory,
   fetchChildStedHistory,
@@ -65,6 +65,7 @@ export function useStedDetail(id: string | undefined, enabled = true) {
     },
     enabled: env.isLive && enabled && !!id,
     staleTime: queryStaleTimes.stedDetail,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -119,6 +120,7 @@ export function useChildStedHistory(
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.stedHistory,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -144,6 +146,7 @@ export function useChildStedHistoryWindow(childId: string | undefined, enabled =
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.stedHistory,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -171,6 +174,7 @@ export function useChildStedLatest(childId: string | undefined, enabled = true) 
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.stedLatest,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -182,5 +186,6 @@ export function useStedRoster(childIds: string[], enabled = true) {
     queryFn: () => loadRosterFromLocalOrRemote(sortedIds),
     enabled: env.isLive && enabled && sortedIds.length > 0,
     staleTime: queryStaleTimes.stedRoster,
+    ...localFirstQueryOptions,
   })
 }

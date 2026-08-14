@@ -86,7 +86,7 @@ function NcdaUserDetailLive() {
           <div className="mb-3">{backLink}</div>
           <LiveUnavailableState
             title={is404 ? ncda.users.notFound : ncda.users.detailError}
-            description={ncda.users.scopeLabel}
+            description={ncda.users.detailError}
             action={
               <Button type="button" variant="primary" onClick={() => void detail.refetch()}>
                 {ncda.users.retry}
@@ -106,7 +106,6 @@ function NcdaUserDetailLive() {
       <PageContent>
         <div className="mb-4 space-y-2">
           {backLink}
-          <p className="text-caption text-text-secondary">{ncda.users.scopeLabel}</p>
         </div>
 
         <div className="space-y-8">

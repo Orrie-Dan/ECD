@@ -46,9 +46,7 @@ export function NcdaRolesPage() {
         size="compact"
       />
       <PageContent>
-        <p className="mb-2 text-caption text-text-secondary">{ncda.users.scopeLabel}</p>
         <p className="mb-4 text-body text-text-secondary">{ncda.rolesPage.intro}</p>
-        <p className="mb-4 text-caption text-text-muted">{ncda.rolesPage.noRbacApi}</p>
 
         <Card padding="md" className="border-border overflow-x-auto">
           <table className="w-full min-w-0 sm:min-w-[40rem] text-left text-body responsive-table-cards">

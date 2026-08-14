@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { growth, nutrition, queryStaleTimes } from '@/api/query-keys'
+import { growth, localFirstQueryOptions, nutrition, queryStaleTimes } from '@/api/query-keys'
 import {
   fetchChildGrowthChart,
   fetchChildGrowthHistory,
@@ -79,6 +79,7 @@ export function useChildGrowthHistory(childId: string | undefined, enabled = tru
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.growthHistory,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -107,6 +108,7 @@ export function useChildGrowthLatest(childId: string | undefined, enabled = true
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.growthLatest,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -140,6 +142,7 @@ export function useChildGrowthChart(childId: string | undefined, enabled = true)
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.growthChart,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -154,6 +157,7 @@ export function useGrowthRoster(childIds: string[], enabled = true) {
     queryFn: () => loadRosterFromLocalOrRemote(sortedIds),
     enabled: env.isLive && enabled && sortedIds.length > 0,
     staleTime: queryStaleTimes.growthRoster,
+    ...localFirstQueryOptions,
     select: (data) => data.measurements,
   })
 }

@@ -112,7 +112,7 @@ function NcdaChildDetailLive() {
           <div className="mb-3">{backLink}</div>
           <LiveUnavailableState
             title={is404 ? ncda.children.notFound : ncda.children.detailError}
-            description={ncda.children.scopeLabel}
+            description={ncda.children.detailError}
             action={
               <Button type="button" variant="primary" onClick={() => void detail.refetch()}>
                 {ncda.children.retry}
@@ -140,12 +140,9 @@ function NcdaChildDetailLive() {
       <PageContent>
         <div className="mb-4 space-y-2">
           {backLink}
-          <p className="text-caption text-text-secondary">
-            {ncda.children.scopeLabel}
-            {detail.data?.registrationNumber
-              ? ` · ${detail.data.registrationNumber}`
-              : ''}
-          </p>
+          {detail.data?.registrationNumber ? (
+            <p className="text-caption text-text-secondary">{detail.data.registrationNumber}</p>
+          ) : null}
         </div>
 
         <div className="space-y-8">

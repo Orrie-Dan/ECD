@@ -36,6 +36,7 @@ export {
   computeCenterStedComparison,
   computeStedDistrictSummary,
   setPhysicalPart,
+  markAllPhysicalNormal,
 } from '@/lib/sted-utils'
 
 export type {

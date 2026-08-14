@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { feeding, queryStaleTimes } from '@/api/query-keys'
+import { feeding, localFirstQueryOptions, queryStaleTimes } from '@/api/query-keys'
 import {
   fetchAllFeedingDays,
   fetchAllFeedingMonthSummaries,
@@ -74,6 +74,7 @@ export function useFeedingDayList(filters: FeedingDayListFilters, enabled = true
     },
     enabled: env.isLive && enabled && !!filters.centerId,
     staleTime: queryStaleTimes.feedingDays,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -99,6 +100,7 @@ export function useFeedingDaysWindow(centerId: string | undefined, enabled = tru
     },
     enabled: env.isLive && enabled && !!centerId,
     staleTime: queryStaleTimes.feedingDays,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -150,6 +152,7 @@ export function useFeedingMonthSummaryList(
     },
     enabled: env.isLive && enabled && !!filters.centerId,
     staleTime: queryStaleTimes.feedingSummaries,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -175,5 +178,6 @@ export function useFeedingSummariesWindow(centerId: string | undefined, enabled 
     },
     enabled: env.isLive && enabled && !!centerId,
     staleTime: queryStaleTimes.feedingSummaries,
+    ...localFirstQueryOptions,
   })
 }

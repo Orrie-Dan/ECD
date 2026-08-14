@@ -160,7 +160,7 @@ function NcdaCenterDetailLive() {
           <div className="mb-3">{backLink}</div>
           <LiveUnavailableState
             title={is404 ? ncda.centers.notFound : ncda.centers.detailError}
-            description={ncda.centers.scopeLabel}
+            description={ncda.centers.detailError}
             action={
               <Button type="button" variant="primary" onClick={() => void detail.refetch()}>
                 {ncda.centers.retry}
@@ -194,10 +194,9 @@ function NcdaCenterDetailLive() {
       <PageContent>
         <div className="mb-4 space-y-2">
           {backLink}
-          <p className="text-caption text-text-secondary">
-            {ncda.centers.scopeLabel}
-            {detail.data?.code ? ` · ${detail.data.code}` : ''}
-          </p>
+          {detail.data?.code ? (
+            <p className="text-caption text-text-secondary">{detail.data.code}</p>
+          ) : null}
         </div>
 
         <div className="space-y-8">

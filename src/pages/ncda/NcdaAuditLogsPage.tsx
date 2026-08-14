@@ -106,7 +106,6 @@ function NcdaAuditLogsLive() {
         size="compact"
       />
       <PageContent>
-        <p className="mb-4 text-caption text-text-secondary">{ncda.auditLogs.scopeLabel}</p>
         <p className="mb-4 text-caption text-text-muted">{ncda.auditLogs.immutableNote}</p>
 
         <Card padding="md" className="border-border space-y-4">

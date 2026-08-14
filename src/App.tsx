@@ -55,7 +55,6 @@ import {
   NcdaCompliancePage,
   NcdaWashPage,
   NcdaMonitoringPage,
-  NcdaReportsPage,
   NcdaAuditLogsPage,
   NcdaAuditLogDetailPage,
   NcdaRolesPage,
@@ -186,7 +185,10 @@ export default function App() {
                     <Route path="/ncda/dashboard" element={<NcdaDashboardPage />} />
                     <Route path="/ncda/monitoring" element={<NcdaMonitoringPage />} />
                     <Route path="/ncda/inspections" element={<NcdaCompliancePage />} />
-                    <Route path="/ncda/reports" element={<NcdaReportsPage />} />
+                    <Route
+                      path="/ncda/reports"
+                      element={<RedirectWithSearch to="/ncda/dashboard" />}
+                    />
                     <Route path="/ncda/users" element={<NcdaUsersPage />} />
                     <Route path="/ncda/users/:userId" element={<NcdaUserDetailPage />} />
                     <Route path="/ncda/roles" element={<NcdaRolesPage />} />

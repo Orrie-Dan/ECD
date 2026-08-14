@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { referrals, queryStaleTimes } from '@/api/query-keys'
+import { localFirstQueryOptions, referrals, queryStaleTimes } from '@/api/query-keys'
 import {
   fetchAllReferrals,
   fetchChildReferralHistory,
@@ -112,6 +112,7 @@ export function useReferralList(filters: ReferralListFilters = {}, enabled = tru
     queryFn: () => loadListFromLocalOrRemote(filters),
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.referralList,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -125,6 +126,7 @@ export function useReferralWindow(
     queryFn: () => loadWindowFromLocalOrRemote(filters),
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.referralWindow,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -152,5 +154,6 @@ export function useChildReferralHistory(childId: string | undefined, enabled = t
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.referralHistory,
+    ...localFirstQueryOptions,
   })
 }

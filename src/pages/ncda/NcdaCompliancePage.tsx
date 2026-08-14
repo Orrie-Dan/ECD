@@ -112,9 +112,6 @@ function NcdaComplianceLive() {
         size="compact"
       />
       <PageContent>
-        <p className="mb-2 text-caption text-text-secondary">{ncda.compliance.scopeLabel}</p>
-        <p className="mb-4 text-caption text-text-muted">{ncda.compliance.nationalNote}</p>
-
         <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label={ncda.inspections.bucketsTitle}>
           {(
             [
@@ -138,25 +135,6 @@ function NcdaComplianceLive() {
             </Button>
           ))}
         </div>
-
-        <Card padding="md" className="mb-4 border-border bg-background-subtle/40">
-          <p className="text-body-sm font-semibold text-text">{ncda.compliance.aggregatesUnavailableTitle}</p>
-          <p className="mt-1 text-caption text-text-secondary">
-            {ncda.compliance.aggregatesUnavailableBody}
-          </p>
-          <p className="mt-2 text-body-sm font-semibold text-text">
-            {ncda.inspections.followUpUnavailableTitle}
-          </p>
-          <p className="mt-1 text-caption text-text-secondary">
-            {ncda.inspections.followUpUnavailableBody}
-          </p>
-          <Link
-            to={NCDA_PATHS.wash}
-            className="mt-2 inline-block text-caption font-semibold text-primary hover:underline"
-          >
-            {ncda.inspections.relatedWash}
-          </Link>
-        </Card>
 
         <Card padding="md" className="mb-4 border-border space-y-4">
           <h2 className="text-subheading font-semibold text-text">{ncda.compliance.listTitle}</h2>

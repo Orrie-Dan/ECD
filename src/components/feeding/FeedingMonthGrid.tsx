@@ -22,6 +22,44 @@ function ServedMark({ served, label }: { served: boolean; label: string }) {
   )
 }
 
+function ServedDots({ record }: { record?: CenterFeedingDay }) {
+  const marks = [
+    { on: !!record?.milkServed, label: caretaker.imirire.milk },
+    { on: !!record?.porridgeServed, label: caretaker.imirire.porridge },
+    { on: !!record?.balancedMealServed, label: caretaker.imirire.balancedMeal },
+  ]
+  return (
+    <span className="flex items-center justify-center gap-0.5" aria-hidden>
+      {marks.map((mark) => (
+        <span
+          key={mark.label}
+          className={`h-1.5 w-1.5 rounded-full ${
+            mark.on ? 'bg-primary' : 'bg-border'
+          }`}
+        />
+      ))}
+    </span>
+  )
+}
+
+function mondayIndex(jsWeekday: number): number {
+  return (jsWeekday + 6) % 7
+}
+
+function leadingMondayBlanks(yearMonth: string): number {
+  const [year, month] = yearMonth.split('-').map(Number)
+  return mondayIndex(new Date(year, month - 1, 1).getDay())
+}
+
+function dayStatusLabel(record: CenterFeedingDay | undefined, isFuture: boolean): string {
+  if (isFuture) return caretaker.imirire.futureDay
+  if (!record) return caretaker.imirire.dayNotLogged
+  if (record.milkServed && record.porridgeServed && record.balancedMealServed) {
+    return caretaker.imirire.dayComplete
+  }
+  return caretaker.imirire.dayPartial
+}
+
 export interface FeedingMonthGridProps {
   yearMonth: string
   onYearMonthChange: (yearMonth: string) => void
@@ -43,6 +81,7 @@ export function FeedingMonthGrid({
   const byDate = new Map(days.map((d) => [d.date, d]))
   const counts = computeFeedingDayCounts(days)
   const loggedDays = days.length
+  const blanks = leadingMondayBlanks(yearMonth)
 
   const rows = Array.from({ length: dayCount }, (_, i) => {
     const dayNum = i + 1
@@ -50,6 +89,12 @@ export function FeedingMonthGrid({
     const record = byDate.get(date)
     return { dayNum, date, record }
   })
+
+  const openDay = (date: string, hasRecord: boolean) => {
+    if (date > today) return
+    if (hasRecord) onEditDay(date)
+    else onMarkDay(date)
+  }
 
   return (
     <div className="space-y-4">
@@ -107,7 +152,62 @@ export function FeedingMonthGrid({
           </div>
         </div>
 
-        <div className="overflow-x-auto max-h-[min(65vh,560px)] overflow-y-auto -mx-1 px-1 sm:mx-0 sm:px-0 rounded-lg border border-border">
+        <div className="md:hidden space-y-2" aria-label={caretaker.imirire.calendarLabel}>
+          <div className="grid grid-cols-7 gap-1">
+            {caretaker.imirire.weekdaysMonFirst.map((label) => (
+              <span
+                key={label}
+                className="text-center text-caption font-semibold uppercase tracking-wide text-text-secondary py-1"
+              >
+                {label}
+              </span>
+            ))}
+            {Array.from({ length: blanks }, (_, i) => (
+              <span key={`blank-${i}`} aria-hidden />
+            ))}
+            {rows.map(({ dayNum, date, record }) => {
+              const isToday = date === today
+              const isFuture = date > today
+              const hasRecord = !!record
+              const fullyLogged =
+                !!record?.milkServed &&
+                !!record?.porridgeServed &&
+                !!record?.balancedMealServed
+              const status = dayStatusLabel(record, isFuture)
+              const label = `${caretaker.imirire.day} ${dayNum}${
+                isToday ? `, ${caretaker.imirire.today}` : ''
+              }, ${status}`
+
+              return (
+                <button
+                  key={date}
+                  type="button"
+                  id={isToday ? 'feeding-today-cell' : undefined}
+                  disabled={isFuture}
+                  onClick={() => openDay(date, hasRecord)}
+                  aria-label={label}
+                  aria-current={isToday ? 'date' : undefined}
+                  className={`flex flex-col items-center justify-center gap-1 min-h-[3.25rem] rounded-xl border-2 px-1 py-1.5 transition-colors focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+                    isFuture
+                      ? 'border-transparent bg-background-subtle/40 text-text-muted cursor-not-allowed opacity-50'
+                      : isToday
+                        ? 'border-primary bg-primary-light text-primary shadow-sm'
+                        : fullyLogged
+                          ? 'border-success/35 bg-success-light/25 text-text'
+                          : hasRecord
+                            ? 'border-warning/40 bg-warning-light/20 text-text'
+                            : 'border-border bg-surface text-text hover:border-primary/40 hover:bg-primary-light/40'
+                  }`}
+                >
+                  <span className="tabular-nums text-body font-semibold leading-none">{dayNum}</span>
+                  {!isFuture && <ServedDots record={record} />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="hidden md:block overflow-x-auto max-h-[min(65vh,560px)] overflow-y-auto rounded-lg border border-border">
           <table className="w-full min-w-[520px] text-left">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-background-subtle">
@@ -142,6 +242,7 @@ export function FeedingMonthGrid({
                   <tr
                     key={date}
                     id={isToday ? 'feeding-today-row' : undefined}
+                    onClick={isFuture ? undefined : () => openDay(date, hasRecord)}
                     className={`border-b border-border last:border-0 transition-colors ${
                       isToday
                         ? 'bg-primary-light/50 ring-1 ring-inset ring-primary/20'
@@ -152,7 +253,7 @@ export function FeedingMonthGrid({
                             : isFuture
                               ? 'opacity-50'
                               : 'hover:bg-background-subtle/60'
-                    }`}
+                    } ${isFuture ? '' : 'cursor-pointer'}`}
                   >
                     <td className="py-3 px-3 text-body font-semibold text-text">
                       <span className="inline-flex items-center gap-2">
@@ -181,12 +282,15 @@ export function FeedingMonthGrid({
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex flex-wrap gap-2 justify-end">
-                        {hasRecord ? (
+                        {isFuture ? null : hasRecord ? (
                           <Button
                             variant="tertiary"
                             size="sm"
                             icon={<Pencil size={14} />}
-                            onClick={() => onEditDay(date)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onEditDay(date)
+                            }}
                           >
                             {caretaker.imirire.editDay}
                           </Button>
@@ -195,7 +299,10 @@ export function FeedingMonthGrid({
                             variant="secondary"
                             size="sm"
                             icon={<Plus size={14} />}
-                            onClick={() => onMarkDay(date)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onMarkDay(date)
+                            }}
                           >
                             {caretaker.imirire.markCompleted}
                           </Button>

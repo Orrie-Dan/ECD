@@ -147,7 +147,7 @@ function NcdaDistrictDetailLive() {
           <div className="mb-3">{backLink}</div>
           <LiveUnavailableState
             title={is404 ? ncda.districts.notFound : ncda.districts.detailError}
-            description={ncda.districts.scopeLabel}
+            description={ncda.districts.detailError}
             action={
               <Button type="button" variant="primary" onClick={() => void detail.refetch()}>
                 {ncda.districts.retry}
@@ -182,10 +182,9 @@ function NcdaDistrictDetailLive() {
       <PageContent>
         <div className="mb-4 space-y-2">
           {backLink}
-          <p className="text-caption text-text-secondary">
-            {ncda.districts.scopeLabel}
-            {detail.data?.code ? ` · ${detail.data.code}` : ''}
-          </p>
+          {detail.data?.code ? (
+            <p className="text-caption text-text-secondary">{detail.data.code}</p>
+          ) : null}
         </div>
 
         <div className="space-y-8">

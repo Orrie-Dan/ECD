@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { nutrition, queryStaleTimes } from '@/api/query-keys'
+import { localFirstQueryOptions, nutrition, queryStaleTimes } from '@/api/query-keys'
 import {
   fetchNutritionAlerts,
   fetchNutritionHistory,
@@ -92,6 +92,7 @@ export function useNutritionHistory(childId: string | undefined, enabled = true)
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.nutritionHistory,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -115,6 +116,7 @@ export function useNutritionLatest(childId: string | undefined, enabled = true) 
     },
     enabled: env.isLive && enabled && !!childId,
     staleTime: queryStaleTimes.nutritionLatest,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -129,6 +131,7 @@ export function useNutritionAssessments(childIds: string[], enabled = true) {
     queryFn: () => loadRosterFromLocalOrRemote(sortedIds),
     enabled: env.isLive && enabled && sortedIds.length > 0,
     staleTime: queryStaleTimes.nutritionRoster,
+    ...localFirstQueryOptions,
     select: (data) => data.assessments,
   })
 }
@@ -148,5 +151,6 @@ export function useNutritionAlerts(filters: NutritionAlertFilters = {}, enabled 
     },
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.nutritionAlerts,
+    ...localFirstQueryOptions,
   })
 }

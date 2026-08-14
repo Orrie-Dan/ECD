@@ -41,6 +41,7 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
       expect(app).toContain('path="/ncda/monitoring"')
       expect(app).toContain('path="/ncda/inspections"')
       expect(app).toContain('path="/ncda/reports"')
+      expect(app).toContain('RedirectWithSearch to="/ncda/dashboard"')
       expect(app).toContain('path="/ncda/users"')
       expect(app).toContain('path="/ncda/roles"')
       expect(app).toContain('path="/ncda/settings"')
@@ -81,7 +82,6 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
           NCDA_PATHS.dashboard,
           NCDA_PATHS.monitoring,
           NCDA_PATHS.inspections,
-          NCDA_PATHS.reports,
           NCDA_PATHS.users,
           NCDA_PATHS.roles,
           NCDA_PATHS.settings,
@@ -94,8 +94,10 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
           NCDA_PATHS.centers,
           NCDA_PATHS.children,
           NCDA_PATHS.wash,
+          NCDA_PATHS.reports,
         ]),
       )
+      expect(paths).not.toContain(NCDA_PATHS.reports)
       expect(new Set(paths).size).toBe(paths.length)
     })
 

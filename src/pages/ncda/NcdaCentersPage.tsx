@@ -101,8 +101,6 @@ function NcdaCentersLive() {
       />
 
       <PageContent>
-        <p className="mb-4 text-caption text-text-secondary">{ncda.centers.scopeLabel}</p>
-
         <div className="space-y-8">
           <NcdaDashboardSection
             title={ncda.centers.networkTitle}
@@ -122,7 +120,6 @@ function NcdaCentersLive() {
                 icon={<Building2 size={18} />}
               />
             </div>
-            <p className="mt-2 text-caption text-text-muted">{ncda.centers.nationalNote}</p>
           </NcdaDashboardSection>
 
           <section className="space-y-3" aria-labelledby="ncda-centers-list">

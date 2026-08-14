@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/Button'
 import { Stepper } from '@/components/ui/Stepper'
 import { FormField } from '@/components/ui/FormField'
 import { Alert } from '@/components/ui/Alert'
+import { SelectTile } from '@/components/feeding/SelectTile'
 import { ChildPicker } from '@/components/children/ChildPicker'
+import { StedAgeRoutingStep } from '@/components/sted/StedAgeRoutingStep'
 import { StedPhysicalStep } from '@/components/sted/StedPhysicalStep'
 import { StedMilestonesStep } from '@/components/sted/StedMilestonesStep'
 import { StedReviewStep } from '@/components/sted/StedReviewStep'
@@ -34,6 +36,7 @@ import {
   getMilestoneCodes,
   getStedAgeBand,
   isPhysicalClear,
+  markAllPhysicalNormal,
   setPhysicalPart,
 } from '@/lib/sted-utils'
 import type {
@@ -43,17 +46,21 @@ import type {
   StedPhysicalPart,
 } from '@/types'
 
-/** MVP wizard: Child → Consent → Physical → Milestones → Review & Submit */
 const STEPS = [
   { title: caretaker.sted.stepChild },
   { title: caretaker.sted.stepConsent },
+  { title: caretaker.sted.stepAgeRouting },
   { title: caretaker.sted.stepPhysical },
   { title: caretaker.sted.stepMilestones },
   { title: caretaker.sted.stepReview },
 ]
 
-const TOTAL_STEPS = STEPS.length
-const STEP_REVIEW = 5
+const STEP_CHILD = 1
+const STEP_CONSENT = 2
+const STEP_AGE_ROUTING = 3
+const STEP_PHYSICAL = 4
+const STEP_MILESTONES = 5
+const STEP_REVIEW = 6
 
 export function StedWizardPage() {
   const { user } = useAuth()
@@ -106,7 +113,7 @@ export function StedWizardPage() {
     }
   }, [growthMeasurements, nutritionAssessments, dueFollowUpIds])
 
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(STEP_CHILD)
   const [childId, setChildId] = useState(searchParams.get('childId') ?? '')
   const [consent, setConsent] = useState(false)
   const [physical, setPhysical] = useState<StedPhysicalCheck>(emptyPhysicalCheck())
@@ -128,7 +135,7 @@ export function StedWizardPage() {
   }
 
   const goNext = () => {
-    if (step === 1) {
+    if (step === STEP_CHILD) {
       if (!childId) {
         showError(caretaker.sted.childRequired)
         return
@@ -137,23 +144,26 @@ export function StedWizardPage() {
         showError(caretaker.sted.ageNotEligible)
         return
       }
-      setStep(2)
+      setStep(STEP_CONSENT)
       return
     }
-    if (step === 2) {
+    if (step === STEP_CONSENT) {
       if (!consent) {
         showError(caretaker.sted.consentRequired)
         return
       }
-      setStep(3)
+      setStep(STEP_AGE_ROUTING)
       return
     }
-    if (step === 3) {
-      // Age band is derived from DOB — load the matching question set next.
-      setStep(4)
+    if (step === STEP_AGE_ROUTING) {
+      setStep(STEP_PHYSICAL)
       return
     }
-    if (step === 4) {
+    if (step === STEP_PHYSICAL) {
+      setStep(STEP_MILESTONES)
+      return
+    }
+    if (step === STEP_MILESTONES) {
       if (!milestonesComplete) {
         setMilestonesShowIncomplete(true)
         showError(caretaker.sted.milestonesIncomplete)
@@ -169,12 +179,11 @@ export function StedWizardPage() {
     if (!milestonesComplete) {
       setMilestonesShowIncomplete(true)
       showError(caretaker.sted.milestonesIncomplete)
-      setStep(4)
+      setStep(STEP_MILESTONES)
       return
     }
 
     const date = getTodayDate()
-    // Outcome is system-derived for MVP (not collected in the wizard).
     const outcome = buildDefaultOutcome(physical, milestones, date)
 
     try {
@@ -216,7 +225,7 @@ export function StedWizardPage() {
 
         <Stepper steps={STEPS} currentStep={step} />
 
-        {child && step > 1 && (
+        {child && step > STEP_CHILD && (
           <div
             className="rounded-xl border border-primary/20 bg-primary-light/35 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
             role="status"
@@ -245,12 +254,12 @@ export function StedWizardPage() {
             <p className="text-caption font-semibold uppercase tracking-wide text-primary">
               {common.ui.stepProgress
                 .replace('{current}', String(step))
-                .replace('{total}', String(TOTAL_STEPS))}
+                .replace('{total}', String(STEPS.length))}
             </p>
             <h2 className="text-subheading text-text mt-1">{STEPS[step - 1]?.title}</h2>
           </div>
 
-          {step === 1 && (
+          {step === STEP_CHILD && (
             <div className="space-y-4">
               <FormField label={caretaker.sted.childName} required>
                 <ChildPicker
@@ -295,48 +304,32 @@ export function StedWizardPage() {
             </div>
           )}
 
-          {step === 2 && (
-            <label
-              className={`flex items-start gap-4 rounded-xl border-2 p-5 cursor-pointer transition-colors min-h-[5.5rem] ${
-                consent
-                  ? 'border-success/40 bg-success-light/30'
-                  : 'border-border bg-surface hover:bg-background-subtle/60'
-              }`}
-            >
-              <span
-                className={`flex items-center justify-center w-11 h-11 rounded-xl shrink-0 ${
-                  consent ? 'bg-success-light text-success' : 'bg-background-subtle text-text-muted'
-                }`}
-                aria-hidden
-              >
-                <ShieldCheck size={22} />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="text-body font-semibold text-text block">
-                  {caretaker.sted.consentLabel}
-                </span>
-                <span className="text-caption text-text-secondary mt-1 block">
-                  {caretaker.sted.consentRequired}
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                className="mt-1 h-6 w-6 accent-primary shrink-0"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
+          {step === STEP_CONSENT && (
+            <div className="space-y-3">
+              <SelectTile
+                label={caretaker.sted.consentLabel}
+                selected={consent}
+                onChange={setConsent}
+                icon={<ShieldCheck size={20} />}
               />
-            </label>
+              <p className="text-caption text-text-secondary">{caretaker.sted.consentRequired}</p>
+            </div>
           )}
 
-          {step === 3 && (
+          {step === STEP_AGE_ROUTING && ageBand && (
+            <StedAgeRoutingStep ageBand={ageBand} />
+          )}
+
+          {step === STEP_PHYSICAL && (
             <StedPhysicalStep
               physical={physical}
               onChange={handlePhysicalChange}
+              onMarkAllNormal={() => setPhysical(markAllPhysicalNormal())}
               noProblem={noProblem}
             />
           )}
 
-          {step === 4 && ageBand && (
+          {step === STEP_MILESTONES && ageBand && (
             <StedMilestonesStep
               ageBand={ageBand}
               milestones={milestones}
@@ -356,13 +349,13 @@ export function StedWizardPage() {
               ageBand={ageBand}
               physical={physical}
               milestones={milestones}
-              onEditPhysical={() => setStep(3)}
-              onEditMilestones={() => setStep(4)}
+              onEditPhysical={() => setStep(STEP_PHYSICAL)}
+              onEditMilestones={() => setStep(STEP_MILESTONES)}
             />
           )}
 
           <div className="hidden sm:flex flex-wrap gap-2 pt-2 border-t border-border">
-            {step > 1 && (
+            {step > STEP_CHILD && (
               <Button variant="secondary" onClick={() => setStep((s) => s - 1)}>
                 {common.back}
               </Button>
@@ -382,7 +375,7 @@ export function StedWizardPage() {
 
       <div className="sm:hidden fixed bottom-[4.5rem] inset-x-0 z-30 border-t border-border bg-surface/95 backdrop-blur-sm px-3 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
         <div className="max-w-7xl mx-auto flex gap-2">
-          {step > 1 && (
+          {step > STEP_CHILD && (
             <Button variant="secondary" className="flex-1" onClick={() => setStep((s) => s - 1)}>
               {common.back}
             </Button>

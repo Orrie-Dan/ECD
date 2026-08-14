@@ -1,13 +1,17 @@
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, gender as genderLabels } from '@/locales/rw/common'
 import { calculateAge } from '@/lib/mock-data'
 import {
+  buildDefaultOutcome,
   getMilestoneCodes,
   isAnswered,
+  requiresStedReferral,
   STED_PHYSICAL_PARTS,
 } from '@/lib/sted-utils'
+import { getTodayDate } from '@/lib/nutrition-utils'
 import type {
   Child,
   StedAgeBand,
@@ -59,12 +63,49 @@ export function StedReviewStep({
   const genderLabel =
     genderLabels[child.gender as keyof typeof genderLabels] ?? child.gender
 
+  const problemParts = STED_PHYSICAL_PARTS.filter((part) => physical[part] === 'problem')
+  const oyaCodes = codes.filter((code) => milestones[code] === 'oya')
+  const referred = requiresStedReferral(physical, milestones)
+  const outcome = buildDefaultOutcome(physical, milestones, getTodayDate())
+
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h2 className="text-subheading text-text">{caretaker.sted.stepReview}</h2>
-        <p className="text-body text-text-secondary">{caretaker.sted.reviewHint}</p>
-      </div>
+      <p className="text-body text-text-secondary">{caretaker.sted.reviewHint}</p>
+
+      <section
+        className={`rounded-xl border p-4 space-y-2 ${
+          referred
+            ? 'border-warning/40 bg-warning-light/25'
+            : 'border-success/35 bg-success-light/20'
+        }`}
+        role="status"
+      >
+        <h3 className="text-label text-text">{caretaker.sted.outcomePreviewTitle}</h3>
+        <div className="flex items-start gap-3">
+          {referred ? (
+            <AlertTriangle size={20} className="text-warning shrink-0 mt-0.5" aria-hidden />
+          ) : (
+            <CheckCircle2 size={20} className="text-success shrink-0 mt-0.5" aria-hidden />
+          )}
+          <div className="min-w-0 space-y-1">
+            <p className={`text-body font-semibold ${referred ? 'text-warning' : 'text-success'}`}>
+              {referred
+                ? caretaker.sted.outcomePreviewReferral
+                : caretaker.sted.outcomePreviewNormal}
+            </p>
+            {outcome.followUpIn6Months && outcome.followUpDueDate && (
+              <p className="text-caption text-text-secondary">
+                {caretaker.sted.outcomeFollowUp}
+              </p>
+            )}
+            {referred && (
+              <p className="text-caption text-text-secondary">
+                {caretaker.sted.referralCreateHint}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
 
       {unanswered.length > 0 && (
         <Alert
@@ -77,7 +118,6 @@ export function StedReviewStep({
         </Alert>
       )}
 
-      {/* Child */}
       <section className="rounded-xl border border-border bg-background-subtle/50 p-4 space-y-3">
         <h3 className="text-label text-primary">{caretaker.sted.reviewChildSection}</h3>
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -102,7 +142,6 @@ export function StedReviewStep({
         </dl>
       </section>
 
-      {/* Physical */}
       <section className="rounded-xl border border-border p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-label text-primary">{caretaker.sted.stepPhysical}</h3>
@@ -110,33 +149,32 @@ export function StedReviewStep({
             {caretaker.sted.reviewEditPhysical}
           </Button>
         </div>
-        <ul className="space-y-2">
-          {STED_PHYSICAL_PARTS.map((part) => {
-            const isProblem = physical[part] === 'problem'
-            return (
-              <li
-                key={part}
-                className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 ${
-                  isProblem
-                    ? 'border-error/30 bg-error-light/25'
-                    : 'border-border bg-background-subtle/40'
-                }`}
-              >
-                <span className="text-body text-text">{PART_LABELS[part]}</span>
-                <span
-                  className={`text-caption font-semibold shrink-0 ${
-                    isProblem ? 'text-error' : 'text-success'
-                  }`}
+        {problemParts.length === 0 ? (
+          <p className="text-body text-success font-semibold">
+            {caretaker.sted.reviewAllClearPhysical}
+          </p>
+        ) : (
+          <>
+            <p className="text-caption font-semibold text-text-secondary">
+              {caretaker.sted.reviewAttentionSection}
+            </p>
+            <ul className="space-y-2">
+              {problemParts.map((part) => (
+                <li
+                  key={part}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-error/30 bg-error-light/25 px-3 py-2.5"
                 >
-                  {isProblem ? caretaker.sted.problem : caretaker.sted.normal}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
+                  <span className="text-body text-text">{PART_LABELS[part]}</span>
+                  <span className="text-caption font-semibold text-error shrink-0">
+                    {caretaker.sted.problem}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </section>
 
-      {/* Development questions */}
       <section className="rounded-xl border border-border p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-label text-primary">{caretaker.sted.reviewMilestonesSection}</h3>
@@ -144,47 +182,50 @@ export function StedReviewStep({
             {caretaker.sted.reviewEditMilestones}
           </Button>
         </div>
-        <ul className="space-y-2">
-          {codes.map((code, index) => {
-            const answer = milestones[code]
-            const answered = isAnswered(answer)
-            const isOya = answer === 'oya'
-            return (
+        {unanswered.length > 0 ? (
+          <ul className="space-y-2">
+            {unanswered.map((code) => (
               <li
                 key={code}
-                className={`rounded-lg border px-3 py-3 space-y-2 ${
-                  !answered
-                    ? 'border-error/40 bg-error-light/30 ring-1 ring-error/20'
-                    : isOya
-                      ? 'border-warning/30 bg-warning-light/20'
-                      : 'border-border bg-background-subtle/40'
-                }`}
+                className="rounded-lg border border-error/40 bg-error-light/30 px-3 py-3"
               >
                 <p className="text-body text-text">
                   <span className="text-caption font-bold text-text-muted mr-2">
-                    {index + 1}.
+                    {codes.indexOf(code) + 1}.
                   </span>
                   {milestoneLabel(ageBand, code)}
                 </p>
-                <p
-                  className={`text-caption font-bold ${
-                    !answered
-                      ? 'text-error'
-                      : isOya
-                        ? 'text-warning'
-                        : 'text-success'
-                  }`}
-                >
-                  {answered
-                    ? answer === 'yego'
-                      ? caretaker.sted.yego
-                      : caretaker.sted.oya
-                    : caretaker.sted.reviewNoAnswer}
+                <p className="text-caption font-bold text-error mt-1">
+                  {caretaker.sted.reviewNoAnswer}
                 </p>
               </li>
-            )
-          })}
-        </ul>
+            ))}
+          </ul>
+        ) : oyaCodes.length === 0 ? (
+          <p className="text-body text-success font-semibold">{caretaker.sted.reviewAllYego}</p>
+        ) : (
+          <>
+            <p className="text-caption font-semibold text-text-secondary">
+              {caretaker.sted.reviewAttentionSection}
+            </p>
+            <ul className="space-y-2">
+              {oyaCodes.map((code) => (
+                <li
+                  key={code}
+                  className="rounded-lg border border-warning/30 bg-warning-light/20 px-3 py-3 space-y-1"
+                >
+                  <p className="text-body text-text">
+                    <span className="text-caption font-bold text-text-muted mr-2">
+                      {codes.indexOf(code) + 1}.
+                    </span>
+                    {milestoneLabel(ageBand, code)}
+                  </p>
+                  <p className="text-caption font-bold text-warning">{caretaker.sted.oya}</p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </section>
     </div>
   )

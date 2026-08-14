@@ -97,14 +97,6 @@ function NcdaWashLive() {
     <PageContainer>
       <PageHeader title={ncda.sections.wash.title} subtitle={ncda.wash.subtitle} size="compact" />
       <PageContent>
-        <p className="mb-2 text-caption text-text-secondary">{ncda.wash.scopeLabel}</p>
-        <p className="mb-4 text-caption text-text-muted">{ncda.wash.nationalNote}</p>
-
-        <Card padding="md" className="mb-4 border-border bg-background-subtle/40">
-          <p className="text-body-sm font-semibold text-text">{ncda.wash.aggregatesUnavailableTitle}</p>
-          <p className="mt-1 text-caption text-text-secondary">{ncda.wash.aggregatesUnavailableBody}</p>
-        </Card>
-
         <Card padding="md" className="mb-4 border-border space-y-4">
           <h2 className="text-subheading font-semibold text-text">{ncda.wash.listTitle}</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

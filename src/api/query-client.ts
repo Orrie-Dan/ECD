@@ -1,6 +1,26 @@
 import { QueryClient } from '@tanstack/react-query'
 import { normalizeApiError, isRequestCanceled, type ApiError } from '@/api/errors'
-import { queryStaleTimes } from '@/api/query-keys'
+import {
+  attendance,
+  children,
+  feeding,
+  growth,
+  localFirstQueryOptions,
+  nutrition,
+  queryStaleTimes,
+  referrals,
+  sted,
+} from '@/api/query-keys'
+
+const LOCAL_FIRST_QUERY_ROOTS = [
+  children.keys.all,
+  attendance.keys.all,
+  growth.keys.all,
+  nutrition.keys.all,
+  feeding.keys.all,
+  sted.keys.all,
+  referrals.keys.all,
+] as const
 
 export type GlobalApiErrorHandler = (error: ApiError) => void
 
@@ -17,7 +37,7 @@ function shouldNotify(error: unknown): boolean {
 }
 
 export function createQueryClient(): QueryClient {
-  return new QueryClient({
+  const client = new QueryClient({
     defaultOptions: {
       queries: {
         retry: (failureCount, error) => {
@@ -46,6 +66,12 @@ export function createQueryClient(): QueryClient {
       },
     },
   })
+
+  for (const queryKey of LOCAL_FIRST_QUERY_ROOTS) {
+    client.setQueryDefaults(queryKey, localFirstQueryOptions)
+  }
+
+  return client
 }
 
 /** Singleton used by the QueryProvider. */

@@ -57,8 +57,7 @@ export const ncda = {
     },
     inspections: {
       title: 'Isuzuma',
-      description:
-        'Ibikorwa by\'isuzuma: byarangiye, birategereje, n\'ibisanga — urutonde rw\'isuzuma ry\'uko bikurikizwa.',
+      description: 'Urutonde rw\'isuzuma ry\'ibigo.',
       category: 'Isuzuma',
     },
     roles: {
@@ -99,14 +98,12 @@ export const ncda = {
     },
     compliance: {
       title: 'Uko Bikurikizwa',
-      description:
-        'Urutonde rw\'isuzuma ry\'uko ibigo bikurikiza amategeko — pagination + filters; nta national aggregates.',
+      description: 'Urutonde rw\'isuzuma ry\'uko ibigo bikurikiza amategeko.',
       category: "Ubuziranenge n'Uko Bikurikizwa",
     },
     wash: {
       title: 'WASH',
-      description:
-        'Indangagaciro za WASH — pagination + filters; nta national coverage KPIs.',
+      description: 'Indangagaciro za WASH ku bigo.',
       category: "Ubuziranenge n'Uko Bikurikizwa",
     },
     monitoring: {
@@ -169,7 +166,7 @@ export const ncda = {
     dropouts: 'Abavuye (archived)',
     attendanceRate: 'Igipimo cy\'ubwitabire',
     present: 'Bahari',
-    absent: 'Batariho',
+    absent: 'Batahari',
     centersReportingAttendance: 'Ibigo byanditse ubwitabire',
     nutritionScreenings: 'Isuzuma ry\'imirire',
     nutritionSevere: 'Bikomeye (severe)',
@@ -193,8 +190,8 @@ export const ncda = {
     freshnessPeriod: 'Igihe',
     noRate: 'Nta records',
   },
-  districts: {
-    subtitle: 'Ubuyobozi bw\'uturere ku rwego rw\'igihugu — server pagination, si national bulk download',
+    districts: {
+    subtitle: 'Ubuyobozi bw\'uturere ku rwego rw\'igihugu',
     scopeLabel: 'Urwego: Igihugu (ncda_admin)',
     mockOnlyTitle: 'Gucunga uturere bisaba LIVE API',
     mockOnlyBody:
@@ -254,8 +251,7 @@ export const ncda = {
       'Imibare ya centers / children ku rutonde ntabwo yerekanywe hano — irasaba aggregate ku detail kugira ngo hataboneka N+1 ku rwego rw\'igihugu.',
   },
   centers: {
-    subtitle:
-      'Ubuyobozi bw\'ibigo ku rwego rw\'igihugu — server pagination, si national bulk download',
+    subtitle: 'Ubuyobozi bw\'ibigo ku rwego rw\'igihugu',
     scopeLabel: 'Urwego: Igihugu (ncda_admin)',
     mockOnlyTitle: 'Gucunga ibigo bisaba LIVE API',
     mockOnlyBody:
@@ -330,8 +326,7 @@ export const ncda = {
       'Urutonde rukoresha GET /centers?page=… gusa — ntabwo ruhuza ibigo byose (~39k) mu browser.',
   },
   children: {
-    subtitle:
-      'Ubuyobozi bw\'abana ku rwego rw\'igihugu — server pagination, si national bulk download',
+    subtitle: 'Ubuyobozi bw\'abana ku rwego rw\'igihugu',
     scopeLabel: 'Urwego: Igihugu (ncda_admin)',
     mockOnlyTitle: 'Gukurikirana abana bisaba LIVE API',
     mockOnlyBody:
@@ -403,7 +398,7 @@ export const ncda = {
       'Urutonde rukoresha GET /children?page=… gusa — ntabwo ruhuza abana bose mu browser.',
   },
   users: {
-    subtitle: 'Ubuyobozi bw\'abakoresha — server pagination; nta bulk download',
+    subtitle: 'Ubuyobozi bw\'abakoresha',
     scopeLabel: 'Urwego: Igihugu (ncda_admin)',
     mockOnlyTitle: 'Gucunga abakoresha bisaba LIVE API',
     mockOnlyBody:
@@ -475,7 +470,7 @@ export const ncda = {
     notFound: 'Umukoresha ntabwo abonetse.',
   },
   auditLogs: {
-    subtitle: 'Inyandiko z\'ibikorwa — read-only, server pagination + date window',
+    subtitle: 'Inyandiko z\'ibikorwa by\'abakoresha',
     scopeLabel: 'Urwego: Igihugu (ncda_admin)',
     mockOnlyTitle: 'Audit logs bisaba LIVE API',
     mockOnlyBody:
@@ -573,7 +568,7 @@ export const ncda = {
     },
   },
   compliance: {
-    subtitle: 'Isuzuma ry\'uko bikurikizwa — server pagination; nta national KPIs',
+    subtitle: 'Isuzuma ry\'uko ibigo bikurikiza amategeko',
     scopeLabel: 'Urwego: Igihugu (ncda_admin)',
     mockOnlyTitle: 'Compliance bisaba LIVE API',
     mockOnlyBody:
@@ -618,7 +613,7 @@ export const ncda = {
     itemsEmpty: 'Nta items kuri iri suzuma.',
   },
   wash: {
-    subtitle: 'WASH indicators — server pagination; nta national coverage KPIs',
+    subtitle: 'Indangagaciro za WASH ku bigo',
     scopeLabel: 'Urwego: Igihugu (ncda_admin)',
     mockOnlyTitle: 'WASH bisaba LIVE API',
     mockOnlyBody:
@@ -639,7 +634,7 @@ export const ncda = {
     to: 'Kugeza',
     listError: 'Ntibyashoboye kubona urutonde.',
     retry: 'Ongera ugerageze',
-    empty: 'Nta WASH records.',
+    empty: 'Nta nyandiko za WASH.',
     emptyFiltered: 'Nta records zihuye n\'ubushakashatsi.',
     colDate: 'Itariki',
     colCenter: 'Ikigo',
@@ -900,7 +895,7 @@ export const ncda = {
     periodLabel: 'Igihe',
   },
   inspections: {
-    subtitle: 'Isuzuma ry\'ibigo — gukurikirana ibisanga n\'imiterere, si ikindi dashboard',
+    subtitle: 'Isuzuma ry\'ibigo',
     bucketsTitle: 'Imiterere y\'isuzuma',
     bucketAll: 'Byose',
     bucketDraft: 'Draft',
@@ -916,9 +911,9 @@ export const ncda = {
     criticalHint: 'Ibipimo bifite gapSeverity — reba items mu isuzuma.',
   },
   rolesPage: {
-    subtitle: 'Icyo buri nshingano ishobora gukora — nta PATCH ya role-matrix',
+    subtitle: 'Icyo buri nshingano ishobora gukora',
     intro:
-      'NCDA ntishobora gukora ncda_admin undi. Role n\'urwego ntibihindurwa kuri konti isanzwe — gukora konti nshya gusa.',
+      'NCDA ntishobora gukora undi muyobozi wa NCDA. Inshingano n\'urwego ntibihindurwa kuri konti isanzwe — gukora konti nshya gusa.',
     colRole: 'Inshingano',
     colPortal: 'Portal',
     colScope: 'Urwego',

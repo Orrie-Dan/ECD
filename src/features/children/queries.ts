@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
-import { children, queryStaleTimes } from '@/api/query-keys'
+import { children, localFirstQueryOptions, queryStaleTimes } from '@/api/query-keys'
 import { fetchChildDetail, fetchChildrenList } from '@/api/resources/children'
 import { getLocalStore } from '@/storage'
 import { META_KEYS } from '@/storage/types'
@@ -69,6 +69,7 @@ export function useChildrenList(filters: ChildrenListFilters = {}, enabled = tru
     },
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.childrenList,
+    ...localFirstQueryOptions,
   })
 }
 
@@ -85,5 +86,6 @@ export function useChildDetail(id: string | undefined, enabled = true) {
     },
     enabled: env.isLive && enabled && !!id,
     staleTime: queryStaleTimes.childrenDetail,
+    ...localFirstQueryOptions,
   })
 }

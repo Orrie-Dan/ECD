@@ -417,6 +417,15 @@ export const referralKeys = queryKeys.referrals
 export const monitoringKeys = queryKeys.monitoring
 export const reportingKeys = queryKeys.reporting
 
+/**
+ * LocalStore-backed caregiver queries must fetch while the browser is offline.
+ * React Query defaults to networkMode: 'online', which pauses refetch after a
+ * local write — so the UI would hide what the caretaker just saved until reconnect.
+ */
+export const localFirstQueryOptions = {
+  networkMode: 'always' as const,
+}
+
 export const queryStaleTimes = {
   authMe: 60_000,
   childrenList: 30_000,

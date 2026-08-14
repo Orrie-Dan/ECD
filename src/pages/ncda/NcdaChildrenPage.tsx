@@ -107,8 +107,6 @@ function NcdaChildrenLive() {
       />
 
       <PageContent>
-        <p className="mb-4 text-caption text-text-secondary">{ncda.children.scopeLabel}</p>
-
         <div className="space-y-8">
           <NcdaDashboardSection
             title={ncda.children.networkTitle}
@@ -128,7 +126,6 @@ function NcdaChildrenLive() {
                 icon={<Baby size={18} />}
               />
             </div>
-            <p className="mt-2 text-caption text-text-muted">{ncda.children.nationalNote}</p>
           </NcdaDashboardSection>
 
           <section className="space-y-3" aria-labelledby="ncda-children-list">
