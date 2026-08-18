@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 
 interface DistrictWorkspaceTab {
   path: string
@@ -12,6 +12,8 @@ interface DistrictWorkspaceNavProps {
 }
 
 export function DistrictWorkspaceNav({ items, ariaLabel }: DistrictWorkspaceNavProps) {
+  const { search } = useLocation()
+
   return (
     <nav
       className="flex flex-nowrap gap-1 mb-4 border-b border-border overflow-x-auto overscroll-x-contain -mx-3 px-3 sm:mx-0 sm:px-0"
@@ -20,7 +22,7 @@ export function DistrictWorkspaceNav({ items, ariaLabel }: DistrictWorkspaceNavP
       {items.map((item) => (
         <NavLink
           key={item.path}
-          to={item.path}
+          to={{ pathname: item.path, search }}
           end={item.end === true}
           className={({ isActive }) =>
             [

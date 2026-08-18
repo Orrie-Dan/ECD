@@ -222,7 +222,7 @@ export function StedHistoryPage() {
                               data-label={caretaker.sted.selectChild}
                             >
                               <span className="inline-flex flex-wrap items-center gap-2">
-                                {child?.fullName ?? assessment.childId}
+                                {child?.fullName ?? '—'}
                                 {isLatest && (
                                   <Badge variant="primary" size="sm">
                                     {caretaker.growth.latestMeasurement}
@@ -267,7 +267,7 @@ export function StedHistoryPage() {
                                   if (!child) return
                                   setViewing({ child, assessment })
                                 }}
-                                aria-label={`${caretaker.sted.viewAssessment}: ${child?.fullName ?? assessment.childId}`}
+                                aria-label={`${caretaker.sted.viewAssessment}: ${child?.fullName ?? '—'}`}
                               >
                                 {caretaker.sted.viewAssessment}
                               </Button>

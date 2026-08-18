@@ -17,6 +17,7 @@ import { useAuth, useData } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
+import { findChildByRouteKey } from '@/lib/child-routes'
 import { messageForMutationFailure } from '@/offline/mutation-error-message'
 import { calculateAge } from '@/lib/mock-data'
 import { resolveCenterId } from '@/lib/resolve-center-id'
@@ -113,8 +114,13 @@ export function StedWizardPage() {
     }
   }, [growthMeasurements, nutritionAssessments, dueFollowUpIds])
 
+  const initialChildId = useMemo(() => {
+    const routeKey = searchParams.get('child') ?? searchParams.get('childId') ?? ''
+    return eligible.find((child) => child.id === routeKey)?.id ?? findChildByRouteKey(eligible, routeKey)?.id ?? ''
+  }, [eligible, searchParams])
+
   const [step, setStep] = useState(STEP_CHILD)
-  const [childId, setChildId] = useState(searchParams.get('childId') ?? '')
+  const [childId, setChildId] = useState(initialChildId)
   const [consent, setConsent] = useState(false)
   const [physical, setPhysical] = useState<StedPhysicalCheck>(emptyPhysicalCheck())
   const [milestones, setMilestones] = useState<Record<string, StedAnswer>>({})

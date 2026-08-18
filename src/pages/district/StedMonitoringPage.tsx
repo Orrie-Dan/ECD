@@ -6,14 +6,17 @@ import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
 import { Card, StatCard } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Button } from '@/components/ui/Button'
+import { FormField, SelectInput } from '@/components/ui/FormField'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
 import { useStedMonitoringView } from '@/features/monitoring'
+import { useMonitoringCentre } from '@/features/district/monitoring/useMonitoringCentre'
 import { EnhancedBarChart, formatCountTick } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
+import { ECD_CENTERS } from '@/lib/mock-data'
 import { env } from '@/config/env'
 import type { Child, Referral, StedAssessment } from '@/types'
 
@@ -50,10 +53,12 @@ function StedMonitoringPageShared({
   stedAssessments: StedAssessment[]
   referrals: Referral[]
 }) {
+  const { centreId: scopedCentreId, setCentreId: setScopedCentreId } = useMonitoringCentre()
   const { data, mockComparisons, mockTotals, isLoading, isError, source, refetch } = useStedMonitoringView({
     children,
     stedAssessments,
     referrals,
+    centerId: scopedCentreId ?? undefined,
   })
 
   const totals = useMemo(() => {
@@ -78,7 +83,9 @@ function StedMonitoringPageShared({
 
   const comparisons = useMemo(() => {
     if (source === 'mock' && mockComparisons) return mockComparisons
-    return (data?.items ?? []).map((item) => ({
+    return (data?.items ?? [])
+      .filter((item) => !scopedCentreId || item.centerId === scopedCentreId)
+      .map((item) => ({
       centerId: item.centerId,
       centerName: item.centerName,
       sector: '—',
@@ -90,7 +97,21 @@ function StedMonitoringPageShared({
       referralsCompleted: 0,
       averageScore: item.averageScore,
     }))
-  }, [data?.items, mockComparisons, source])
+  }, [data?.items, mockComparisons, scopedCentreId, source])
+
+  const centerOptions = useMemo(() => {
+    if (env.isLive) {
+      const opts = (data?.items ?? []).map((row) => ({
+        id: row.centerId ?? '',
+        name: row.centerName ?? '—',
+      })).filter((row) => row.id)
+      if (scopedCentreId && !opts.some((o) => o.id === scopedCentreId)) {
+        return [{ id: scopedCentreId, name: '—' }, ...opts]
+      }
+      return opts
+    }
+    return ECD_CENTERS.map((c) => ({ id: c.id, name: c.name }))
+  }, [data?.items, scopedCentreId])
 
   return (
     <>
@@ -101,6 +122,23 @@ function StedMonitoringPageShared({
           ariaLabel={district.monitoringHub.title}
         />
         <PageContent className="space-y-6">
+          <div className="w-full sm:w-72">
+            <FormField label={district.growth.center}>
+              <SelectInput
+                value={scopedCentreId ?? 'all'}
+                onChange={(e) => setScopedCentreId(e.target.value)}
+                aria-label={district.growth.center}
+                className="!min-h-11 sm:!min-h-12 text-body font-semibold"
+              >
+                <option value="all">{district.growth.centerAll}</option>
+                {centerOptions.map((center) => (
+                  <option key={center.id} value={center.id}>
+                    {center.name}
+                  </option>
+                ))}
+              </SelectInput>
+            </FormField>
+          </div>
           {isLoading ? (
             <SkeletonPage label={district.sted.title} stats={5} />
           ) : isError ? (

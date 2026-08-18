@@ -10,6 +10,7 @@ import { env } from '@/config/env'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { isNotFoundError } from '@/api/errors'
+import { findChildByRouteKey, isUuidLike } from '@/lib/child-routes'
 
 export function DistrictChildDetailPage() {
   if (!env.isLive) {
@@ -19,11 +20,14 @@ export function DistrictChildDetailPage() {
 }
 
 function DistrictChildDetailPageLive() {
-  const { id } = useParams<{ id: string }>()
-  const detailQuery = useDistrictChildDetail(id, true)
-  const child = detailQuery.data
+  const { id: routeKey } = useParams<{ id: string }>()
+  const { children, childrenLoading } = useData()
+  const childFromList = findChildByRouteKey(children, routeKey)
+  const childId = childFromList?.id ?? (isUuidLike(routeKey) ? routeKey : undefined)
+  const detailQuery = useDistrictChildDetail(childId, !!childId)
+  const child = detailQuery.data ?? childFromList
 
-  if (detailQuery.isLoading && !child) {
+  if ((childrenLoading || detailQuery.isLoading) && !child) {
     return (
       <>
         <SkeletonCard lines={6} />
@@ -92,10 +96,10 @@ function DistrictChildDetailPageLive() {
 }
 
 function DistrictChildDetailPageMock() {
-  const { id } = useParams<{ id: string }>()
+  const { id: routeKey } = useParams<{ id: string }>()
   const { children } = useData()
   // In MOCK we keep the original behavior: no live query; we only render from the LocalStore roster.
-  const child = children.find((c) => c.id === id)
+  const child = findChildByRouteKey(children, routeKey)
 
   if (!child) {
     return (

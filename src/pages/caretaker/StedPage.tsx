@@ -23,6 +23,8 @@ import { StedAssessmentViewSheet } from '@/components/sted/StedAssessmentViewShe
 import { useAuth, useData } from '@/contexts/AppContext'
 import { usePagination } from '@/hooks/usePagination'
 import { caretaker } from '@/locales/rw/caretaker'
+import { slugifyChildName } from '@/lib/child-routes'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import type { ChildPickerMeta } from '@/lib/child-picker'
 import { applySharedChildFilters, sortRosterChildren } from '@/lib/child-filters'
 import { buildStedFilterSummary, hasActiveStedFilters } from '@/lib/filter-summary'
@@ -117,7 +119,9 @@ export function StedPage() {
   const openPicker = () => setPickerOpen(true)
 
   const startAssessment = (childId?: string) => {
-    navigate(childId ? `/caretaker/sted/new?childId=${childId}` : '/caretaker/sted/new')
+    const child = children.find((item) => item.id === childId)
+    const childSearch = child ? `?child=${encodeURIComponent(slugifyChildName(child.fullName))}` : ''
+    navigate(`/caretaker/sted/new${childSearch}`)
   }
 
   const openAssessment = (child: Child, assessment: StedAssessment) => {
@@ -240,7 +244,7 @@ export function StedPage() {
                         onAssess={() => startAssessment(child.id)}
                         onView={() => {
                           if (assessment) openAssessment(child, assessment)
-                          else navigate(`/caretaker/abana/${child.id}`)
+                          else navigate(buildChildDetailPath('/caretaker/abana', child))
                         }}
                       />
                     )

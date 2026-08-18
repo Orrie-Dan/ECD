@@ -10,6 +10,7 @@ import { GrowthStatusBadge } from '@/components/growth/GrowthStatusBadge'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { formatDate } from '@/lib/mock-data'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import type { DistrictGrowthChildRow } from '@/lib/nutrition-utils'
 
 interface DistrictGrowthChildrenTableProps {
@@ -138,7 +139,10 @@ export function DistrictGrowthChildrenTable({
                 </td>
                 <td className="py-3 td-actions" data-label="">
                   <Link
-                    to={`/district/abana/${row.childId}`}
+                    to={buildChildDetailPath('/district/abana', {
+                      id: row.childId,
+                      fullName: row.childName,
+                    })}
                     className="inline-flex items-center gap-1.5 text-caption font-semibold text-primary hover:underline rounded-lg px-2 py-1.5 transition-colors hover:bg-primary-light/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     <Eye size={16} aria-hidden />

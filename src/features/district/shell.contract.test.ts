@@ -115,6 +115,35 @@ describe('District portal information architecture', () => {
       expect(monitoringPage).not.toContain('GisPendingPlaceholder')
       expect(monitoringPage).not.toContain('DistrictOverviewCommand')
     })
+
+    it('keeps the selected school when switching Imikorere tabs', () => {
+      const nav = fs.readFileSync(
+        path.resolve(__dirname, '../../layouts/district/DistrictWorkspaceNav.tsx'),
+        'utf8',
+      )
+      const attendancePage = fs.readFileSync(
+        path.resolve(__dirname, '../../pages/district/AttendanceMonitoringPage.tsx'),
+        'utf8',
+      )
+      const growthPage = fs.readFileSync(
+        path.resolve(__dirname, '../../pages/district/GrowthMonitoringPage.tsx'),
+        'utf8',
+      )
+      const feedingPage = fs.readFileSync(
+        path.resolve(__dirname, '../../pages/district/FeedingMonitoringPage.tsx'),
+        'utf8',
+      )
+      const stedPage = fs.readFileSync(
+        path.resolve(__dirname, '../../pages/district/StedMonitoringPage.tsx'),
+        'utf8',
+      )
+      expect(nav).toContain('useLocation')
+      expect(nav).toContain('to={{ pathname: item.path, search }}')
+      expect(attendancePage).toContain('useMonitoringCentre')
+      expect(growthPage).toContain('useMonitoringCentre')
+      expect(feedingPage).toContain('useMonitoringCentre')
+      expect(stedPage).toContain('useMonitoringCentre')
+    })
   })
 
   describe('authorization remains role-isolated', () => {

@@ -14,6 +14,7 @@ import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { env } from '@/config/env'
 import { ACTION_ALERTS } from '@/lib/mock-data'
 import { useFollowUpAlerts } from '@/features/alerts'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
@@ -78,7 +79,13 @@ function LiveFollowUpAlertCard({ alert }: { alert: FollowUpAlertViewModel }) {
   const categoryLabel = isOperationalCategory(alert.category)
     ? liveCategoryLabels[alert.category]
     : alert.category
-  const childHref = alert.childId ? `${DISTRICT_PATHS.children}/${alert.childId}` : null
+  const childHref =
+    alert.childId && alert.childName
+      ? buildChildDetailPath(DISTRICT_PATHS.children, {
+          id: alert.childId,
+          fullName: alert.childName,
+        })
+      : null
   const centerHref = alert.centerId ? `${DISTRICT_PATHS.centers}/${alert.centerId}` : null
 
   const body = (

@@ -6,18 +6,20 @@ import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { FormField, TextInput } from '@/components/ui/FormField'
+import { FormField, SelectInput, TextInput } from '@/components/ui/FormField'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
 import { useFeedingMonitoringView } from '@/features/monitoring'
+import { useMonitoringCentre } from '@/features/district/monitoring/useMonitoringCentre'
 import { EnhancedBarChart, formatCountTick } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { getCurrentYearMonth } from '@/lib/feeding-utils'
+import { ECD_CENTERS } from '@/lib/mock-data'
 import { env } from '@/config/env'
 import type { CenterFeedingDay, CenterFeedingMonthSummary } from '@/types'
 
@@ -45,6 +47,7 @@ function FeedingMonitoringPageShared({
   feedingDays: CenterFeedingDay[]
   feedingSummaries: CenterFeedingMonthSummary[]
 }) {
+  const { centreId: scopedCentreId, setCentreId: setScopedCentreId } = useMonitoringCentre()
   const [yearMonth, setYearMonth] = useState(getCurrentYearMonth())
   const [search, setSearch] = useState('')
 
@@ -53,6 +56,7 @@ function FeedingMonitoringPageShared({
     yearMonth,
     feedingDays,
     feedingSummaries,
+    centerId: scopedCentreId ?? undefined,
   })
 
   const summaryCards = useMemo(() => {
@@ -97,11 +101,25 @@ function FeedingMonitoringPageShared({
         .map((r) => ({ kind: 'mock' as const, row: r }))
     }
     const items = data?.items ?? []
-    const filtered = q
-      ? items.filter((row) => row.centerName.toLowerCase().includes(q))
+    const scoped = scopedCentreId
+      ? items.filter((row) => row.centerId === scopedCentreId)
       : items
+    const filtered = q
+      ? scoped.filter((row) => row.centerName.toLowerCase().includes(q))
+      : scoped
     return filtered.map((r) => ({ kind: 'api' as const, row: r }))
-  }, [data?.items, mockComparisons, search, source])
+  }, [data?.items, mockComparisons, scopedCentreId, search, source])
+
+  const centerOptions = useMemo(() => {
+    if (env.isLive) {
+      const opts = (data?.items ?? []).map((row) => ({ id: row.centerId, name: row.centerName }))
+      if (scopedCentreId && !opts.some((o) => o.id === scopedCentreId)) {
+        return [{ id: scopedCentreId, name: scopedCentreId }, ...opts]
+      }
+      return opts
+    }
+    return ECD_CENTERS.map((c) => ({ id: c.id, name: c.name }))
+  }, [data?.items, scopedCentreId])
 
   return (
     <>
@@ -112,7 +130,7 @@ function FeedingMonitoringPageShared({
           ariaLabel={district.monitoringHub.title}
         />
         <PageContent className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <FormField label={district.imirire.selectMonth}>
               <TextInput
                 type="month"
@@ -120,6 +138,21 @@ function FeedingMonitoringPageShared({
                 onChange={(e) => setYearMonth(e.target.value)}
                 className="!min-h-11 sm:!min-h-12"
               />
+            </FormField>
+            <FormField label={district.growth.center}>
+              <SelectInput
+                value={scopedCentreId ?? 'all'}
+                onChange={(e) => setScopedCentreId(e.target.value)}
+                aria-label={district.growth.center}
+                className="!min-h-11 sm:!min-h-12 text-body font-semibold"
+              >
+                <option value="all">{district.growth.centerAll}</option>
+                {centerOptions.map((center) => (
+                  <option key={center.id} value={center.id}>
+                    {center.name}
+                  </option>
+                ))}
+              </SelectInput>
             </FormField>
             <FormField label={district.imirire.searchCenter}>
               <SearchInput

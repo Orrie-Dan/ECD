@@ -91,6 +91,10 @@ function NcdaComplianceLive() {
   const list = useNcdaComplianceAssessments(listFilters)
   const detail = useNcdaComplianceAssessmentDetail(selectedId ?? undefined, Boolean(selectedId))
   const standards = useNcdaComplianceStandards(showStandards)
+  const standardsById = useMemo(
+    () => new Map((standards.data ?? []).map((item) => [item.id, item])),
+    [standards.data],
+  )
 
   const items = list.data?.items ?? []
   const total = list.data?.total ?? 0
@@ -280,7 +284,7 @@ function NcdaComplianceLive() {
                     {items.map((row) => (
                       <tr key={row.id} className="border-b border-border/70">
                         <td className="py-2.5 pr-3" data-label={ncda.compliance.colDate}>{formatDate(row.assessmentDate)}</td>
-                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colCenter}>{row.centerName ?? row.centerId}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colCenter}>{row.centerName ?? '—'}</td>
                         <td className="py-2.5 pr-3" data-label={ncda.compliance.colType}>{row.assessmentType}</td>
                         <td className="py-2.5 pr-3" data-label={ncda.compliance.colStatus}>{row.status}</td>
                         <td className="py-2.5 pr-3" data-label={ncda.compliance.colClass}>{row.overallClassification ?? '—'}</td>
@@ -367,7 +371,7 @@ function NcdaComplianceLive() {
                 <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-body">
                   <div>
                     <dt className="text-caption text-text-secondary">{ncda.compliance.colCenter}</dt>
-                    <dd>{detail.data.centerName ?? detail.data.centerId}</dd>
+                    <dd>{detail.data.centerName ?? '—'}</dd>
                   </div>
                   <div>
                     <dt className="text-caption text-text-secondary">{ncda.compliance.colDate}</dt>
@@ -414,8 +418,13 @@ function NcdaComplianceLive() {
                   <ul className="divide-y divide-border text-body">
                     {detail.data.items.map((item) => (
                       <li key={item.id} className="py-2">
-                        <span className="font-medium">{item.standardId}</span>
+                        <span className="font-medium">
+                          {standardsById.get(item.standardId)?.code ?? item.standardId}
+                        </span>
                         <span className="text-text-secondary">
+                          {standardsById.get(item.standardId)?.title
+                            ? ` — ${standardsById.get(item.standardId)?.title}`
+                            : ''}
                           {' '}
                           · {item.response}
                           {item.score != null ? ` · score ${item.score}` : ''}

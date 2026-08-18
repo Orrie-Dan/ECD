@@ -128,7 +128,7 @@ interface DataContextValue {
   reactivateChild: (id: string) => Promise<void>
   getIncomingTransfers: (centerId: string) => Child[]
   recordAttendance: (record: Omit<AttendanceRecord, 'id'>) => Promise<void>
-  clearTodayAttendance: (childId: string) => Promise<void>
+  clearTodayAttendance: (childId: string, date?: string) => Promise<void>
   getChildAttendance: (childId: string) => AttendanceRecord[]
   getTodayRecord: (childId: string) => AttendanceRecord | undefined
   isPresentToday: (childId: string) => boolean

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { GrowthStatusBadge } from '@/components/growth/GrowthStatusBadge'
 import { caretaker } from '@/locales/rw/caretaker'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import { gender as genderLabels } from '@/locales/rw/common'
 import { calculateAge, formatDate } from '@/lib/mock-data'
 import type { Child, GrowthMeasurement, NutritionStatus } from '@/types'
@@ -136,7 +137,7 @@ export function GrowthRosterCard({
           size="sm"
           fullWidth
           icon={<Eye size={16} />}
-          onClick={() => navigate(`/caretaker/abana/${child.id}?tab=growth`)}
+          onClick={() => navigate(buildChildDetailPath('/caretaker/abana', child, 'growth'))}
           aria-label={`${caretaker.growth.viewHistory}: ${child.fullName}`}
         >
           {caretaker.growth.viewHistory}

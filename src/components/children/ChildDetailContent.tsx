@@ -24,6 +24,7 @@ import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
 import { formatDate } from '@/lib/mock-data'
+import { buildChildEditPath } from '@/lib/child-routes'
 import {
   getAssessmentDueStatus,
   getLatestMeasurement,
@@ -162,7 +163,7 @@ export function ChildDetailContent({
       <ChildHeader
         child={child}
         showActions={actionsEnabled}
-        onEdit={() => navigate(`${editBasePath}/${child.id}/hindura`)}
+        onEdit={() => navigate(buildChildEditPath(editBasePath, child))}
         onArchive={() => setArchiveOpen(true)}
         onReactivate={() => setReactivateOpen(true)}
         onRecordMeasurement={

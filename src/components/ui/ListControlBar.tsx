@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/Button'
 import { SelectInput } from '@/components/ui/FormField'
 import { caretaker } from '@/locales/rw/caretaker'
 
-/** Attendance / children legacy view states. */
-export type ListViewState = 'all' | 'waiting' | 'arrived'
+/** Attendance / children list view states. */
+export type ListViewState = 'all' | 'waiting' | 'arrived' | 'absent'
 
 export interface ListViewOption {
   value: string

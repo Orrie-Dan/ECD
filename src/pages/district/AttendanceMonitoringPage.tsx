@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Building2, CalendarDays, CheckCircle2, Eye, AlertTriangle, XCircle } from 'lucide-react'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -16,6 +16,7 @@ import { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusB
 import { useData } from '@/contexts/AppContext'
 import { useAttendanceMonitoringView, roundPct } from '@/features/monitoring'
 import { useDistrictCenterDayAttendanceRoster } from '@/features/district'
+import { useMonitoringCentre } from '@/features/district/monitoring/useMonitoringCentre'
 import { usePagination } from '@/hooks/usePagination'
 import { Pagination } from '@/components/ui/Pagination'
 import { ECD_CENTERS, formatDate } from '@/lib/mock-data'
@@ -88,14 +89,20 @@ function DistrictAttendancePageShared({
 }) {
   const today = getTodayDate()
   const yesterday = getYesterdayDate()
+  const { centreId: scopedCentreId, setCentreId: setScopedCentreId } = useMonitoringCentre()
 
   const [selectedDate, setSelectedDate] = useState(getTodayDate)
   const [centerId, setCenterId] = useState('all')
   const [statusFilter, setStatusFilter] = useState<CenterSubmissionStatus | 'all'>('all')
   const [search, setSearch] = useState('')
-  const [selectedCenterId, setSelectedCenterId] = useState<string | null>(null)
+  const [selectedCenterId, setSelectedCenterId] = useState<string | null>(scopedCentreId)
   const [childStatusFilter, setChildStatusFilter] = useState<ChildStatusFilter>('all')
   const [liveDrillPage, setLiveDrillPage] = useState(1)
+
+  useEffect(() => {
+    setSelectedCenterId(scopedCentreId)
+    setCenterId(scopedCentreId ?? 'all')
+  }, [scopedCentreId])
 
   const monitoring = useAttendanceMonitoringView({
     selectedDate,
@@ -114,7 +121,13 @@ function DistrictAttendancePageShared({
 
   const setDateCapped = (date: string) => {
     setSelectedDate(date > today ? today : date)
+    setLiveDrillPage(1)
+  }
+
+  const closeCenter = () => {
     setSelectedCenterId(null)
+    setScopedCentreId(null)
+    setCenterId('all')
     setLiveDrillPage(1)
   }
 
@@ -222,6 +235,7 @@ function DistrictAttendancePageShared({
 
   const openCenter = (row: CenterDailyAttendanceRow) => {
     setSelectedCenterId(row.center.id)
+    setScopedCentreId(row.center.id)
     setChildStatusFilter('all')
     setLiveDrillPage(1)
   }
@@ -275,7 +289,6 @@ function DistrictAttendancePageShared({
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value as CenterSubmissionStatus | 'all')
-                  setSelectedCenterId(null)
                 }}
                 aria-label={district.attendanceMonitoring.statusLabel}
                 className="!min-h-12 text-body font-semibold"
@@ -295,7 +308,6 @@ function DistrictAttendancePageShared({
               value={search}
               onChange={(value) => {
                 setSearch(value)
-                setSelectedCenterId(null)
               }}
               placeholder={district.attendanceMonitoring.searchPlaceholder}
             />
@@ -304,8 +316,16 @@ function DistrictAttendancePageShared({
             <SelectInput
               value={centerId}
               onChange={(e) => {
-                setCenterId(e.target.value)
-                setSelectedCenterId(null)
+                const value = e.target.value
+                setCenterId(value)
+                if (value === 'all') {
+                  closeCenter()
+                } else {
+                  setSelectedCenterId(value)
+                  setScopedCentreId(value)
+                  setChildStatusFilter('all')
+                  setLiveDrillPage(1)
+                }
               }}
               aria-label={district.attendanceMonitoring.centerLabel}
               className="!min-h-12 text-body font-semibold"
@@ -352,7 +372,7 @@ function DistrictAttendancePageShared({
               variant="tertiary"
               size="md"
               icon={<ArrowLeft size={16} />}
-              onClick={() => setSelectedCenterId(null)}
+              onClick={closeCenter}
             >
               {district.attendanceMonitoring.backToList}
             </Button>
@@ -373,7 +393,7 @@ function DistrictAttendancePageShared({
               variant="tertiary"
               size="md"
               icon={<ArrowLeft size={16} />}
-              onClick={() => setSelectedCenterId(null)}
+              onClick={closeCenter}
             >
               {district.attendanceMonitoring.backToList}
             </Button>
@@ -402,7 +422,7 @@ function DistrictAttendancePageShared({
               variant="tertiary"
               size="md"
               icon={<ArrowLeft size={16} />}
-              onClick={() => setSelectedCenterId(null)}
+              onClick={closeCenter}
             >
               {district.attendanceMonitoring.backToList}
             </Button>

@@ -4,6 +4,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusBadge'
 import { usePagination } from '@/hooks/usePagination'
+import { useAuth } from '@/contexts/AppContext'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, relations } from '@/locales/rw/common'
 import { formatDate } from '@/lib/mock-data'
@@ -14,6 +15,7 @@ import {
 } from '@/lib/attendance-utils'
 import type { AttendanceRecord, Child } from '@/types'
 import { CalendarDays } from 'lucide-react'
+import { formatRecordedByLabel } from '@/lib/user-display'
 
 interface AttendanceHistoryTableProps {
   records: AttendanceRecord[]
@@ -36,6 +38,7 @@ export function AttendanceHistoryTable({
   resetDeps = [],
   className = '',
 }: AttendanceHistoryTableProps) {
+  const { user } = useAuth()
   const sorted = useMemo(
     () =>
       [...records].sort(
@@ -91,7 +94,7 @@ export function AttendanceHistoryTable({
                   <tr key={record.id} className="border-b border-border last:border-0">
                     {showChildName && (
                       <td className="py-3 pr-4 text-body font-medium text-text" data-label={common.labels.child}>
-                        {child?.fullName ?? record.childId}
+                        {child?.fullName ?? '—'}
                       </td>
                     )}
                     <td className="py-3 pr-4 text-body" data-label={common.labels.date}>
@@ -110,7 +113,7 @@ export function AttendanceHistoryTable({
                       className="py-3 pr-4 text-body text-text-secondary"
                       data-label={caretaker.attendance.recordedBy}
                     >
-                      {record.recordedBy ?? '—'}
+                      {formatRecordedByLabel(record.recordedBy, user)}
                     </td>
                     <td
                       className="py-3 text-body text-text-secondary break-words"

@@ -239,7 +239,7 @@ function NcdaChildDetailLive() {
               error={ncda.children.opsError}
               columns={[
                 ncda.children.opsColDate,
-                ncda.children.opsColStatus,
+                ncda.children.opsColAttendance,
                 ncda.children.opsColMeta,
               ]}
               rows={(attendanceQ.data?.items ?? []).map((row) => [

@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { GrowthStatusBadge } from '@/components/growth/GrowthStatusBadge'
 import { district } from '@/locales/rw/district'
 import { formatDate } from '@/lib/mock-data'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import type { NutritionAlert, NutritionAlertKind } from '@/lib/nutrition-utils'
 
 interface NutritionAlertListProps {
@@ -112,7 +113,10 @@ export function NutritionAlertList({ alerts }: NutritionAlertListProps) {
 
                 <div className="mt-auto pt-3 border-t border-border">
                   <Link
-                    to={`/district/abana/${alert.childId}`}
+                    to={buildChildDetailPath('/district/abana', {
+                      id: alert.childId,
+                      fullName: alert.childName,
+                    })}
                     className="inline-flex items-center text-caption font-semibold text-primary hover:underline rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
                     {district.growth.viewChild}

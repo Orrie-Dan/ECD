@@ -129,19 +129,19 @@ export function useAttendanceRepository(user: User | null) {
   )
 
   const clearTodayAttendance = useCallback(
-    async (childId: string) => {
+    async (childId: string, date?: string) => {
       assertLiveApiWritesAvailable()
-      const today = todayIso()
+      const targetDate = date ?? todayIso()
 
       if (env.isMock) {
         setMockAttendance((prev) =>
-          prev.filter((a) => !(a.childId === childId && a.date === today)),
+          prev.filter((a) => !(a.childId === childId && a.date === targetDate)),
         )
         return
       }
 
       const store = getLocalStore()
-      await softDeleteAttendanceLocalFirst(store, childId, today)
+      await softDeleteAttendanceLocalFirst(store, childId, targetDate)
       await invalidateAttendanceQueries(queryClient, { childId })
 
       if (networkState.getSnapshot().isOnline) {

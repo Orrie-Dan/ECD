@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, HeartPulse, ShieldAlert } from 'lucide-react'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
 import { DISTRICT_MONITORING_TABS } from '@/layouts/district/navigation'
+import { useMonitoringCentre } from '@/features/district/monitoring/useMonitoringCentre'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { FilterResultsBar } from '@/components/ui/FilterResultsBar'
@@ -125,8 +126,17 @@ function GrowthMonitoringPageShared({
   growthMeasurements: GrowthMeasurement[]
   nutritionAssessments: NutritionAssessment[]
 }) {
-  const [filters, setFilters] = useState<DistrictGrowthFilters>(DEFAULT_DISTRICT_GROWTH_FILTERS)
+  const { centreId: scopedCentreId, setCentreId: setScopedCentreId } = useMonitoringCentre()
+  const [filters, setFilters] = useState<DistrictGrowthFilters>(() => ({
+    ...DEFAULT_DISTRICT_GROWTH_FILTERS,
+    centerId: scopedCentreId ?? 'all',
+  }))
   const [screeningPage, setScreeningPage] = useState(1)
+
+  useEffect(() => {
+    const fromUrl = scopedCentreId ?? 'all'
+    setFilters((prev) => (prev.centerId === fromUrl ? prev : { ...prev, centerId: fromUrl }))
+  }, [scopedCentreId])
 
   const debouncedSearch = useDebounce(filters.search, 300)
   const effectiveFilters = useMemo(
@@ -280,15 +290,22 @@ function GrowthMonitoringPageShared({
   ])
 
   const filterCenters = useMemo(() => {
-    if (env.isLive) {
-      return (nutritionMonitoring.data?.items ?? []).map((item) => ({
-        id: item.centerId,
-        name: item.centerName,
-        sector: '—',
-      }))
+    const fromApi = env.isLive
+      ? (nutritionMonitoring.data?.items ?? []).map((item) => ({
+          id: item.centerId,
+          name: item.centerName,
+          sector: '—',
+        }))
+      : ECD_CENTERS.map((c) => ({ id: c.id, name: c.name, sector: c.sector }))
+    if (
+      scopedCentreId &&
+      scopedCentreId !== 'all' &&
+      !fromApi.some((c) => c.id === scopedCentreId)
+    ) {
+      return [{ id: scopedCentreId, name: scopedCentreId, sector: '—' }, ...fromApi]
     }
-    return ECD_CENTERS.map((c) => ({ id: c.id, name: c.name, sector: c.sector }))
-  }, [nutritionMonitoring.data?.items])
+    return fromApi
+  }, [nutritionMonitoring.data?.items, scopedCentreId])
 
   const coverageSeries = useMemo(
     () => buildCoverageByCenterSeries(centerRows, 8),
@@ -308,12 +325,19 @@ function GrowthMonitoringPageShared({
   const resetFilters = useCallback(() => {
     setFilters(DEFAULT_DISTRICT_GROWTH_FILTERS)
     setScreeningPage(1)
-  }, [])
+    setScopedCentreId(null)
+  }, [setScopedCentreId])
 
-  const patchFilters = useCallback((next: Partial<DistrictGrowthFilters>) => {
-    setFilters((prev) => ({ ...prev, ...next }))
-    setScreeningPage(1)
-  }, [])
+  const patchFilters = useCallback(
+    (next: Partial<DistrictGrowthFilters>) => {
+      setFilters((prev) => ({ ...prev, ...next }))
+      setScreeningPage(1)
+      if (next.centerId !== undefined) {
+        setScopedCentreId(next.centerId === 'all' ? null : next.centerId)
+      }
+    },
+    [setScopedCentreId],
+  )
 
   return (
     <>

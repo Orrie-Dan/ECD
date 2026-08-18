@@ -215,7 +215,7 @@ function NcdaWashLive() {
                     {items.map((row) => (
                       <tr key={row.id} className="border-b border-border/70">
                         <td className="py-2.5 pr-3" data-label={ncda.wash.colDate}>{formatDate(row.recordedDate)}</td>
-                        <td className="py-2.5 pr-3" data-label={ncda.wash.colCenter}>{row.centerName ?? row.centerId}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.wash.colCenter}>{row.centerName ?? '—'}</td>
                         <td className="py-2.5 pr-3" data-label={ncda.wash.colWater}>{yn(row.waterSourceAvailable)}</td>
                         <td className="py-2.5 pr-3" data-label={ncda.wash.colSanitation}>{yn(row.sanitationFacilityAvailable)}</td>
                         <td className="py-2.5 pr-3" data-label={ncda.wash.colHandwashing}>{yn(row.handwashingFacilityAvailable)}</td>
@@ -275,7 +275,7 @@ function NcdaWashLive() {
               <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-body">
                 <div>
                   <dt className="text-caption text-text-secondary">{ncda.wash.colCenter}</dt>
-                  <dd>{detail.data.centerName ?? detail.data.centerId}</dd>
+                  <dd>{detail.data.centerName ?? '—'}</dd>
                 </div>
                 <div>
                   <dt className="text-caption text-text-secondary">{ncda.wash.colDate}</dt>

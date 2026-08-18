@@ -20,12 +20,18 @@ import {
 } from '@/lib/child-form'
 import type { ChildRegistrationForm } from '@/types'
 import { SkeletonCard } from '@/components/ui/Skeleton'
+import {
+  buildChildDetailPath,
+  findChildByRouteKey,
+  isUuidLike,
+} from '@/lib/child-routes'
 
 export function EditChildPage() {
-  const { id } = useParams<{ id: string }>()
-  const { children, updateChild } = useData()
-  const detailQuery = useChildDetail(id, env.isLive && !!id)
-  const childFromList = children.find((c) => c.id === id)
+  const { id: routeKey } = useParams<{ id: string }>()
+  const { children, childrenLoading, updateChild } = useData()
+  const childFromList = findChildByRouteKey(children, routeKey)
+  const childId = childFromList?.id ?? (isUuidLike(routeKey) ? routeKey : undefined)
+  const detailQuery = useChildDetail(childId, env.isLive && !!childId)
   const child = env.isLive ? (detailQuery.data ?? childFromList) : childFromList
   const navigate = useNavigate()
   const { showSuccess, showError } = useToast()
@@ -41,7 +47,7 @@ export function EditChildPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof ChildRegistrationForm, string>>>({})
   const [submitting, setSubmitting] = useState(false)
 
-  if (env.isLive && detailQuery.isLoading && !child) {
+  if (env.isLive && (childrenLoading || detailQuery.isLoading) && !child) {
     return (
       <CaretakerLayout
         pageTitle={caretaker.registration.editTitle}
@@ -118,7 +124,7 @@ export function EditChildPage() {
       showSuccess(
         env.isLive && !isOnline ? common.sync.savedOnDevice : messages.childUpdated,
       )
-      navigate(`/caretaker/abana/${child.id}`)
+      navigate(buildChildDetailPath('/caretaker/abana', child))
     } catch (err) {
       showError(messageForMutationFailure(err))
     } finally {
@@ -129,7 +135,7 @@ export function EditChildPage() {
   return (
     <CaretakerLayout
       pageTitle={caretaker.registration.editTitle}
-      backTo={`/caretaker/abana/${child.id}`}
+      backTo={buildChildDetailPath('/caretaker/abana', child)}
       backLabel={common.back}
     >
       <ChildFormWizard

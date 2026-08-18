@@ -3,13 +3,16 @@ import { Clock, User, FileText, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/Card'
 import { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusBadge'
+import { useAuth } from '@/contexts/AppContext'
 import { caretaker } from '@/locales/rw/caretaker'
+import { formatDate } from '@/lib/mock-data'
 import { common, relations } from '@/locales/rw/common'
 import {
   formatArrivalTime,
   getAbsentReasonLabel,
   getBroughtByLabel,
 } from '@/lib/attendance-utils'
+import { formatRecordedByLabel } from '@/lib/user-display'
 import type { AttendanceRecord, Child } from '@/types'
 
 interface AttendanceViewSheetProps {
@@ -20,6 +23,7 @@ interface AttendanceViewSheetProps {
 }
 
 export function AttendanceViewSheet({ open, child, record, onClose }: AttendanceViewSheetProps) {
+  const { user } = useAuth()
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -49,6 +53,7 @@ export function AttendanceViewSheet({ open, child, record, onClose }: Attendance
               <h2 id="attendance-view-title" className="text-heading text-text truncate">
                 {child.fullName}
               </h2>
+              <p className="text-caption text-text-secondary mt-0.5">{formatDate(record.date)}</p>
               <div className="mt-1.5">
                 <AttendanceStatusBadge status={record.present ? 'present' : 'absent'} size="md" />
               </div>
@@ -113,7 +118,9 @@ export function AttendanceViewSheet({ open, child, record, onClose }: Attendance
             </span>
             <div>
               <p className="text-caption text-text-muted">{caretaker.attendance.recordedBy}</p>
-              <p className="text-subheading text-text mt-0.5">{record.recordedBy ?? '—'}</p>
+              <p className="text-subheading text-text mt-0.5">
+                {formatRecordedByLabel(record.recordedBy, user)}
+              </p>
             </div>
           </div>
         </CardContent>

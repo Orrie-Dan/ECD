@@ -93,6 +93,10 @@ export const common = {
     waitingBody:
       'Ikarita n’ibikorwa bya GIS bizazana nyuma y’ubufatanye na sisitemu ya GIS.',
   },
+  charts: {
+    fullscreen: 'Reba muri ecran yose',
+    exitFullscreen: 'Funga',
+  },
   /** LIVE-mode honesty copy — never imply mock/fake success succeeded online. */
   live: {
     unavailableTitle: 'Aya makuru ntabwo aboneka muri iki gihe',

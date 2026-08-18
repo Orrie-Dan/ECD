@@ -6,11 +6,8 @@ import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, GUARDIAN_RELATION_OPTIONS, OTHER_RELATION_VALUE, messages } from '@/locales/rw/common'
 import { useToast } from '@/components/ui/Toast'
-import {
-  getTodayDate,
-  isoFromDateAndTime,
-  timeInputFromIso,
-} from '@/lib/attendance-utils'
+import { getTodayDate, isoFromDateAndTime, timeInputFromIso } from '@/lib/attendance-utils'
+import { formatDate } from '@/lib/mock-data'
 import type { AbsentReason, AttendanceRecord, BroughtBy, Child } from '@/types'
 
 const ABSENT_REASONS: AbsentReason[] = ['sick', 'family', 'transport', 'weather', 'other']
@@ -28,6 +25,8 @@ interface AttendanceDialogProps {
   open: boolean
   child: Child | null
   existing?: AttendanceRecord | null
+  /** Day being recorded (YYYY-MM-DD). Defaults to today. */
+  date?: string
   /** Prefill present/absent when opening from a quick action */
   initialPresent?: boolean | null
   recordedBy: string
@@ -39,6 +38,7 @@ export function AttendanceDialog({
   open,
   child,
   existing,
+  date,
   initialPresent = null,
   recordedBy,
   onClose,
@@ -77,6 +77,8 @@ export function AttendanceDialog({
 
   if (!child) return null
 
+  const recordDate = date ?? existing?.date ?? today
+
   const validate = (): boolean => {
     const next: Record<string, string> = {}
     if (present === null) {
@@ -106,7 +108,7 @@ export function AttendanceDialog({
     if (present) {
       onConfirm({
         present: true,
-        arrivedAt: isoFromDateAndTime(existing?.date ?? today, arrivalTime),
+        arrivedAt: isoFromDateAndTime(recordDate, arrivalTime),
         broughtBy: broughtBy as BroughtBy,
         broughtByOther:
           broughtBy === OTHER_RELATION_VALUE ? broughtByOther.trim() : undefined,
@@ -148,6 +150,7 @@ export function AttendanceDialog({
       <div className="space-y-5">
         <div>
           <p className="text-body-lg font-semibold text-text">{child.fullName}</p>
+          <p className="text-caption text-text-secondary mt-0.5">{formatDate(recordDate)}</p>
           <p className="text-caption text-text-secondary mt-0.5">
             {caretaker.attendance.recordedBy}: {recordedBy}
           </p>

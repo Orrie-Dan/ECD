@@ -27,6 +27,7 @@ import { useAuth, useData } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { usePagination } from '@/hooks/usePagination'
 import { caretaker } from '@/locales/rw/caretaker'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import { common } from '@/locales/rw/common'
 import { messageForMutationFailure } from '@/offline/mutation-error-message'
 import { env } from '@/config/env'
@@ -297,7 +298,7 @@ export function GrowthPage() {
                         lastMeasurementDate={latest?.date}
                         viewOnly={listFilter === 'up_to_date'}
                         onRecord={() => setModalChild(child)}
-                        onView={() => navigate(`/caretaker/abana/${child.id}?tab=growth`)}
+                        onView={() => navigate(buildChildDetailPath('/caretaker/abana', child, 'growth'))}
                       />
                     )
                   })}

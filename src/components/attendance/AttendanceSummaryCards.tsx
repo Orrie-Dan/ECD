@@ -17,6 +17,9 @@ interface AttendanceSummaryCardsProps {
     rate?: string
     late?: string
   }
+  /** When set, total/present/absent cards become filters. */
+  selectedStatus?: 'all' | 'present' | 'absent' | 'none'
+  onSelectStatus?: (status: 'all' | 'present' | 'absent') => void
 }
 
 /** Equal-height summary strip for daily / monitoring attendance views. */
@@ -26,6 +29,8 @@ export function AttendanceSummaryCards({
   compact = false,
   className = '',
   labels,
+  selectedStatus = 'none',
+  onSelectStatus,
 }: AttendanceSummaryCardsProps) {
   const cols = showLate
     ? 'grid-cols-2 sm:grid-cols-3 xl:grid-cols-5'
@@ -43,6 +48,8 @@ export function AttendanceSummaryCards({
           value={stats.total}
           icon={<Users size={compact ? 18 : 22} className="text-primary" />}
           compact={compact}
+          selected={selectedStatus === 'all'}
+          onClick={onSelectStatus ? () => onSelectStatus('all') : undefined}
         />
       </div>
       <div className="h-full [&_>div]:h-full">
@@ -52,6 +59,8 @@ export function AttendanceSummaryCards({
           icon={<UserCheck size={compact ? 18 : 22} className="text-success" />}
           variant="success"
           compact={compact}
+          selected={selectedStatus === 'present'}
+          onClick={onSelectStatus ? () => onSelectStatus('present') : undefined}
         />
       </div>
       <div className="h-full [&_>div]:h-full">
@@ -60,6 +69,8 @@ export function AttendanceSummaryCards({
           value={stats.absent}
           icon={<UserX size={compact ? 18 : 22} className="text-text-muted" />}
           compact={compact}
+          selected={selectedStatus === 'absent'}
+          onClick={onSelectStatus ? () => onSelectStatus('absent') : undefined}
         />
       </div>
       <div className="h-full [&_>div]:h-full">

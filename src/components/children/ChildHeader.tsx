@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/children/StatusBadge'
 import { caretaker } from '@/locales/rw/caretaker'
+import { slugifyChildName } from '@/lib/child-routes'
 import { gender } from '@/locales/rw/common'
 import { calculateAge, formatDate } from '@/lib/mock-data'
 import type { ArchiveReason, Child } from '@/types'
@@ -190,7 +191,7 @@ export function ChildHeader({
                 </Link>
                 <Link
                   role="menuitem"
-                  to={`/caretaker/sted/new?childId=${encodeURIComponent(child.id)}`}
+                  to={`/caretaker/sted/new?child=${encodeURIComponent(slugifyChildName(child.fullName))}`}
                   className="flex items-center gap-2.5 px-3.5 py-2.5 text-body text-text hover:bg-background-subtle"
                   onClick={() => setMenuOpen(false)}
                 >

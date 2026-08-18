@@ -5,11 +5,13 @@ import { SelectInput } from '@/components/ui/FormField'
 import { caretaker } from '@/locales/rw/caretaker'
 import type { ListViewState } from '@/components/ui/ListControlBar'
 
+export type AttendanceViewState = ListViewState
+
 interface AttendanceDayFiltersProps {
   childName: string
   onChildNameChange: (value: string) => void
-  viewState: ListViewState
-  onViewStateChange: (state: ListViewState) => void
+  viewState: AttendanceViewState
+  onViewStateChange: (state: AttendanceViewState) => void
   onOpenSearchFilters: () => void
   hasActiveSearchFilters?: boolean
   className?: string
@@ -41,13 +43,14 @@ export function AttendanceDayFilters({
       <div className="flex gap-2 w-full sm:w-auto sm:shrink-0">
         <SelectInput
           value={viewState}
-          onChange={(e) => onViewStateChange(e.target.value as ListViewState)}
+          onChange={(e) => onViewStateChange(e.target.value as AttendanceViewState)}
           aria-label={caretaker.filters.stateLabel}
-          className="min-h-11 sm:min-h-12 flex-1 sm:flex-none sm:w-44 text-body font-semibold"
+          className="min-h-11 sm:min-h-12 flex-1 sm:flex-none sm:w-52 text-body font-semibold"
         >
-          <option value="waiting">{caretaker.filters.stateWaiting}</option>
-          <option value="arrived">{caretaker.filters.stateArrived}</option>
-          <option value="all">{caretaker.filters.stateAll}</option>
+          <option value="all">{caretaker.attendance.filterAll}</option>
+          <option value="waiting">{caretaker.attendance.filterUnrecorded}</option>
+          <option value="arrived">{caretaker.attendance.filterPresent}</option>
+          <option value="absent">{caretaker.attendance.filterAbsent}</option>
         </SelectInput>
 
         <Button

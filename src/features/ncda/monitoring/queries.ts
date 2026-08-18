@@ -12,8 +12,10 @@ import {
   fetchMonitoringWash,
 } from '@/api/resources/monitoring'
 import { fetchDistrictReport } from '@/api/resources/reporting'
+import { fetchMonitoringAttendance } from '@/api/resources/monitoring'
 import type { MonitoringDateFilters, MonitoringScopeFilters } from '@/models/monitoring'
 import { listDistrictsPage } from '@/api/resources/geo'
+import { listCentersPage } from '@/api/resources/centers'
 
 export type NcdaMonitoringFilters = MonitoringDateFilters & {
   districtId?: string
@@ -109,6 +111,43 @@ export function useNcdaMonitoringDistrictOptions(enabled = true) {
   return useQuery({
     queryKey: ncda.keys.monitoring.overview({ districtOptions: true }),
     queryFn: () => listDistrictsPage({ page: 1, pageSize: 100 }),
+    enabled: env.isLive && enabled,
+    staleTime: queryStaleTimes.ncdaMonitoring,
+  })
+}
+
+export function useNcdaMonitoringCenterOptions(
+  districtId?: string,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ncda.keys.monitoring.overview({ centerOptions: true, districtId }),
+    queryFn: () =>
+      listCentersPage({
+        districtId: districtId && districtId !== 'all' ? districtId : undefined,
+        page: 1,
+        pageSize: 200,
+      }),
+    enabled: env.isLive && enabled,
+    staleTime: queryStaleTimes.ncdaMonitoring,
+  })
+}
+
+export function useNcdaMonitoringAttendance(
+  filters: NcdaMonitoringFilters = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ncda.keys.monitoring.overview({ attendance: true, ...filters as Record<string, unknown> }),
+    queryFn: () =>
+      fetchMonitoringAttendance({
+        from: filters.from,
+        to: filters.to,
+        districtId: filters.districtId,
+        centerId: filters.centerId,
+        page: 1,
+        pageSize: 100,
+      }),
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.ncdaMonitoring,
   })

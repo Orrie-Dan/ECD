@@ -207,11 +207,17 @@ export function useFeedingMonitoringView(input: {
   yearMonth: string
   feedingDays: CenterFeedingDay[]
   feedingSummaries: CenterFeedingMonthSummary[]
+  centerId?: string
 }) {
   const filters = useMemo(() => {
     const range = yearMonthToMonitoringRange(input.yearMonth)
-    return { ...range, page: 1, pageSize: 100 }
-  }, [input.yearMonth])
+    return {
+      ...range,
+      centerId: input.centerId && input.centerId !== 'all' ? input.centerId : undefined,
+      page: 1,
+      pageSize: 100,
+    }
+  }, [input.yearMonth, input.centerId])
 
   const live = useMonitoringFeeding(filters)
 
@@ -232,10 +238,15 @@ export function useFeedingMonitoringView(input: {
     input.feedingSummaries,
     input.yearMonth,
   )
+  const scopedCenterId =
+    input.centerId && input.centerId !== 'all' ? input.centerId : undefined
+  const mockComparisons = scopedCenterId
+    ? mock.comparisons.filter((row) => row.centerId === scopedCenterId)
+    : mock.comparisons
 
   return {
     data: mock.view as MonitoringFeedingViewModel | undefined,
-    mockComparisons: mock.comparisons,
+    mockComparisons,
     mockSummary: mock.summary,
     isLoading: false,
     isError: false,
@@ -248,8 +259,16 @@ export function useStedMonitoringView(input: {
   children: Child[]
   stedAssessments: StedAssessment[]
   referrals: Referral[]
+  centerId?: string
 }) {
-  const filters = useMemo(() => ({ page: 1, pageSize: 100 }), [])
+  const filters = useMemo(
+    () => ({
+      centerId: input.centerId && input.centerId !== 'all' ? input.centerId : undefined,
+      page: 1,
+      pageSize: 100,
+    }),
+    [input.centerId],
+  )
   const live = useMonitoringSted(filters)
 
   if (env.isLive) {
@@ -265,10 +284,15 @@ export function useStedMonitoringView(input: {
   }
 
   const mock = buildMockStedMonitoring(input.children, input.stedAssessments, input.referrals)
+  const scopedCenterId =
+    input.centerId && input.centerId !== 'all' ? input.centerId : undefined
+  const mockComparisons = scopedCenterId
+    ? mock.comparisons.filter((row) => row.centerId === scopedCenterId)
+    : mock.comparisons
 
   return {
     data: mock.view as MonitoringStedViewModel | undefined,
-    mockComparisons: mock.comparisons,
+    mockComparisons,
     mockTotals: mock.totals,
     isLoading: false,
     isError: false,

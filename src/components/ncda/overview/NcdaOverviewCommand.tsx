@@ -592,7 +592,7 @@ export function NcdaOverviewCommand() {
                     className="text-left font-medium text-primary hover:underline"
                     onClick={() => row.districtId && selectDistrict(row.districtId)}
                   >
-                    {row.districtName ?? row.districtId}
+                    {row.districtName ?? '—'}
                   </button>
                   <span className="text-caption tabular-nums text-text-secondary">
                     {ncda.monitoring.stedCoverage}:{' '}

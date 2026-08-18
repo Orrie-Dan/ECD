@@ -8,15 +8,17 @@ import { useChildDetail } from '@/features/children'
 import { env } from '@/config/env'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
+import { findChildByRouteKey, isUuidLike } from '@/lib/child-routes'
 
 export function ChildDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const { children } = useData()
-  const detailQuery = useChildDetail(id, env.isLive && !!id)
-  const childFromList = children.find((c) => c.id === id)
+  const { id: routeKey } = useParams<{ id: string }>()
+  const { children, childrenLoading } = useData()
+  const childFromList = findChildByRouteKey(children, routeKey)
+  const childId = childFromList?.id ?? (isUuidLike(routeKey) ? routeKey : undefined)
+  const detailQuery = useChildDetail(childId, env.isLive && !!childId)
   const child = env.isLive ? (detailQuery.data ?? childFromList) : childFromList
 
-  if (env.isLive && detailQuery.isLoading && !child) {
+  if (env.isLive && (childrenLoading || detailQuery.isLoading) && !child) {
     return (
       <CaretakerLayout pageTitle={caretaker.childDetail.title} backTo="/caretaker/abana" backLabel={common.back}>
         <div className="space-y-4" aria-busy="true">

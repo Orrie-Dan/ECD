@@ -32,6 +32,7 @@ import { useToast } from '@/components/ui/Toast'
 import { env } from '@/config/env'
 import { caretaker } from '@/locales/rw/caretaker'
 import { filterAndSortChildren } from '@/lib/children-utils'
+import { buildChildDetailPath, buildChildEditPath } from '@/lib/child-routes'
 import { buildChildrenFilterSummary, hasActiveChildrenFilters } from '@/lib/filter-summary'
 import { usePagination } from '@/hooks/usePagination'
 import { Pagination } from '@/components/ui/Pagination'
@@ -230,8 +231,8 @@ export function ChildrenListPage() {
                 child={child}
                 assessmentDueStatus={getAssessmentDueStatus(latest?.date)}
                 nutritionStatus={assessment?.status}
-                onView={() => navigate(`/caretaker/abana/${child.id}`)}
-                onEdit={() => navigate(`/caretaker/abana/${child.id}/hindura`)}
+                onView={() => navigate(buildChildDetailPath('/caretaker/abana', child))}
+                onEdit={() => navigate(buildChildEditPath('/caretaker/abana', child))}
                 onArchive={() => setArchiveChild(child)}
                 onReactivate={() => setReactivateChild(child)}
                 onRecordMeasurement={() => setMeasureChild(child)}

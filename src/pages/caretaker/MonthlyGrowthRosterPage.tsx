@@ -21,6 +21,7 @@ import { useAuth, useData } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { usePagination } from '@/hooks/usePagination'
 import { caretaker } from '@/locales/rw/caretaker'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import { common, gender as genderLabels } from '@/locales/rw/common'
 import { calculateAge, formatDate } from '@/lib/mock-data'
 import {
@@ -455,7 +456,7 @@ export function MonthlyGrowthRosterPage() {
                                   size="sm"
                                   icon={<Eye size={14} />}
                                   onClick={() =>
-                                    navigate(`/caretaker/abana/${child.id}?tab=growth`)
+                                    navigate(buildChildDetailPath('/caretaker/abana', child, 'growth'))
                                   }
                                   aria-label={`${caretaker.growth.viewHistory}: ${child.fullName}`}
                                 >

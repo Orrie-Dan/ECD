@@ -21,6 +21,8 @@ describe('District AttendanceMonitoringPage (Sprint 5.2)', () => {
     expect(content).toContain('const { children, attendance } = useData()')
     expect(content).toContain('function DistrictAttendancePageMock()')
     expect(content).toContain('useDistrictCenterDayAttendanceRoster')
+    expect(content).toContain('useMonitoringCentre')
+    expect(content).toContain('setScopedCentreId')
   })
 
   it('fetchMonitoringAttendance passes scoped from/to + centerId to generated client', async () => {

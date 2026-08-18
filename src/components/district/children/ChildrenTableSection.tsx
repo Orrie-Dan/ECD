@@ -7,6 +7,7 @@ import { SearchHighlight } from '@/components/ui/SearchHighlight'
 import { Pagination } from '@/components/ui/Pagination'
 import { StatusBadge } from '@/components/children/StatusBadge'
 import { calculateAge } from '@/lib/mock-data'
+import { buildChildDetailPath } from '@/lib/child-routes'
 import { district } from '@/locales/rw/district'
 import { common, gender } from '@/locales/rw/common'
 import type { Child } from '@/types'
@@ -124,7 +125,7 @@ export function ChildrenTableSection({
                 </td>
                 <td className="py-3 td-actions" data-label="">
                   <Link
-                    to={`/district/abana/${child.id}`}
+                    to={buildChildDetailPath('/district/abana', child)}
                     className="inline-flex items-center gap-1.5 text-caption font-semibold text-primary hover:underline rounded-lg px-2 py-1.5 transition-colors hover:bg-primary-light/50"
                   >
                     <Eye size={16} aria-hidden />

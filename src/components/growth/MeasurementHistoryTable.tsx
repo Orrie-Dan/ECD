@@ -7,10 +7,12 @@ import { Pagination } from '@/components/ui/Pagination'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { GrowthStatusBadge } from '@/components/growth/GrowthStatusBadge'
 import { usePagination } from '@/hooks/usePagination'
+import { useAuth } from '@/contexts/AppContext'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
 import { formatDate } from '@/lib/mock-data'
 import { classifyNutrition, sortMeasurementsDesc } from '@/lib/nutrition-utils'
+import { formatRecordedByLabel } from '@/lib/user-display'
 import type { Child, GrowthMeasurement } from '@/types'
 
 interface MeasurementHistoryTableProps {
@@ -41,6 +43,7 @@ export function MeasurementHistoryTable({
   canEdit = false,
   highlightLatest = false,
 }: MeasurementHistoryTableProps) {
+  const { user } = useAuth()
   const sorted = useMemo(() => sortMeasurementsDesc(records), [records])
   const pagination = usePagination(sorted, { resetDeps: [sorted.length, ...resetDeps] })
   const latestId = sorted[0]?.id
@@ -106,7 +109,7 @@ export function MeasurementHistoryTable({
                         className="py-3 px-2 pr-4 text-body font-medium text-text"
                         data-label={common.labels.child}
                       >
-                        {child?.fullName ?? record.childId}
+                        {child?.fullName ?? '—'}
                       </td>
                     )}
                     <td className="py-3 px-2 pr-4 text-body" data-label={common.labels.date}>
@@ -138,7 +141,7 @@ export function MeasurementHistoryTable({
                       className="py-3 px-2 pr-4 text-body"
                       data-label={caretaker.growth.recordedBy}
                     >
-                      {record.recordedBy ?? '—'}
+                      {formatRecordedByLabel(record.recordedBy, user)}
                     </td>
                     {canEdit && onEdit && (
                       <td className="py-3 px-2" data-label={common.labels.actions}>

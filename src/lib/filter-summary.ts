@@ -108,9 +108,11 @@ export function buildAttendanceFilterSummary(
   const clauses = sharedClauses(filters)
 
   if (viewState === 'waiting') {
-    clauses.push('abataraza')
+    clauses.push('abatarandikwa')
   } else if (viewState === 'arrived') {
-    clauses.push('abahageze uyu munsi')
+    clauses.push('abaje')
+  } else if (viewState === 'absent') {
+    clauses.push('abataje')
   }
 
   if (clauses.length === 0) return null
@@ -211,7 +213,7 @@ export function hasActiveAttendanceFilters(
   filters: AttendanceSearchFilters,
   viewState: ListViewState,
 ): boolean {
-  return isAttendanceSearchActive(filters) || viewState !== 'waiting'
+  return isAttendanceSearchActive(filters) || viewState !== 'all'
 }
 
 export function hasActiveGrowthFilters(

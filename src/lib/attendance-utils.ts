@@ -11,14 +11,41 @@ export type AgeGroupFilter = 'all' | '3-4' | '5-6'
 /** Placeholder cutoff for "late" arrivals (HH:mm, local). */
 export const LATE_ARRIVAL_CUTOFF = '08:30'
 
+/** Days of attendance kept in the caretaker LIVE window. */
+export const ATTENDANCE_LOOKBACK_DAYS = 40
+
 export function getTodayDate(): string {
   return new Date().toISOString().split('T')[0]
 }
 
 export function getYesterdayDate(): string {
-  const date = new Date()
-  date.setDate(date.getDate() - 1)
-  return date.toISOString().split('T')[0]
+  return shiftIsoDate(getTodayDate(), -1)
+}
+
+/** Shift a YYYY-MM-DD value by whole local calendar days. */
+export function shiftIsoDate(dateStr: string, days: number): string {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  if (!year || !month || !day) return dateStr
+  const date = new Date(year, month - 1, day)
+  date.setDate(date.getDate() + days)
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+export function clampIsoDate(dateStr: string, minDate: string, maxDate: string): string {
+  if (!dateStr) return maxDate
+  if (dateStr < minDate) return minDate
+  if (dateStr > maxDate) return maxDate
+  return dateStr
+}
+
+export function attendanceMinDate(
+  maxDate = getTodayDate(),
+  lookbackDays = ATTENDANCE_LOOKBACK_DAYS,
+): string {
+  return shiftIsoDate(maxDate, -lookbackDays)
 }
 
 export function getRecordForDate(
@@ -490,14 +517,73 @@ export function filterAbsentChildren({
     .sort((a, b) => a.child.fullName.localeCompare(b.child.fullName, 'rw'))
 }
 
+export type AttendanceRosterFilter = 'all' | 'waiting' | 'arrived' | 'absent'
+
+export interface AttendanceDayRow {
+  child: Child
+  status: AttendanceDayStatus
+  record?: AttendanceRecord
+  previous?: AttendanceRecord
+}
+
+const ROSTER_STATUS_RANK: Record<AttendanceDayStatus, number> = {
+  present: 0,
+  absent: 1,
+  unrecorded: 2,
+}
+
+/** One row per child for a selected day — present/absent first so the roster is readable. */
+export function buildAttendanceDayRows({
+  children,
+  attendance,
+  date,
+  filters,
+  viewState,
+}: {
+  children: Child[]
+  attendance: AttendanceRecord[]
+  date: string
+  filters: AttendanceSearchFilters
+  viewState: AttendanceRosterFilter
+}): AttendanceDayRow[] {
+  const filteredChildren = applySharedChildFilters(children, filters)
+
+  let rows: AttendanceDayRow[] = filteredChildren.map((child) => {
+    const record = getRecordForDate(attendance, child.id, date)
+    const status = record ? (record.present ? 'present' : 'absent') : 'unrecorded'
+    const previous = attendance
+      .filter((entry) => entry.childId === child.id && entry.date < date)
+      .sort((a, b) => b.date.localeCompare(a.date))[0]
+    return { child, status, record, previous }
+  })
+
+  if (viewState === 'waiting') {
+    rows = rows.filter((row) => row.status === 'unrecorded')
+  } else if (viewState === 'arrived') {
+    rows = rows.filter((row) => row.status === 'present')
+  } else if (viewState === 'absent') {
+    rows = rows.filter((row) => row.status === 'absent')
+  }
+
+  rows.sort((a, b) => {
+    const rank = ROSTER_STATUS_RANK[a.status] - ROSTER_STATUS_RANK[b.status]
+    if (rank !== 0) return rank
+    if (a.status === 'present') {
+      return (b.record?.arrivedAt ?? '').localeCompare(a.record?.arrivedAt ?? '')
+        || a.child.fullName.localeCompare(b.child.fullName, 'rw')
+    }
+    return a.child.fullName.localeCompare(b.child.fullName, 'rw')
+  })
+
+  return rows
+}
+
 export function formatRelativeDayLabel(dateStr: string): string {
   const today = getTodayDate()
-  const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toISOString().split('T')[0]
+  const yesterdayStr = getYesterdayDate()
 
   if (dateStr === today) return ''
   if (dateStr === yesterdayStr) return 'Ejo'
-  const date = new Date(dateStr)
+  const date = new Date(`${dateStr}T00:00:00`)
   return date.toLocaleDateString('rw-RW', { day: 'numeric', month: 'short' })
 }

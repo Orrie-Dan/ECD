@@ -17,7 +17,9 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { NcdaDashboardSection } from '@/components/ncda/NcdaDashboardSection'
 import { ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
+import { useAuth } from '@/contexts/AppContext'
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
+import { formatRecordedByLabel } from '@/lib/user-display'
 import { env } from '@/config/env'
 import { effectiveRangeToMonitoringDates, roundPct } from '@/features/monitoring'
 import {
@@ -87,6 +89,7 @@ export function NcdaCenterDetailPage() {
 
 function NcdaCenterDetailLive() {
   const { centerId = '' } = useParams<{ centerId: string }>()
+  const { user } = useAuth()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
   const [section, setSection] = useState<OpsSection>('overview')
   const [opsPage, setOpsPage] = useState(1)
@@ -126,6 +129,13 @@ function NcdaCenterDetailLive() {
     opsPage,
     OPS_PAGE_SIZE,
     section === 'feeding' && Boolean(centerId),
+  )
+  const childLabelsById = useMemo(
+    () =>
+      new Map(
+        (childrenQ.data?.items ?? []).map((row) => [row.id, row.fullName || row.registrationNumber || '—']),
+      ),
+    [childrenQ.data?.items],
   )
 
   const backLink = (
@@ -349,7 +359,7 @@ function NcdaCenterDetailLive() {
                 ncda.centers.opsColMeta,
               ]}
               rows={(childrenQ.data?.items ?? []).map((row) => [
-                row.fullName || row.id,
+                row.fullName || row.registrationNumber || '—',
                 row.status,
                 row.registrationNumber || '—',
               ])}
@@ -368,13 +378,13 @@ function NcdaCenterDetailLive() {
               error={ncda.centers.opsError}
               columns={[
                 ncda.centers.opsColDate,
-                ncda.centers.opsColStatus,
+                ncda.centers.opsColAttendance,
                 ncda.centers.opsColMeta,
               ]}
               rows={(attendanceQ.data?.items ?? []).map((row) => [
                 row.date?.slice(0, 10) ?? '—',
                 row.present ? ncda.centers.statusPresent : ncda.centers.statusAbsent,
-                row.childId?.slice(0, 8) ?? '—',
+                childLabelsById.get(row.childId ?? '') ?? '—',
               ])}
               total={attendanceQ.data?.total ?? 0}
               totalPages={attendanceQ.data?.totalPages ?? 1}
@@ -397,7 +407,7 @@ function NcdaCenterDetailLive() {
               rows={(nutritionQ.data?.items ?? []).map((row) => [
                 row.screeningDate?.slice(0, 10) ?? '—',
                 row.nutritionStatus ?? '—',
-                row.childId?.slice(0, 8) ?? '—',
+                childLabelsById.get(row.childId ?? '') ?? '—',
               ])}
               total={nutritionQ.data?.total ?? 0}
               totalPages={nutritionQ.data?.totalPages ?? 1}
@@ -426,7 +436,7 @@ function NcdaCenterDetailLive() {
                 ]
                   .filter(Boolean)
                   .join(', ') || '—',
-                row.recordedBy ?? '—',
+                formatRecordedByLabel(row.recordedBy, user),
               ])}
               total={feedingQ.data?.total ?? 0}
               totalPages={feedingQ.data?.totalPages ?? 1}

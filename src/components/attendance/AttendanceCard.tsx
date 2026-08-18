@@ -28,6 +28,7 @@ interface AttendanceCardProps {
   onMarkPresent?: () => void
   onMarkAbsent?: () => void
   onEdit?: () => void
+  onView?: () => void
   className?: string
 }
 
@@ -39,6 +40,7 @@ export function AttendanceCard({
   onMarkPresent,
   onMarkAbsent,
   onEdit,
+  onView,
   className = '',
 }: AttendanceCardProps) {
   const age = calculateAge(child.dateOfBirth)
@@ -126,7 +128,9 @@ export function AttendanceCard({
         <div className="min-h-12 mb-3">
           <div className="flex items-baseline justify-between gap-2">
             <p className="text-caption font-semibold text-text-muted shrink-0">
-              {caretaker.attendance.lastAttendance}
+              {todayStatus === 'unrecorded'
+                ? caretaker.attendance.lastAttendance
+                : caretaker.attendance.thisDayAttendance}
             </p>
             {lastAttendanceMeta.date && (
               <p className="text-caption font-semibold text-text tabular-nums text-right truncate">
@@ -145,6 +149,7 @@ export function AttendanceCard({
           onMarkPresent={onMarkPresent}
           onMarkAbsent={onMarkAbsent}
           onEdit={onEdit}
+          onView={onView}
         />
       </div>
     </Card>
