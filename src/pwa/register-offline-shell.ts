@@ -3,15 +3,14 @@ import { env } from '@/config/env'
 
 /**
  * Register the PWA service worker for LIVE builds.
- * Uses prompt mode — never auto-reload mid-session (caretaker may be recording data).
- * Updated SW waits until the next cold start / explicit refresh.
+ * Hosted deployments should take over quickly so users do not stay on stale shells.
  */
 export function registerOfflineShell(): void {
   if (typeof window === 'undefined') return
   // Skip SW in MOCK unit tests / SSR-less vitest environments without SW support.
   if (!('serviceWorker' in navigator)) return
 
-  registerSW({
+  const updateSW = registerSW({
     immediate: true,
     onRegisteredSW(_swUrl, registration) {
       // Periodic update check when online — does not force reload.
@@ -25,9 +24,10 @@ export function registerOfflineShell(): void {
       }
     },
     onNeedRefresh() {
-      // Intentionally no auto-reload. Next navigation/cold start picks up the new shell.
+      // Force activation so fresh deploys replace the stale shell promptly.
+      void updateSW(true)
       if (import.meta.env.DEV) {
-        console.info('[pwa] New app shell available — will apply on next launch')
+        console.info('[pwa] New app shell available — reloading now')
       }
     },
     onOfflineReady() {

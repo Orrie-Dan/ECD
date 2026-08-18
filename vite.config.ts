@@ -14,7 +14,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'prompt',
+      // Apply new service workers eagerly so hosted deploys surface quickly.
+      registerType: 'autoUpdate',
       injectRegister: false,
       includeAssets: ['ncda-logo.png', 'icons.svg'],
       manifest: {

@@ -97,6 +97,13 @@ export const common = {
     fullscreen: 'Reba muri ecran yose',
     exitFullscreen: 'Funga',
   },
+  notFound: {
+    code: '404',
+    title: 'Uru rupapuro ntiruboneka',
+    description:
+      'Icyo washakaga nticyabonetse cyangwa cyimuwe. Subira ku ntangiriro maze wongere ugerageze.',
+    goHome: 'Subira ahabanza',
+  },
   /** LIVE-mode honesty copy — never imply mock/fake success succeeded online. */
   live: {
     unavailableTitle: 'Aya makuru ntabwo aboneka muri iki gihe',

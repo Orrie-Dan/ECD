@@ -7,6 +7,7 @@ import { AppErrorBoundary } from '@/components/AppErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RoleSelectionPage } from '@/pages/RoleSelectionPage'
 import { CaretakerDashboardPage } from '@/pages/caretaker/DashboardPage'
 import { RegisterChildPage } from '@/pages/caretaker/RegisterChildPage'
@@ -218,7 +219,7 @@ export default function App() {
                   </Route>
                 </Route>
 
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </ToastProvider>
             </DataProvider>
