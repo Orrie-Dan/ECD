@@ -18,6 +18,7 @@ import { useApiAuth } from '@/api/auth/ApiAuthProvider'
 import { normalizeApiError } from '@/api/errors'
 import { UnknownUserRoleError } from '@/api/roles'
 import { completeLiveLogin } from '@/features/auth/complete-live-login'
+import { clearAllCachedLogins } from '@/features/auth/offline-auth'
 import type { UserRole } from '@/types'
 import type { LoginError, LoginResult } from '@/features/auth/login-result'
 
@@ -61,6 +62,9 @@ export function useLogin() {
         if (apiError.isValidationError || apiError.isUnauthorized) {
           return { success: false, error: 'invalid_credentials' }
         }
+        if (apiError.isNetworkError) {
+          return { success: false, error: 'invalid_credentials' }
+        }
         throw apiError
       }
     },
@@ -73,6 +77,7 @@ export function useLogout() {
 
   return () => {
     apiAuth.clearSession()
+    clearAllCachedLogins()
     void queryClient.removeQueries({ queryKey: auth.keys.all })
     void queryClient.removeQueries({ queryKey: children.keys.all })
     void queryClient.removeQueries({ queryKey: attendance.keys.all })
