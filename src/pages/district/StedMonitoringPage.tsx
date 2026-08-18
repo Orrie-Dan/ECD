@@ -20,6 +20,19 @@ import { ECD_CENTERS } from '@/lib/mock-data'
 import { env } from '@/config/env'
 import type { Child, Referral, StedAssessment } from '@/types'
 
+type StedComparisonRow = {
+  centerId: string
+  centerName: string
+  sector: string
+  eligible: number
+  screened: number
+  coverageRate: number
+  oyaResponses: number
+  referralsCreated: number
+  referralsCompleted: number
+  averageScore: number | null
+}
+
 export function StedMonitoringPage() {
   if (env.isLive) {
     return (
@@ -81,22 +94,35 @@ function StedMonitoringPageShared({
     }
   }, [data?.summary, mockTotals, source])
 
-  const comparisons = useMemo(() => {
-    if (source === 'mock' && mockComparisons) return mockComparisons
+  const comparisons = useMemo<StedComparisonRow[]>(() => {
+    if (source === 'mock' && mockComparisons) {
+      return mockComparisons.map((row) => ({
+        centerId: row.centerId,
+        centerName: row.centerName,
+        sector: row.sector,
+        eligible: row.eligible,
+        screened: row.assessed,
+        coverageRate: row.coverageRate,
+        oyaResponses: row.oyaResponses,
+        referralsCreated: row.referralsCreated,
+        referralsCompleted: row.referralsCompleted,
+        averageScore: null,
+      }))
+    }
     return (data?.items ?? [])
       .filter((item) => !scopedCentreId || item.centerId === scopedCentreId)
       .map((item) => ({
-      centerId: item.centerId,
-      centerName: item.centerName,
-      sector: '—',
-      eligible: 0,
-      screened: item.assessmentsCompleted,
-      coverageRate: 0,
-      oyaResponses: 0,
-      referralsCreated: 0,
-      referralsCompleted: 0,
-      averageScore: item.averageScore,
-    }))
+        centerId: item.centerId ?? '',
+        centerName: item.centerName ?? '—',
+        sector: '—',
+        eligible: 0,
+        screened: item.assessmentsCompleted ?? 0,
+        coverageRate: 0,
+        oyaResponses: 0,
+        referralsCreated: 0,
+        referralsCompleted: 0,
+        averageScore: item.averageScore ?? null,
+      }))
   }, [data?.items, mockComparisons, scopedCentreId, source])
 
   const centerOptions = useMemo(() => {
@@ -227,10 +253,9 @@ function StedMonitoringPageShared({
                   </thead>
                   <tbody>
                     {comparisons.map((row) => {
-                      const sector = 'sector' in row ? String(row.sector) : '—'
+                      const sector = row.sector || '—'
                       const screened = row.screened
-                      const assessed =
-                        'eligible' in row && row.eligible > 0 ? row.eligible : screened
+                      const assessed = row.eligible > 0 ? row.eligible : screened
                       const oya =
                         source === 'api'
                           ? row.averageScore != null

@@ -686,6 +686,7 @@ export const ncda = {
     attendanceRate: 'Igipimo cy\'ubwitabire',
     present: 'Bahari',
     absent: 'Badahari',
+    stedCoverage: 'Coverage ya STED',
     centersReporting: 'Ibigo byanditse ubwitabire',
     nutritionScreenings: 'Isuzuma ry\'imirire',
     nutritionSevere: 'Bikomeye',

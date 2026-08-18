@@ -141,7 +141,7 @@ export function DistrictGrowthChildrenTable({
                   <Link
                     to={buildChildDetailPath('/district/abana', {
                       id: row.childId,
-                      fullName: row.childName,
+                      fullName: row.fullName,
                     })}
                     className="inline-flex items-center gap-1.5 text-caption font-semibold text-primary hover:underline rounded-lg px-2 py-1.5 transition-colors hover:bg-primary-light/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >

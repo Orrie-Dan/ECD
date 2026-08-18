@@ -2,8 +2,9 @@ const PBKDF2_ITERATIONS = 100_000
 const SALT_BYTES = 16
 const HASH_BYTES = 32
 
-function toBase64(buffer: ArrayBuffer): string {
-  return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+function toBase64(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer)
+  return btoa(String.fromCharCode(...bytes))
 }
 
 function fromBase64(b64: string): Uint8Array {
@@ -15,15 +16,17 @@ function fromBase64(b64: string): Uint8Array {
 
 async function deriveKey(password: string, salt: Uint8Array): Promise<ArrayBuffer> {
   const encoder = new TextEncoder()
+  const passwordBytes = Uint8Array.from(encoder.encode(password))
+  const normalizedSalt = Uint8Array.from(salt)
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(password),
+    passwordBytes,
     'PBKDF2',
     false,
     ['deriveBits'],
   )
   return crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: normalizedSalt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
     keyMaterial,
     HASH_BYTES * 8,
   )

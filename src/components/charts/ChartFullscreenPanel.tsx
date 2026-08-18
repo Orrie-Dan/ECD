@@ -56,7 +56,9 @@ export function ChartFullscreenPanel({
             onClick={() => setOpen(true)}
             aria-label={common.charts.fullscreen}
             className="shrink-0"
-          />
+          >
+            {common.charts.fullscreen}
+          </Button>
         </div>
         <div className="min-w-0 w-full flex-1">{renderChart(chartHeight)}</div>
         {footer ? <div className="mt-3 min-w-0">{footer}</div> : null}
