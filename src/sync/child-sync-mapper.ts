@@ -92,6 +92,8 @@ export function mapPullChildToLocal(
     archiveReason:
       row.archiveReason == null ? existing?.archiveReason : asString(row.archiveReason),
     notes: row.notes == null ? existing?.notes : asString(row.notes),
+    classroomId: row.classroomId == null ? existing?.classroomId : asString(row.classroomId),
+    classroomGrade: row.classroomGrade == null ? existing?.classroomGrade : asString(row.classroomGrade),
   }
 }
 

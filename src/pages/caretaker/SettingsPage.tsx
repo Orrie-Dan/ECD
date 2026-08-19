@@ -83,7 +83,14 @@ export function SettingsPage() {
               <h2 className="text-subheading text-text mb-4">{caretaker.settings.centerInfo}</h2>
               <dl>
                 <InfoRow label={caretaker.settings.centerName} value={user?.centerName ?? '—'} />
-                <InfoRow label={caretaker.settings.role} value={caretaker.settings.roleCaretaker} />
+                <InfoRow
+                  label={caretaker.settings.role}
+                  value={
+                    user?.role === 'ecdDirector'
+                      ? caretaker.settings.roleDirector
+                      : caretaker.settings.roleCaretaker
+                  }
+                />
                 <InfoRow label={caretaker.settings.appVersion} value="1.0.0" />
               </dl>
             </Card>

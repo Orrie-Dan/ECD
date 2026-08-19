@@ -28,16 +28,6 @@
               }
             }
           },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTokensResponseDto"
-                }
-              }
-            }
-          },
           "400": {
             "description": "Validation failed or invalid credentials payload",
             "content": {
@@ -72,16 +62,6 @@
         },
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthTokensResponseDto"
-                }
-              }
-            }
-          },
-          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -191,9 +171,6 @@
               }
             }
           },
-          "201": {
-            "description": ""
-          },
           "400": {
             "description": "Validation failed (username or email required)",
             "content": {
@@ -245,9 +222,6 @@
                 }
               }
             }
-          },
-          "201": {
-            "description": ""
           },
           "400": {
             "description": "Validation failed or invalid/expired reset token",
@@ -1291,6 +1265,16 @@
             }
           },
           {
+            "name": "classroomId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by classroom",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "name": "search",
             "required": false,
             "in": "query",
@@ -1748,16 +1732,6 @@
               }
             }
           },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChildDetailResponseDto"
-                }
-              }
-            }
-          },
           "400": {
             "description": "Validation failed or malformed parameters",
             "content": {
@@ -1867,16 +1841,6 @@
               }
             }
           },
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ChildDetailResponseDto"
-                }
-              }
-            }
-          },
           "400": {
             "description": "Validation failed or malformed parameters",
             "content": {
@@ -1967,9 +1931,6 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
-          },
           "400": {
             "description": "Validation failed or malformed parameters",
             "content": {
@@ -3241,7 +3202,7 @@
       "post": {
         "operationId": "UsersController_create",
         "summary": "Create a user",
-        "description": "Provisions a new user account within the caller management scope. Returns a one-time `temporaryPassword` that must be shared out-of-band; it is never included on subsequent GET/list/update responses.",
+        "description": "Provisions a new user account within the caller management scope. NCDA can create district officers, ECD directors, and caregivers; district officers can create ECD directors and caregivers in their district; ECD directors can create caregivers at their center. Returns a one-time `temporaryPassword` that must be shared out-of-band; it is never included on subsequent GET/list/update responses.",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -3307,7 +3268,7 @@
       "get": {
         "operationId": "UsersController_findAll",
         "summary": "List users",
-        "description": "Returns a paginated list of users visible to the caller. Pagination shape uses `data` (not `items`) and omits `totalPages`.",
+        "description": "Returns a paginated list of users visible to the caller. ECD directors see caregivers at their center only. Pagination shape uses `data` (not `items`) and omits `totalPages`.",
         "parameters": [
           {
             "name": "role",
@@ -3507,7 +3468,7 @@
       "patch": {
         "operationId": "UsersController_update",
         "summary": "Update a user",
-        "description": "Partial update of user profile/role/status fields within caller scope.",
+        "description": "Partial update of user profile/status fields within caller scope. Set `status` to `SUSPENDED` to deactivate (remove) a caregiver.",
         "parameters": [
           {
             "name": "id",
@@ -3621,16 +3582,6 @@
         },
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResetUserPasswordResponseDto"
-                }
-              }
-            }
-          },
-          "201": {
             "description": "",
             "content": {
               "application/json": {
@@ -4628,6 +4579,345 @@
         },
         "tags": [
           "centers"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/centers/{centerId}/classrooms": {
+      "get": {
+        "operationId": "ClassroomsController_findAllByCenter",
+        "summary": "List classrooms for a center",
+        "description": "Returns the 3 fixed classrooms (Grade 1–3) with child counts.",
+        "parameters": [
+          {
+            "name": "centerId",
+            "required": true,
+            "in": "path",
+            "description": "Center UUID",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClassroomResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Center not found or not visible in caller scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "classrooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/classrooms/{id}": {
+      "get": {
+        "operationId": "ClassroomsController_findOne",
+        "summary": "Get classroom detail",
+        "description": "Returns a single classroom with enrolled children count.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Classroom UUID",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassroomResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Classroom not found or not visible in caller scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "classrooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/children/{id}/promote": {
+      "post": {
+        "operationId": "ClassroomsController_promoteChild",
+        "summary": "Promote child to next grade",
+        "description": "Moves a child from current grade to the next. Grade 3 children cannot be promoted.",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Child UUID",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoteChildDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PromoteChildResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Child not found or not visible in caller scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "classrooms"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/centers/{centerId}/promote": {
+      "post": {
+        "operationId": "ClassroomsController_bulkPromote",
+        "summary": "Bulk promote children in a center",
+        "description": "Promotes all children to the next grade. Grade 3 children are returned for manual archival.",
+        "parameters": [
+          {
+            "name": "centerId",
+            "required": true,
+            "in": "path",
+            "description": "Center UUID",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkPromoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkPromoteResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or malformed parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated but role/scope/ownership denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Center not found or not visible in caller scope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "classrooms"
         ],
         "security": [
           {
@@ -6618,7 +6908,7 @@
       "get": {
         "operationId": "GeoController_listDistricts",
         "summary": "List districts",
-        "description": "Paginated districts. Caregivers and district focal persons are scoped to their district.",
+        "description": "Paginated districts. Center staff and district focal persons are scoped to their district.",
         "parameters": [
           {
             "name": "search",
@@ -6720,7 +7010,7 @@
       "get": {
         "operationId": "GeoController_getDistrict",
         "summary": "Get district by id",
-        "description": "Returns a single district. Caregivers and district focal persons are limited to their own district.",
+        "description": "Returns a single district. Center staff and district focal persons are limited to their own district.",
         "parameters": [
           {
             "name": "id",
@@ -7881,15 +8171,15 @@
   },
   "info": {
     "title": "ECD Backend API",
-    "description": "Early Childhood Development management system API. Success responses are bare DTO bodies; errors use `{ success, statusCode, message, timestamp }` (plus `entity` / `currentVersion` on optimistic-lock conflicts). List endpoints use offset pagination (`items`, `page`, `pageSize`, `total`, `totalPages`); sync pull uses cursor pagination.",
+    "description": "Early Childhood Development management system API.",
     "version": "1.0",
     "contact": {}
   },
   "tags": [],
   "servers": [
     {
-      "url": "http://localhost:3000",
-      "description": "API"
+      "url": "/",
+      "description": "Current host"
     }
   ],
   "components": {
@@ -7897,8 +8187,7 @@
       "bearer": {
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "type": "http",
-        "description": "Access token from POST /api/v1/auth/login (`Authorization: Bearer <accessToken>`)."
+        "type": "http"
       }
     },
     "schemas": {
@@ -7912,8 +8201,8 @@
           },
           "password": {
             "type": "string",
-            "minLength": 6,
             "example": "secret123",
+            "minLength": 6,
             "description": "Account password"
           }
         },
@@ -7927,7 +8216,8 @@
         "enum": [
           "caregiver",
           "district_focal_person",
-          "ncda_admin"
+          "ncda_admin",
+          "ecd_director"
         ]
       },
       "AuthCenterSummaryDto": {
@@ -7967,14 +8257,14 @@
             "$ref": "#/components/schemas/UserRole"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "center": {
             "nullable": true,
@@ -8083,14 +8373,14 @@
             "$ref": "#/components/schemas/UserRole"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "center": {
             "nullable": true,
@@ -8101,7 +8391,7 @@
             ]
           },
           "email": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "caregiver01@example.com",
             "description": "Account email when set"
@@ -8145,8 +8435,8 @@
           },
           "newPassword": {
             "type": "string",
-            "minLength": 6,
             "example": "newSecret123",
+            "minLength": 6,
             "description": "New password to set"
           }
         },
@@ -8160,19 +8450,19 @@
         "properties": {
           "deviceUuid": {
             "type": "string",
-            "maxLength": 255,
             "example": "550e8400-e29b-41d4-a716-446655440000",
+            "maxLength": 255,
             "description": "Stable client-generated device identifier"
           },
           "platform": {
             "type": "string",
-            "maxLength": 50,
-            "example": "android"
+            "example": "android",
+            "maxLength": 50
           },
           "appVersion": {
             "type": "string",
-            "maxLength": 50,
-            "example": "1.2.0"
+            "example": "1.2.0",
+            "maxLength": 50
           }
         },
         "required": [
@@ -8199,28 +8489,28 @@
             "description": "Stable client-generated device identifier"
           },
           "platform": {
-            "type": "string",
-            "nullable": true,
-            "example": "android"
+            "type": "object",
+            "example": "android",
+            "nullable": true
           },
           "appVersion": {
-            "type": "string",
-            "nullable": true,
-            "example": "1.2.0"
+            "type": "object",
+            "example": "1.2.0",
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/DeviceStatus"
           },
           "lastSeenAt": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
+            "nullable": true,
             "description": "Legacy alias for last sync / heartbeat. Same value as lastSyncAt (DB last_sync_at)."
           },
           "lastSyncAt": {
             "type": "string",
-            "nullable": true,
             "format": "date-time",
+            "nullable": true,
             "description": "Last sync timestamp (DB last_sync_at). Additive alias of lastSeenAt."
           },
           "registeredAt": {
@@ -8253,8 +8543,8 @@
         "properties": {
           "clientOperationId": {
             "type": "string",
-            "description": "Stable client-generated operation id. Must be unique per device and reused unchanged on retries for deduplication",
-            "example": "op-uuid-or-client-id"
+            "example": "op-uuid-or-client-id",
+            "description": "Stable client-generated operation id. Must be unique per device and reused unchanged on retries for deduplication"
           },
           "entityType": {
             "type": "string",
@@ -8279,8 +8569,8 @@
           },
           "version": {
             "type": "number",
-            "minimum": 0,
             "example": 0,
+            "minimum": 0,
             "description": "Client-known entity version for optimistic concurrency"
           },
           "clientTimestamp": {
@@ -8338,14 +8628,14 @@
             "example": "op-uuid-or-client-id"
           },
           "localId": {
-            "type": "string",
-            "nullable": true,
-            "example": "local-temp-id"
+            "type": "object",
+            "example": "local-temp-id",
+            "nullable": true
           },
           "entityId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "entityType": {
             "type": "string",
@@ -8358,7 +8648,7 @@
             "$ref": "#/components/schemas/SyncOperationStatus"
           },
           "conflictReason": {
-            "type": "string",
+            "type": "object",
             "nullable": true
           },
           "replayed": {
@@ -8367,9 +8657,9 @@
             "description": "True when this push replayed a previously accepted operation"
           },
           "sessionId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "required": [
@@ -8389,9 +8679,9 @@
         "type": "object",
         "properties": {
           "sessionId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "accepted": {
             "type": "number",
@@ -8635,13 +8925,13 @@
             "$ref": "#/components/schemas/SyncOperationStatus"
           },
           "conflictReason": {
-            "type": "string",
+            "type": "object",
             "nullable": true
           },
           "processedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           }
         },
         "required": [
@@ -8682,8 +8972,8 @@
           },
           "lastRetryAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "startedAt": {
             "type": "string",
@@ -8691,8 +8981,8 @@
           },
           "completedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "operations": {
             "type": "array",
@@ -8735,9 +9025,9 @@
           },
           "reason": {
             "type": "string",
+            "example": "Family relocated",
             "minLength": 1,
-            "maxLength": 255,
-            "example": "Family relocated"
+            "maxLength": 255
           },
           "notes": {
             "type": "string",
@@ -8746,8 +9036,8 @@
           "childVersion": {
             "type": "number",
             "description": "Expected child optimistic-lock version from the last read (required for CAS)",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "deviceId": {
             "type": "string",
@@ -8813,13 +9103,13 @@
           },
           "acceptedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "acceptedBy": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "version": {
             "type": "number",
@@ -8944,14 +9234,14 @@
           "version": {
             "type": "number",
             "description": "Expected transfer optimistic-lock version from the last read (required for CAS)",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "childVersion": {
             "type": "number",
             "description": "Expected child optimistic-lock version from the last read (required for CAS)",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "deviceId": {
             "type": "string",
@@ -8970,14 +9260,14 @@
           "version": {
             "type": "number",
             "description": "Expected transfer optimistic-lock version from the last read (required for CAS)",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "childVersion": {
             "type": "number",
             "description": "Expected child optimistic-lock version from the last read (required for CAS)",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "deviceId": {
             "type": "string",
@@ -9002,27 +9292,25 @@
         "properties": {
           "fullName": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 200,
             "description": "Full name; required when firstName is omitted",
-            "example": "Uwimana Jean"
+            "example": "Uwimana Jean",
+            "maxLength": 200
           },
           "firstName": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100,
             "description": "Given name; required when fullName is omitted",
-            "example": "Jean"
+            "example": "Jean",
+            "maxLength": 100
           },
           "middleName": {
             "type": "string",
-            "maxLength": 100,
-            "example": "Pierre"
+            "example": "Pierre",
+            "maxLength": 100
           },
           "lastName": {
             "type": "string",
-            "maxLength": 100,
-            "example": "Uwimana"
+            "example": "Uwimana",
+            "maxLength": 100
           },
           "dateOfBirth": {
             "type": "string",
@@ -9039,10 +9327,13 @@
             "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             "description": "ECD center UUID"
           },
-          "registrationNumber": {
+          "nationalId": {
             "type": "string",
-            "maxLength": 50,
-            "example": "REG-2024-001"
+            "example": "1200080012345600",
+            "minLength": 16,
+            "maxLength": 16,
+            "pattern": "^[123]\\d{3}[78]\\d{10}$",
+            "description": "Rwanda National Identification Number (NIN) — 16 digits: [1|2|3 status][YYYY birth year][7|8 gender][7-digit seq][issue freq][2-digit checksum]"
           },
           "homeVillageId": {
             "type": "string",
@@ -9052,33 +9343,33 @@
           },
           "guardianName": {
             "type": "string",
-            "maxLength": 150,
-            "example": "Mukamana Alice"
+            "example": "Mukamana Alice",
+            "maxLength": 150
           },
           "guardianPhone": {
             "type": "string",
-            "maxLength": 50,
-            "example": "+250788123456"
+            "example": "+250788123456",
+            "maxLength": 50
           },
           "guardianRelation": {
             "type": "string",
-            "maxLength": 50,
-            "example": "Mother"
+            "example": "Mother",
+            "maxLength": 50
           },
           "guardian2Name": {
             "type": "string",
-            "maxLength": 150,
-            "example": "Niyonsenga Paul"
+            "example": "Niyonsenga Paul",
+            "maxLength": 150
           },
           "guardian2Phone": {
             "type": "string",
-            "maxLength": 50,
-            "example": "+250788654321"
+            "example": "+250788654321",
+            "maxLength": 50
           },
           "guardian2Relation": {
             "type": "string",
-            "maxLength": 50,
-            "example": "Father"
+            "example": "Father",
+            "maxLength": 50
           },
           "specialNeeds": {
             "type": "string",
@@ -9094,6 +9385,11 @@
             "example": "2024-01-10",
             "description": "Registration date (ISO-8601); defaults to now if omitted"
           },
+          "classroomId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Classroom UUID; if omitted, backend may auto-assign based on age"
+          },
           "deviceId": {
             "type": "string",
             "format": "uuid",
@@ -9104,7 +9400,7 @@
           "dateOfBirth",
           "gender",
           "centerId",
-          "registrationNumber",
+          "nationalId",
           "homeVillageId",
           "guardianName",
           "guardianPhone"
@@ -9117,6 +9413,14 @@
           "active",
           "transferred",
           "archived"
+        ]
+      },
+      "ClassroomGrade": {
+        "type": "string",
+        "enum": [
+          "grade_1",
+          "grade_2",
+          "grade_3"
         ]
       },
       "ChildDetailResponseDto": {
@@ -9144,46 +9448,55 @@
             "example": "active",
             "$ref": "#/components/schemas/ApiChildStatus"
           },
-          "registrationNumber": {
+          "nationalId": {
             "type": "string",
-            "example": "REG-2024-001",
-            "description": "Unique registration number (additive on list/detail)"
+            "example": "1200080012345678",
+            "description": "National Identification Number (NIN) — unique child identifier"
           },
           "centerId": {
             "type": "string",
             "format": "uuid"
           },
           "centerName": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Kigali ECD Center"
+          },
+          "classroomId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classroomGrade": {
+            "nullable": true,
+            "$ref": "#/components/schemas/ClassroomGrade"
           },
           "homeVillageId": {
             "type": "string",
             "format": "uuid"
           },
           "province": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Kigali"
           },
           "district": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Gasabo"
           },
           "sector": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Remera"
           },
           "cell": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Rukiri I"
           },
           "village": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Amahoro"
           },
@@ -9208,17 +9521,22 @@
             "type": "string",
             "format": "date-time"
           },
+          "classroomLabel": {
+            "type": "object",
+            "nullable": true,
+            "example": "Grade 1 / Umwaka wa 1"
+          },
           "firstName": {
             "type": "string",
             "example": "Jean"
           },
           "middleName": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Pierre"
           },
           "lastName": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Uwimana"
           },
@@ -9228,27 +9546,27 @@
             "description": "Primary guardian relationship"
           },
           "guardian2Name": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Habimana Paul"
           },
           "guardian2Phone": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "+250788654321"
           },
           "guardian2Relation": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "father"
           },
           "notes": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Prefers morning sessions"
           },
           "specialNeeds": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Hearing impairment"
           },
@@ -9259,7 +9577,7 @@
             "description": "Date the child was registered at the center"
           },
           "archiveReason": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Family relocated"
           },
@@ -9275,9 +9593,11 @@
           "gender",
           "dateOfBirth",
           "status",
-          "registrationNumber",
+          "nationalId",
           "centerId",
           "centerName",
+          "classroomId",
+          "classroomGrade",
           "homeVillageId",
           "province",
           "district",
@@ -9289,6 +9609,7 @@
           "version",
           "createdAt",
           "updatedAt",
+          "classroomLabel",
           "firstName",
           "middleName",
           "lastName",
@@ -9328,46 +9649,55 @@
             "example": "active",
             "$ref": "#/components/schemas/ApiChildStatus"
           },
-          "registrationNumber": {
+          "nationalId": {
             "type": "string",
-            "example": "REG-2024-001",
-            "description": "Unique registration number (additive on list/detail)"
+            "example": "1200080012345678",
+            "description": "National Identification Number (NIN) — unique child identifier"
           },
           "centerId": {
             "type": "string",
             "format": "uuid"
           },
           "centerName": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Kigali ECD Center"
+          },
+          "classroomId": {
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classroomGrade": {
+            "nullable": true,
+            "$ref": "#/components/schemas/ClassroomGrade"
           },
           "homeVillageId": {
             "type": "string",
             "format": "uuid"
           },
           "province": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Kigali"
           },
           "district": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Gasabo"
           },
           "sector": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Remera"
           },
           "cell": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Rukiri I"
           },
           "village": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Amahoro"
           },
@@ -9399,9 +9729,11 @@
           "gender",
           "dateOfBirth",
           "status",
-          "registrationNumber",
+          "nationalId",
           "centerId",
           "centerName",
+          "classroomId",
+          "classroomGrade",
           "homeVillageId",
           "province",
           "district",
@@ -9454,31 +9786,29 @@
         "properties": {
           "version": {
             "type": "number",
-            "description": "Expected optimistic-lock version from the last read",
+            "example": 1,
             "minimum": 0,
-            "example": 1
+            "description": "Expected optimistic-lock version from the last read"
           },
           "fullName": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 200,
-            "example": "Uwimana Jean"
+            "example": "Uwimana Jean",
+            "maxLength": 200
           },
           "firstName": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 100,
-            "example": "Jean"
+            "example": "Jean",
+            "maxLength": 100
           },
           "middleName": {
             "type": "string",
-            "maxLength": 100,
-            "example": "Pierre"
+            "example": "Pierre",
+            "maxLength": 100
           },
           "lastName": {
             "type": "string",
-            "maxLength": 100,
-            "example": "Uwimana"
+            "example": "Uwimana",
+            "maxLength": 100
           },
           "dateOfBirth": {
             "type": "string",
@@ -9501,33 +9831,33 @@
           },
           "guardianName": {
             "type": "string",
-            "maxLength": 150,
-            "example": "Mukamana Alice"
+            "example": "Mukamana Alice",
+            "maxLength": 150
           },
           "guardianPhone": {
             "type": "string",
-            "maxLength": 50,
-            "example": "+250788123456"
+            "example": "+250788123456",
+            "maxLength": 50
           },
           "guardianRelation": {
             "type": "string",
-            "maxLength": 50,
-            "example": "Mother"
+            "example": "Mother",
+            "maxLength": 50
           },
           "guardian2Name": {
             "type": "string",
-            "maxLength": 150,
-            "example": "Niyonsenga Paul"
+            "example": "Niyonsenga Paul",
+            "maxLength": 150
           },
           "guardian2Phone": {
             "type": "string",
-            "maxLength": 50,
-            "example": "+250788654321"
+            "example": "+250788654321",
+            "maxLength": 50
           },
           "guardian2Relation": {
             "type": "string",
-            "maxLength": 50,
-            "example": "Father"
+            "example": "Father",
+            "maxLength": 50
           },
           "specialNeeds": {
             "type": "string",
@@ -9548,6 +9878,11 @@
             "example": "2024-06-01T00:00:00.000Z",
             "description": "Archive timestamp (ISO-8601)"
           },
+          "classroomId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Classroom UUID for grade reassignment"
+          },
           "deviceId": {
             "type": "string",
             "format": "uuid",
@@ -9563,14 +9898,14 @@
         "properties": {
           "version": {
             "type": "number",
-            "description": "Expected optimistic-lock version from the last read",
+            "example": 1,
             "minimum": 0,
-            "example": 1
+            "description": "Expected optimistic-lock version from the last read"
           },
           "archiveReason": {
             "type": "string",
-            "maxLength": 500,
             "example": "Moved out of catchment",
+            "maxLength": 500,
             "description": "Reason for archiving"
           },
           "deviceId": {
@@ -9588,9 +9923,9 @@
         "properties": {
           "version": {
             "type": "number",
-            "description": "Expected optimistic-lock version from the last read",
+            "example": 1,
             "minimum": 0,
-            "example": 1
+            "description": "Expected optimistic-lock version from the last read"
           },
           "deviceId": {
             "type": "string",
@@ -9618,9 +9953,9 @@
           },
           "reason": {
             "type": "string",
+            "example": "Family relocated",
             "minLength": 1,
-            "maxLength": 255,
-            "example": "Family relocated"
+            "maxLength": 255
           },
           "notes": {
             "type": "string",
@@ -9657,14 +9992,14 @@
           },
           "weightKg": {
             "type": "number",
-            "minimum": 0.001,
             "example": 12.5,
+            "minimum": 0.001,
             "description": "Weight in kilograms"
           },
           "muacCm": {
             "type": "number",
-            "minimum": 0.001,
             "example": 14.2,
+            "minimum": 0.001,
             "description": "Mid-upper arm circumference in centimetres"
           },
           "nutritionStatus": {
@@ -9673,14 +10008,14 @@
           },
           "heightCm": {
             "type": "number",
-            "minimum": 0.001,
             "example": 85,
+            "minimum": 0.001,
             "description": "Height in centimetres"
           },
           "headCircumferenceCm": {
             "type": "number",
-            "minimum": 0.001,
             "example": 48,
+            "minimum": 0.001,
             "description": "Head circumference in centimetres"
           },
           "mealQuality": {
@@ -10050,14 +10385,14 @@
             "nullable": true
           },
           "screeningId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "screeningDate": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "nutritionStatus": {
             "nullable": true,
@@ -10155,8 +10490,8 @@
           "version": {
             "type": "number",
             "description": "Required when updating an existing center+date feeding day (optimistic locking). Omit on first create.",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "deviceId": {
             "type": "string",
@@ -10313,31 +10648,31 @@
           },
           "yearMonth": {
             "type": "string",
-            "pattern": "^\\d{4}-\\d{2}$",
             "example": "2026-08",
-            "description": "Year-month in YYYY-MM format"
+            "description": "Year-month in YYYY-MM format",
+            "pattern": "^\\d{4}-\\d{2}$"
           },
           "milkLiters": {
             "type": "number",
-            "minimum": 0,
-            "example": 120.5
+            "example": 120.5,
+            "minimum": 0
           },
           "flourKg": {
             "type": "number",
-            "minimum": 0,
-            "example": 50
+            "example": 50,
+            "minimum": 0
           },
           "foodSource": {
             "type": "string",
+            "example": "Local market",
             "minLength": 1,
-            "maxLength": 255,
-            "example": "Local market"
+            "maxLength": 255
           },
           "version": {
             "type": "number",
             "description": "Required when updating an existing center+yearMonth summary (optimistic locking). Omit on first create.",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "deviceId": {
             "type": "string",
@@ -10381,9 +10716,9 @@
             "example": "Local market"
           },
           "recordedBy": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "recordedAt": {
             "type": "string",
@@ -10476,14 +10811,14 @@
           },
           "notes": {
             "type": "string",
-            "maxLength": 1000,
-            "example": "Arrived late"
+            "example": "Arrived late",
+            "maxLength": 1000
           },
           "version": {
             "type": "number",
-            "description": "Required when correcting an existing attendance row (optimistic lock). Omit on first create.",
+            "example": 0,
             "minimum": 0,
-            "example": 0
+            "description": "Required when correcting an existing attendance row (optimistic lock). Omit on first create."
           },
           "deviceId": {
             "type": "string",
@@ -10492,8 +10827,8 @@
           },
           "localId": {
             "type": "string",
-            "maxLength": 100,
             "example": "local-att-001",
+            "maxLength": 100,
             "description": "Client-side local identifier for sync correlation"
           }
         },
@@ -10571,7 +10906,7 @@
             "$ref": "#/components/schemas/AbsentReason"
           },
           "notes": {
-            "type": "string",
+            "type": "object",
             "nullable": true,
             "example": "Arrived late"
           },
@@ -10714,15 +11049,15 @@
         "properties": {
           "username": {
             "type": "string",
+            "example": "caregiver01",
             "minLength": 3,
-            "maxLength": 100,
-            "example": "caregiver01"
+            "maxLength": 100
           },
           "fullName": {
             "type": "string",
+            "example": "Jane Doe",
             "minLength": 1,
-            "maxLength": 200,
-            "example": "Jane Doe"
+            "maxLength": 200
           },
           "role": {
             "$ref": "#/components/schemas/UserRole"
@@ -10735,12 +11070,12 @@
           "centerId": {
             "type": "string",
             "format": "uuid",
-            "description": "Required when role is caregiver"
+            "description": "Required when role is caregiver or ecd_director"
           },
           "phone": {
             "type": "string",
-            "maxLength": 50,
-            "example": "+250788123456"
+            "example": "+250788123456",
+            "maxLength": 50
           }
         },
         "required": [
@@ -10833,9 +11168,9 @@
             "example": "Jane Doe"
           },
           "phone": {
-            "type": "string",
-            "nullable": true,
-            "example": "+250788123456"
+            "type": "object",
+            "example": "+250788123456",
+            "nullable": true
           },
           "role": {
             "$ref": "#/components/schemas/UserRole"
@@ -10918,9 +11253,9 @@
             "example": "Jane Doe"
           },
           "phone": {
-            "type": "string",
-            "nullable": true,
-            "example": "+250788123456"
+            "type": "object",
+            "example": "+250788123456",
+            "nullable": true
           },
           "role": {
             "$ref": "#/components/schemas/UserRole"
@@ -11024,15 +11359,15 @@
         "properties": {
           "fullName": {
             "type": "string",
+            "example": "Jane Doe",
             "minLength": 1,
-            "maxLength": 200,
-            "example": "Jane Doe"
+            "maxLength": 200
           },
           "phone": {
-            "type": "string",
-            "nullable": true,
+            "type": "object",
+            "example": "+250788123456",
             "maxLength": 50,
-            "example": "+250788123456"
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/ApiUserStatus"
@@ -11044,9 +11379,9 @@
         "properties": {
           "newPassword": {
             "type": "string",
-            "description": "Optional explicit password. If omitted, a temporary password is generated and returned once as `temporaryPassword`.",
             "minLength": 8,
-            "maxLength": 128
+            "maxLength": 128,
+            "description": "Optional explicit password. If omitted, a temporary password is generated and returned once as `temporaryPassword`."
           }
         }
       },
@@ -11196,8 +11531,8 @@
           },
           "followUpDueDate": {
             "type": "string",
-            "nullable": true,
-            "format": "date"
+            "format": "date",
+            "nullable": true
           },
           "notes": {
             "type": "string",
@@ -11310,15 +11645,15 @@
           },
           "reason": {
             "type": "string",
+            "example": "Severe malnutrition",
             "minLength": 1,
-            "maxLength": 500,
-            "example": "Severe malnutrition"
+            "maxLength": 500
           },
           "destination": {
             "type": "string",
+            "example": "District hospital",
             "minLength": 1,
-            "maxLength": 500,
-            "example": "District hospital"
+            "maxLength": 500
           },
           "notes": {
             "type": "string",
@@ -11391,8 +11726,8 @@
           },
           "implementedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "notes": {
             "type": "string",
@@ -11506,8 +11841,8 @@
           "version": {
             "type": "number",
             "description": "Expected optimistic-lock version from the last read (required for CAS)",
-            "minimum": 0,
-            "example": 1
+            "example": 1,
+            "minimum": 0
           },
           "status": {
             "example": "completed",
@@ -11564,24 +11899,24 @@
             "example": "Kigali ECD Center"
           },
           "phone": {
-            "type": "string",
-            "nullable": true,
-            "example": "+250788123456"
+            "type": "object",
+            "example": "+250788123456",
+            "nullable": true
           },
           "capacity": {
-            "type": "number",
-            "nullable": true,
-            "example": 40
+            "type": "object",
+            "example": 40,
+            "nullable": true
           },
           "latitude": {
-            "type": "number",
-            "nullable": true,
-            "example": -1.9441
+            "type": "object",
+            "example": -1.9441,
+            "nullable": true
           },
           "longitude": {
-            "type": "number",
-            "nullable": true,
-            "example": 30.0619
+            "type": "object",
+            "example": 30.0619,
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/EcdCenterStatus"
@@ -11591,18 +11926,18 @@
             "format": "uuid"
           },
           "districtName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Gasabo"
+            "type": "object",
+            "example": "Gasabo",
+            "nullable": true
           },
           "villageId": {
             "type": "string",
             "format": "uuid"
           },
           "villageName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kimironko"
+            "type": "object",
+            "example": "Kimironko",
+            "nullable": true
           },
           "currentComplianceLevel": {
             "nullable": true,
@@ -11610,8 +11945,8 @@
           },
           "currentComplianceAssessedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "activeChildrenCount": {
             "type": "number",
@@ -11702,24 +12037,24 @@
             "example": "Kigali ECD Center"
           },
           "phone": {
-            "type": "string",
-            "nullable": true,
-            "example": "+250788123456"
+            "type": "object",
+            "example": "+250788123456",
+            "nullable": true
           },
           "capacity": {
-            "type": "number",
-            "nullable": true,
-            "example": 40
+            "type": "object",
+            "example": 40,
+            "nullable": true
           },
           "latitude": {
-            "type": "number",
-            "nullable": true,
-            "example": -1.9441
+            "type": "object",
+            "example": -1.9441,
+            "nullable": true
           },
           "longitude": {
-            "type": "number",
-            "nullable": true,
-            "example": 30.0619
+            "type": "object",
+            "example": 30.0619,
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/EcdCenterStatus"
@@ -11729,18 +12064,18 @@
             "format": "uuid"
           },
           "districtName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Gasabo"
+            "type": "object",
+            "example": "Gasabo",
+            "nullable": true
           },
           "villageId": {
             "type": "string",
             "format": "uuid"
           },
           "villageName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kimironko"
+            "type": "object",
+            "example": "Kimironko",
+            "nullable": true
           },
           "currentComplianceLevel": {
             "nullable": true,
@@ -11748,8 +12083,8 @@
           },
           "currentComplianceAssessedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "activeChildrenCount": {
             "type": "number",
@@ -11769,9 +12104,9 @@
             "format": "date-time"
           },
           "provinceName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kigali"
+            "type": "object",
+            "example": "Kigali",
+            "nullable": true
           },
           "caregiversCount": {
             "type": "number",
@@ -11821,37 +12156,37 @@
         "properties": {
           "version": {
             "type": "number",
-            "description": "Required for optimistic locking (CAS)",
+            "example": 1,
             "minimum": 1,
-            "example": 1
+            "description": "Required for optimistic locking (CAS)"
           },
           "name": {
             "type": "string",
+            "example": "Kigali ECD Center",
             "minLength": 1,
-            "maxLength": 200,
-            "example": "Kigali ECD Center"
+            "maxLength": 200
           },
           "phone": {
-            "type": "string",
-            "nullable": true,
+            "type": "object",
+            "example": "+250788123456",
             "maxLength": 30,
-            "example": "+250788123456"
+            "nullable": true
           },
           "capacity": {
-            "type": "number",
-            "nullable": true,
+            "type": "object",
+            "example": 40,
             "minimum": 0,
-            "example": 40
+            "nullable": true
           },
           "latitude": {
-            "type": "number",
-            "nullable": true,
-            "example": -1.9441
+            "type": "object",
+            "example": -1.9441,
+            "nullable": true
           },
           "longitude": {
-            "type": "number",
-            "nullable": true,
-            "example": 30.0619
+            "type": "object",
+            "example": 30.0619,
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/EcdCenterStatus"
@@ -11868,6 +12203,116 @@
         },
         "required": [
           "version"
+        ]
+      },
+      "ClassroomResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "centerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "grade": {
+            "$ref": "#/components/schemas/ClassroomGrade"
+          },
+          "label": {
+            "type": "string",
+            "example": "Grade 1 / Umwaka wa 1"
+          },
+          "childrenCount": {
+            "type": "number",
+            "example": 25
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "centerId",
+          "grade",
+          "label",
+          "childrenCount",
+          "createdAt"
+        ]
+      },
+      "PromoteChildDto": {
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "example": "2027-01-15",
+            "description": "Effective date for the promotion (ISO-8601)"
+          }
+        },
+        "required": [
+          "effectiveDate"
+        ]
+      },
+      "PromoteChildResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classroomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classroomGrade": {
+            "$ref": "#/components/schemas/ClassroomGrade"
+          }
+        },
+        "required": [
+          "id",
+          "classroomId",
+          "classroomGrade"
+        ]
+      },
+      "BulkPromoteDto": {
+        "type": "object",
+        "properties": {
+          "effectiveDate": {
+            "type": "string",
+            "example": "2027-01-15",
+            "description": "Effective date for bulk promotion (ISO-8601)"
+          },
+          "excludeChildIds": {
+            "description": "Child IDs to exclude from promotion",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "effectiveDate"
+        ]
+      },
+      "BulkPromoteResponseDto": {
+        "type": "object",
+        "properties": {
+          "promotedCount": {
+            "type": "number",
+            "example": 20
+          },
+          "grade3ChildIds": {
+            "description": "IDs of children in Grade 3 who were not promoted",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "promotedCount",
+          "grade3ChildIds"
         ]
       },
       "DashboardChildrenMetricsDto": {
@@ -11913,9 +12358,9 @@
             "example": 80
           },
           "rate": {
-            "type": "number",
-            "nullable": true,
-            "example": 87.5
+            "type": "object",
+            "example": 87.5,
+            "nullable": true
           },
           "centersReporting": {
             "type": "number",
@@ -12038,14 +12483,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centersInScope": {
             "type": "number",
@@ -12150,34 +12595,34 @@
             "example": "Child requires urgent referral"
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kigali ECD Center"
+            "type": "object",
+            "example": "Kigali ECD Center",
+            "nullable": true
           },
           "childId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "childName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Jane Doe"
+            "type": "object",
+            "example": "Jane Doe",
+            "nullable": true
           },
           "entityType": {
-            "type": "string",
-            "nullable": true,
-            "example": "ChildNutritionScreening"
+            "type": "object",
+            "example": "ChildNutritionScreening",
+            "nullable": true
           },
           "entityId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "detectedAt": {
             "type": "string",
@@ -12257,14 +12702,14 @@
             "$ref": "#/components/schemas/FollowUpAlertCountsDto"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "required": [
@@ -12295,9 +12740,9 @@
             "example": 100
           },
           "attendanceRate": {
-            "type": "number",
-            "nullable": true,
-            "example": 80
+            "type": "object",
+            "example": 80,
+            "nullable": true
           }
         },
         "required": [
@@ -12324,9 +12769,9 @@
             "example": 5
           },
           "rate": {
-            "type": "number",
-            "nullable": true,
-            "example": 80
+            "type": "object",
+            "example": 80,
+            "nullable": true
           }
         },
         "required": [
@@ -12360,9 +12805,9 @@
             "example": 8
           },
           "rate": {
-            "type": "number",
-            "nullable": true,
-            "example": 80
+            "type": "object",
+            "example": 80,
+            "nullable": true
           }
         },
         "required": [
@@ -12386,19 +12831,19 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "sectorId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "summary": {
             "$ref": "#/components/schemas/MonitoringAttendanceSummaryDto"
@@ -12487,9 +12932,9 @@
             "example": 10
           },
           "screeningCoverage": {
-            "type": "number",
-            "nullable": true,
-            "example": 90
+            "type": "object",
+            "example": 90,
+            "nullable": true
           }
         },
         "required": [
@@ -12559,14 +13004,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "summary": {
             "$ref": "#/components/schemas/MonitoringNutritionSummaryDto"
@@ -12639,9 +13084,9 @@
             "example": 48
           },
           "feedingCoverage": {
-            "type": "number",
-            "nullable": true,
-            "example": 41.7
+            "type": "object",
+            "example": 41.7,
+            "nullable": true
           },
           "centersMissingReports": {
             "type": "number",
@@ -12684,9 +13129,9 @@
             "example": 1
           },
           "coverage": {
-            "type": "number",
-            "nullable": true,
-            "example": 83.3
+            "type": "object",
+            "example": 83.3,
+            "nullable": true
           }
         },
         "required": [
@@ -12710,14 +13155,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "summary": {
             "$ref": "#/components/schemas/MonitoringFeedingSummaryDto"
@@ -12780,14 +13225,14 @@
             "example": 100
           },
           "coverage": {
-            "type": "number",
-            "nullable": true,
-            "example": 40
+            "type": "object",
+            "example": 40,
+            "nullable": true
           },
           "averageScore": {
-            "type": "number",
-            "nullable": true,
-            "example": 72.5
+            "type": "object",
+            "example": 72.5,
+            "nullable": true
           },
           "pendingFollowUps": {
             "type": "number",
@@ -12862,9 +13307,9 @@
             "example": 6
           },
           "averageScore": {
-            "type": "number",
-            "nullable": true,
-            "example": 70
+            "type": "object",
+            "example": 70,
+            "nullable": true
           }
         },
         "required": [
@@ -12884,14 +13329,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "granularity": {
             "type": "string",
@@ -12995,9 +13440,9 @@
             }
           },
           "classificationNullRate": {
-            "type": "number",
-            "nullable": true,
+            "type": "object",
             "example": 0.5,
+            "nullable": true,
             "description": "Share of assessments with null overallClassification (sparse when REST-only)"
           }
         },
@@ -13024,14 +13469,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "summary": {
             "$ref": "#/components/schemas/MonitoringComplianceSummaryDto"
@@ -13131,14 +13576,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "summary": {
             "$ref": "#/components/schemas/MonitoringWashSummaryDto"
@@ -13176,9 +13621,9 @@
             "example": 2
           },
           "averageCompletionDays": {
-            "type": "number",
-            "nullable": true,
-            "example": 4.5
+            "type": "object",
+            "example": 4.5,
+            "nullable": true
           }
         },
         "required": [
@@ -13234,14 +13679,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "summary": {
             "$ref": "#/components/schemas/MonitoringReferralsSummaryDto"
@@ -13365,14 +13810,14 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "centerId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "interpretation": {
             "nullable": true,
@@ -13440,13 +13885,13 @@
           },
           "archivedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "archiveReason": {
-            "type": "string",
-            "nullable": true,
-            "example": "Moved away"
+            "type": "object",
+            "example": "Moved away",
+            "nullable": true
           }
         },
         "required": [
@@ -13470,9 +13915,9 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "interpretation": {
             "$ref": "#/components/schemas/DropoutInterpretationDto"
@@ -13527,9 +13972,9 @@
             "example": 8
           },
           "rate": {
-            "type": "number",
-            "nullable": true,
-            "example": 80
+            "type": "object",
+            "example": 80,
+            "nullable": true
           }
         },
         "required": [
@@ -13649,9 +14094,9 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "items": {
             "type": "array",
@@ -13707,9 +14152,9 @@
             "example": 2
           },
           "attendanceRate": {
-            "type": "number",
-            "nullable": true,
-            "example": 87.5
+            "type": "object",
+            "example": 87.5,
+            "nullable": true
           },
           "nutritionScreenings": {
             "type": "number",
@@ -13757,9 +14202,9 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "kpis": {
             "$ref": "#/components/schemas/DistrictReportKpisDto"
@@ -13791,9 +14236,9 @@
             "$ref": "#/components/schemas/PrismaAuditAction"
           },
           "changedById": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "changedAt": {
             "type": "string",
@@ -13885,9 +14330,9 @@
             "format": "date-time"
           },
           "updatedById": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "required": [
@@ -13941,14 +14386,14 @@
             "$ref": "#/components/schemas/AdministrativeLevel"
           },
           "parentId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "districtId": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "name": {
             "type": "string",
@@ -13959,14 +14404,14 @@
             "example": "VIL-001"
           },
           "latitude": {
-            "type": "number",
-            "nullable": true,
-            "example": -1.9441
+            "type": "object",
+            "example": -1.9441,
+            "nullable": true
           },
           "longitude": {
-            "type": "number",
-            "nullable": true,
-            "example": 30.0619
+            "type": "object",
+            "example": 30.0619,
+            "nullable": true
           },
           "createdAt": {
             "type": "string",
@@ -14077,14 +14522,14 @@
             "example": "Kigali ECD Center"
           },
           "phone": {
-            "type": "string",
-            "nullable": true,
-            "example": "+250788123456"
+            "type": "object",
+            "example": "+250788123456",
+            "nullable": true
           },
           "capacity": {
-            "type": "number",
-            "nullable": true,
-            "example": 40
+            "type": "object",
+            "example": 40,
+            "nullable": true
           },
           "status": {
             "$ref": "#/components/schemas/EcdCenterStatus"
@@ -14094,19 +14539,19 @@
             "format": "uuid"
           },
           "villageName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kimironko"
+            "type": "object",
+            "example": "Kimironko",
+            "nullable": true
           },
           "latitude": {
-            "type": "number",
-            "nullable": true,
-            "example": -1.9441
+            "type": "object",
+            "example": -1.9441,
+            "nullable": true
           },
           "longitude": {
-            "type": "number",
-            "nullable": true,
-            "example": 30.0619
+            "type": "object",
+            "example": 30.0619,
+            "nullable": true
           }
         },
         "required": [
@@ -14185,9 +14630,9 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kigali ECD Center"
+            "type": "object",
+            "example": "Kigali ECD Center",
+            "nullable": true
           },
           "districtId": {
             "type": "string",
@@ -14208,24 +14653,24 @@
             "$ref": "#/components/schemas/AssessmentStatus"
           },
           "submittedById": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "submittedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "verifiedById": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "verifiedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "overallClassification": {
             "nullable": true,
@@ -14342,28 +14787,28 @@
             "$ref": "#/components/schemas/ItemResponse"
           },
           "score": {
-            "type": "number",
-            "nullable": true,
-            "example": 1
+            "type": "object",
+            "example": 1,
+            "nullable": true
           },
           "evidenceNotes": {
-            "type": "string",
-            "nullable": true,
-            "example": "Evidence notes"
+            "type": "object",
+            "example": "Evidence notes",
+            "nullable": true
           },
           "gapSeverity": {
             "nullable": true,
             "$ref": "#/components/schemas/GapSeverity"
           },
           "gapImprovementAction": {
-            "type": "string",
-            "nullable": true,
-            "example": "Install handwashing station"
+            "type": "object",
+            "example": "Install handwashing station",
+            "nullable": true
           },
           "gapTargetDate": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "gapStatus": {
             "nullable": true,
@@ -14371,8 +14816,8 @@
           },
           "gapResolvedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "version": {
             "type": "number",
@@ -14417,9 +14862,9 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kigali ECD Center"
+            "type": "object",
+            "example": "Kigali ECD Center",
+            "nullable": true
           },
           "districtId": {
             "type": "string",
@@ -14440,24 +14885,24 @@
             "$ref": "#/components/schemas/AssessmentStatus"
           },
           "submittedById": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "submittedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "verifiedById": {
-            "type": "string",
-            "nullable": true,
-            "format": "uuid"
+            "type": "object",
+            "format": "uuid",
+            "nullable": true
           },
           "verifiedAt": {
             "type": "string",
-            "nullable": true,
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "overallClassification": {
             "nullable": true,
@@ -14535,8 +14980,8 @@
         "properties": {
           "version": {
             "type": "number",
-            "minimum": 1,
             "example": 1,
+            "minimum": 1,
             "description": "Required for optimistic locking (CAS)"
           },
           "status": {
@@ -14575,13 +15020,13 @@
             "example": "Safe drinking water available"
           },
           "description": {
-            "type": "string",
+            "type": "object",
             "nullable": true
           },
           "weight": {
-            "type": "number",
-            "nullable": true,
-            "example": 1
+            "type": "object",
+            "example": 1,
+            "nullable": true
           },
           "version": {
             "type": "string",
@@ -14662,8 +15107,8 @@
         "properties": {
           "version": {
             "type": "number",
-            "minimum": 1,
             "example": 1,
+            "minimum": 1,
             "description": "Required for optimistic locking (CAS)"
           },
           "response": {
@@ -14714,9 +15159,9 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "string",
-            "nullable": true,
-            "example": "Kigali ECD Center"
+            "type": "object",
+            "example": "Kigali ECD Center",
+            "nullable": true
           },
           "districtId": {
             "type": "string",
@@ -14731,18 +15176,18 @@
             "example": true
           },
           "waterSourceType": {
-            "type": "string",
-            "nullable": true,
-            "example": "piped"
+            "type": "object",
+            "example": "piped",
+            "nullable": true
           },
           "sanitationFacilityAvailable": {
             "type": "boolean",
             "example": true
           },
           "latrineCount": {
-            "type": "number",
-            "nullable": true,
-            "example": 2
+            "type": "object",
+            "example": 2,
+            "nullable": true
           },
           "handwashingFacilityAvailable": {
             "type": "boolean",
@@ -14753,7 +15198,7 @@
             "example": true
           },
           "notes": {
-            "type": "string",
+            "type": "object",
             "nullable": true
           },
           "recordedById": {
@@ -14848,8 +15293,8 @@
           },
           "latrineCount": {
             "type": "number",
-            "minimum": 0,
-            "example": 2
+            "example": 2,
+            "minimum": 0
           },
           "handwashingFacilityAvailable": {
             "type": "boolean",
@@ -14878,8 +15323,8 @@
         "properties": {
           "version": {
             "type": "number",
-            "minimum": 1,
             "example": 1,
+            "minimum": 1,
             "description": "Required for optimistic locking (CAS)"
           },
           "waterSourceAvailable": {
@@ -14896,8 +15341,8 @@
           },
           "latrineCount": {
             "type": "number",
-            "minimum": 0,
-            "example": 2
+            "example": 2,
+            "minimum": 0
           },
           "handwashingFacilityAvailable": {
             "type": "boolean",

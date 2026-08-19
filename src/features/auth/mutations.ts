@@ -13,6 +13,7 @@ import {
   reporting,
   district,
   ncda,
+  ecdCenter,
 } from '@/api/query-keys'
 import { useApiAuth } from '@/api/auth/ApiAuthProvider'
 import { normalizeApiError } from '@/api/errors'
@@ -90,5 +91,6 @@ export function useLogout() {
     void queryClient.removeQueries({ queryKey: reporting.keys.all })
     void queryClient.removeQueries({ queryKey: district.keys.all })
     void queryClient.removeQueries({ queryKey: ncda.keys.all })
+    void queryClient.removeQueries({ queryKey: ecdCenter.keys.all })
   }
 }

@@ -49,6 +49,7 @@ interface AttendanceDayRosterProps {
   rows: AttendanceDayRow[]
   dateLabel: string
   resetDeps?: unknown[]
+  groupByGrade?: boolean
   onMarkPresent: (child: Child) => void
   onMarkAbsent: (child: Child) => void
   onView: (child: Child, record: AttendanceRecord) => void

@@ -8,6 +8,7 @@ import {
   Ruler,
   ClipboardList,
   Baby,
+  ArrowLeftRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -40,6 +41,8 @@ interface ChildHeaderProps {
   onArchive?: () => void
   onReactivate?: () => void
   onRecordMeasurement?: () => void
+  onTransfer?: () => void
+  transferPending?: boolean
 }
 
 export function ChildHeader({
@@ -49,6 +52,8 @@ export function ChildHeader({
   onArchive,
   onReactivate,
   onRecordMeasurement,
+  onTransfer,
+  transferPending,
 }: ChildHeaderProps) {
   const initials = getInitials(child.fullName)
   const age = calculateAge(child.dateOfBirth)
@@ -163,6 +168,25 @@ export function ChildHeader({
               {caretaker.growth.recordMeasurement}
             </Button>
           )}
+          {transferPending ? (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<ArrowLeftRight size={16} />}
+              disabled
+            >
+              {caretaker.transfer.alreadyPending ?? 'Kwimura bitegereje'}
+            </Button>
+          ) : onTransfer ? (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<ArrowLeftRight size={16} />}
+              onClick={onTransfer}
+            >
+              {caretaker.childDetail.transfer}
+            </Button>
+          ) : null}
 
           <div className="relative ml-auto" ref={menuRef}>
             <Button

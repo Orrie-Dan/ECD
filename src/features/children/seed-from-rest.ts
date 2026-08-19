@@ -45,6 +45,8 @@ export async function mapChildListItemToLocalSeed(
       archivedAt: item.archivedAt,
       archiveReason: item.archiveReason,
       notes: item.notes,
+      classroomId: item.classroomId,
+      classroomGrade: item.classroomGrade,
     }
   })
   await store.putChildren(rows)

@@ -151,7 +151,7 @@ function stedViewClause(view: StedListFilter): string | null {
     case 'due':
       return 'basabwa gusubiramo'
     case 'referred':
-      return 'baherejwe'
+      return 'byoherejweho'
     case 'assessed':
       return 'basuzumwe'
     default:

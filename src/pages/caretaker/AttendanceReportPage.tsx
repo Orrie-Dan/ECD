@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
+import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
+import { useClassroomGateway } from '@/hooks/useClassroomGateway'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -98,6 +101,9 @@ export function AttendanceReportPage() {
     [children],
   )
 
+  const { setSelectedGrade, gradeChildren: gradeActiveChildren, goBack, isGradeSelected } =
+    useClassroomGateway(activeChildren)
+
   const applyRange = (from: string, to: string) => {
     const next = clampDateRange(from, to, today)
     setDateFrom(next.from)
@@ -121,15 +127,15 @@ export function AttendanceReportPage() {
 
   const summary = useMemo(() => {
     if (isSingleDay) {
-      return computeAttendanceSummary(activeChildren, attendance, selectedDate)
+      return computeAttendanceSummary(gradeActiveChildren, attendance, selectedDate)
     }
     return computeRecordsSummary(rangeRecords, { includeLate: false })
-  }, [isSingleDay, activeChildren, attendance, selectedDate, rangeRecords])
+  }, [isSingleDay, gradeActiveChildren, attendance, selectedDate, rangeRecords])
 
   const reportRows = useMemo(() => {
     if (!isSingleDay) return []
     const q = search.trim().toLowerCase()
-    return activeChildren
+    return gradeActiveChildren
       .map((child) => {
         const status = getDayStatus(attendance, child.id, selectedDate)
         const record = getRecordForDate(attendance, child.id, selectedDate)
@@ -146,7 +152,7 @@ export function AttendanceReportPage() {
         if (filter === 'all') return true
         return row.status === filter
       })
-  }, [isSingleDay, activeChildren, attendance, selectedDate, filter, search])
+  }, [isSingleDay, gradeActiveChildren, attendance, selectedDate, filter, search])
 
   const pagination = usePagination(reportRows, {
     resetDeps: [selectedDate, filter, search, dateFrom, dateTo],
@@ -196,9 +202,17 @@ export function AttendanceReportPage() {
     setPreviewOpen(false)
   }
 
+  const goBackToClassrooms = () => {
+    goBack()
+    setFilter('all')
+    setSearch('')
+  }
+
   return (
     <CaretakerLayout>
       <PageContainer>
+        {isGradeSelected && <ClassroomBackLink onClick={goBackToClassrooms} />}
+
         <PageHeader
           title={caretaker.report.title}
           description={
@@ -219,6 +233,13 @@ export function AttendanceReportPage() {
         />
 
         <PageContent>
+      {!isGradeSelected ? (
+        <ClassroomCards
+          children={activeChildren}
+          onSelect={setSelectedGrade}
+        />
+      ) : (
+      <>
       <AttendanceFilters
         selectedDate={selectedDate}
         maxDate={today}
@@ -378,6 +399,9 @@ export function AttendanceReportPage() {
         record={viewEntry?.record ?? null}
         onClose={() => setViewEntry(null)}
       />
+
+      </>
+      )}
 
       <ReportPreviewModal
         open={previewOpen}

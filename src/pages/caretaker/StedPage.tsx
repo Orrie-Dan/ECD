@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Accessibility, Clock, History } from 'lucide-react'
+import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
+import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
+import { useClassroomGateway } from '@/hooks/useClassroomGateway'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -63,16 +66,19 @@ export function StedPage() {
     [children, user?.centerId],
   )
 
-  const eligible = useMemo(() => getEligibleStedChildren(centerChildren), [centerChildren])
+  const { selectedGrade, setSelectedGrade, gradeChildren: gradeCenterChildren, goBack, isGradeSelected } =
+    useClassroomGateway(centerChildren)
+
+  const eligible = useMemo(() => getEligibleStedChildren(gradeCenterChildren), [gradeCenterChildren])
 
   const summary = useMemo(
-    () => computeStedCenterSummary(centerChildren, stedAssessments),
-    [centerChildren, stedAssessments],
+    () => computeStedCenterSummary(gradeCenterChildren, stedAssessments),
+    [gradeCenterChildren, stedAssessments],
   )
 
   const dueFollowUp = useMemo(
-    () => getChildrenDueForStedFollowUp(centerChildren, stedAssessments),
-    [centerChildren, stedAssessments],
+    () => getChildrenDueForStedFollowUp(gradeCenterChildren, stedAssessments),
+    [gradeCenterChildren, stedAssessments],
   )
 
   const dueIds = useMemo(
@@ -133,9 +139,16 @@ export function StedPage() {
     setListFilter('due')
   }
 
+  const goBackToClassrooms = () => {
+    goBack()
+    resetAll()
+  }
+
   return (
     <CaretakerLayout>
       <PageContainer>
+        {isGradeSelected && <ClassroomBackLink onClick={goBackToClassrooms} />}
+
         <PageHeader
           title={caretaker.sted.title}
           description={caretaker.sted.subtitle}
@@ -165,6 +178,13 @@ export function StedPage() {
         />
 
         <PageContent className="space-y-6">
+      {!isGradeSelected ? (
+          <ClassroomCards
+            children={centerChildren}
+            onSelect={setSelectedGrade}
+          />
+      ) : (
+      <>
           <StedSummaryCards
             stats={summary}
             activeFilter={listFilter}
@@ -300,6 +320,8 @@ export function StedPage() {
             filters={filters}
             onApply={(next) => setFilters(next as RosterSearchFilters)}
           />
+      </>
+      )}
         </PageContent>
       </PageContainer>
     </CaretakerLayout>

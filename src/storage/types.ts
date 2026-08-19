@@ -107,6 +107,8 @@ export interface LocalChildRecord {
   archivedAt?: string
   archiveReason?: string
   notes?: string
+  classroomId?: string
+  classroomGrade?: string
 }
 
 /**

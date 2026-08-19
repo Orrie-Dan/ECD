@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Ruler, AlertTriangle, Clock, CheckCircle2, Users } from 'lucide-react'
+import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
+import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
+import { useClassroomGateway } from '@/hooks/useClassroomGateway'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -106,13 +109,16 @@ export function GrowthPage() {
     [children, user?.centerId],
   )
 
+  const { selectedGrade, setSelectedGrade, gradeChildren: gradeCenterChildren, goBack, isGradeSelected } =
+    useClassroomGateway(centerChildren)
+
   const summary = useMemo(
-    () => computeGrowthSummary(centerChildren, growthMeasurements, nutritionAssessments),
-    [centerChildren, growthMeasurements, nutritionAssessments],
+    () => computeGrowthSummary(gradeCenterChildren, growthMeasurements, nutritionAssessments),
+    [gradeCenterChildren, growthMeasurements, nutritionAssessments],
   )
 
   const filteredChildren = useMemo(() => {
-    const bySearch = applySharedChildFilters(centerChildren, filters)
+    const bySearch = applySharedChildFilters(gradeCenterChildren, filters)
     const byView = filterGrowthChildren(
       bySearch,
       growthMeasurements,
@@ -138,13 +144,13 @@ export function GrowthPage() {
   const atRiskIds = useMemo(() => {
     return new Set(
       filterGrowthChildren(
-        centerChildren,
+        gradeCenterChildren,
         growthMeasurements,
         nutritionAssessments,
         'at_risk',
       ).map((c) => c.id),
     )
-  }, [centerChildren, growthMeasurements, nutritionAssessments])
+  }, [gradeCenterChildren, growthMeasurements, nutritionAssessments])
 
   const getChildMeta = useMemo(() => {
     return (child: Child): ChildPickerMeta => {
@@ -195,9 +201,16 @@ export function GrowthPage() {
     setListFilter('due')
   }
 
+  const goBackToClassrooms = () => {
+    goBack()
+    resetAll()
+  }
+
   return (
     <CaretakerLayout>
       <PageContainer>
+        {isGradeSelected && <ClassroomBackLink onClick={goBackToClassrooms} />}
+
         <PageHeader
           title={caretaker.growth.title}
           description={caretaker.growth.subtitle}
@@ -217,7 +230,7 @@ export function GrowthPage() {
                 className="w-full sm:w-auto"
                 icon={<Ruler size={18} />}
                 onClick={openPicker}
-                disabled={centerChildren.length === 0}
+                disabled={gradeCenterChildren.length === 0}
               >
                 {caretaker.growth.recordMeasurement}
               </Button>
@@ -226,6 +239,13 @@ export function GrowthPage() {
         />
 
         <PageContent className="space-y-6">
+      {!isGradeSelected ? (
+          <ClassroomCards
+            children={centerChildren}
+            onSelect={setSelectedGrade}
+          />
+      ) : (
+      <>
           <GrowthSummaryCards
             stats={summary}
             activeFilter={listFilter}
@@ -245,7 +265,7 @@ export function GrowthPage() {
                 size="md"
                 className="w-full sm:w-auto shrink-0"
                 onClick={openPicker}
-                disabled={centerChildren.length === 0}
+                disabled={gradeCenterChildren.length === 0}
               >
                 {caretaker.growth.selectChild}
               </Button>
@@ -263,7 +283,7 @@ export function GrowthPage() {
               hasActiveSearchFilters={isRosterSearchActive(filters)}
             />
 
-            {centerChildren.length > 0 && (
+            {gradeCenterChildren.length > 0 && (
               <FilterResultsBar
                 count={filteredChildren.length}
                 summary={hasActiveConfig ? filterSummary : null}
@@ -324,7 +344,7 @@ export function GrowthPage() {
             hideTrigger
             open={pickerOpen}
             onOpenChange={setPickerOpen}
-            childrenList={centerChildren}
+            childrenList={gradeCenterChildren}
             value={modalChild?.id ?? ''}
             onChange={(_id, child) => {
               setModalChild(child)
@@ -363,6 +383,8 @@ export function GrowthPage() {
             filters={filters}
             onApply={(next) => setFilters(next as RosterSearchFilters)}
           />
+      </>
+      )}
         </PageContent>
       </PageContainer>
     </CaretakerLayout>

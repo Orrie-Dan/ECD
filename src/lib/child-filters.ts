@@ -1,10 +1,28 @@
-import type { Child, Gender, GuardianRelation } from '@/types'
+import type { Child, ClassroomGrade, Gender, GuardianRelation } from '@/types'
 import { calculateAge } from '@/lib/mock-data'
 import { getAgeGroup } from '@/lib/attendance-utils'
 import { getProvinceDisplayName } from '@/lib/rwanda-admin'
 
 export type GenderFilter = 'all' | Gender
 export type AgeFilter = 'all' | '3-4' | '5-6'
+export type GradeFilter = 'all' | ClassroomGrade
+
+const GRADE_LABELS: Record<ClassroomGrade, string> = {
+  grade_1: 'Umwaka wa 1',
+  grade_2: 'Umwaka wa 2',
+  grade_3: 'Umwaka wa 3',
+}
+
+export function getGradeLabel(grade: ClassroomGrade | undefined): string {
+  return grade ? GRADE_LABELS[grade] : ''
+}
+
+export const GRADE_FILTER_OPTIONS: { value: GradeFilter; label: string }[] = [
+  { value: 'all', label: 'Imyaka yose' },
+  { value: 'grade_1', label: GRADE_LABELS.grade_1 },
+  { value: 'grade_2', label: GRADE_LABELS.grade_2 },
+  { value: 'grade_3', label: GRADE_LABELS.grade_3 },
+]
 
 export interface LocationFilters {
   province: string
@@ -28,6 +46,7 @@ export interface SharedChildFilters extends LocationFilters {
   guardianRelation: '' | GuardianRelation
   gender: GenderFilter
   age: AgeFilter
+  grade: GradeFilter
 }
 
 export type ChildrenSort = 'name-asc' | 'name-desc' | 'registered-desc'
@@ -56,6 +75,7 @@ export const DEFAULT_SHARED_FILTERS: SharedChildFilters = {
   guardianRelation: '',
   gender: 'all',
   age: 'all',
+  grade: 'all',
   ...EMPTY_LOCATION,
 }
 
@@ -94,6 +114,7 @@ export function isSharedFiltersActive(
     filters.guardianRelation !== defaults.guardianRelation ||
     filters.gender !== defaults.gender ||
     filters.age !== defaults.age ||
+    filters.grade !== defaults.grade ||
     filters.province !== defaults.province ||
     filters.district !== defaults.district ||
     filters.sector !== defaults.sector ||
@@ -187,6 +208,10 @@ export function applySharedChildFilters(children: Child[], filters: SharedChildF
 
   if (filters.age !== 'all') {
     result = result.filter((c) => getAgeGroup(calculateAge(c.dateOfBirth)) === filters.age)
+  }
+
+  if (filters.grade !== 'all') {
+    result = result.filter((c) => c.classroomGrade === filters.grade)
   }
 
   if (filters.province) {

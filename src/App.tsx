@@ -25,6 +25,11 @@ import { StedWizardPage } from '@/pages/caretaker/StedWizardPage'
 import { StedHistoryPage } from '@/pages/caretaker/StedHistoryPage'
 import { SettingsPage } from '@/pages/caretaker/SettingsPage'
 import { MorePage } from '@/pages/caretaker/MorePage'
+import { TransfersPage } from '@/pages/caretaker/TransfersPage'
+import { SelfEvalPage } from '@/pages/caretaker/SelfEvalPage'
+import { SelfEvalWizardPage } from '@/pages/caretaker/SelfEvalWizardPage'
+import { CenterUsersPage } from '@/pages/caretaker/CenterUsersPage'
+import { CenterUserDetailPage } from '@/pages/caretaker/CenterUserDetailPage'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { DistrictDashboardPage } from '@/pages/district/DashboardPage'
@@ -62,7 +67,7 @@ import {
   NcdaSettingsPage,
 } from '@/pages/ncda/NcdaPages'
 import { useAuth } from '@/contexts/AppContext'
-import { homePathForUser } from '@/api/roles'
+import { ECD_CENTER_ROLES, homePathForUser } from '@/api/roles'
 
 function RedirectWithSearch({ to }: { to: string }) {
   const { search } = useLocation()
@@ -99,7 +104,7 @@ export default function App() {
                 <Route path="/login" element={<Navigate to="/" replace />} />
                 <Route path="/login/:role" element={<LoginPage />} />
 
-                <Route element={<ProtectedRoute allowedRole="caretaker" />}>
+                <Route element={<ProtectedRoute allowedRole={ECD_CENTER_ROLES} />}>
                   <Route path="/caretaker" element={<CaretakerDashboardPage />} />
                   <Route path="/caretaker/kwiyandikisha" element={<RegisterChildPage />} />
                   <Route path="/caretaker/ubwitabire" element={<AttendancePage />} />
@@ -116,6 +121,14 @@ export default function App() {
                   <Route path="/caretaker/raporo" element={<AttendanceReportPage />} />
                   <Route path="/caretaker/ibindi" element={<MorePage />} />
                   <Route path="/caretaker/igenamiterere" element={<SettingsPage />} />
+                </Route>
+
+                <Route element={<ProtectedRoute allowedRole="ecdDirector" />}>
+                  <Route path="/caretaker/kwimura" element={<TransfersPage />} />
+                  <Route path="/caretaker/isuzuma" element={<SelfEvalPage />} />
+                  <Route path="/caretaker/isuzuma/new" element={<SelfEvalWizardPage />} />
+                  <Route path="/caretaker/abakoresha" element={<CenterUsersPage />} />
+                  <Route path="/caretaker/abakoresha/:userId" element={<CenterUserDetailPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRole="districtOfficer" />}>

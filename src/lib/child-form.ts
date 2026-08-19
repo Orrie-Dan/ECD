@@ -8,6 +8,8 @@ export const EMPTY_CHILD_FORM: ChildRegistrationForm = {
   fullName: '',
   dateOfBirth: '',
   gender: '',
+  nationalId: '',
+  classroomGrade: '',
   specialNeeds: '',
   guardianName: '',
   guardianPhone: '',
@@ -27,6 +29,8 @@ export function childToForm(child: Child): ChildRegistrationForm {
     fullName: child.fullName,
     dateOfBirth: child.dateOfBirth,
     gender: child.gender,
+    nationalId: child.nationalId ?? '',
+    classroomGrade: child.classroomGrade ?? '',
     specialNeeds: child.specialNeeds ?? '',
     guardianName: child.guardianName,
     guardianPhone: child.guardianPhone,
@@ -98,6 +102,8 @@ export function validateChildFormStep(
       }
     }
     if (!form.gender) newErrors.gender = common.required
+    if (!form.nationalId.trim()) newErrors.nationalId = common.required
+    if (!form.classroomGrade) newErrors.classroomGrade = common.required
   }
 
   if (currentStep === 2) {

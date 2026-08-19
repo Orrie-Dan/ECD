@@ -3,8 +3,8 @@ export const auth = {
     welcomeTitle: 'Murakaza neza',
     welcomeSubtitle: 'Hitamo icyiciro cyawe kugira ngo ukomeze muri sisitemu.',
     caretaker: {
-      title: 'Umurezi',
-      description: "Abarezi b'ibigo bya ECD",
+      title: 'Ikigo cya ECD',
+      description: "Abayobozi n'abarezi b'ibigo bya ECD",
     },
     districtOfficer: {
       title: "Umukozi w'Akarere",
@@ -20,7 +20,7 @@ export const auth = {
     brandName: 'ECD Rwanda',
     systemName: "",
     title: 'Injira muri Sisitemu',
-    titleCaretaker: "Injira nk'Umurezi",
+    titleCaretaker: "Injira mu kigo cya ECD",
     titleDistrictOfficer: "Injira nk'Umukozi w'Akarere",
     titleNcda: 'Injira nka NCDA Admin',
     subtitle: 'Andika amakuru yawe kugira ngo ukomeze.',

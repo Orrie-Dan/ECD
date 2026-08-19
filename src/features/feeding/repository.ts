@@ -14,7 +14,7 @@ import {
   upsertFeedingDayLocalFirst,
   upsertFeedingMonthSummaryLocalFirst,
 } from '@/features/feeding/local-feeding'
-import { isCaretaker } from '@/api/roles'
+import { isEcdCenterUser } from '@/api/roles'
 import { isBalancedComposition } from '@/lib/feeding-utils'
 import { MOCK_FEEDING_DAYS, MOCK_FEEDING_SUMMARIES } from '@/lib/mock-data'
 import { getLocalStore } from '@/storage'
@@ -46,7 +46,7 @@ export function useFeedingRepository(user: User | null) {
   const [mockSummaries, setMockSummaries] =
     useState<CenterFeedingMonthSummary[]>(MOCK_FEEDING_SUMMARIES)
 
-  const centerId = isCaretaker(user) ? user?.centerId : undefined
+  const centerId = isEcdCenterUser(user) ? user?.centerId : undefined
 
   const daysQuery = useFeedingDaysWindow(centerId, env.isLive && !!centerId)
   const summariesQuery = useFeedingSummariesWindow(centerId, env.isLive && !!centerId)

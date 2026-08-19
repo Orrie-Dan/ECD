@@ -1,5 +1,5 @@
 /** Application (UI) roles — normalized from backend JWT roles via `normalizeRole`. */
-export type UserRole = 'caretaker' | 'districtOfficer' | 'ncda'
+export type UserRole = 'caretaker' | 'ecdDirector' | 'districtOfficer' | 'ncda'
 
 export interface User {
   id: string
@@ -14,6 +14,8 @@ export interface User {
 export type Gender = 'Umuhungu' | 'Umukobwa'
 
 export type ChildStatus = 'active' | 'transferred' | 'archived'
+
+export type ClassroomGrade = 'grade_1' | 'grade_2' | 'grade_3'
 
 export type GuardianRelation =
   | 'umubyeyi_mama'
@@ -66,6 +68,7 @@ export interface Child {
   status: ChildStatus
   /** Placeholder registration number until backend issues real IDs */
   registrationNumber: string
+  nationalId?: string
   centerId: string
   centerName: string
   transferredAt?: string
@@ -82,6 +85,9 @@ export interface Child {
   version?: number
   /** LIVE API home village admin-unit UUID */
   homeVillageId?: string
+  classroomId?: string
+  classroomGrade?: ClassroomGrade
+  classroomLabel?: string
 }
 
 export interface TransferChildInput {
@@ -389,6 +395,8 @@ export interface ChildRegistrationForm {
   fullName: string
   dateOfBirth: string
   gender: Gender | ''
+  nationalId: string
+  classroomGrade: ClassroomGrade | ''
   specialNeeds: string
   guardianName: string
   guardianPhone: string

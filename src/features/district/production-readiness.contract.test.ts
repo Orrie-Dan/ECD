@@ -48,9 +48,9 @@ describe('Sprint 5.4 District production readiness', () => {
       'utf8',
     )
 
-    expect(childrenRepo).toMatch(/isCaretaker\(user\)/)
-    expect(attendanceRepo).toMatch(/isCaretaker\(user\)/)
-    expect(referralRepo).toMatch(/isCaretaker\(user\)/)
+      expect(childrenRepo).toMatch(/isEcdCenterUser\(user\)/)
+      expect(attendanceRepo).toMatch(/isEcdCenterUser\(user\)/)
+      expect(referralRepo).toMatch(/isEcdCenterUser\(user\)/)
   })
 
   it('District children hooks use district query-key namespace', () => {

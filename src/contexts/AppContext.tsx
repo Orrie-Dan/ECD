@@ -7,6 +7,7 @@ import {
   useMemo,
   type ReactNode,
 } from 'react'
+import { loginRoleMatches } from '@/api/roles'
 import type {
   User,
   UserRole,
@@ -181,6 +182,13 @@ const DEMO_USERS: Record<UserRole, User> = {
     centerId: DEFAULT_CENTER_ID,
     centerName: DEFAULT_CENTER_NAME,
   },
+  ecdDirector: {
+    id: 'u1d',
+    name: 'Mukamana Claudine',
+    role: 'ecdDirector',
+    centerId: DEFAULT_CENTER_ID,
+    centerName: DEFAULT_CENTER_NAME,
+  },
   districtOfficer: {
     id: 'u2',
     name: 'Niyonsenga Patrick',
@@ -196,6 +204,7 @@ const DEMO_USERS: Record<UserRole, User> = {
 
 const DEMO_CREDENTIALS: Record<string, { password: string; role: UserRole }> = {
   umurezi: { password: '1234', role: 'caretaker' },
+  umuyobozi: { password: '1234', role: 'ecdDirector' },
   akarere: { password: '1234', role: 'districtOfficer' },
   /** Explicit MOCK credential only — LIVE role comes from JWT/backend. */
   ncda: { password: '1234', role: 'ncda' },
@@ -268,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { success: false, error: 'invalid_credentials' }
         }
 
-        if (account.role !== expectedRole) {
+        if (!loginRoleMatches(account.role, expectedRole)) {
           return { success: false, error: 'wrong_role' }
         }
 

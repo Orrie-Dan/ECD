@@ -1,0 +1,373 @@
+{
+  "source": "Self Evaluation Tool for Compliance with ECD Standards.docx",
+  "generalInfoItemCount": 27,
+  "scoringRules": {
+    "description": "Each standard item has weight; multi-indicator items count each indicator; score earned if standard exists/meets criteria; section subtotals; grand total as percentage.",
+    "formula": "percent = round(earnedScore / maxScore * 100)",
+    "ranks": [
+      {
+        "color": "green",
+        "minPercent": 90,
+        "maxPercent": 100
+      },
+      {
+        "color": "blue",
+        "minPercent": 70,
+        "maxPercent": 89
+      },
+      {
+        "color": "yellow",
+        "minPercent": 50,
+        "maxPercent": 69
+      },
+      {
+        "color": "red",
+        "minPercent": 0,
+        "maxPercent": 49
+      }
+    ]
+  },
+  "facilityTools": [
+    {
+      "title": "A. Self-Evaluation Tool for Daycare Facilities (Creches)",
+      "grandTotalMax": null,
+      "sectionCount": 16,
+      "itemCount": 0,
+      "subtotalSum": 0,
+      "sections": [
+        {
+          "title": "1. Care and Support before birth/ Kwita ku mwana mbere y’uko avuka",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "2. Food and Nutrition practices",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "4. Responsive care and support services to children from birth to 3 years/ Kwita ku bana bavutse kugeza ku myaka 3",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "5. Day-care staffing/ Abakozi b’Irerero",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "6. Physical Environment/ Imiterere y’Irerero",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "7. Sanitary Facilities/ Ibikoresho by’Isuku mu Irerero",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "8. Handwashing practices/ Gukaraba Intoki",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "9. Building specifications/ Ibisabwa ku Nyubako",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "10. Equipment/Ibikoresho",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "11. Breastfeeding Room/ Icyumba cyo konkerezamo",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "12. Care, learning and play/ Kwitabwaho, Kwiga no Gukina",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "13. Health/ Ubuzima",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "14. Child safety and protection/ Umutekano no kurinda umwana ihohoterwa.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "15. Positive discipline/ Gukosora umwana utamuhutaje",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "16. Record Keeping/ Kubika Amakuru ku Bana",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "17. Education/ Uburezi",
+          "items": [],
+          "subtotalMax": null
+        }
+      ]
+    },
+    {
+      "title": "B. Self-Evaluation Tool for Home-Based ECD Facilities",
+      "grandTotalMax": null,
+      "sectionCount": 8,
+      "itemCount": 0,
+      "subtotalSum": 0,
+      "sections": [
+        {
+          "title": "1. Information about establishment/Imiterere y’urugo mbonezamikurire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "2. Information about Leadership and Management/Imiyoborere y’urugo mbonezamikurire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "3. Information about Curriculum and Learning Approaches /Integanyanyigisho n’imyigire mu rugo mbonezamikurire.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "4. Information about Health/Ubuzima",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "5. Information about Nutrition/Imirire mu rugo mbonezamikurire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "6. Information about Child Protection and Safety/Umutekano no kurinda umwana",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "7. Information about WASH/Amazi, Isuku n’Isukura",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "8. Information about Recruitment/Selection and qualification of caregivers /Uko abarezi bashyirwaho mu rugo mbonezamikurire n’impamyabushobozi zabo.",
+          "items": [],
+          "subtotalMax": null
+        }
+      ]
+    },
+    {
+      "title": "C. ECD Mapping Tool for Community-Based ECD Facilities",
+      "grandTotalMax": null,
+      "sectionCount": 15,
+      "itemCount": 0,
+      "subtotalSum": 0,
+      "sections": [
+        {
+          "title": "1. Information about Geographical Location/Aho urugo rukorera",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "2. Information about Physical Environment/Imiterere y’aho urugo rukorera",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "3. Information about Classroom/Indoor space/Ibyumba byigirwamo",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "4. Information about Kitchen/Igikoni",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "5. Information about Toilets/Ubwiherero",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "6. Information about Outdoor Play area and Equipment/Aho abana bakinira hanze n’ibikoresho by’imikino.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "7. Information about Health Practices and Procedures/Ubuzima",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "8. Information about Food and Nutrition Practices/Imirire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "9. Information about child protection and safety Practices /Umutekano no kurinda umwana.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "10. Information about WASH Practices/Amazi, Isuku n’Isukura",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "11. Information about Organisation of Teaching and Learning Activities/Play activities/Kuyobora ibikorwa by’imyigire n’imyigishirize.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "12. Information about Teaching and Learning Resources/Imfashanyigisho z’imyigire n’imyigishirize",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "13. Information about Establishment, Registration and Accreditation/ Gutangiza no kwandikisha urugo mbonezamikurire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "14. Information about Management of a Community-Based ECD facility/Imicungire y’urugo mbonezamikurire rukorera muri kominote.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "15. Information about Recruitment and qualification of caregivers/Ishyirwa mu kazi ku barezi mu rugo mbonezamikurire rukorera muri kominote mu mudugudu.",
+          "items": [],
+          "subtotalMax": null
+        }
+      ]
+    },
+    {
+      "title": "D. Self-Evaluation Tool for School-Based and Model ECD Facilities",
+      "grandTotalMax": null,
+      "sectionCount": 22,
+      "itemCount": 0,
+      "subtotalSum": 0,
+      "sections": [
+        {
+          "title": "2. Geographical location/Aho ruherereye",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "2. Preschool physical environment/Imiterere y’aho urugo rukorera",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "3. Classroom/Indoor space /Ibyumba byo kwigiramo",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "4. Furniture/Intebe n’Ameza",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "5. Kitchen /Igikoni",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "6. Kitchen Store/Ububiko bw’igikoni",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "7. Toilets/Latrines/Ubwiherero",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "8. Sleeping Area/ Aho abana baryama",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "9. Playground/Outdoor Play Area/Ikibuga/Aho abana bakinira hanze",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "10. Play equipment/Ibikinisho byo hanze",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "11. Health Practices and Procedures/ Ubuzima",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "12. Food and Nutrition Practices /Imirire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "13. Child Protection/Safety Practices/Umutekano no kurinda umwana",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "14. WASH/ Amazi, Isuku n’Isukura",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "15. Teaching and learning approaches, methods and strategies/Uburyo bw’imyigishirize mu rugo mbonezamikurire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "16. Organisation of teaching and learning activities/play activities/Kuyobora ibikorwa by’imyigire n’imyigishirize.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "17. Teaching and learning resources/play materials /Imfashanyigisho n’ibikinisho by’imyigire n’imyigishirize.",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "17. Organization of field/study visits/ Gutegura no gukora ingendoshuri",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "18. Establishment, registration and accreditation /Gutangiza, kwandikisha no kwemeza urugo mbonezamikurire",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "19. Collaborative, supportive relationships with families and communities/Imikoranire hagati y’urugo mbonezamikurire n’ababyeyi",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "20. Assessment/ Isuzuma",
+          "items": [],
+          "subtotalMax": null
+        },
+        {
+          "title": "21. ECD Staff recruitment and CPD/Ishyirwamukazi ku barezi mu rugo mbonezamikurire.",
+          "items": [],
+          "subtotalMax": null
+        }
+      ]
+    }
+  ]
+}

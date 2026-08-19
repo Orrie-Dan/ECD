@@ -31,7 +31,7 @@ type RoleFilter = 'all' | UserRole
 type StatusFilter = 'all' | ApiUserStatus
 
 /**
- * NCDA Users management — national admin directory + create (DFP/caregiver only).
+ * NCDA Users management — national admin directory + create (DFP / ECD director / caregiver).
  * Temporary passwords are shown once and never cached in query state.
  */
 export function NcdaUsersPage() {
@@ -103,9 +103,12 @@ function NcdaUsersLive() {
     centerId: '',
   })
   const createCenters = useNcdaUserCenterOptions(
-    createForm.role === 'caregiver' ? createForm.districtId || undefined : undefined,
+    createForm.role === 'caregiver' || createForm.role === 'ecd_director'
+      ? createForm.districtId || undefined
+      : undefined,
     undefined,
-    createForm.role === 'caregiver' && Boolean(createForm.districtId),
+    (createForm.role === 'caregiver' || createForm.role === 'ecd_director') &&
+      Boolean(createForm.districtId),
   )
 
   const total = list.data?.total ?? 0
@@ -135,7 +138,9 @@ function NcdaUsersLive() {
         ...(createForm.role === 'district_focal_person'
           ? { districtId: createForm.districtId }
           : {}),
-        ...(createForm.role === 'caregiver' ? { centerId: createForm.centerId } : {}),
+        ...(createForm.role === 'caregiver' || createForm.role === 'ecd_director'
+          ? { centerId: createForm.centerId }
+          : {}),
       })
       setTempSecret(result.temporaryPassword)
       setShowCreate(false)
@@ -263,6 +268,7 @@ function NcdaUsersLive() {
                       <option value="district_focal_person">
                         {ncda.users.roleDistrict}
                       </option>
+                      <option value="ecd_director">{ncda.users.roleDirector}</option>
                       <option value="caregiver">{ncda.users.roleCaregiver}</option>
                     </SelectInput>
                     <p className="mt-1 text-caption text-text-muted">
@@ -270,7 +276,8 @@ function NcdaUsersLive() {
                     </p>
                   </div>
                   {createForm.role === 'district_focal_person' ||
-                  createForm.role === 'caregiver' ? (
+                  createForm.role === 'caregiver' ||
+                  createForm.role === 'ecd_director' ? (
                     <div>
                       <label className="mb-1 block text-caption font-semibold text-text-secondary">
                         {ncda.users.districtFilter}
@@ -295,7 +302,7 @@ function NcdaUsersLive() {
                       </SelectInput>
                     </div>
                   ) : null}
-                  {createForm.role === 'caregiver' ? (
+                  {createForm.role === 'caregiver' || createForm.role === 'ecd_director' ? (
                     <div>
                       <label className="mb-1 block text-caption font-semibold text-text-secondary">
                         {ncda.users.centerFilter}
@@ -371,6 +378,7 @@ function NcdaUsersLive() {
                   >
                     <option value="all">{ncda.users.statusAll}</option>
                     <option value="caregiver">{ncda.users.roleCaregiver}</option>
+                    <option value="ecd_director">{ncda.users.roleDirector}</option>
                     <option value="district_focal_person">{ncda.users.roleDistrict}</option>
                     <option value="ncda_admin">{ncda.users.roleNcda}</option>
                   </SelectInput>
@@ -531,6 +539,7 @@ function NcdaUsersLive() {
 
 function roleLabel(role: string): string {
   if (role === 'caregiver') return ncda.users.roleCaregiver
+  if (role === 'ecd_director') return ncda.users.roleDirector
   if (role === 'district_focal_person') return ncda.users.roleDistrict
   if (role === 'ncda_admin') return ncda.users.roleNcda
   return role

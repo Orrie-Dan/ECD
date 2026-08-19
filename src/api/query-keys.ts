@@ -377,6 +377,33 @@ function createDistrictKeys() {
   }
 }
 
+function createClassroomKeys() {
+  const all = ['classrooms'] as const
+  const lists = () => [...all, 'list'] as const
+  return {
+    all,
+    lists,
+    byCenter: (centerId: string) => [...lists(), centerId] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  }
+}
+
+/**
+ * ECD director caregiver-governance queries — center-scoped user admin.
+ */
+function createEcdCenterKeys() {
+  const all = ['ecd-center'] as const
+  return {
+    all,
+    users: {
+      all: [...all, 'users'] as const,
+      list: (filters: Record<string, unknown> = {}) =>
+        [...all, 'users', 'list', filters] as const,
+      detail: (id: string) => [...all, 'users', 'detail', id] as const,
+    },
+  }
+}
+
 export const queryKeys = {
   auth: createAuthKeys(),
   children: createChildrenKeys(),
@@ -391,6 +418,8 @@ export const queryKeys = {
   centersDirectory: createCentersDirectoryKeys(),
   district: createDistrictKeys(),
   ncda: createNcdaKeys(),
+  ecdCenter: createEcdCenterKeys(),
+  classrooms: createClassroomKeys(),
 } as const
 
 export const auth = { keys: queryKeys.auth }
@@ -405,6 +434,8 @@ export const monitoring = { keys: queryKeys.monitoring }
 export const reporting = { keys: queryKeys.reporting }
 export const district = { keys: queryKeys.district }
 export const ncda = { keys: queryKeys.ncda }
+export const ecdCenter = { keys: queryKeys.ecdCenter }
+export const classrooms = { keys: queryKeys.classrooms }
 
 export const authKeys = queryKeys.auth
 export const childrenKeys = queryKeys.children
@@ -473,6 +504,10 @@ export const queryStaleTimes = {
   ncdaReporting: 60_000,
   /** District caregiver admin — short stale; mutations invalidate list/detail. */
   districtUsers: 30_000,
+  /** ECD director caregiver admin — short stale; mutations invalidate list/detail. */
+  ecdCenterUsers: 30_000,
+  /** Classrooms per center — rarely changes; 2m stale window. */
+  classrooms: 120_000,
   /** District Incamake geo identity / sectors / centres. */
   districtOverview: 60_000,
 } as const

@@ -3,6 +3,7 @@ import {
   LogOut,
   ChevronDown,
   ArrowLeft,
+  ArrowLeftRight,
   User,
   Home,
   Users,
@@ -11,8 +12,11 @@ import {
   Menu,
   Ruler,
   LayoutGrid,
+  UtensilsCrossed,
+  Accessibility,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AppContext'
+import { isEcdDirector } from '@/api/roles'
 import { Button } from '@/components/ui/Button'
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav'
 import { NavDrawer } from '@/components/ui/NavDrawer'
@@ -41,33 +45,109 @@ interface CaretakerLayoutProps {
   backLabel?: string
 }
 
+const homeNavItem: SidebarNavItem = {
+  path: '/caretaker',
+  label: caretaker.nav.home,
+  icon: Home,
+}
+const childrenNavItem: SidebarNavItem = {
+  path: '/caretaker/abana',
+  label: caretaker.nav.children,
+  icon: Users,
+  matchPaths: ['/caretaker/abana'],
+}
+const attendanceNavItem: SidebarNavItem = {
+  path: '/caretaker/ubwitabire',
+  label: caretaker.nav.attendance,
+  icon: ClipboardCheck,
+}
+const growthNavItem: SidebarNavItem = {
+  path: '/caretaker/imikurire',
+  label: caretaker.nav.growth,
+  icon: Ruler,
+  matchPaths: ['/caretaker/imikurire'],
+}
+const imirireNavItem: SidebarNavItem = {
+  path: '/caretaker/imirire',
+  label: caretaker.nav.imirire,
+  icon: UtensilsCrossed,
+  matchPaths: ['/caretaker/imirire'],
+}
+const stedNavItem: SidebarNavItem = {
+  path: '/caretaker/sted',
+  label: caretaker.nav.sted,
+  icon: Accessibility,
+  matchPaths: ['/caretaker/sted'],
+}
+const usersNavItem: SidebarNavItem = {
+  path: '/caretaker/abakoresha',
+  label: caretaker.nav.users,
+  icon: Users,
+  matchPaths: ['/caretaker/abakoresha'],
+}
+const selfEvalNavItem: SidebarNavItem = {
+  path: '/caretaker/isuzuma',
+  label: caretaker.selfEval.title,
+  icon: ClipboardCheck,
+  matchPaths: ['/caretaker/isuzuma'],
+}
+const transfersNavItem: SidebarNavItem = {
+  path: '/caretaker/kwimura',
+  label: caretaker.nav.transfers,
+  icon: ArrowLeftRight,
+  matchPaths: ['/caretaker/kwimura'],
+}
+
+const moreMatchPaths = [
+  '/caretaker/ibindi',
+  '/caretaker/kwiyandikisha',
+  '/caretaker/raporo',
+  '/caretaker/igenamiterere',
+]
+
+function buildSidebarNavItems(director: boolean): SidebarNavItem[] {
+  const items: SidebarNavItem[] = [
+    homeNavItem,
+    childrenNavItem,
+    attendanceNavItem,
+    growthNavItem,
+    imirireNavItem,
+    stedNavItem,
+  ]
+  if (director) {
+    items.push(usersNavItem, selfEvalNavItem, transfersNavItem)
+  }
+  items.push({
+    path: '/caretaker/ibindi',
+    label: caretaker.nav.more,
+    icon: LayoutGrid,
+    matchPaths: director
+      ? moreMatchPaths
+      : [...moreMatchPaths, '/caretaker/isuzuma', '/caretaker/abakoresha', '/caretaker/kwimura'],
+  })
+  return items
+}
+
 /** Daily map: ≤5 items. Rarer tasks live under Ibindi. */
-const primaryNavItems: SidebarNavItem[] = [
-  { path: '/caretaker', label: caretaker.nav.home, icon: Home },
-  { path: '/caretaker/abana', label: caretaker.nav.children, icon: Users, matchPaths: ['/caretaker/abana'] },
-  { path: '/caretaker/ubwitabire', label: caretaker.nav.attendance, icon: ClipboardCheck },
-  {
-    path: '/caretaker/imikurire',
-    label: caretaker.nav.growth,
-    icon: Ruler,
-    matchPaths: ['/caretaker/imikurire'],
-  },
+const mobileNavItems: NavItem[] = [
+  homeNavItem,
+  childrenNavItem,
+  attendanceNavItem,
+  growthNavItem,
   {
     path: '/caretaker/ibindi',
     label: caretaker.nav.more,
     icon: LayoutGrid,
     matchPaths: [
-      '/caretaker/ibindi',
-      '/caretaker/kwiyandikisha',
+      ...moreMatchPaths,
       '/caretaker/imirire',
       '/caretaker/sted',
-      '/caretaker/raporo',
-      '/caretaker/igenamiterere',
+      '/caretaker/isuzuma',
+      '/caretaker/abakoresha',
+      '/caretaker/kwimura',
     ],
   },
 ]
-
-const mobileNavItems: NavItem[] = primaryNavItems
 
 function getPageTitle(pathname: string): string {
   if (pathname === '/caretaker') return caretaker.nav.home
@@ -78,6 +158,9 @@ function getPageTitle(pathname: string): string {
   if (pathname.startsWith('/caretaker/imirire')) return caretaker.nav.imirire
   if (pathname.startsWith('/caretaker/sted')) return caretaker.nav.sted
   if (pathname === '/caretaker/raporo') return caretaker.nav.reports
+  if (pathname.startsWith('/caretaker/isuzuma')) return caretaker.selfEval.title
+  if (pathname.startsWith('/caretaker/kwimura')) return caretaker.nav.transfers
+  if (pathname.startsWith('/caretaker/abakoresha')) return caretaker.nav.users
   if (pathname === '/caretaker/igenamiterere') return caretaker.nav.settings
   if (pathname === '/caretaker/ibindi') return caretaker.nav.more
   return common.appName
@@ -141,6 +224,9 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+
+  const director = isEcdDirector(user)
+  const sidebarNavItems = buildSidebarNavItems(director)
 
   const title = pageTitle ?? getPageTitle(location.pathname)
   const showBack = Boolean(backTo || backLabel)
@@ -225,9 +311,9 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
   return (
     <div className="min-h-dvh bg-background flex">
       {/* Labeled sidebar only — never icon-only (design.md) */}
-      <aside className="hidden lg:flex flex-col w-56 xl:w-60 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
+      <aside className="hidden lg:flex flex-col w-60 xl:w-64 bg-surface border-r border-border shrink-0 fixed inset-y-0 left-0 z-30">
         <SidebarBrand centerName={user?.centerName} />
-        <SidebarNavList items={primaryNavItems} pathname={location.pathname} />
+        <SidebarNavList items={sidebarNavItems} pathname={location.pathname} />
         <div className="p-3 xl:p-4 border-t border-border">
           <div className="px-4 py-3 rounded-xl bg-background-subtle">
             <p className="text-caption text-text-muted">{common.ui.systemUser}</p>
@@ -243,13 +329,13 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
           <p className="text-caption text-text-secondary mt-0.5">{user?.centerName}</p>
         </div>
         <SidebarNavList
-          items={primaryNavItems}
+          items={sidebarNavItems}
           pathname={location.pathname}
           onNavigate={() => setDrawerOpen(false)}
         />
       </NavDrawer>
 
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-56 xl:ml-60">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-60 xl:ml-64">
         <header className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm safe-area-top">
           <div className="px-3 sm:px-5 lg:px-6 h-14 flex items-center justify-between gap-3">
             <div className="min-w-0 flex items-center gap-2">

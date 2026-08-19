@@ -2,7 +2,7 @@ import { loginRequest } from '@/api/resources/auth'
 import type { ApiAuthContextValue } from '@/api/auth/ApiAuthProvider'
 import { tokenStorage } from '@/api/token-storage'
 import { normalizeApiError } from '@/api/errors'
-import { hasRole, UnknownUserRoleError } from '@/api/roles'
+import { loginRoleMatches, UnknownUserRoleError } from '@/api/roles'
 import { activateLocalWorkspace } from '@/storage'
 import { ensureDeviceRegisteredUntilOk } from '@/features/device'
 import { getSyncEngine } from '@/sync/sync-engine'
@@ -48,7 +48,7 @@ async function completeOnlineLogin(
     password: input.password,
   })
 
-  if (!hasRole(session.user, input.expectedRole)) {
+  if (!loginRoleMatches(session.user.role, input.expectedRole)) {
     return { success: false, error: 'wrong_role' }
   }
 
@@ -99,7 +99,7 @@ async function attemptOfflineLogin(
     return { success: false, error: 'invalid_credentials' }
   }
 
-  if (!hasRole(session.user, input.expectedRole)) {
+  if (!loginRoleMatches(session.user.role, input.expectedRole)) {
     return { success: false, error: 'wrong_role' }
   }
 

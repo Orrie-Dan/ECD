@@ -4,7 +4,7 @@ import { hasRole, homePathForUser } from '@/api/roles'
 import type { UserRole } from '@/types'
 
 interface ProtectedRouteProps {
-  allowedRole?: UserRole
+  allowedRole?: UserRole | UserRole[]
 }
 
 export function ProtectedRoute({ allowedRole }: ProtectedRouteProps) {

@@ -39,11 +39,15 @@ export type UsersListFilters = {
 /** Roles NCDA may assign on create — mirrors backend canCreateRole. */
 export const NCDA_CREATABLE_ROLES: UserRole[] = [
   'district_focal_person',
+  'ecd_director',
   'caregiver',
 ]
 
-/** Roles District Focal Person may assign on create — caregiver only. */
+/** Roles District Focal Person may assign on create — caregiver only (UI). */
 export const DISTRICT_CREATABLE_ROLES: UserRole[] = ['caregiver']
+
+/** Roles ECD director may assign on create — caregiver at own center only. */
+export const ECD_DIRECTOR_CREATABLE_ROLES: UserRole[] = ['caregiver']
 
 export async function listUsersPage(
   filters: UsersListFilters = {},
@@ -83,6 +87,25 @@ export async function createDistrictCaregiver(
 ): Promise<CreateUserResponseDto> {
   if (dto.role !== 'caregiver') {
     throw new Error('District Focal Person can only create caregiver accounts')
+  }
+  if (!dto.centerId?.trim()) {
+    throw new Error('centerId is required for caregiver accounts')
+  }
+  return usersControllerCreate({
+    username: dto.username,
+    fullName: dto.fullName,
+    phone: dto.phone,
+    role: 'caregiver',
+    centerId: dto.centerId.trim(),
+  })
+}
+
+/** ECD director — create caregiver accounts at the director's center. */
+export async function createCenterCaregiver(
+  dto: CreateUserDto,
+): Promise<CreateUserResponseDto> {
+  if (!ECD_DIRECTOR_CREATABLE_ROLES.includes(dto.role)) {
+    throw new Error('ECD director can only create caregiver accounts')
   }
   if (!dto.centerId?.trim()) {
     throw new Error('centerId is required for caregiver accounts')

@@ -11,12 +11,14 @@ import {
   DEFAULT_ATTENDANCE_SEARCH,
   DEFAULT_CHILDREN_SEARCH,
   DEFAULT_ROSTER_SEARCH,
+  GRADE_FILTER_OPTIONS,
   isAttendanceSearchActive,
   isChildrenSearchActive,
   isRosterSearchActive,
   resetLocationField,
   type AttendanceSearchFilters,
   type ChildrenSearchFilters,
+  type GradeFilter,
   type RosterSearchFilters,
   type SharedChildFilters,
   type ChildStatusFilter,
@@ -67,6 +69,12 @@ function getAgePreview(value: SharedChildFilters['age']): string | undefined {
   if (value === 'all') return undefined
   if (value === '3-4') return caretaker.children.age34
   return caretaker.children.age56
+}
+
+function getGradePreview(value: SharedChildFilters['grade']): string | undefined {
+  if (value === 'all') return undefined
+  const opt = GRADE_FILTER_OPTIONS.find((o) => o.value === value)
+  return opt?.label
 }
 
 function getLocationPreview(filters: SharedChildFilters): string | undefined {
@@ -153,6 +161,7 @@ export function SearchFiltersPanel({
       draft.childName.trim() || undefined,
       getGenderPreview(draft.gender),
       getAgePreview(draft.age),
+      getGradePreview(draft.grade),
     ].filter(Boolean)
     if (variant === 'children') {
       const status = (draft as ChildrenSearchFilters).status
@@ -252,6 +261,15 @@ export function SearchFiltersPanel({
                 { value: '3-4', label: caretaker.children.age34 },
                 { value: '5-6', label: caretaker.children.age56 },
               ]}
+            />
+          </FormField>
+
+          <FormField label={caretaker.classrooms.gradeLabel} hint={caretaker.classrooms.filterByGrade}>
+            <RadioGroup
+              name="filter-grade"
+              value={draft.grade}
+              onChange={(v) => updateDraft('grade', v as GradeFilter)}
+              options={GRADE_FILTER_OPTIONS}
             />
           </FormField>
 

@@ -18,8 +18,11 @@ import {
 } from '@/components/growth/MeasurementDialog'
 import { ArchiveDialog } from '@/components/children/ArchiveDialog'
 import { ReactivateChildDialog } from '@/components/children/ReactivateChildDialog'
+import { InitiateTransferModal } from '@/components/transfers/InitiateTransferModal'
+import { useTransfersControllerFindOutgoing } from '@/api/generated/endpoints/transfers/transfers'
+import { TransferStatus } from '@/api/generated/models/transferStatus'
 import { useAuth, useData } from '@/contexts/AppContext'
-import { isCaretaker as userIsCaretaker } from '@/api/roles'
+import { isEcdCenterUser as userIsEcdCenter, isEcdDirector } from '@/api/roles'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
@@ -30,6 +33,7 @@ import {
   getLatestMeasurement,
   sortMeasurementsDesc,
 } from '@/lib/nutrition-utils'
+import { getGradeLabel } from '@/lib/child-filters'
 import type { Child, GrowthMeasurement } from '@/types'
 
 type DetailTab = 'overview' | 'profile' | 'attendance' | 'growth'
@@ -108,10 +112,20 @@ export function ChildDetailContent({
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [reactivateOpen, setReactivateOpen] = useState(false)
   const [measureOpen, setMeasureOpen] = useState(false)
+  const [transferOpen, setTransferOpen] = useState(false)
   const [editingMeasurement, setEditingMeasurement] = useState<GrowthMeasurement | null>(null)
 
-  const isCaretaker = userIsCaretaker(user)
+  const isCaretaker = userIsEcdCenter(user)
+  const isDirector = isEcdDirector(user)
   const actionsEnabled = showActions && isCaretaker
+
+  const outgoingQuery = useTransfersControllerFindOutgoing(
+    { pageSize: 100 },
+    { query: { enabled: isDirector } },
+  )
+  const hasPendingTransfer = (outgoingQuery.data?.items ?? []).some(
+    (t) => t.childId === child.id && t.status === TransferStatus.pending,
+  )
 
   const attendance = getChildAttendance(child.id)
   const presentCount = attendance.filter((a) => a.present).length
@@ -171,6 +185,12 @@ export function ChildDetailContent({
             ? () => openMeasureDialog(null)
             : undefined
         }
+        onTransfer={
+          isDirector && child.status === 'active' && !hasPendingTransfer
+            ? () => setTransferOpen(true)
+            : undefined
+        }
+        transferPending={hasPendingTransfer}
       />
 
       <div
@@ -332,6 +352,10 @@ export function ChildDetailContent({
               label={caretaker.childDetail.dateRegistered}
               value={formatDate(child.registeredAt)}
             />
+            <DetailRow
+              label={caretaker.classrooms.gradeLabel}
+              value={getGradeLabel(child.classroomGrade) || caretaker.classrooms.noClassroom}
+            />
           </ChildInfoCard>
 
           <GuardianCard child={child} which={1} />
@@ -385,6 +409,16 @@ export function ChildDetailContent({
       {actionsEnabled && (
         <>
           <ArchiveDialog open={archiveOpen} onClose={() => setArchiveOpen(false)} child={child} />
+          {isDirector && (
+            <InitiateTransferModal
+              open={transferOpen}
+              onClose={() => setTransferOpen(false)}
+              childId={child.id}
+              childName={child.fullName}
+              childVersion={child.version ?? 0}
+              currentCenterId={child.centerId}
+            />
+          )}
           <ReactivateChildDialog
             open={reactivateOpen}
             onClose={() => setReactivateOpen(false)}

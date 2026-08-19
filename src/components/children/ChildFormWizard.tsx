@@ -15,7 +15,8 @@ import {
   getProvinceDisplayName,
   toLocationOptions,
 } from '@/lib/rwanda-admin'
-import type { ChildRegistrationForm, Gender, GuardianRelation } from '@/types'
+import { GRADE_FILTER_OPTIONS } from '@/lib/child-filters'
+import type { ChildRegistrationForm, ClassroomGrade, Gender, GuardianRelation } from '@/types'
 
 export const CHILD_FORM_STEPS = [
   { title: caretaker.registration.step1Title, description: caretaker.registration.step1Desc },
@@ -120,11 +121,29 @@ export function ChildFormWizard({
               disabled={lockDemographics}
             />
           </FormField>
+          <FormField label={caretaker.registration.nationalId} required error={errors.nationalId}>
+            <TextInput
+              value={form.nationalId}
+              onChange={(e) => onUpdateField('nationalId', e.target.value)}
+              placeholder={caretaker.registration.nationalIdPlaceholder}
+              error={!!errors.nationalId}
+              inputMode="numeric"
+            />
+          </FormField>
           <FormField label={caretaker.registration.specialNeeds}>
             <TextArea
               value={form.specialNeeds}
               onChange={(e) => onUpdateField('specialNeeds', e.target.value)}
               placeholder={caretaker.registration.specialNeedsPlaceholder}
+            />
+          </FormField>
+          <FormField label={caretaker.classrooms.schoolGradeLabel} required error={errors.classroomGrade}>
+            <RadioGroup
+              name="classroomGrade"
+              value={form.classroomGrade}
+              onChange={(v) => onUpdateField('classroomGrade', v as ClassroomGrade)}
+              options={GRADE_FILTER_OPTIONS.filter((o) => o.value !== 'all')}
+              error={!!errors.classroomGrade}
             />
           </FormField>
         </FormSection>
@@ -273,8 +292,20 @@ export function ChildFormWizard({
                 value={form.gender ? gender[form.gender as Gender] : ''}
               />
               <ReviewRow
+                label={caretaker.registration.nationalId}
+                value={form.nationalId.trim() || caretaker.registration.notProvided}
+              />
+              <ReviewRow
                 label={caretaker.registration.reviewSpecialNeeds}
                 value={form.specialNeeds.trim() || caretaker.registration.notProvided}
+              />
+              <ReviewRow
+                label={caretaker.classrooms.schoolGradeLabel}
+                value={
+                  form.classroomGrade
+                    ? GRADE_FILTER_OPTIONS.find((o) => o.value === form.classroomGrade)?.label ?? ''
+                    : caretaker.classrooms.noClassroom
+                }
               />
             </dl>
           </section>

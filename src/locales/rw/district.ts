@@ -685,7 +685,7 @@ export const district = {
     oyaResponses: 'Ibisubizo OYA',
     referralsCreated: 'Ihererekanya byakozwe',
     referralsCompleted: 'Ihererekanya byarangiye',
-    referred: 'Baherejwe',
+    referred: 'Byoherejweho',
     openReferrals: 'Ihererekanya itararangira',
     overdueFollowUp: 'Basabwa gusubiramo',
     centerComparison: 'Ugereranya ku bigo',

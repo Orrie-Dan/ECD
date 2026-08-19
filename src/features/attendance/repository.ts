@@ -8,7 +8,7 @@ import {
   softDeleteAttendanceLocalFirst,
   upsertAttendanceLocalFirst,
 } from '@/features/attendance/local-attendance'
-import { isCaretaker } from '@/api/roles'
+import { isEcdCenterUser } from '@/api/roles'
 import { MOCK_ATTENDANCE } from '@/lib/mock-data'
 import { getLocalStore } from '@/storage'
 import { getSyncEngine } from '@/sync/sync-engine'
@@ -41,7 +41,7 @@ export function useAttendanceRepository(user: User | null) {
 
   const listFilters = useMemo(
     () => ({
-      centerId: isCaretaker(user) ? user?.centerId : undefined,
+      centerId: isEcdCenterUser(user) ? user?.centerId : undefined,
       startDate: daysAgoIso(LIVE_LOOKBACK_DAYS),
       endDate: todayIso(),
     }),
@@ -51,7 +51,7 @@ export function useAttendanceRepository(user: User | null) {
   // District LIVE must not pull district-wide attendance windows into LocalStore.
   const liveQuery = useAttendanceWindow(
     listFilters,
-    env.isLive && !!user && isCaretaker(user),
+    env.isLive && !!user && isEcdCenterUser(user),
   )
 
   const attendance: AttendanceRecord[] = useMemo(() => {

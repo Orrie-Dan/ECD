@@ -8,9 +8,13 @@ import {
   homePathForUser,
   hasRole,
   isCaretaker,
+  isEcdDirector,
+  isEcdCenterUser,
+  loginRoleMatches,
   isDistrictOfficer,
   isNcda,
   UnknownUserRoleError,
+  ECD_CENTER_ROLES,
 } from '@/api/roles'
 import { queryKeys } from '@/api/query-keys'
 
@@ -18,6 +22,7 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
   describe('role mapping', () => {
     it('maps backend roles to distinct application roles', () => {
       expect(normalizeRole('caregiver')).toBe('caretaker')
+      expect(normalizeRole('ecd_director')).toBe('ecdDirector')
       expect(normalizeRole('district_focal_person')).toBe('districtOfficer')
       expect(normalizeRole('ncda_admin')).toBe('ncda')
     })
@@ -26,6 +31,8 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
       expect(normalizeRole('ncda_admin')).not.toBe('districtOfficer')
       expect(denormalizeRole('ncda')).toBe('ncda_admin')
       expect(denormalizeRole('districtOfficer')).toBe('district_focal_person')
+      expect(denormalizeRole('ecdDirector')).toBe('ecd_director')
+      expect(denormalizeRole('caretaker')).toBe('caregiver')
     })
 
     it('fails closed for unknown API roles', () => {
@@ -39,6 +46,7 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
   describe('login destinations', () => {
     it('routes each supported role to its application boundary', () => {
       expect(homePathForRole('caretaker')).toBe('/caretaker')
+      expect(homePathForRole('ecdDirector')).toBe('/caretaker')
       expect(homePathForRole('districtOfficer')).toBe('/district')
       expect(homePathForRole('ncda')).toBe('/ncda')
     })
@@ -47,6 +55,7 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
       expect(homePathForUser({ role: 'ncda' })).toBe('/ncda')
       expect(homePathForUser({ role: 'districtOfficer' })).toBe('/district')
       expect(homePathForUser({ role: 'caretaker' })).toBe('/caretaker')
+      expect(homePathForUser({ role: 'ecdDirector' })).toBe('/caretaker')
       expect(homePathForUser(null)).toBe('/')
     })
   })
@@ -56,16 +65,27 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
       const ncdaUser = { role: 'ncda' as const }
       const districtUser = { role: 'districtOfficer' as const }
       const caregiverUser = { role: 'caretaker' as const }
+      const directorUser = { role: 'ecdDirector' as const }
 
       expect(hasRole(ncdaUser, 'ncda')).toBe(true)
       expect(hasRole(ncdaUser, 'districtOfficer')).toBe(false)
       expect(hasRole(districtUser, 'ncda')).toBe(false)
       expect(hasRole(caregiverUser, 'ncda')).toBe(false)
       expect(hasRole(caregiverUser, 'districtOfficer')).toBe(false)
+      expect(hasRole(directorUser, 'caretaker')).toBe(false)
+      expect(hasRole(directorUser, ECD_CENTER_ROLES)).toBe(true)
+      expect(hasRole(caregiverUser, ECD_CENTER_ROLES)).toBe(true)
 
       expect(isNcda(ncdaUser)).toBe(true)
       expect(isDistrictOfficer(districtUser)).toBe(true)
       expect(isCaretaker(caregiverUser)).toBe(true)
+      expect(isEcdDirector(directorUser)).toBe(true)
+      expect(isEcdCenterUser(caregiverUser)).toBe(true)
+      expect(isEcdCenterUser(directorUser)).toBe(true)
+      expect(isCaretaker(directorUser)).toBe(false)
+      expect(loginRoleMatches('ecdDirector', 'caretaker')).toBe(true)
+      expect(loginRoleMatches('caretaker', 'caretaker')).toBe(true)
+      expect(loginRoleMatches('ncda', 'caretaker')).toBe(false)
       expect(isNcda(districtUser)).toBe(false)
       expect(isDistrictOfficer(ncdaUser)).toBe(false)
     })
@@ -86,6 +106,14 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
       expect(app).toContain('path="/district"')
       expect(app).not.toMatch(/allowedRole=\{?\[["']districtOfficer["'],\s*["']ncda["']\]\}?/)
     })
+
+    it('shares ECD center pages for caregiver and director; director extras are gated', () => {
+      expect(app).toContain('allowedRole={ECD_CENTER_ROLES}')
+      expect(app).toContain('allowedRole="ecdDirector"')
+      expect(app).toContain('path="/caretaker/abakoresha"')
+      expect(app).toContain('path="/caretaker/isuzuma"')
+      expect(app).toContain('CenterUsersPage')
+    })
   })
 
   describe('login path + LocalStore isolation', () => {
@@ -97,7 +125,7 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
       expect(loginPage).toContain("ncda: 'ncda'")
     })
 
-    it('caregiver repositories still gate LIVE hydration with isCaretaker', () => {
+    it('caregiver repositories still gate LIVE hydration with isEcdCenterUser', () => {
       const childrenRepo = fs.readFileSync(
         path.resolve(__dirname, '../children/repository.ts'),
         'utf8',
@@ -106,8 +134,8 @@ describe('Sprint 5.5A — NCDA role boundary', () => {
         path.resolve(__dirname, '../attendance/repository.ts'),
         'utf8',
       )
-      expect(childrenRepo).toMatch(/isCaretaker\(user\)/)
-      expect(attendanceRepo).toMatch(/isCaretaker\(user\)/)
+      expect(childrenRepo).toMatch(/isEcdCenterUser\(user\)/)
+      expect(attendanceRepo).toMatch(/isEcdCenterUser\(user\)/)
       expect(childrenRepo).not.toMatch(/isNcda\(user\)/)
     })
 

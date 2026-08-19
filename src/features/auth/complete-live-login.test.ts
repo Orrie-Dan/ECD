@@ -131,4 +131,38 @@ describe('completeLiveLogin', () => {
     expect(setSession).not.toHaveBeenCalled()
     expect(ensureDeviceRegisteredUntilOk).not.toHaveBeenCalled()
   })
+
+  it('accepts ECD director on the caregiver login portal', async () => {
+    const directorApiUser: AuthUserResponseDto = {
+      ...apiUser,
+      username: 'director1',
+      role: 'ecd_director',
+    }
+    vi.mocked(loginRequest).mockResolvedValue({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: {
+        id: 'user-1',
+        name: 'director1',
+        role: 'ecdDirector',
+        centerId: 'center-1',
+        centerName: 'Ikigo',
+      },
+      apiUser: directorApiUser,
+    })
+
+    const result = await completeLiveLogin(
+      { username: 'director1', password: 'secret', expectedRole: 'caretaker' },
+      { setSession, clearSession },
+    )
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.role).toBe('ecdDirector')
+    }
+    expect(setSession).toHaveBeenCalledWith(
+      { accessToken: 'access', refreshToken: 'refresh' },
+      directorApiUser,
+    )
+  })
 })

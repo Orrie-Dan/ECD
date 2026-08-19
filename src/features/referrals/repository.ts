@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { env } from '@/config/env'
 import { normalizeApiError } from '@/api/errors'
-import { isCaretaker } from '@/api/roles'
+import { isEcdCenterUser } from '@/api/roles'
 import { asReferralViewModel } from '@/api/mappers/referral.mapper'
 import { useReferralWindow } from '@/features/referrals/queries'
 import { invalidateReferralQueries } from '@/features/referrals/mutations'
@@ -42,7 +42,7 @@ export function useReferralRepository(user: User | null, children: Child[]) {
 
   const windowFilters = useMemo(
     () => ({
-      centerId: isCaretaker(user) ? user?.centerId : undefined,
+      centerId: isEcdCenterUser(user) ? user?.centerId : undefined,
     }),
     [user],
   )
@@ -50,7 +50,7 @@ export function useReferralRepository(user: User | null, children: Child[]) {
   // District LIVE must not pull district-wide referral windows into LocalStore.
   const liveQuery = useReferralWindow(
     windowFilters,
-    env.isLive && !!user && isCaretaker(user),
+    env.isLive && !!user && isEcdCenterUser(user),
   )
 
   const childCenterMap = useMemo(() => {

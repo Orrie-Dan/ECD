@@ -52,6 +52,9 @@ export function mapChildListItemToViewModel(dto: ChildResponseDto): ChildViewMod
     version: dto.version,
     homeVillageId: dto.homeVillageId,
     archivedAt: dto.status === 'archived' ? dto.updatedAt?.slice(0, 10) : undefined,
+    classroomId: (dto.classroomId as unknown as string) ?? undefined,
+    classroomGrade: dto.classroomGrade ?? undefined,
+    nationalId: dto.nationalId ?? undefined,
   }
 }
 
@@ -88,6 +91,10 @@ export function mapChildDetailToViewModel(dto: ChildDetailResponseDto): ChildVie
     firstName: dto.firstName,
     middleName: dto.middleName ?? undefined,
     lastName: dto.lastName ?? undefined,
+    classroomId: (dto.classroomId as unknown as string) ?? undefined,
+    classroomGrade: dto.classroomGrade ?? undefined,
+    classroomLabel: (dto.classroomLabel as unknown as string) ?? undefined,
+    nationalId: dto.nationalId ?? undefined,
   }
 }
 

@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CheckCircle2, Clock, Pencil, Ruler, Users, Eye } from 'lucide-react'
+import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
+import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
+import { useClassroomGateway } from '@/hooks/useClassroomGateway'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -62,17 +65,20 @@ export function MonthlyGrowthRosterPage() {
     [children, user?.centerId],
   )
 
+  const { selectedGrade, setSelectedGrade, gradeChildren: gradeCenterChildren, goBack, isGradeSelected } =
+    useClassroomGateway(centerChildren)
+
   const { pending, measured } = useMemo(
-    () => partitionGrowthRoster(centerChildren, growthMeasurements, yearMonth),
-    [centerChildren, growthMeasurements, yearMonth],
+    () => partitionGrowthRoster(gradeCenterChildren, growthMeasurements, yearMonth),
+    [gradeCenterChildren, growthMeasurements, yearMonth],
   )
 
   const coverageRate =
-    centerChildren.length === 0
+    gradeCenterChildren.length === 0
       ? 0
-      : Math.round((measured.length / centerChildren.length) * 100)
+      : Math.round((measured.length / gradeCenterChildren.length) * 100)
 
-  const list = view === 'pending' ? pending : view === 'measured' ? measured : centerChildren
+  const list = view === 'pending' ? pending : view === 'measured' ? measured : gradeCenterChildren
 
   const pagination = usePagination(list, { resetDeps: [view, yearMonth] })
 
@@ -139,16 +145,23 @@ export function MonthlyGrowthRosterPage() {
   const tabs: { id: RosterView; label: string; count: number }[] = [
     { id: 'pending', label: caretaker.growth.pendingMeasurement, count: pending.length },
     { id: 'measured', label: caretaker.growth.measuredThisMonth, count: measured.length },
-    { id: 'all', label: caretaker.growth.allChildren, count: centerChildren.length },
+    { id: 'all', label: caretaker.growth.allChildren, count: gradeCenterChildren.length },
   ]
 
   const progressLabel = caretaker.growth.progressOf
     .replace('{done}', String(measured.length))
-    .replace('{total}', String(centerChildren.length))
+    .replace('{total}', String(gradeCenterChildren.length))
+
+  const goBackToClassrooms = () => {
+    goBack()
+    setView('pending')
+  }
 
   return (
     <CaretakerLayout backTo="/caretaker/imikurire" backLabel={caretaker.nav.growth}>
       <PageContainer>
+        {isGradeSelected && <ClassroomBackLink onClick={goBackToClassrooms} />}
+
         <PageHeader
           title={caretaker.growth.monthlyRoster}
           description={caretaker.growth.monthlyRosterDesc}
@@ -158,7 +171,7 @@ export function MonthlyGrowthRosterPage() {
               size="md"
               icon={<Ruler size={18} />}
               onClick={startSession}
-              disabled={centerChildren.length === 0 || pending.length === 0}
+              disabled={gradeCenterChildren.length === 0 || pending.length === 0}
               className="w-full sm:w-auto"
             >
               {caretaker.growth.startSession}
@@ -167,6 +180,13 @@ export function MonthlyGrowthRosterPage() {
         />
 
         <PageContent className="space-y-6">
+      {!isGradeSelected ? (
+          <ClassroomCards
+            children={centerChildren}
+            onSelect={setSelectedGrade}
+          />
+      ) : (
+      <>
           <div
             className="grid grid-cols-2 sm:grid-cols-4 gap-4 items-stretch"
             role="group"
@@ -267,7 +287,7 @@ export function MonthlyGrowthRosterPage() {
             />
           </Card>
 
-          {centerChildren.length === 0 ? (
+          {gradeCenterChildren.length === 0 ? (
             <EmptyState
               icon={<Users size={48} className="text-text-muted" strokeWidth={1.5} />}
               title={caretaker.growth.noChildrenRoster}
@@ -487,6 +507,8 @@ export function MonthlyGrowthRosterPage() {
               />
             </>
           )}
+      </>
+      )}
         </PageContent>
       </PageContainer>
 

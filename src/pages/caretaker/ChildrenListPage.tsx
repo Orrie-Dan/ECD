@@ -1,6 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Baby } from 'lucide-react'
+import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
+import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
+import { useClassroomGateway } from '@/hooks/useClassroomGateway'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import {
   ListControlBar,
@@ -83,6 +86,9 @@ export function ChildrenListPage() {
   const [reactivateChild, setReactivateChild] = useState<Child | null>(null)
   const [measureChild, setMeasureChild] = useState<Child | null>(null)
 
+  const { selectedGrade, setSelectedGrade, gradeChildren, goBack, isGradeSelected } =
+    useClassroomGateway(children)
+
   useEffect(() => {
     const timer = window.setTimeout(() => setMockLoading(false), 280)
     return () => window.clearTimeout(timer)
@@ -100,12 +106,12 @@ export function ChildrenListPage() {
   const filtered = useMemo(
     () =>
       filterAndSortChildren({
-        children,
+        children: gradeChildren,
         filters,
         attendanceFilter,
         isPresentToday,
       }),
-    [children, filters, attendanceFilter, isPresentToday],
+    [gradeChildren, filters, attendanceFilter, isPresentToday],
   )
 
   const pagination = usePagination(filtered, {
@@ -126,9 +132,16 @@ export function ChildrenListPage() {
     setViewState('all')
   }
 
+  const goBackToClassrooms = () => {
+    goBack()
+    resetAll()
+  }
+
   return (
     <CaretakerLayout>
       <PageContainer>
+        {isGradeSelected && <ClassroomBackLink onClick={goBackToClassrooms} />}
+
         <PageHeader
           title={caretaker.children.title}
           description={caretaker.children.subtitle}
@@ -146,6 +159,13 @@ export function ChildrenListPage() {
         />
 
         <PageContent>
+      {!isGradeSelected ? (
+        <ClassroomCards
+          children={children}
+          onSelect={setSelectedGrade}
+        />
+      ) : (
+      <>
       <ListControlBar
         childName={filters.childName}
         onChildNameChange={(childName) => setFilters((prev) => ({ ...prev, childName }))}
@@ -262,6 +282,8 @@ export function ChildrenListPage() {
         filters={filters}
         onApply={(f) => setFilters(f as ChildrenSearchFilters)}
       />
+      </>
+      )}
 
       {archiveChild && (
         <ArchiveDialog

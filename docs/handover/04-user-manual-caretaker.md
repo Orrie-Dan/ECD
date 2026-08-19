@@ -13,7 +13,7 @@ Iri gitabo gisobanura ibyo umurezi akora buri munsi. Ntabwo usabwa kumenya seriv
 
 1. Fungura sisitemu.  
 2. Hitamo **Umurezi**.  
-3. Andika izina n’ijambo ry’ibanga waherejwe.  
+3. Andika izina n’ijambo ry’ibanga wyoherejweho.  
 4. Ujya ku **Ahabanza**.
 
 Niba umurongo udahari ariko wigeze winjira kandi amakuru yabitswe ku gikoresho, ushobora gukomeza gukora. Niba nta makuru yabitswe, sisitemu izakubwira **Nta makuru yabitswe kuri iki gikoresho** — huza interneti rimwe.

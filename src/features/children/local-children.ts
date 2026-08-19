@@ -59,6 +59,8 @@ export function localChildToViewModel(row: LocalChildRecord): ChildViewModel {
     firstName: row.firstName,
     middleName: row.middleName ?? undefined,
     lastName: row.lastName ?? undefined,
+    classroomId: row.classroomId,
+    classroomGrade: row.classroomGrade as Child['classroomGrade'],
   }
 }
 

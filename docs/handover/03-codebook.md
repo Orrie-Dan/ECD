@@ -245,7 +245,7 @@ Default rule: any physical `problem` or any milestone `oya` → referred + couns
 |---|---|---|
 | `sourceType` | `nutrition` \| `sted` | Imirire / MUAC \| STED |
 | `status` | `pending` \| `completed` \| `cancelled` | Bitegereje \| Byakozwe \| Byahagaritswe |
-| `destination` | string | Aho baherejwe |
+| `destination` | string | Aho byoherejweho |
 | `reason` | string | Impamvu |
 | `implementedAt` | ISO date, optional | Itariki yashyizwe mu bikorwa |
 

@@ -24,6 +24,14 @@ const ROLES = [
     notes: ncda.rolesPage.roleDfpNotes,
   },
   {
+    id: 'ecd_director',
+    label: ncda.rolesPage.roleDirector,
+    portal: ncda.rolesPage.roleDirectorPortal,
+    scope: ncda.rolesPage.roleDirectorScope,
+    create: ncda.rolesPage.roleDirectorCreate,
+    notes: ncda.rolesPage.roleDirectorNotes,
+  },
+  {
     id: 'caregiver',
     label: ncda.rolesPage.roleCaregiver,
     portal: ncda.rolesPage.roleCaregiverPortal,

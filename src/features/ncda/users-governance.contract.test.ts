@@ -46,8 +46,13 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
         'caregiver',
         'district_focal_person',
         'ncda_admin',
+        'ecd_director',
       ])
-      expect(NCDA_CREATABLE_ROLES).toEqual(['district_focal_person', 'caregiver'])
+      expect(NCDA_CREATABLE_ROLES).toEqual([
+        'district_focal_person',
+        'ecd_director',
+        'caregiver',
+      ])
       expect(NCDA_CREATABLE_ROLES).not.toContain('ncda_admin')
       expect(usersPage).not.toMatch(/super_admin|District_Inspector|\bDHI\b|\bCAU\b/)
       expect(usersPage).toContain('createRoleForbidden')

@@ -10,7 +10,7 @@ import {
 import { useChildrenList } from '@/features/children/queries'
 import { invalidateChildrenQueries } from '@/features/children/mutations'
 import { createChildLocalFirst, updateChildLocalFirst, archiveChildLocalFirst, reactivateChildLocalFirst, ChildUpdateRequiresOnlineError, childPatchRequiresOnlineRest } from '@/features/children/local-children'
-import { isCaretaker } from '@/api/roles'
+import { isEcdCenterUser } from '@/api/roles'
 import {
   MOCK_CHILDREN,
   DEFAULT_CENTER_ID,
@@ -54,7 +54,7 @@ export function useChildrenRepository(user: User | null) {
 
   const listFilters = useMemo(
     () => ({
-      centerId: isCaretaker(user) ? user?.centerId : undefined,
+      centerId: isEcdCenterUser(user) ? user?.centerId : undefined,
       page: 1,
       pageSize: 100,
     }),
@@ -64,7 +64,7 @@ export function useChildrenRepository(user: User | null) {
   // District LIVE must not hydrate caregiver LocalStore / unbounded centerless lists.
   const liveListQuery = useChildrenList(
     listFilters,
-    env.isLive && !!user && isCaretaker(user),
+    env.isLive && !!user && isEcdCenterUser(user),
   )
 
   const children: Child[] = useMemo(

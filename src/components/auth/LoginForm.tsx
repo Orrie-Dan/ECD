@@ -26,7 +26,7 @@ export function LoginForm({ role }: LoginFormProps) {
   const [formError, setFormError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const title = hasRole({ role }, 'caretaker')
+  const title = hasRole({ role }, ['caretaker', 'ecdDirector'])
     ? auth.login.titleCaretaker
     : hasRole({ role }, 'ncda')
       ? auth.login.titleNcda
