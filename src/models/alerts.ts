@@ -3,6 +3,10 @@ export type FollowUpAlertCategory =
   | 'attendance'
   | 'referral'
   | 'data_quality'
+  | 'sted'
+  | 'transfer'
+  | 'compliance'
+  | 'capacity'
 
 export type FollowUpAlertPriority = 'high' | 'medium' | 'low'
 
@@ -36,6 +40,10 @@ export interface FollowUpAlertsViewModel {
     attendance: number
     referral: number
     data_quality: number
+    sted: number
+    transfer: number
+    compliance: number
+    capacity: number
     high: number
   }
   districtId: string | null

@@ -377,6 +377,17 @@ function createDistrictKeys() {
   }
 }
 
+function createNotificationKeys() {
+  const all = ['notifications'] as const
+  const lists = () => [...all, 'list'] as const
+  return {
+    all,
+    lists,
+    list: (filters: Record<string, unknown> = {}) => [...lists(), filters] as const,
+    unreadCount: () => [...all, 'unread-count'] as const,
+  }
+}
+
 function createClassroomKeys() {
   const all = ['classrooms'] as const
   const lists = () => [...all, 'list'] as const
@@ -420,6 +431,7 @@ export const queryKeys = {
   ncda: createNcdaKeys(),
   ecdCenter: createEcdCenterKeys(),
   classrooms: createClassroomKeys(),
+  notifications: createNotificationKeys(),
 } as const
 
 export const auth = { keys: queryKeys.auth }
@@ -436,6 +448,8 @@ export const district = { keys: queryKeys.district }
 export const ncda = { keys: queryKeys.ncda }
 export const ecdCenter = { keys: queryKeys.ecdCenter }
 export const classrooms = { keys: queryKeys.classrooms }
+
+export const notifications = { keys: queryKeys.notifications }
 
 export const authKeys = queryKeys.auth
 export const childrenKeys = queryKeys.children
@@ -508,6 +522,10 @@ export const queryStaleTimes = {
   ecdCenterUsers: 30_000,
   /** Classrooms per center — rarely changes; 2m stale window. */
   classrooms: 120_000,
+  /** Notifications list — short stale; mutations invalidate. */
+  notifications: 15_000,
+  /** Unread count badge — polled every 30s; very short stale. */
+  notificationsUnread: 10_000,
   /** District Incamake geo identity / sectors / centres. */
   districtOverview: 60_000,
 } as const

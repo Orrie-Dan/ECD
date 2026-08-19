@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LogOut, Menu } from 'lucide-react'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { NavDrawer } from '@/components/ui/NavDrawer'
@@ -196,7 +197,10 @@ export function NcdaLayout() {
                 <h1 className="text-body font-bold text-text leading-tight truncate">{pageTitle}</h1>
               </div>
             </div>
-            <NcdaUserMenu onRequestLogout={() => setShowLogout(true)} />
+            <div className="flex items-center gap-2">
+              <NotificationBell rolePrefix="/ncda" />
+              <NcdaUserMenu onRequestLogout={() => setShowLogout(true)} />
+            </div>
           </div>
         </header>
 

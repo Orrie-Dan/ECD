@@ -22,6 +22,7 @@ import { BottomNav, type NavItem } from '@/components/ui/BottomNav'
 import { NavDrawer } from '@/components/ui/NavDrawer'
 import { SidebarNavLink, isSidebarNavActive, type SidebarNavItem } from '@/components/ui/SidebarNavLink'
 import { SyncStatusIndicator } from '@/components/offline/SyncStatusIndicator'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ProductionMockBanner } from '@/components/offline/ProductionMockBanner'
 import {
   LogoutPendingModal,
@@ -352,6 +353,7 @@ export function CaretakerLayout({ children, pageTitle, backTo, backLabel }: Care
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <NotificationBell rolePrefix="/caretaker" />
               <SyncStatusIndicator />
               <div className="hidden md:block text-right min-w-0">
                 <p className="text-body font-semibold text-text leading-tight truncate max-w-[12rem] lg:max-w-[14rem]">

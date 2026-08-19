@@ -30,6 +30,8 @@ import { SelfEvalPage } from '@/pages/caretaker/SelfEvalPage'
 import { SelfEvalWizardPage } from '@/pages/caretaker/SelfEvalWizardPage'
 import { CenterUsersPage } from '@/pages/caretaker/CenterUsersPage'
 import { CenterUserDetailPage } from '@/pages/caretaker/CenterUserDetailPage'
+import { CaretakerNotificationsPage } from '@/pages/caretaker/NotificationsPage'
+import { CaretakerAlertsPage } from '@/pages/caretaker/AlertsPage'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { DistrictDashboardPage } from '@/pages/district/DashboardPage'
@@ -43,11 +45,15 @@ import { GrowthMonitoringPage } from '@/pages/district/GrowthMonitoringPage'
 import { FeedingMonitoringPage } from '@/pages/district/FeedingMonitoringPage'
 import { StedMonitoringPage } from '@/pages/district/StedMonitoringPage'
 import { GukurikiranaPage } from '@/pages/district/GukurikiranaPage'
+import { DistrictNotificationsPage } from '@/pages/district/NotificationsPage'
+import { DistrictAlertsPage } from '@/pages/district/AlertsPage'
 import { DistrictMonitoringPage } from '@/pages/district/DistrictMonitoringPage'
 import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
 import { DistrictCaregiversPage } from '@/pages/district/DistrictCaregiversPage'
 import { DistrictCaregiverDetailPage } from '@/pages/district/DistrictCaregiverDetailPage'
 import { NcdaLayout } from '@/layouts/NcdaLayout'
+import { NcdaNotificationsPage } from '@/pages/ncda/NotificationsPage'
+import { NcdaAlertsPage } from '@/pages/ncda/AlertsPage'
 import {
   NcdaDashboardPage,
   NcdaDistrictsPage,
@@ -119,6 +125,8 @@ export default function App() {
                   <Route path="/caretaker/abana/:id" element={<ChildDetailPage />} />
                   <Route path="/caretaker/abana/:id/hindura" element={<EditChildPage />} />
                   <Route path="/caretaker/raporo" element={<AttendanceReportPage />} />
+                  <Route path="/caretaker/amatangazo" element={<CaretakerNotificationsPage />} />
+                  <Route path="/caretaker/impugukirwa" element={<CaretakerAlertsPage />} />
                   <Route path="/caretaker/ibindi" element={<MorePage />} />
                   <Route path="/caretaker/igenamiterere" element={<SettingsPage />} />
                 </Route>
@@ -146,6 +154,8 @@ export default function App() {
                     <Route path="/district/imikorere/imirire" element={<FeedingMonitoringPage />} />
                     <Route path="/district/imikorere/sted" element={<StedMonitoringPage />} />
                     <Route path="/district/gukurikirana" element={<GukurikiranaPage />} />
+                    <Route path="/district/amatangazo" element={<DistrictNotificationsPage />} />
+                    <Route path="/district/impugukirwa" element={<DistrictAlertsPage />} />
                     <Route path="/district/raporo" element={<DistrictReportsPage />} />
                     <Route path="/district/igenamiterere" element={<DistrictSettingsPage />} />
                     <Route
@@ -219,6 +229,8 @@ export default function App() {
                       path="/ncda/compliance"
                       element={<RedirectWithSearch to="/ncda/inspections" />}
                     />
+                    <Route path="/ncda/amatangazo" element={<NcdaNotificationsPage />} />
+                    <Route path="/ncda/impugukirwa" element={<NcdaAlertsPage />} />
                     <Route path="/ncda/wash" element={<NcdaWashPage />} />
                     <Route
                       path="/ncda/devices"

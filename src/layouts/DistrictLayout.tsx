@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LogOut, Menu } from 'lucide-react'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { LogoutPendingModal } from '@/components/offline/LogoutPendingModal'
@@ -275,15 +276,18 @@ export function DistrictLayout() {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => {
-                void openLogoutModal()
-              }}
-              className="lg:hidden touch-target flex items-center justify-center rounded-lg text-error hover:bg-error-light transition-colors shrink-0"
-              aria-label={common.logout}
-            >
-              <LogOut size={20} />
-            </button>
+            <div className="flex items-center gap-2">
+              <NotificationBell rolePrefix="/district" />
+              <button
+                onClick={() => {
+                  void openLogoutModal()
+                }}
+                className="lg:hidden touch-target flex items-center justify-center rounded-lg text-error hover:bg-error-light transition-colors shrink-0"
+                aria-label={common.logout}
+              >
+                <LogOut size={20} />
+              </button>
+            </div>
           </div>
         </header>
 
