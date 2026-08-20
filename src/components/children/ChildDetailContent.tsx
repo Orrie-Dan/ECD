@@ -18,6 +18,7 @@ import {
 } from '@/components/growth/MeasurementDialog'
 import { ArchiveDialog } from '@/components/children/ArchiveDialog'
 import { ReactivateChildDialog } from '@/components/children/ReactivateChildDialog'
+import { AssignClassroomDialog } from '@/components/children/AssignClassroomDialog'
 import { InitiateTransferModal } from '@/components/transfers/InitiateTransferModal'
 import { useTransfersControllerFindOutgoing } from '@/api/generated/endpoints/transfers/transfers'
 import { TransferStatus } from '@/api/generated/models/transferStatus'
@@ -113,6 +114,7 @@ export function ChildDetailContent({
   const [reactivateOpen, setReactivateOpen] = useState(false)
   const [measureOpen, setMeasureOpen] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
+  const [assignClassroomOpen, setAssignClassroomOpen] = useState(false)
   const [editingMeasurement, setEditingMeasurement] = useState<GrowthMeasurement | null>(null)
 
   const isCaretaker = userIsEcdCenter(user)
@@ -183,6 +185,11 @@ export function ChildDetailContent({
         onRecordMeasurement={
           actionsEnabled && child.status === 'active'
             ? () => openMeasureDialog(null)
+            : undefined
+        }
+        onAssignClassroom={
+          actionsEnabled && child.status === 'active' && !child.classroomGrade
+            ? () => setAssignClassroomOpen(true)
             : undefined
         }
         onTransfer={
@@ -349,6 +356,10 @@ export function ChildDetailContent({
           <ChildInfoCard title={caretaker.childDetail.personalInfo}>
             <DetailRow label={common.labels.dateOfBirth} value={formatDate(child.dateOfBirth)} />
             <DetailRow
+              label={caretaker.registration.nationalId}
+              value={child.nationalId?.trim() || caretaker.registration.notProvided}
+            />
+            <DetailRow
               label={caretaker.childDetail.dateRegistered}
               value={formatDate(child.registeredAt)}
             />
@@ -413,15 +424,17 @@ export function ChildDetailContent({
             <InitiateTransferModal
               open={transferOpen}
               onClose={() => setTransferOpen(false)}
-              childId={child.id}
-              childName={child.fullName}
-              childVersion={child.version ?? 0}
-              currentCenterId={child.centerId}
+              child={child}
             />
           )}
           <ReactivateChildDialog
             open={reactivateOpen}
             onClose={() => setReactivateOpen(false)}
+            child={child}
+          />
+          <AssignClassroomDialog
+            open={assignClassroomOpen}
+            onClose={() => setAssignClassroomOpen(false)}
             child={child}
           />
           <MeasurementDialog

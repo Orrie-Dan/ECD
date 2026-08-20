@@ -12,6 +12,21 @@ export type ChildrenAgeFilter = AgeFilter
 export type ChildrenAttendanceFilter = 'all' | 'present' | 'absent'
 export type { ChildrenSort }
 
+/** True when the child should count toward centre enrollment (attendance, dashboard, etc.). */
+export function isEnrolledChild(child: Child): boolean {
+  return child.status === 'active'
+}
+
+/** Active children at this centre, optionally excluding pending outgoing transfers. */
+export function filterEnrolledChildren(
+  children: Child[],
+  excludeChildIds?: ReadonlySet<string>,
+): Child[] {
+  return children.filter(
+    (child) => isEnrolledChild(child) && !(excludeChildIds?.has(child.id) ?? false),
+  )
+}
+
 interface FilterSortParams {
   children: Child[]
   filters: ChildrenSearchFilters

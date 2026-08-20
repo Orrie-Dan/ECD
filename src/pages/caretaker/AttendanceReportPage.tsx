@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
 import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
 import { useClassroomGateway } from '@/hooks/useClassroomGateway'
+import { useEnrollmentChildren } from '@/hooks/useEnrollmentChildren'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -66,6 +67,7 @@ function statusFilterLabel(filter: ReportStatusFilter): string {
  */
 export function AttendanceReportPage() {
   const { children, attendance } = useData()
+  const enrolledChildren = useEnrollmentChildren()
   const { showSuccess, showError } = useToast()
   const [viewEntry, setViewEntry] = useState<{ child: Child; record: AttendanceRecord } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -96,13 +98,8 @@ export function AttendanceReportPage() {
 
   const childrenById = useMemo(() => new Map(children.map((child) => [child.id, child])), [children])
 
-  const activeChildren = useMemo(
-    () => children.filter((child) => child.status === 'active'),
-    [children],
-  )
-
   const { setSelectedGrade, gradeChildren: gradeActiveChildren, goBack, isGradeSelected } =
-    useClassroomGateway(activeChildren)
+    useClassroomGateway(enrolledChildren)
 
   const applyRange = (from: string, to: string) => {
     const next = clampDateRange(from, to, today)
@@ -235,7 +232,7 @@ export function AttendanceReportPage() {
         <PageContent>
       {!isGradeSelected ? (
         <ClassroomCards
-          children={activeChildren}
+          children={enrolledChildren}
           onSelect={setSelectedGrade}
         />
       ) : (

@@ -16,7 +16,7 @@ import type {
   TransferChildInput,
 } from '@/types'
 import type { PaginatedChildrenResponseDto } from '@/api/generated/models'
-import { buildRegistrationNumber } from '@/lib/mock-data'
+import { normalizeNationalId } from '@/lib/child-form'
 
 const DEFAULT_RELATION: GuardianRelation = 'ikindi'
 
@@ -46,7 +46,11 @@ export function mapChildListItemToViewModel(dto: ChildResponseDto): ChildViewMod
     village: emptyLocation(dto.village),
     registeredAt: dto.createdAt?.slice(0, 10) ?? dto.createdAt,
     status: dto.status,
-    registrationNumber: dto.registrationNumber,
+    // API list DTO has no separate registrationNumber; NIN is the durable identifier.
+    registrationNumber:
+      (dto as ChildResponseDto & { registrationNumber?: string }).registrationNumber ??
+      dto.nationalId ??
+      '',
     centerId: dto.centerId,
     centerName: dto.centerName ?? '',
     version: dto.version,
@@ -80,7 +84,10 @@ export function mapChildDetailToViewModel(dto: ChildDetailResponseDto): ChildVie
     village: emptyLocation(dto.village),
     registeredAt: dto.registeredAt?.slice(0, 10) ?? dto.registeredAt,
     status: dto.status,
-    registrationNumber: dto.registrationNumber,
+    registrationNumber:
+      (dto as ChildDetailResponseDto & { registrationNumber?: string }).registrationNumber ??
+      dto.nationalId ??
+      '',
     centerId: dto.centerId,
     centerName: dto.centerName ?? '',
     archivedAt: dto.archivedAt ?? undefined,
@@ -112,19 +119,19 @@ export function mapPaginatedChildrenToViewModel(
 
 export function mapFormToCreateChildDto(
   form: ChildRegistrationForm,
-  options: { centerId: string; homeVillageId: string; registrationNumber?: string },
+  options: {
+    centerId: string
+    homeVillageId: string
+    classroomId?: string
+  },
 ): CreateChildDto {
-  const registrationNumber =
-    options.registrationNumber ??
-    buildRegistrationNumber(String(Date.now()).slice(-4), new Date().toISOString().slice(0, 10))
-
   return {
     fullName: form.fullName.trim(),
     dateOfBirth: form.dateOfBirth,
     gender: form.gender as CreateChildDto['gender'],
     centerId: options.centerId,
-    registrationNumber,
     homeVillageId: options.homeVillageId,
+    nationalId: normalizeNationalId(form.nationalId),
     guardianName: form.guardianName.trim(),
     guardianPhone: form.guardianPhone.trim(),
     guardianRelation: form.guardianRelation || undefined,
@@ -136,6 +143,7 @@ export function mapFormToCreateChildDto(
         }
       : {}),
     ...(form.specialNeeds.trim() ? { specialNeeds: form.specialNeeds.trim() } : {}),
+    ...(options.classroomId ? { classroomId: options.classroomId } : {}),
   }
 }
 
@@ -159,6 +167,7 @@ export function mapChildPatchToUpdateDto(
     ...(patch.guardian2Phone !== undefined ? { guardian2Phone: patch.guardian2Phone } : {}),
     ...(patch.guardian2Relation !== undefined ? { guardian2Relation: patch.guardian2Relation } : {}),
     ...(patch.specialNeeds !== undefined ? { specialNeeds: patch.specialNeeds } : {}),
+    ...(patch.classroomId !== undefined ? { classroomId: patch.classroomId } : {}),
   }
 }
 

@@ -8,6 +8,7 @@ import {
   transferChildRequest,
   updateChildRequest,
 } from '@/api/resources/children'
+import { resolveClassroomIdForGrade } from '@/api/resources/classrooms'
 import type { ChildViewModel } from '@/models/child'
 import type {
   ArchiveChildInput,
@@ -39,9 +40,13 @@ export function useCreateChild() {
         cell: input.form.cell,
         village: input.form.village,
       })
+      const classroomId = input.form.classroomGrade
+        ? await resolveClassroomIdForGrade(input.centerId, input.form.classroomGrade)
+        : null
       return createChildRequest(input.form, {
         centerId: input.centerId,
         homeVillageId,
+        ...(classroomId ? { classroomId } : {}),
       })
     },
     onSuccess: () => {
@@ -66,6 +71,9 @@ export function useUpdateChild() {
           cell: input.form.cell,
           village: input.form.village,
         })
+        const classroomId = input.form.classroomGrade
+          ? await resolveClassroomIdForGrade(input.child.centerId, input.form.classroomGrade)
+          : null
         patch = {
           ...patch,
           homeVillageId,
@@ -74,6 +82,8 @@ export function useUpdateChild() {
           sector: input.form.sector,
           cell: input.form.cell,
           village: input.form.village,
+          ...(input.form.classroomGrade ? { classroomGrade: input.form.classroomGrade } : {}),
+          ...(classroomId ? { classroomId } : {}),
         } as Partial<Child> & { homeVillageId: string }
       }
       return updateChildRequest(input.child, patch)

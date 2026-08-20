@@ -12,6 +12,7 @@ import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummar
 import { useAuth, useData } from '@/contexts/AppContext'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, relations } from '@/locales/rw/common'
+import { useEnrollmentChildren } from '@/hooks/useEnrollmentChildren'
 import {
   computeAttendanceSummary,
   formatArrivalTime,
@@ -65,19 +66,20 @@ function formatTodayDate(): string {
 
 export function CaretakerDashboardPage() {
   const { user } = useAuth()
-  const { children, attendance } = useData()
+  const { attendance } = useData()
+  const enrolledChildren = useEnrollmentChildren()
   const navigate = useNavigate()
 
   const summary = useMemo(
-    () => computeAttendanceSummary(children, attendance, getTodayDate()),
-    [children, attendance],
+    () => computeAttendanceSummary(enrolledChildren, attendance, getTodayDate()),
+    [enrolledChildren, attendance],
   )
   const presentCount = summary.present
   const waitingCount = summary.unrecorded
 
   const activityItems = useMemo(
-    () => buildActivityFeed(children, attendance),
-    [children, attendance]
+    () => buildActivityFeed(enrolledChildren, attendance),
+    [enrolledChildren, attendance]
   )
 
   return (
@@ -108,14 +110,14 @@ export function CaretakerDashboardPage() {
           </section>
 
           <section aria-label={common.ui.keyStats} className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <StatCard icon={<Baby size={22} />} label={caretaker.dashboard.totalChildren} value={children.length} />
+            <StatCard icon={<Baby size={22} />} label={caretaker.dashboard.totalChildren} value={enrolledChildren.length} />
             <StatCard icon={<CheckCircle2 size={22} />} label={caretaker.dashboard.presentToday} value={presentCount} variant="success" />
             <StatCard icon={<Hourglass size={22} />} label={caretaker.dashboard.notYetArrived} value={waitingCount} variant="warning" />
           </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ActivityTimeline items={activityItems} />
-            <ProgressCard present={presentCount} total={children.length} />
+            <ProgressCard present={presentCount} total={enrolledChildren.length} />
           </div>
         </PageContent>
       </PageContainer>

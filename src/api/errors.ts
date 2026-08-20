@@ -94,6 +94,25 @@ export function normalizeApiError(error: unknown): ApiError {
 }
 
 function fromAxiosError(error: AxiosError<ErrorBody>): ApiError {
+  // Abort / CancelToken — preserve a stable code so toast guards still work after
+  // the auth interceptor normalizes the rejection into an ApiError.
+  if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+    const message = error.message || 'canceled'
+    return {
+      statusCode: 0,
+      message,
+      messages: [message],
+      code: 'ERR_CANCELED',
+      raw: error,
+      isNetworkError: false,
+      isUnauthorized: false,
+      isForbidden: false,
+      isConflict: false,
+      isValidationError: false,
+      isNotFound: false,
+    }
+  }
+
   const statusCode = error.response?.status ?? 0
   const body = error.response?.data
   const { message, messages } = flattenMessage(
@@ -124,9 +143,15 @@ export function isApiError(value: unknown): value is ApiError {
   )
 }
 
-/** Type guard for Axios cancel / abort. */
+/** Type guard for Axios cancel / abort (raw or normalized ApiError). */
 export function isRequestCanceled(error: unknown): boolean {
-  return axios.isCancel(error) || (isAxiosError(error) && error.code === 'ERR_CANCELED')
+  if (axios.isCancel(error)) return true
+  if (isAxiosError(error) && error.code === 'ERR_CANCELED') return true
+  if (error instanceof Error && (error.name === 'AbortError' || error.name === 'CanceledError')) {
+    return true
+  }
+  if (isApiError(error) && error.code === 'ERR_CANCELED') return true
+  return false
 }
 
 /** Classify a normalized (or raw) error for UI / recovery branching. */

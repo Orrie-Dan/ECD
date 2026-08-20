@@ -552,6 +552,7 @@ describe('SyncEngine + children offline proof', () => {
         fullName: 'Offline Child',
         dateOfBirth: '2021-05-05',
         gender: 'Umukobwa',
+        nationalId: '1199880012345678',
         specialNeeds: '',
         guardianName: 'Mama',
         guardianPhone: '0781111111',

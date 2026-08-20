@@ -62,7 +62,11 @@ export async function fetchChildDetail(id: string): Promise<ChildViewModel> {
 
 export async function createChildRequest(
   form: ChildRegistrationForm,
-  options: { centerId: string; homeVillageId: string; registrationNumber?: string },
+  options: {
+    centerId: string
+    homeVillageId: string
+    classroomId?: string
+  },
 ): Promise<ChildViewModel> {
   const body: CreateChildDto = mapFormToCreateChildDto(form, options)
   const dto = await childrenControllerCreate(body)
@@ -111,54 +115,94 @@ function matchName<T extends { name: string }>(items: T[], name: string): T | un
   return items.find((u) => u.name.toLowerCase() === needle)
 }
 
-/**
- * Resolve a village admin-unit UUID from cascade names.
- * Districts come from `/districts`; sector/cell/village from `/admin-units`.
- */
-export async function resolveHomeVillageId(location: {
+function matchNames<T extends { name: string }>(items: T[], name: string): T[] {
+  const needle = name.trim().toLowerCase()
+  return items.filter((u) => u.name.toLowerCase() === needle)
+}
+
+type VillageLocation = {
   district: string
   sector: string
   cell: string
   village: string
-}): Promise<string> {
-  const districtsPage = await geoControllerListDistricts({
-    search: location.district.trim(),
-    page: 1,
-    pageSize: 50,
-  })
-  const district = matchName(districtsPage.items, location.district)
-  if (!district) {
-    throw new Error(`District not found: ${location.district}`)
-  }
+}
 
-  const sectors = await geoControllerListAdminUnits({
-    level: 'sector',
-    districtId: district.id,
-  })
-  const sector = matchName(sectors, location.sector)
-  if (!sector) {
-    throw new Error(`Sector not found: ${location.sector}`)
-  }
-
-  // Cells/villages are parent-scoped; production rows often have districtId=null.
-  // Passing districtId here returns [] and blocks every caregiver child create.
+/** Walk sector → cell → village. Cells/villages must not send districtId (LIVE rows are often null). */
+async function resolveVillageUnderSector(
+  sectorId: string,
+  location: VillageLocation,
+): Promise<{ villageId: string } | { missing: 'cell' | 'village' }> {
   const cells = await geoControllerListAdminUnits({
     level: 'cell',
-    parentId: sector.id,
+    parentId: sectorId,
   })
   const cell = matchName(cells, location.cell)
-  if (!cell) {
-    throw new Error(`Cell not found: ${location.cell}`)
-  }
+  if (!cell) return { missing: 'cell' }
 
   const villages = await geoControllerListAdminUnits({
     level: 'village',
     parentId: cell.id,
   })
   const village = matchName(villages, location.village)
-  if (!village) {
+  if (!village) return { missing: 'village' }
+  return { villageId: village.id }
+}
+
+/**
+ * Caregiver GET /districts is scoped to the centre's district, but a child may live
+ * in another district. Fall back to the unscoped sector catalogue and match the
+ * sector/cell/village names.
+ */
+async function resolveVillageOutsideScopedDistrict(location: VillageLocation): Promise<string> {
+  let sectors: Awaited<ReturnType<typeof geoControllerListAdminUnits>>
+  try {
+    sectors = await geoControllerListAdminUnits({ level: 'sector' })
+  } catch {
+    throw new Error(`District not found: ${location.district}`)
+  }
+  const namedSectors = matchNames(sectors, location.sector)
+  if (namedSectors.length === 0) {
+    throw new Error(`District not found: ${location.district}`)
+  }
+
+  let sawCell = false
+  for (const sector of namedSectors) {
+    const result = await resolveVillageUnderSector(sector.id, location)
+    if ('villageId' in result) return result.villageId
+    if (result.missing === 'village') sawCell = true
+  }
+
+  if (sawCell) throw new Error(`Village not found: ${location.village}`)
+  throw new Error(`Cell not found: ${location.cell}`)
+}
+
+/**
+ * Resolve a village admin-unit UUID from cascade names.
+ * Home address is independent of the centre's district — children may attend a
+ * school in a different district than they reside in.
+ */
+export async function resolveHomeVillageId(location: VillageLocation): Promise<string> {
+  const districtsPage = await geoControllerListDistricts({
+    search: location.district.trim(),
+    page: 1,
+    pageSize: 50,
+  })
+  const district = matchName(districtsPage.items, location.district)
+
+  if (district) {
+    const sectors = await geoControllerListAdminUnits({
+      level: 'sector',
+      districtId: district.id,
+    })
+    const sector = matchName(sectors, location.sector)
+    if (!sector) {
+      throw new Error(`Sector not found: ${location.sector}`)
+    }
+    const result = await resolveVillageUnderSector(sector.id, location)
+    if ('villageId' in result) return result.villageId
+    if (result.missing === 'cell') throw new Error(`Cell not found: ${location.cell}`)
     throw new Error(`Village not found: ${location.village}`)
   }
 
-  return village.id
+  return resolveVillageOutsideScopedDistrict(location)
 }

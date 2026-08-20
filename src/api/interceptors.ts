@@ -1,7 +1,7 @@
 import axios, { type AxiosError, isAxiosError } from 'axios'
 import { env } from '@/config/env'
 import { tokenStorage } from '@/api/token-storage'
-import { normalizeApiError, type ApiError } from '@/api/errors'
+import { isRequestCanceled, normalizeApiError, type ApiError } from '@/api/errors'
 
 type RetriableConfig = import('axios').InternalAxiosRequestConfig & { _retry?: boolean }
 
@@ -108,6 +108,13 @@ export function attachAuthInterceptors(client: import('axios').AxiosInstance): v
   client.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
+      // React Query aborts in-flight GETs (refetch / unmount / key change). Those
+      // must not toast — and must not go through refresh / session listeners.
+      // Re-throw the original cancel so React Query keeps treating it as an abort.
+      if (isRequestCanceled(error)) {
+        return Promise.reject(error)
+      }
+
       const original = error.config as RetriableConfig | undefined
       const status = error.response?.status
       const apiError = normalizeApiError(error)

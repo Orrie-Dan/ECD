@@ -18,10 +18,11 @@ import { AttendanceViewSheet } from '@/components/attendance/AttendanceViewSheet
 import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
 import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
 import { useClassroomGateway } from '@/hooks/useClassroomGateway'
+import { useEnrollmentChildren } from '@/hooks/useEnrollmentChildren'
 import { useAuth, useData } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
-import { getGradeLabel } from '@/lib/child-filters'
+import { getClassroomSelectionLabel } from '@/lib/child-filters'
 import { env } from '@/config/env'
 import { messages } from '@/locales/rw/common'
 import { messageForMutationFailure } from '@/offline/mutation-error-message'
@@ -42,6 +43,7 @@ export function AttendancePage() {
   const { user } = useAuth()
   const { children, attendance, recordAttendance, clearTodayAttendance, childrenNeedOnlineBootstrap } =
     useData()
+  const enrolledChildren = useEnrollmentChildren()
   const { showSuccess, showError } = useToast()
 
   const [filters, setFilters] = useState<AttendanceSearchFilters>(DEFAULT_ATTENDANCE_SEARCH)
@@ -56,13 +58,8 @@ export function AttendancePage() {
   const today = getTodayDate()
   const recordedBy = user?.name ?? 'Umurezi'
 
-  const activeChildren = useMemo(
-    () => children.filter((c) => c.status === 'active'),
-    [children],
-  )
-
   const { selectedGrade, setSelectedGrade, gradeChildren, goBack, isGradeSelected } =
-    useClassroomGateway(activeChildren)
+    useClassroomGateway(enrolledChildren)
 
   const summary = useMemo(
     () => computeAttendanceSummary(gradeChildren, attendance, selectedDate),
@@ -148,7 +145,7 @@ export function AttendancePage() {
   )
 
   const panelTitle = isGradeSelected
-    ? getGradeLabel(selectedGrade!)
+    ? getClassroomSelectionLabel(selectedGrade)
     : caretaker.attendance.title
 
   const panelDescription = isGradeSelected
@@ -217,7 +214,7 @@ export function AttendancePage() {
           />
 
           <ClassroomCards
-            children={activeChildren}
+            children={enrolledChildren}
             onSelect={setSelectedGrade}
             getDetail={getAttendanceDetail}
           />

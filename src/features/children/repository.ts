@@ -7,6 +7,7 @@ import {
   transferChildRequest,
   updateChildRequest,
 } from '@/api/resources/children'
+import { resolveClassroomIdForGrade } from '@/api/resources/classrooms'
 import { useChildrenList } from '@/features/children/queries'
 import { invalidateChildrenQueries } from '@/features/children/mutations'
 import { createChildLocalFirst, updateChildLocalFirst, archiveChildLocalFirst, reactivateChildLocalFirst, ChildUpdateRequiresOnlineError, childPatchRequiresOnlineRest } from '@/features/children/local-children'
@@ -111,6 +112,8 @@ export function useChildrenRepository(user: User | null) {
           fullName: input.fullName,
           dateOfBirth: input.dateOfBirth,
           gender: input.gender,
+          nationalId: input.nationalId ?? '',
+          classroomGrade: input.classroomGrade ?? '',
           specialNeeds: input.specialNeeds ?? '',
           guardianName: input.guardianName,
           guardianPhone: input.guardianPhone,
@@ -151,12 +154,18 @@ export function useChildrenRepository(user: User | null) {
         }
       }
 
+      let classroomId: string | null = null
+      if (form.classroomGrade && networkState.getSnapshot().isOnline) {
+        classroomId = await resolveClassroomIdForGrade(centerId, form.classroomGrade)
+      }
+
       const created = await createChildLocalFirst(store, {
         form,
         centerId,
         centerName: input.centerName ?? user?.centerName ?? '',
         homeVillageId,
         villageResolved,
+        classroomId,
       })
 
       await invalidateChildrenQueries(queryClient)
@@ -190,6 +199,10 @@ export function useChildrenRepository(user: User | null) {
           ...formToChildPayload(_form),
           province: getProvinceDisplayName(_form.province) || _form.province,
         }
+        if (_form.classroomGrade && networkState.getSnapshot().isOnline) {
+          const classroomId = await resolveClassroomIdForGrade(current.centerId, _form.classroomGrade)
+          if (classroomId) nextPatch = { ...nextPatch, classroomId }
+        }
         const existingLocal = await store.getChild(id)
         const needsOnlineFields =
           !existingLocal || childPatchRequiresOnlineRest(existingLocal, nextPatch)
@@ -212,7 +225,41 @@ export function useChildrenRepository(user: User | null) {
           village: _form.village,
         })
         nextPatch = { ...nextPatch, homeVillageId }
-        await updateChildRequest(current, nextPatch)
+        const updated = await updateChildRequest(current, nextPatch)
+        if (existingLocal) {
+          await store.putChild({
+            ...existingLocal,
+            classroomId: updated.classroomId ?? nextPatch.classroomId ?? existingLocal.classroomId,
+            classroomGrade:
+              updated.classroomGrade ?? nextPatch.classroomGrade ?? existingLocal.classroomGrade,
+            nationalId: updated.nationalId ?? existingLocal.nationalId,
+            version: updated.version,
+            _localStatus: 'clean',
+            lastModifiedAt: new Date().toISOString(),
+          })
+        }
+        await invalidateChildrenQueries(queryClient, id)
+        return
+      }
+
+      // Classroom assignment — online REST, then mirror clean local for classroom cards
+      if (
+        (nextPatch.classroomId !== undefined || nextPatch.classroomGrade !== undefined) &&
+        networkState.getSnapshot().isOnline
+      ) {
+        const updated = await updateChildRequest(current, nextPatch)
+        const existingLocal = await store.getChild(id)
+        if (existingLocal) {
+          await store.putChild({
+            ...existingLocal,
+            classroomId: updated.classroomId ?? nextPatch.classroomId ?? existingLocal.classroomId,
+            classroomGrade:
+              updated.classroomGrade ?? nextPatch.classroomGrade ?? existingLocal.classroomGrade,
+            version: updated.version,
+            _localStatus: 'clean',
+            lastModifiedAt: new Date().toISOString(),
+          })
+        }
         await invalidateChildrenQueries(queryClient, id)
         return
       }

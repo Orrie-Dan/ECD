@@ -124,10 +124,12 @@ export function ChildFormWizard({
           <FormField label={caretaker.registration.nationalId} required error={errors.nationalId}>
             <TextInput
               value={form.nationalId}
-              onChange={(e) => onUpdateField('nationalId', e.target.value)}
+              onChange={(e) => onUpdateField('nationalId', e.target.value.replace(/[^\d]/g, '').slice(0, 16))}
               placeholder={caretaker.registration.nationalIdPlaceholder}
               error={!!errors.nationalId}
               inputMode="numeric"
+              maxLength={16}
+              autoComplete="off"
             />
           </FormField>
           <FormField label={caretaker.registration.specialNeeds}>

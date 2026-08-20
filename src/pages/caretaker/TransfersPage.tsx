@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { ArrowDownLeft, ArrowUpRight, Send } from 'lucide-react'
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -12,6 +12,7 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
+import { formatApiErrorMessage, normalizeApiError } from '@/api/errors'
 import {
   useTransfersControllerFindIncoming,
   useTransfersControllerFindOutgoing,
@@ -23,12 +24,62 @@ import {
 import type { TransferResponseDto } from '@/api/generated/models'
 import { TransferStatus } from '@/api/generated/models/transferStatus'
 import { TransferDetailModal } from '@/components/transfers/TransferDetailModal'
-import {
-  getChildrenControllerFindOneQueryOptions,
-} from '@/api/generated/endpoints/children/children'
 import { useCentersControllerFindAll } from '@/api/generated/endpoints/centers/centers'
 import { useData } from '@/contexts/AppContext'
-import { useQueryClient, useQueries } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
+import { env } from '@/config/env'
+import { invalidateChildrenQueries } from '@/features/children/mutations'
+import {
+  refreshChildFromApiLocal,
+  revertChildPendingTransferLocal,
+} from '@/features/children/transfer-local'
+import { getLocalStore } from '@/storage'
+import { getSyncEngine } from '@/sync/sync-engine'
+
+/**
+ * Incoming / historical transfers often reference children outside the caller's
+ * center scope. Never GET /children/:id for those — it 404s by design.
+ * Prefer local centre children, then optional DTO enrichment if the API adds it.
+ */
+function readTransferChildMeta(transfer: TransferResponseDto): {
+  name?: string
+  version?: number
+} {
+  const raw = transfer as TransferResponseDto & {
+    childName?: unknown
+    childFullName?: unknown
+    childVersion?: unknown
+  }
+  const nameCandidate =
+    (typeof raw.childName === 'string' && raw.childName.trim()) ||
+    (typeof raw.childFullName === 'string' && raw.childFullName.trim()) ||
+    ''
+  const version = typeof raw.childVersion === 'number' ? raw.childVersion : undefined
+  return {
+    name: nameCandidate || undefined,
+    version,
+  }
+}
+
+function conflictRetryVersions(
+  error: unknown,
+  attempted: { version: number; childVersion: number },
+): { version: number; childVersion: number } | null {
+  const apiError = normalizeApiError(error)
+  if (!apiError.isConflict) return null
+  const raw = apiError.raw
+  if (!raw || typeof raw !== 'object') return null
+  const body = raw as { entity?: unknown; currentVersion?: unknown }
+  if (typeof body.currentVersion !== 'number') return null
+  const entity = String(body.entity ?? '').toLowerCase()
+  if (entity.includes('child')) {
+    return { version: attempted.version, childVersion: body.currentVersion }
+  }
+  if (entity.includes('transfer')) {
+    return { version: body.currentVersion, childVersion: attempted.childVersion }
+  }
+  return null
+}
 
 type Tab = 'incoming' | 'outgoing'
 
@@ -176,21 +227,12 @@ export function TransfersPage() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   const localChildMap = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const c of children) map.set(c.id, c.fullName)
+    const map = new Map<string, { name: string; version?: number }>()
+    for (const c of children) {
+      map.set(c.id, { name: c.fullName, version: c.version })
+    }
     return map
   }, [children])
-
-  const unknownChildIds = useMemo(
-    () => [...new Set(transfers.map((t) => t.childId).filter((id) => !localChildMap.has(id)))],
-    [transfers, localChildMap],
-  )
-  const childQueries = useQueries({
-    queries: unknownChildIds.map((id) => ({
-      ...getChildrenControllerFindOneQueryOptions(id),
-      staleTime: 5 * 60 * 1000,
-    })),
-  })
 
   const centersQuery = useCentersControllerFindAll({ pageSize: 100 })
   const centerNameMap = useMemo(() => {
@@ -199,27 +241,17 @@ export function TransfersPage() {
     return map
   }, [centersQuery.data])
 
-  const localChildVersionMap = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const c of children) if (c.version != null) map.set(c.id, c.version)
-    return map
-  }, [children])
+  const resolveChildName = (transfer: TransferResponseDto) => {
+    const local = localChildMap.get(transfer.childId)?.name
+    if (local) return local
+    return readTransferChildMeta(transfer).name ?? caretaker.incomingTransfers.unknownChild
+  }
 
-  const resolveChildName = useMemo(() => {
-    const map = new Map(localChildMap)
-    childQueries.forEach((q, i) => {
-      if (q.data) map.set(unknownChildIds[i], (q.data as { fullName: string }).fullName)
-    })
-    return (id: string) => map.get(id) ?? '…'
-  }, [localChildMap, childQueries, unknownChildIds])
-
-  const resolveChildVersion = useMemo(() => {
-    const map = new Map(localChildVersionMap)
-    childQueries.forEach((q, i) => {
-      if (q.data) map.set(unknownChildIds[i], (q.data as { version: number }).version)
-    })
-    return (id: string) => map.get(id) ?? 0
-  }, [localChildVersionMap, childQueries, unknownChildIds])
+  const resolveChildVersion = (transfer: TransferResponseDto): number => {
+    const local = localChildMap.get(transfer.childId)?.version
+    if (local != null) return local
+    return readTransferChildMeta(transfer).version ?? 0
+  }
 
   const resolveCenterName = (id: string) => centerNameMap.get(id) ?? '…'
 
@@ -231,32 +263,74 @@ export function TransfersPage() {
     void queryClient.invalidateQueries({ queryKey: getTransfersControllerFindOutgoingQueryKey() })
   }
 
-  const handleAccept = (transfer: TransferResponseDto) => {
-    acceptMutation.mutate(
-      { id: transfer.id, data: { version: transfer.version, childVersion: resolveChildVersion(transfer.childId) } },
-      {
-        onSuccess: () => {
-          showToast(caretaker.incomingTransfers.statusAccepted, 'success')
+  const refreshChildAfterTransfer = async (childId: string, kind: 'accept' | 'cancel') => {
+    if (!env.isLive) {
+      await invalidateChildrenQueries(queryClient, childId)
+      return
+    }
+    const store = getLocalStore()
+    if (kind === 'cancel') {
+      await revertChildPendingTransferLocal(store, childId)
+    }
+    try {
+      await refreshChildFromApiLocal(store, childId)
+    } catch {
+      // Offline or out of scope — local pending/cancel patch still applied.
+    }
+    await invalidateChildrenQueries(queryClient, childId)
+    void getSyncEngine().syncNow()
+  }
+
+  const runTransferMutation = async (
+    kind: 'accept' | 'cancel',
+    transfer: TransferResponseDto,
+  ) => {
+    const mutateAsync =
+      kind === 'accept' ? acceptMutation.mutateAsync : cancelMutation.mutateAsync
+    const successMessage =
+      kind === 'accept' ? caretaker.incomingTransfers.statusAccepted : 'Byahagaritswe'
+
+    let data = {
+      version: transfer.version,
+      childVersion: resolveChildVersion(transfer),
+    }
+
+    try {
+      await mutateAsync({ id: transfer.id, data })
+      showToast(successMessage, 'success')
+      setSelectedTransfer(null)
+      invalidateAll()
+      await refreshChildAfterTransfer(transfer.childId, kind)
+    } catch (err) {
+      const retry = conflictRetryVersions(err, data)
+      if (retry) {
+        try {
+          data = retry
+          await mutateAsync({ id: transfer.id, data })
+          showToast(successMessage, 'success')
           setSelectedTransfer(null)
           invalidateAll()
-        },
-        onError: () => showToast('Ntibyashobotse kwakira', 'error'),
-      },
-    )
+          await refreshChildAfterTransfer(transfer.childId, kind)
+          return
+        } catch (retryErr) {
+          showToast(formatApiErrorMessage(retryErr), 'error')
+          setSelectedTransfer(null)
+          invalidateAll()
+          return
+        }
+      }
+      showToast(formatApiErrorMessage(err), 'error')
+      setSelectedTransfer(null)
+      invalidateAll()
+    }
+  }
+
+  const handleAccept = (transfer: TransferResponseDto) => {
+    void runTransferMutation('accept', transfer)
   }
 
   const handleCancel = (transfer: TransferResponseDto) => {
-    cancelMutation.mutate(
-      { id: transfer.id, data: { version: transfer.version, childVersion: resolveChildVersion(transfer.childId) } },
-      {
-        onSuccess: () => {
-          showToast('Byahagaritswe', 'success')
-          setSelectedTransfer(null)
-          invalidateAll()
-        },
-        onError: () => showToast('Ntibyashobotse guhagarika', 'error'),
-      },
-    )
+    void runTransferMutation('cancel', transfer)
   }
 
   const handleTabChange = (newTab: Tab) => {
@@ -349,7 +423,7 @@ export function TransfersPage() {
                     transfer={transfer}
                     direction={tab}
                     onView={setSelectedTransfer}
-                    childName={resolveChildName(transfer.childId)}
+                    childName={resolveChildName(transfer)}
                     fromCenterName={resolveCenterName(transfer.fromCenterId)}
                     toCenterName={resolveCenterName(transfer.toCenterId)}
                   />
@@ -384,7 +458,7 @@ export function TransfersPage() {
         onCancel={handleCancel}
         accepting={acceptMutation.isPending}
         cancelling={cancelMutation.isPending}
-        childName={selectedTransfer ? resolveChildName(selectedTransfer.childId) : ''}
+        childName={selectedTransfer ? resolveChildName(selectedTransfer) : ''}
         fromCenterName={selectedTransfer ? resolveCenterName(selectedTransfer.fromCenterId) : ''}
         toCenterName={selectedTransfer ? resolveCenterName(selectedTransfer.toCenterId) : ''}
       />

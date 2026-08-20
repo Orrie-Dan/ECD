@@ -1,5 +1,6 @@
 import { createUuid } from '@/lib/uuid'
 import { buildRegistrationNumber } from '@/lib/mock-data'
+import { normalizeNationalId, isValidRwandaNationalId } from '@/lib/child-form'
 import type { LocalStore } from '@/storage/local-store'
 import type { LocalChildRecord, OutboxStatus, SyncOperationRecord } from '@/storage/types'
 import {
@@ -9,7 +10,8 @@ import {
   villageCacheKey,
 } from '@/sync/child-sync-mapper'
 import { VILLAGE_REFERENCE_BLOCKED_ERROR } from '@/sync/failure-class'
-import type { ArchiveChildInput, Child, ChildRegistrationForm } from '@/types'
+import { resolveClassroomIdForGrade } from '@/api/resources/classrooms'
+import type { ArchiveChildInput, Child, ChildRegistrationForm, ClassroomGrade } from '@/types'
 import type { ChildViewModel } from '@/models/child'
 
 const ACTIVE_MUTATION_STATUSES: OutboxStatus[] = ['pending', 'blocked', 'syncing']
@@ -61,6 +63,7 @@ export function localChildToViewModel(row: LocalChildRecord): ChildViewModel {
     lastName: row.lastName ?? undefined,
     classroomId: row.classroomId,
     classroomGrade: row.classroomGrade as Child['classroomGrade'],
+    nationalId: row.nationalId,
   }
 }
 
@@ -71,6 +74,8 @@ export interface CreateLocalChildInput {
   homeVillageId: string | null
   /** When false, enqueue as blocked until village resolved. */
   villageResolved: boolean
+  /** Resolved from GET /centers/:id/classrooms when online. */
+  classroomId?: string | null
 }
 
 /**
@@ -88,6 +93,12 @@ export async function createChildLocalFirst(
   const registrationNumber = buildRegistrationNumber(id.replace(/-/g, '').slice(-4), registeredAt)
   const homeVillageId = input.homeVillageId ?? ''
   const now = new Date().toISOString()
+  const classroomGrade = input.form.classroomGrade || undefined
+  const classroomId = input.classroomId || undefined
+  const nationalId = normalizeNationalId(input.form.nationalId)
+  if (!isValidRwandaNationalId(nationalId)) {
+    throw new Error('Child registration requires a valid 16-digit nationalId (NIN)')
+  }
 
   const child: LocalChildRecord = {
     id,
@@ -119,6 +130,9 @@ export async function createChildLocalFirst(
     sector: input.form.sector,
     cell: input.form.cell,
     village: input.form.village,
+    classroomId,
+    classroomGrade,
+    nationalId,
   }
 
   const payload = buildChildCreateSyncPayload(child)
@@ -267,6 +281,16 @@ function applyChildPatchToLocal(
     homeVillageId: patch.homeVillageId ?? existing.homeVillageId,
     notes: patch.notes !== undefined ? patch.notes : existing.notes,
     status: patch.status ?? existing.status,
+    classroomId:
+      patch.classroomId !== undefined ? patch.classroomId || undefined : existing.classroomId,
+    classroomGrade:
+      patch.classroomGrade !== undefined
+        ? patch.classroomGrade || undefined
+        : existing.classroomGrade,
+    nationalId:
+      patch.nationalId !== undefined
+        ? normalizeNationalId(patch.nationalId) || undefined
+        : existing.nationalId,
     archivedAt:
       patch.archivedAt !== undefined
         ? patch.archivedAt || undefined
@@ -395,11 +419,25 @@ export async function unblockChildCreatesNeedingVillage(
     if (op.entityType !== 'child' || op.operation !== 'create') continue
     const child = await store.getChild(op.entityId)
     if (!child) continue
+
+    const withClassroom = async (row: LocalChildRecord): Promise<LocalChildRecord> => {
+      if (row.classroomId || !row.classroomGrade) return row
+      const classroomId = await resolveClassroomIdForGrade(
+        row.centerId,
+        row.classroomGrade as ClassroomGrade,
+      )
+      return classroomId ? { ...row, classroomId } : row
+    }
+
     if (child.homeVillageId) {
-      await store.updateOperation(op.clientOperationId, {
-        status: 'pending',
-        payload: buildChildCreateSyncPayload(child),
-        lastError: undefined,
+      const updated = await withClassroom(child)
+      await store.runTransaction(['children', 'sync_operations'], 'rw', async (tx) => {
+        if (updated !== child) await tx.putChild(updated)
+        await tx.updateOperation(op.clientOperationId, {
+          status: 'pending',
+          payload: buildChildCreateSyncPayload(updated),
+          lastError: undefined,
+        })
       })
       continue
     }
@@ -410,7 +448,7 @@ export async function unblockChildCreatesNeedingVillage(
         cell: child.cell,
         village: child.village,
       })
-      const updated: LocalChildRecord = { ...child, homeVillageId }
+      const updated = await withClassroom({ ...child, homeVillageId })
       await store.runTransaction(['children', 'sync_operations', 'village_cache'], 'rw', async (tx) => {
         await tx.putChild(updated)
         await tx.updateOperation(op.clientOperationId, {

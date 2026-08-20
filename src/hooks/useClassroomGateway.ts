@@ -1,15 +1,19 @@
 import { useState, useMemo, useCallback } from 'react'
 import type { Child, ClassroomGrade } from '@/types'
 
-export function useClassroomGateway(children: Child[]) {
-  const [selectedGrade, setSelectedGrade] = useState<ClassroomGrade | null>(null)
+/** Grade filter, or children with no classroom assignment yet. */
+export type ClassroomSelection = ClassroomGrade | 'unassigned'
 
-  const gradeChildren = useMemo(
-    () => selectedGrade
-      ? children.filter((c) => c.classroomGrade === selectedGrade)
-      : children,
-    [children, selectedGrade],
-  )
+export function useClassroomGateway(children: Child[]) {
+  const [selectedGrade, setSelectedGrade] = useState<ClassroomSelection | null>(null)
+
+  const gradeChildren = useMemo(() => {
+    if (!selectedGrade) return children
+    if (selectedGrade === 'unassigned') {
+      return children.filter((c) => !c.classroomGrade)
+    }
+    return children.filter((c) => c.classroomGrade === selectedGrade)
+  }, [children, selectedGrade])
 
   const goBack = useCallback(() => setSelectedGrade(null), [])
 

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import { common } from '@/locales/rw/common'
+import { createUuid } from '@/lib/uuid'
 
 interface ToastItem {
   id: string
@@ -85,6 +86,11 @@ interface ToastOptions {
 interface ToastContextValue {
   showSuccess: (message: string, options?: ToastOptions) => void
   showError: (message: string) => void
+  /**
+   * Back-compat helper for older call sites.
+   * Prefer `showSuccess` / `showError` for new code.
+   */
+  showToast: (message: string, type: 'success' | 'error') => void
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)
@@ -93,7 +99,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   const addToast = useCallback((toast: Omit<ToastItem, 'id'>) => {
-    const id = String(Date.now())
+    // Use a collision-safe ID so React keys remain unique.
+    const id = createUuid()
     setToasts((prev) => [...prev, { ...toast, id }])
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
@@ -111,12 +118,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     [addToast]
   )
   const showError = useCallback((message: string) => addToast({ message, type: 'error' }), [addToast])
+  const showToast = useCallback(
+    (message: string, type: 'success' | 'error') => {
+      if (type === 'success') showSuccess(message)
+      else showError(message)
+    },
+    [showError, showSuccess],
+  )
   const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
   return (
-    <ToastContext.Provider value={{ showSuccess, showError }}>
+    <ToastContext.Provider value={{ showSuccess, showError, showToast }}>
       {children}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </ToastContext.Provider>

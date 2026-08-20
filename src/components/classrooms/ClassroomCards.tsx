@@ -1,20 +1,15 @@
 import { type ReactNode } from 'react'
-import { Users, ChevronRight } from 'lucide-react'
+import { Users, ChevronRight, UserRoundX } from 'lucide-react'
 import { caretaker } from '@/locales/rw/caretaker'
 import { getGradeLabel } from '@/lib/child-filters'
+import type { ClassroomSelection } from '@/hooks/useClassroomGateway'
 import type { ClassroomGrade, Child } from '@/types'
 
 const GRADES: ClassroomGrade[] = ['grade_1', 'grade_2', 'grade_3']
 
-export interface ClassroomStat {
-  grade: ClassroomGrade
-  total: number
-  detail?: ReactNode
-}
-
 interface ClassroomCardsProps {
   children: Child[]
-  onSelect: (grade: ClassroomGrade) => void
+  onSelect: (grade: ClassroomSelection) => void
   /** Per-grade detail line (rendered below the child count). Falls back to nothing. */
   getDetail?: (grade: ClassroomGrade, kids: Child[]) => ReactNode
   title?: string
@@ -75,9 +70,32 @@ export function ClassroomCards({
       </div>
 
       {unassigned.length > 0 && (
-        <p className="mt-3 text-caption text-text-muted">
-          {caretaker.classrooms.noClassroom}: {unassigned.length} {caretaker.classrooms.childrenCount.toLowerCase()}
-        </p>
+        <button
+          type="button"
+          onClick={() => onSelect('unassigned')}
+          className="
+            mt-4 w-full text-left rounded-xl border border-warning/40 bg-warning-light/30 p-4 transition-all
+            hover:shadow-md hover:border-warning/60 active:scale-[0.99]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning
+          "
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="inline-flex items-center gap-2 text-heading font-bold text-text">
+              <UserRoundX size={20} className="text-warning" />
+              {caretaker.classrooms.noClassroom}
+            </span>
+            <ChevronRight size={18} className="text-text-muted" />
+          </div>
+          <div className="flex items-baseline gap-3">
+            <span className="text-2xl font-bold text-text">{unassigned.length}</span>
+            <span className="text-caption text-text-secondary">
+              {caretaker.classrooms.childrenCount}
+            </span>
+          </div>
+          <p className="mt-2 text-caption text-text-secondary">
+            {caretaker.classrooms.unassignedHint}
+          </p>
+        </button>
       )}
     </div>
   )

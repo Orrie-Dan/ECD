@@ -94,6 +94,7 @@ export function mapPullChildToLocal(
     notes: row.notes == null ? existing?.notes : asString(row.notes),
     classroomId: row.classroomId == null ? existing?.classroomId : asString(row.classroomId),
     classroomGrade: row.classroomGrade == null ? existing?.classroomGrade : asString(row.classroomGrade),
+    nationalId: row.nationalId == null ? existing?.nationalId : asString(row.nationalId),
   }
 }
 
@@ -103,8 +104,14 @@ function toSyncGender(gender: string): 'male' | 'female' {
 }
 
 export function buildChildCreateSyncPayload(child: LocalChildRecord): Record<string, unknown> {
+  const nationalId = child.nationalId?.trim()
+  if (!nationalId) {
+    throw new Error('child create sync payload requires nationalId')
+  }
   return {
+    // Local display / client reference only — backend national_id comes from nationalId.
     registrationNumber: child.registrationNumber,
+    nationalId,
     firstName: child.firstName,
     middleName: child.middleName ?? null,
     lastName: child.lastName ?? null,
@@ -121,6 +128,7 @@ export function buildChildCreateSyncPayload(child: LocalChildRecord): Record<str
     guardian2Relation: child.guardian2Relation ?? null,
     homeVillageId: child.homeVillageId,
     registeredAt: child.registeredAt,
+    ...(child.classroomId ? { classroomId: child.classroomId } : {}),
   }
 }
 
@@ -144,6 +152,7 @@ export function buildChildUpdateSyncPayload(child: LocalChildRecord): Record<str
     guardian2Relation: child.guardian2Relation ?? null,
     archiveReason: child.archiveReason ?? null,
     archivedAt: child.archivedAt ?? null,
+    ...(child.classroomId ? { classroomId: child.classroomId } : {}),
   }
 }
 

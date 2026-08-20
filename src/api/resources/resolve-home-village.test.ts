@@ -75,4 +75,35 @@ describe('resolveHomeVillageId', () => {
       }),
     ).rejects.toThrow('Cell not found: MissingCell')
   })
+
+  it('resolves a home village in a district outside the caller GET /districts scope', async () => {
+    vi.mocked(geoControllerListDistricts).mockResolvedValue({
+      items: [{ id: 'dist-gasabo', name: 'Gasabo' }],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+    } as never)
+
+    vi.mocked(geoControllerListAdminUnits).mockImplementation(async (params) => {
+      if (params?.level === 'sector' && !params.districtId) {
+        return [{ id: 'sec-kayonza', name: 'Mukarange' }] as never
+      }
+      if (params?.level === 'cell' && params.parentId === 'sec-kayonza') {
+        expect(params.districtId).toBeUndefined()
+        return [{ id: 'cell-kayonza', name: 'Nyagatovu' }] as never
+      }
+      if (params?.level === 'village' && params.parentId === 'cell-kayonza') {
+        return [{ id: 'vil-kayonza', name: 'Kageyo' }] as never
+      }
+      return [] as never
+    })
+
+    const id = await resolveHomeVillageId({
+      district: 'Kayonza',
+      sector: 'Mukarange',
+      cell: 'Nyagatovu',
+      village: 'Kageyo',
+    })
+    expect(id).toBe('vil-kayonza')
+  })
 })

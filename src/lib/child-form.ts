@@ -51,6 +51,10 @@ export function formToChildPayload(form: ChildRegistrationForm) {
     fullName: form.fullName.trim(),
     dateOfBirth: form.dateOfBirth,
     gender: form.gender as Gender,
+    ...(form.classroomGrade ? { classroomGrade: form.classroomGrade } : {}),
+    ...(normalizeNationalId(form.nationalId)
+      ? { nationalId: normalizeNationalId(form.nationalId) }
+      : {}),
     ...(form.specialNeeds.trim() ? { specialNeeds: form.specialNeeds.trim() } : { specialNeeds: undefined }),
     guardianName: form.guardianName.trim(),
     guardianPhone: form.guardianPhone.trim(),
@@ -76,8 +80,21 @@ export function formToChildPayload(form: ChildRegistrationForm) {
 
 const PHONE_PATTERN = /^(07\d{8}|2507\d{8}|\+2507\d{8})$/
 
+/** Matches backend CreateChildDto / sync create (16-digit Rwanda NIN). */
+export const RWANDA_NIN_REGEX = /^[123]\d{4}[78]\d{10}$/
+
 export function isValidRwandaPhone(phone: string): boolean {
   return PHONE_PATTERN.test(phone.replace(/[\s-]/g, ''))
+}
+
+/** Strip spaces/dashes; keep digits only for NIN validation. */
+export function normalizeNationalId(value: string | undefined | null): string {
+  if (typeof value !== 'string') return ''
+  return value.replace(/[\s-]/g, '').trim()
+}
+
+export function isValidRwandaNationalId(value: string | undefined | null): boolean {
+  return RWANDA_NIN_REGEX.test(normalizeNationalId(value))
 }
 
 export function validateChildFormStep(
@@ -102,7 +119,11 @@ export function validateChildFormStep(
       }
     }
     if (!form.gender) newErrors.gender = common.required
-    if (!form.nationalId.trim()) newErrors.nationalId = common.required
+    if (!form.nationalId.trim()) {
+      newErrors.nationalId = common.required
+    } else if (!isValidRwandaNationalId(form.nationalId)) {
+      newErrors.nationalId = caretaker.registration.nationalIdInvalid
+    }
     if (!form.classroomGrade) newErrors.classroomGrade = common.required
   }
 

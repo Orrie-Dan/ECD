@@ -23,6 +23,7 @@ function childForm(name: string) {
     fullName: name,
     dateOfBirth: '2021-03-15',
     gender: 'Umukobwa',
+    nationalId: '1199880012345678',
     specialNeeds: '',
     guardianName: 'Guardian',
     guardianPhone: '0780000000',
@@ -65,6 +66,8 @@ describe('Village-blocked child create', () => {
     const ops = await store.listOperations({ status: 'blocked' })
     expect(ops).toHaveLength(1)
     expect(ops[0]?.entityType).toBe('child')
+    expect(ops[0]?.payload?.nationalId).toBe('1199880012345678')
+    expect(ops[0]?.payload?.nationalId).not.toMatch(/^ECD-/)
     expect(ops[0]?.lastError).toBe(VILLAGE_REFERENCE_BLOCKED_ERROR)
     expect(isVillageReferenceBlocked(ops[0]?.lastError)).toBe(true)
     expect(classifyBlockedReason(ops[0]?.lastError)).toBe('village_reference')

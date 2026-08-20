@@ -100,6 +100,7 @@ function childForm(name: string) {
     fullName: name,
     dateOfBirth: '2021-03-15',
     gender: 'Umukobwa',
+    nationalId: '1199880012345678',
     specialNeeds: '',
     guardianName: 'Guardian',
     guardianPhone: '0780000000',

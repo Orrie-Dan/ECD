@@ -72,7 +72,9 @@ export function ReactivateChildDialog({ open, onClose, child }: ReactivateChildD
           <p className="text-body text-text-secondary">
             {caretaker.children.age}: {calculateAge(child.dateOfBirth)} · {gender[child.gender]}
           </p>
-          <p className="text-caption text-text-secondary font-mono">{child.registrationNumber}</p>
+          {child.nationalId?.trim() ? (
+            <p className="text-caption text-text-secondary font-mono">{child.nationalId.trim()}</p>
+          ) : null}
           {child.archivedAt && (
             <p className="text-body text-text-secondary">
               {caretaker.childDetail.archiveDate}: {formatDate(child.archivedAt)}

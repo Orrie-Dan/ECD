@@ -2,6 +2,7 @@ import type { Child, ClassroomGrade, Gender, GuardianRelation } from '@/types'
 import { calculateAge } from '@/lib/mock-data'
 import { getAgeGroup } from '@/lib/attendance-utils'
 import { getProvinceDisplayName } from '@/lib/rwanda-admin'
+import { caretaker } from '@/locales/rw/caretaker'
 
 export type GenderFilter = 'all' | Gender
 export type AgeFilter = 'all' | '3-4' | '5-6'
@@ -15,6 +16,14 @@ const GRADE_LABELS: Record<ClassroomGrade, string> = {
 
 export function getGradeLabel(grade: ClassroomGrade | undefined): string {
   return grade ? GRADE_LABELS[grade] : ''
+}
+
+export function getClassroomSelectionLabel(
+  selection: ClassroomGrade | 'unassigned' | null | undefined,
+): string {
+  if (!selection) return ''
+  if (selection === 'unassigned') return caretaker.classrooms.noClassroom
+  return getGradeLabel(selection)
 }
 
 export const GRADE_FILTER_OPTIONS: { value: GradeFilter; label: string }[] = [

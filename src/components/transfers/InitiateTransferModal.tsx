@@ -3,24 +3,32 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { FormField, TextInput, TextArea } from '@/components/ui/FormField'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
+import { StatusBadge } from '@/components/children/StatusBadge'
 import { useToast } from '@/components/ui/Toast'
 import { useAuth } from '@/contexts/AppContext'
+import { calculateAge, formatDate } from '@/lib/mock-data'
+import { getGuardianRelationLabel } from '@/lib/guardian-relations'
 import { caretaker } from '@/locales/rw/caretaker'
-import { common } from '@/locales/rw/common'
+import { common, gender } from '@/locales/rw/common'
 import {
   useTransfersControllerCreate,
   getTransfersControllerFindOutgoingQueryKey,
 } from '@/api/generated/endpoints/transfers/transfers'
 import { useCentersControllerFindAll } from '@/api/generated/endpoints/centers/centers'
 import { useQueryClient } from '@tanstack/react-query'
+import type { Child } from '@/types'
+import { env } from '@/config/env'
+import { invalidateChildrenQueries } from '@/features/children/mutations'
+import {
+  markChildPendingTransferLocal,
+} from '@/features/children/transfer-local'
+import { getLocalStore } from '@/storage'
+import { getSyncEngine } from '@/sync/sync-engine'
 
 interface InitiateTransferModalProps {
   open: boolean
   onClose: () => void
-  childId: string
-  childName: string
-  childVersion: number
-  currentCenterId: string
+  child: Child
 }
 
 const REASON_OPTIONS = [
@@ -30,13 +38,24 @@ const REASON_OPTIONS = [
   { value: 'other', label: caretaker.transfer.reasons.other },
 ]
 
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  if (!value.trim()) return null
+  return (
+    <div>
+      <dt className="text-caption text-text-muted mb-0.5">{label}</dt>
+      <dd className="text-body text-text font-medium">{value}</dd>
+    </div>
+  )
+}
+
+function homeLocation(child: Child): string {
+  return [child.village, child.cell, child.sector, child.district].filter(Boolean).join(', ')
+}
+
 export function InitiateTransferModal({
   open,
   onClose,
-  childId,
-  childName,
-  childVersion,
-  currentCenterId,
+  child,
 }: InitiateTransferModalProps) {
   const [toCenterId, setToCenterId] = useState('')
   const [transferDate, setTransferDate] = useState(() => new Date().toISOString().slice(0, 10))
@@ -55,7 +74,7 @@ export function InitiateTransferModal({
   const createMutation = useTransfersControllerCreate()
 
   const centerOptions = (centersQuery.data?.items ?? [])
-    .filter((c) => c.id !== currentCenterId)
+    .filter((c) => c.id !== child.centerId)
     .map((c) => ({ value: c.id, label: c.name }))
 
   const validate = (): boolean => {
@@ -72,20 +91,28 @@ export function InitiateTransferModal({
     createMutation.mutate(
       {
         data: {
-          childId,
+          childId: child.id,
           toCenterId,
           transferDate,
           reason: REASON_OPTIONS.find((r) => r.value === reason)?.label ?? reason,
           notes: notes.trim() || undefined,
-          childVersion,
+          childVersion: child.version ?? 0,
         },
       },
       {
         onSuccess: () => {
-          showToast(`${childName} — ${caretaker.transfer.confirm}`, 'success')
+          showToast(`${child.fullName} — ${caretaker.transfer.confirm}`, 'success')
           void queryClient.invalidateQueries({
             queryKey: getTransfersControllerFindOutgoingQueryKey(),
           })
+          if (env.isLive) {
+            void markChildPendingTransferLocal(getLocalStore(), child.id).then(() =>
+              invalidateChildrenQueries(queryClient, child.id),
+            )
+            void getSyncEngine().syncNow()
+          } else {
+            void invalidateChildrenQueries(queryClient, child.id)
+          }
           resetAndClose()
         },
         onError: () => showToast(common.error, 'error'),
@@ -125,9 +152,50 @@ export function InitiateTransferModal({
       }
     >
       <div className="space-y-5">
-        <div className="rounded-xl bg-background-subtle border border-border px-4 py-3">
-          <p className="text-caption text-text-muted mb-0.5">{caretaker.incomingTransfers.childName}</p>
-          <p className="text-body font-semibold text-text">{childName}</p>
+        <div className="rounded-xl border border-border bg-background-subtle/60 p-4 space-y-3">
+          <p className="text-caption text-text-muted uppercase tracking-wide font-semibold">
+            {caretaker.transfer.summary}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-subheading text-text">{child.fullName}</p>
+            <StatusBadge status={child.status} />
+          </div>
+          <p className="text-body text-text-secondary">
+            {caretaker.children.age}: {calculateAge(child.dateOfBirth)} · {gender[child.gender]} ·{' '}
+            {formatDate(child.dateOfBirth)}
+          </p>
+          {child.nationalId?.trim() ? (
+            <p className="text-caption text-text-secondary font-mono">{child.nationalId.trim()}</p>
+          ) : null}
+
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-border">
+            <SummaryRow
+              label={caretaker.transfer.currentCenter}
+              value={child.centerName}
+            />
+            {child.classroomLabel ? (
+              <SummaryRow
+                label={caretaker.classrooms.gradeLabel}
+                value={child.classroomLabel}
+              />
+            ) : null}
+            <SummaryRow
+              label={caretaker.incomingTransfers.guardian}
+              value={child.guardianName}
+            />
+            <SummaryRow
+              label={caretaker.incomingTransfers.phone}
+              value={child.guardianPhone}
+            />
+            <SummaryRow
+              label={common.labels.relation}
+              value={getGuardianRelationLabel(child.guardianRelation)}
+            />
+            <SummaryRow
+              label={caretaker.registration.reviewLocation}
+              value={homeLocation(child)}
+            />
+          </dl>
         </div>
 
         <FormField

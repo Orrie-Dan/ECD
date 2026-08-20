@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Baby,
   ArrowLeftRight,
+  School,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -42,6 +43,7 @@ interface ChildHeaderProps {
   onReactivate?: () => void
   onRecordMeasurement?: () => void
   onTransfer?: () => void
+  onAssignClassroom?: () => void
   transferPending?: boolean
 }
 
@@ -53,6 +55,7 @@ export function ChildHeader({
   onReactivate,
   onRecordMeasurement,
   onTransfer,
+  onAssignClassroom,
   transferPending,
 }: ChildHeaderProps) {
   const initials = getInitials(child.fullName)
@@ -109,10 +112,12 @@ export function ChildHeader({
           </p>
 
           <dl className="flex flex-wrap gap-x-5 gap-y-1.5 text-caption text-text-secondary">
-            <div className="flex gap-1.5">
-              <dt>{caretaker.childDetail.registrationNumber}:</dt>
-              <dd className="font-semibold text-text font-mono">{child.registrationNumber}</dd>
-            </div>
+            {child.nationalId?.trim() ? (
+              <div className="flex gap-1.5">
+                <dt>{caretaker.registration.nationalId}:</dt>
+                <dd className="font-semibold text-text font-mono">{child.nationalId.trim()}</dd>
+              </div>
+            ) : null}
             <div className="flex gap-1.5">
               <dt>{caretaker.childDetail.centre}:</dt>
               <dd className="font-semibold text-text">{child.centerName}</dd>
@@ -156,6 +161,16 @@ export function ChildHeader({
           {onEdit && (
             <Button variant="secondary" size="sm" icon={<Pencil size={16} />} onClick={onEdit}>
               {caretaker.childDetail.edit}
+            </Button>
+          )}
+          {onAssignClassroom && (
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<School size={16} />}
+              onClick={onAssignClassroom}
+            >
+              {caretaker.classrooms.assignClassroom}
             </Button>
           )}
           {onRecordMeasurement && (

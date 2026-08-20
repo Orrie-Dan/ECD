@@ -96,7 +96,9 @@ export function ArchiveDialog({ open, onClose, child }: ArchiveDialogProps) {
           <p className="text-body text-text-secondary">
             {caretaker.children.age}: {calculateAge(child.dateOfBirth)} · {gender[child.gender]}
           </p>
-          <p className="text-caption text-text-secondary font-mono">{child.registrationNumber}</p>
+          {child.nationalId?.trim() ? (
+            <p className="text-caption text-text-secondary font-mono">{child.nationalId.trim()}</p>
+          ) : null}
         </div>
 
         <div

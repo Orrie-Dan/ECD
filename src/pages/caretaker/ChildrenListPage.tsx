@@ -35,6 +35,7 @@ import { useToast } from '@/components/ui/Toast'
 import { env } from '@/config/env'
 import { caretaker } from '@/locales/rw/caretaker'
 import { filterAndSortChildren } from '@/lib/children-utils'
+import { useEnrollmentChildren } from '@/hooks/useEnrollmentChildren'
 import { buildChildDetailPath, buildChildEditPath } from '@/lib/child-routes'
 import { buildChildrenFilterSummary, hasActiveChildrenFilters } from '@/lib/filter-summary'
 import { usePagination } from '@/hooks/usePagination'
@@ -75,6 +76,7 @@ export function ChildrenListPage() {
     nutritionAssessments,
     recordMeasurement,
   } = useData()
+  const enrolledChildren = useEnrollmentChildren()
   const navigate = useNavigate()
   const { showSuccess } = useToast()
 
@@ -87,7 +89,7 @@ export function ChildrenListPage() {
   const [measureChild, setMeasureChild] = useState<Child | null>(null)
 
   const { selectedGrade, setSelectedGrade, gradeChildren, goBack, isGradeSelected } =
-    useClassroomGateway(children)
+    useClassroomGateway(enrolledChildren)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setMockLoading(false), 280)
@@ -125,7 +127,7 @@ export function ChildrenListPage() {
 
   const hasActiveConfig = hasActiveChildrenFilters(filters, viewState)
 
-  const activeCount = children.filter((c) => c.status === 'active').length
+  const activeCount = enrolledChildren.length
 
   const resetAll = () => {
     setFilters(DEFAULT_CHILDREN_SEARCH)
@@ -145,7 +147,7 @@ export function ChildrenListPage() {
         <PageHeader
           title={caretaker.children.title}
           description={caretaker.children.subtitle}
-          badge={`${activeCount} / ${children.length} abana`}
+          badge={`${activeCount} abana`}
           action={
             <Button
               variant="primary"
@@ -161,7 +163,7 @@ export function ChildrenListPage() {
         <PageContent>
       {!isGradeSelected ? (
         <ClassroomCards
-          children={children}
+          children={enrolledChildren}
           onSelect={setSelectedGrade}
         />
       ) : (

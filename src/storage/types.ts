@@ -109,6 +109,8 @@ export interface LocalChildRecord {
   notes?: string
   classroomId?: string
   classroomGrade?: string
+  /** Rwanda National Identification Number (NIN) */
+  nationalId?: string
 }
 
 /**

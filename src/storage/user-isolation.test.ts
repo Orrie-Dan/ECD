@@ -47,24 +47,25 @@ const CENTER_A = 'center-a'
 const CENTER_B = 'center-b'
 
 async function seedUserAWorkspace(store: LocalStore) {
-  const child = await createChildLocalFirst(store, {
-    form: {
-      fullName: 'Aline A',
-      dateOfBirth: '2020-01-01',
-      gender: 'Umukobwa',
-      specialNeeds: '',
-      guardianName: 'Parent',
-      guardianPhone: '0780000001',
-      guardianRelation: 'umubyeyi',
-      guardian2Name: '',
-      guardian2Phone: '',
-      guardian2Relation: '',
-      province: 'p',
-      district: 'd',
-      sector: 's',
-      cell: 'c',
-      village: 'v',
-    } as never,
+    const child = await createChildLocalFirst(store, {
+      form: {
+        fullName: 'Aline A',
+        dateOfBirth: '2020-01-01',
+        gender: 'Umukobwa',
+        nationalId: '1199880012345678',
+        specialNeeds: '',
+        guardianName: 'Parent',
+        guardianPhone: '0780000001',
+        guardianRelation: 'umubyeyi',
+        guardian2Name: '',
+        guardian2Phone: '',
+        guardian2Relation: '',
+        province: 'p',
+        district: 'd',
+        sector: 's',
+        cell: 'c',
+        village: 'v',
+      } as never,
     centerId: CENTER_A,
     centerName: 'Center A',
     homeVillageId: createUuid(),

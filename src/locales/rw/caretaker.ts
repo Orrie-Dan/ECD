@@ -117,6 +117,8 @@ export const caretaker = {
     reviewLocation: 'Aho Atuye',
     nationalId: 'Indangamuntu',
     nationalIdPlaceholder: 'Urugero: 1199880012345678',
+    nationalIdInvalid:
+      'Andika indangamuntu yuzuye y’imibare 16 (urugero: 1199880012345678)',
     submit: 'Bika Amakuru',
     saveChanges: 'Bika Impinduka',
   },
@@ -306,7 +308,6 @@ export const caretaker = {
     totalAbsent: 'Inshuro ataje',
     attendanceRate: "Ijanisha ry'ubwitabire",
     dateRegistered: 'Itariki yanditswe',
-    registrationNumber: 'Nimero yo kwiyandikisha',
     centre: 'Ikigo',
     checkInTime: 'Igihe yaje',
     specialNeedsLabel: 'Ikibazo cyihariye',
@@ -356,6 +357,8 @@ export const caretaker = {
   },
   transfer: {
     title: 'Ohereza Umwana',
+    summary: 'Incamake y\'umwana',
+    currentCenter: 'Ikigo akomokaho',
     destination: 'Ikigo yoherejweho',
     destinationPlaceholder: 'Hitamo ikigo',
     destinationRequired: 'Hitamo ikigo yoherejweho',
@@ -380,6 +383,8 @@ export const caretaker = {
     subtitle: 'Emera abana boherejwe ku kigo cyawe',
     listTitle: 'Abategereje kwakirwa',
     childName: 'Izina ry\'umwana',
+    /** Shown when child is outside this centre's local roster (e.g. pending incoming). */
+    unknownChild: 'Umwana',
     sourceCenter: 'Ikigo akomokaho',
     destinationCenter: 'Ikigo yoherejweho',
     transferDate: 'Itariki yo kwimura',
@@ -889,6 +894,9 @@ export const caretaker = {
     effectiveDate: 'Itariki y\'ihinduka',
     noClassroom: 'Nta mwaka',
     assignClassroom: 'Hitamo umwaka',
+    assignConfirm: 'Shyira mu mwaka',
+    assignSuccess: 'Umwana yashyizwe mu mwaka neza',
+    unassignedHint: 'Abana batari mu mwaka — kanda hano ubasobanure cyangwa ubashyire mu mwaka.',
   },
   selfEval: {
     title: 'Isuzuma ry’ubuziranenge',
