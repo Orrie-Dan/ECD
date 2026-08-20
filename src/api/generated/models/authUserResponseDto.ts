@@ -6,8 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { UserRole } from './userRole';
-import type { AuthUserResponseDtoDistrictId } from './authUserResponseDtoDistrictId';
-import type { AuthUserResponseDtoCenterId } from './authUserResponseDtoCenterId';
 import type { AuthUserResponseDtoCenter } from './authUserResponseDtoCenter';
 
 export interface AuthUserResponseDto {
@@ -15,9 +13,9 @@ export interface AuthUserResponseDto {
   username: string;
   role: UserRole;
   /** @nullable */
-  districtId: AuthUserResponseDtoDistrictId;
+  districtId: string | null;
   /** @nullable */
-  centerId: AuthUserResponseDtoCenterId;
+  centerId: string | null;
   /** @nullable */
   center: AuthUserResponseDtoCenter;
 }

@@ -5,11 +5,8 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { AssessmentDetailResponseDtoCenterName } from './assessmentDetailResponseDtoCenterName';
 import type { AssessmentType } from './assessmentType';
 import type { AssessmentStatus } from './assessmentStatus';
-import type { AssessmentDetailResponseDtoSubmittedById } from './assessmentDetailResponseDtoSubmittedById';
-import type { AssessmentDetailResponseDtoVerifiedById } from './assessmentDetailResponseDtoVerifiedById';
 import type { ComplianceClassification } from './complianceClassification';
 import type { AssessmentItemResponseDto } from './assessmentItemResponseDto';
 
@@ -17,18 +14,18 @@ export interface AssessmentDetailResponseDto {
   id: string;
   centerId: string;
   /** @nullable */
-  centerName: AssessmentDetailResponseDtoCenterName;
+  centerName: string | null;
   districtId: string;
   standardsVersion: string;
   assessmentType: AssessmentType;
   assessmentDate: string;
   status: AssessmentStatus;
   /** @nullable */
-  submittedById: AssessmentDetailResponseDtoSubmittedById;
+  submittedById: string | null;
   /** @nullable */
   submittedAt: string | null;
   /** @nullable */
-  verifiedById: AssessmentDetailResponseDtoVerifiedById;
+  verifiedById: string | null;
   /** @nullable */
   verifiedAt: string | null;
   /** @nullable */

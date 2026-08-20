@@ -5,8 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { MonitoringStedSummaryDtoCoverage } from './monitoringStedSummaryDtoCoverage';
-import type { MonitoringStedSummaryDtoAverageScore } from './monitoringStedSummaryDtoAverageScore';
 import type { MonitoringStedSummaryDtoAgeBandDistribution } from './monitoringStedSummaryDtoAgeBandDistribution';
 import type { MonitoringStedSummaryDtoOutcomeDistribution } from './monitoringStedSummaryDtoOutcomeDistribution';
 
@@ -18,9 +16,9 @@ export interface MonitoringStedSummaryDto {
   centersWithAssessments: number;
   activeChildren: number;
   /** @nullable */
-  coverage: MonitoringStedSummaryDtoCoverage;
+  coverage: number | null;
   /** @nullable */
-  averageScore: MonitoringStedSummaryDtoAverageScore;
+  averageScore: number | null;
   pendingFollowUps: number;
   /** Centers in resolved scope */
   centersInScope: number;

@@ -7,14 +7,7 @@
  */
 import type { ApiChildGender } from './apiChildGender';
 import type { ApiChildStatus } from './apiChildStatus';
-import type { ChildResponseDtoCenterName } from './childResponseDtoCenterName';
-import type { ChildResponseDtoClassroomId } from './childResponseDtoClassroomId';
 import type { ClassroomGrade } from './classroomGrade';
-import type { ChildResponseDtoProvince } from './childResponseDtoProvince';
-import type { ChildResponseDtoDistrict } from './childResponseDtoDistrict';
-import type { ChildResponseDtoSector } from './childResponseDtoSector';
-import type { ChildResponseDtoCell } from './childResponseDtoCell';
-import type { ChildResponseDtoVillage } from './childResponseDtoVillage';
 
 export interface ChildResponseDto {
   id: string;
@@ -26,22 +19,22 @@ export interface ChildResponseDto {
   nationalId: string;
   centerId: string;
   /** @nullable */
-  centerName: ChildResponseDtoCenterName;
+  centerName: string | null;
   /** @nullable */
-  classroomId: ChildResponseDtoClassroomId;
+  classroomId: string | null;
   /** @nullable */
   classroomGrade: ClassroomGrade;
   homeVillageId: string;
   /** @nullable */
-  province: ChildResponseDtoProvince;
+  province: string | null;
   /** @nullable */
-  district: ChildResponseDtoDistrict;
+  district: string | null;
   /** @nullable */
-  sector: ChildResponseDtoSector;
+  sector: string | null;
   /** @nullable */
-  cell: ChildResponseDtoCell;
+  cell: string | null;
   /** @nullable */
-  village: ChildResponseDtoVillage;
+  village: string | null;
   guardianName: string;
   guardianPhone: string;
   /** Optimistic-lock version (required for PATCH/DELETE/archive) */

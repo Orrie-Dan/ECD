@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { MonitoringNutritionSummaryDtoScreeningCoverage } from './monitoringNutritionSummaryDtoScreeningCoverage';
 
 export interface MonitoringNutritionSummaryDto {
   activeChildren: number;
@@ -18,5 +17,5 @@ export interface MonitoringNutritionSummaryDto {
   overdueScreenings: number;
   neverScreened: number;
   /** @nullable */
-  screeningCoverage: MonitoringNutritionSummaryDtoScreeningCoverage;
+  screeningCoverage: number | null;
 }

@@ -6,25 +6,22 @@
  * OpenAPI spec version: 1.0
  */
 import type { UserRole } from './userRole';
-import type { AuthMeResponseDtoDistrictId } from './authMeResponseDtoDistrictId';
-import type { AuthMeResponseDtoCenterId } from './authMeResponseDtoCenterId';
 import type { AuthMeResponseDtoCenter } from './authMeResponseDtoCenter';
-import type { AuthMeResponseDtoEmail } from './authMeResponseDtoEmail';
 
 export interface AuthMeResponseDto {
   id: string;
   username: string;
   role: UserRole;
   /** @nullable */
-  districtId: AuthMeResponseDtoDistrictId;
+  districtId: string | null;
   /** @nullable */
-  centerId: AuthMeResponseDtoCenterId;
+  centerId: string | null;
   /** @nullable */
   center: AuthMeResponseDtoCenter;
   /**
    * Account email when set
    * @nullable
    */
-  email: AuthMeResponseDtoEmail;
+  email: string | null;
   fullName: string;
 }

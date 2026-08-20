@@ -5,28 +5,24 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { WashIndicatorResponseDtoCenterName } from './washIndicatorResponseDtoCenterName';
-import type { WashIndicatorResponseDtoWaterSourceType } from './washIndicatorResponseDtoWaterSourceType';
-import type { WashIndicatorResponseDtoLatrineCount } from './washIndicatorResponseDtoLatrineCount';
-import type { WashIndicatorResponseDtoNotes } from './washIndicatorResponseDtoNotes';
 
 export interface WashIndicatorResponseDto {
   id: string;
   centerId: string;
   /** @nullable */
-  centerName: WashIndicatorResponseDtoCenterName;
+  centerName: string | null;
   districtId: string;
   recordedDate: string;
   waterSourceAvailable: boolean;
   /** @nullable */
-  waterSourceType: WashIndicatorResponseDtoWaterSourceType;
+  waterSourceType: string | null;
   sanitationFacilityAvailable: boolean;
   /** @nullable */
-  latrineCount: WashIndicatorResponseDtoLatrineCount;
+  latrineCount: number | null;
   handwashingFacilityAvailable: boolean;
   wasteManagementAvailable: boolean;
   /** @nullable */
-  notes: WashIndicatorResponseDtoNotes;
+  notes: string | null;
   recordedById: string;
   /** Optimistic-lock version; required on updates */
   version: number;

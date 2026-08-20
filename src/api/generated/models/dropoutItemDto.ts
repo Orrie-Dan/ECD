@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { DropoutItemDtoArchiveReason } from './dropoutItemDtoArchiveReason';
 
 export interface DropoutItemDto {
   childId: string;
@@ -15,5 +14,5 @@ export interface DropoutItemDto {
   /** @nullable */
   archivedAt: string | null;
   /** @nullable */
-  archiveReason: DropoutItemDtoArchiveReason;
+  archiveReason: string | null;
 }

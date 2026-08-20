@@ -5,16 +5,14 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { MonitoringWashResponseDtoDistrictId } from './monitoringWashResponseDtoDistrictId';
-import type { MonitoringWashResponseDtoCenterId } from './monitoringWashResponseDtoCenterId';
 import type { MonitoringWashSummaryDto } from './monitoringWashSummaryDto';
 
 export interface MonitoringWashResponseDto {
   from: string;
   to: string;
   /** @nullable */
-  districtId: MonitoringWashResponseDtoDistrictId;
+  districtId: string | null;
   /** @nullable */
-  centerId: MonitoringWashResponseDtoCenterId;
+  centerId: string | null;
   summary: MonitoringWashSummaryDto;
 }

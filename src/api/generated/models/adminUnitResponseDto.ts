@@ -6,23 +6,19 @@
  * OpenAPI spec version: 1.0
  */
 import type { AdministrativeLevel } from './administrativeLevel';
-import type { AdminUnitResponseDtoParentId } from './adminUnitResponseDtoParentId';
-import type { AdminUnitResponseDtoDistrictId } from './adminUnitResponseDtoDistrictId';
-import type { AdminUnitResponseDtoLatitude } from './adminUnitResponseDtoLatitude';
-import type { AdminUnitResponseDtoLongitude } from './adminUnitResponseDtoLongitude';
 
 export interface AdminUnitResponseDto {
   id: string;
   level: AdministrativeLevel;
   /** @nullable */
-  parentId: AdminUnitResponseDtoParentId;
+  parentId: string | null;
   /** @nullable */
-  districtId: AdminUnitResponseDtoDistrictId;
+  districtId: string | null;
   name: string;
   code: string;
   /** @nullable */
-  latitude: AdminUnitResponseDtoLatitude;
+  latitude: number | null;
   /** @nullable */
-  longitude: AdminUnitResponseDtoLongitude;
+  longitude: number | null;
   createdAt: string;
 }

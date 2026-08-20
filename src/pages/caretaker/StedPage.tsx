@@ -66,7 +66,7 @@ export function StedPage() {
     [children, user?.centerId],
   )
 
-  const { selectedGrade, setSelectedGrade, gradeChildren: gradeCenterChildren, goBack, isGradeSelected } =
+  const { setSelectedGrade, gradeChildren: gradeCenterChildren, goBack, isGradeSelected } =
     useClassroomGateway(centerChildren)
 
   const eligible = useMemo(() => getEligibleStedChildren(gradeCenterChildren), [gradeCenterChildren])

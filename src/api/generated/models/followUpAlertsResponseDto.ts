@@ -7,15 +7,13 @@
  */
 import type { FollowUpAlertDto } from './followUpAlertDto';
 import type { FollowUpAlertCountsDto } from './followUpAlertCountsDto';
-import type { FollowUpAlertsResponseDtoDistrictId } from './followUpAlertsResponseDtoDistrictId';
-import type { FollowUpAlertsResponseDtoCenterId } from './followUpAlertsResponseDtoCenterId';
 
 export interface FollowUpAlertsResponseDto {
   items: FollowUpAlertDto[];
   total: number;
   counts: FollowUpAlertCountsDto;
   /** @nullable */
-  districtId: FollowUpAlertsResponseDtoDistrictId;
+  districtId: string | null;
   /** @nullable */
-  centerId: FollowUpAlertsResponseDtoCenterId;
+  centerId: string | null;
 }

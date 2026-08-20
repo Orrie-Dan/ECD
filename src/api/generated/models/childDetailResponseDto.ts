@@ -7,23 +7,7 @@
  */
 import type { ApiChildGender } from './apiChildGender';
 import type { ApiChildStatus } from './apiChildStatus';
-import type { ChildDetailResponseDtoCenterName } from './childDetailResponseDtoCenterName';
-import type { ChildDetailResponseDtoClassroomId } from './childDetailResponseDtoClassroomId';
 import type { ClassroomGrade } from './classroomGrade';
-import type { ChildDetailResponseDtoProvince } from './childDetailResponseDtoProvince';
-import type { ChildDetailResponseDtoDistrict } from './childDetailResponseDtoDistrict';
-import type { ChildDetailResponseDtoSector } from './childDetailResponseDtoSector';
-import type { ChildDetailResponseDtoCell } from './childDetailResponseDtoCell';
-import type { ChildDetailResponseDtoVillage } from './childDetailResponseDtoVillage';
-import type { ChildDetailResponseDtoClassroomLabel } from './childDetailResponseDtoClassroomLabel';
-import type { ChildDetailResponseDtoMiddleName } from './childDetailResponseDtoMiddleName';
-import type { ChildDetailResponseDtoLastName } from './childDetailResponseDtoLastName';
-import type { ChildDetailResponseDtoGuardian2Name } from './childDetailResponseDtoGuardian2Name';
-import type { ChildDetailResponseDtoGuardian2Phone } from './childDetailResponseDtoGuardian2Phone';
-import type { ChildDetailResponseDtoGuardian2Relation } from './childDetailResponseDtoGuardian2Relation';
-import type { ChildDetailResponseDtoNotes } from './childDetailResponseDtoNotes';
-import type { ChildDetailResponseDtoSpecialNeeds } from './childDetailResponseDtoSpecialNeeds';
-import type { ChildDetailResponseDtoArchiveReason } from './childDetailResponseDtoArchiveReason';
 
 export interface ChildDetailResponseDto {
   id: string;
@@ -35,22 +19,22 @@ export interface ChildDetailResponseDto {
   nationalId: string;
   centerId: string;
   /** @nullable */
-  centerName: ChildDetailResponseDtoCenterName;
+  centerName: string | null;
   /** @nullable */
-  classroomId: ChildDetailResponseDtoClassroomId;
+  classroomId: string | null;
   /** @nullable */
   classroomGrade: ClassroomGrade;
   homeVillageId: string;
   /** @nullable */
-  province: ChildDetailResponseDtoProvince;
+  province: string | null;
   /** @nullable */
-  district: ChildDetailResponseDtoDistrict;
+  district: string | null;
   /** @nullable */
-  sector: ChildDetailResponseDtoSector;
+  sector: string | null;
   /** @nullable */
-  cell: ChildDetailResponseDtoCell;
+  cell: string | null;
   /** @nullable */
-  village: ChildDetailResponseDtoVillage;
+  village: string | null;
   guardianName: string;
   guardianPhone: string;
   /** Optimistic-lock version (required for PATCH/DELETE/archive) */
@@ -58,28 +42,28 @@ export interface ChildDetailResponseDto {
   createdAt: string;
   updatedAt: string;
   /** @nullable */
-  classroomLabel: ChildDetailResponseDtoClassroomLabel;
+  classroomLabel: string | null;
   firstName: string;
   /** @nullable */
-  middleName: ChildDetailResponseDtoMiddleName;
+  middleName: string | null;
   /** @nullable */
-  lastName: ChildDetailResponseDtoLastName;
+  lastName: string | null;
   /** Primary guardian relationship */
   guardianRelation: string;
   /** @nullable */
-  guardian2Name: ChildDetailResponseDtoGuardian2Name;
+  guardian2Name: string | null;
   /** @nullable */
-  guardian2Phone: ChildDetailResponseDtoGuardian2Phone;
+  guardian2Phone: string | null;
   /** @nullable */
-  guardian2Relation: ChildDetailResponseDtoGuardian2Relation;
+  guardian2Relation: string | null;
   /** @nullable */
-  notes: ChildDetailResponseDtoNotes;
+  notes: string | null;
   /** @nullable */
-  specialNeeds: ChildDetailResponseDtoSpecialNeeds;
+  specialNeeds: string | null;
   /** Date the child was registered at the center */
   registeredAt: string;
   /** @nullable */
-  archiveReason: ChildDetailResponseDtoArchiveReason;
+  archiveReason: string | null;
   /** @nullable */
   archivedAt: string | null;
 }

@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { PrismaAuditAction } from './prismaAuditAction';
-import type { AuditLogResponseDtoChangedById } from './auditLogResponseDtoChangedById';
 import type { AuditLogResponseDtoOldValues } from './auditLogResponseDtoOldValues';
 import type { AuditLogResponseDtoNewValues } from './auditLogResponseDtoNewValues';
 import type { AuditLogResponseDtoMetadata } from './auditLogResponseDtoMetadata';
@@ -17,7 +16,7 @@ export interface AuditLogResponseDto {
   entityId: string;
   action: PrismaAuditAction;
   /** @nullable */
-  changedById: AuditLogResponseDtoChangedById;
+  changedById: string | null;
   changedAt: string;
   /**
    * Previous entity snapshot (JSON)

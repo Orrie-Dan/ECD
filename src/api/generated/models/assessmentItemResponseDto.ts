@@ -6,10 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { ItemResponse } from './itemResponse';
-import type { AssessmentItemResponseDtoScore } from './assessmentItemResponseDtoScore';
-import type { AssessmentItemResponseDtoEvidenceNotes } from './assessmentItemResponseDtoEvidenceNotes';
 import type { GapSeverity } from './gapSeverity';
-import type { AssessmentItemResponseDtoGapImprovementAction } from './assessmentItemResponseDtoGapImprovementAction';
 import type { GapStatus } from './gapStatus';
 
 export interface AssessmentItemResponseDto {
@@ -18,13 +15,13 @@ export interface AssessmentItemResponseDto {
   standardId: string;
   response: ItemResponse;
   /** @nullable */
-  score: AssessmentItemResponseDtoScore;
+  score: number | null;
   /** @nullable */
-  evidenceNotes: AssessmentItemResponseDtoEvidenceNotes;
+  evidenceNotes: string | null;
   /** @nullable */
   gapSeverity: GapSeverity;
   /** @nullable */
-  gapImprovementAction: AssessmentItemResponseDtoGapImprovementAction;
+  gapImprovementAction: string | null;
   /** @nullable */
   gapTargetDate: string | null;
   /** @nullable */

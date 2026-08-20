@@ -8,7 +8,6 @@
 import type { MonitoringComplianceSummaryDtoByStatus } from './monitoringComplianceSummaryDtoByStatus';
 import type { MonitoringComplianceSummaryDtoByType } from './monitoringComplianceSummaryDtoByType';
 import type { MonitoringComplianceSummaryDtoByClassification } from './monitoringComplianceSummaryDtoByClassification';
-import type { MonitoringComplianceSummaryDtoClassificationNullRate } from './monitoringComplianceSummaryDtoClassificationNullRate';
 
 export interface MonitoringComplianceSummaryDto {
   totalAssessments: number;
@@ -22,5 +21,5 @@ export interface MonitoringComplianceSummaryDto {
    * Share of assessments with null overallClassification (sparse when REST-only)
    * @nullable
    */
-  classificationNullRate: MonitoringComplianceSummaryDtoClassificationNullRate;
+  classificationNullRate: number | null;
 }

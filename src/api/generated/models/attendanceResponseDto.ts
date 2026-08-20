@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { AbsentReason } from './absentReason';
-import type { AttendanceResponseDtoNotes } from './attendanceResponseDtoNotes';
 
 export interface AttendanceResponseDto {
   id: string;
@@ -18,7 +17,7 @@ export interface AttendanceResponseDto {
   /** @nullable */
   absentReason: AbsentReason;
   /** @nullable */
-  notes: AttendanceResponseDtoNotes;
+  notes: string | null;
   /** User who recorded the attendance */
   recordedBy: string;
   /** Optimistic-lock version */

@@ -5,8 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { DashboardResponseDtoDistrictId } from './dashboardResponseDtoDistrictId';
-import type { DashboardResponseDtoCenterId } from './dashboardResponseDtoCenterId';
 import type { DashboardChildrenMetricsDto } from './dashboardChildrenMetricsDto';
 import type { DashboardAttendanceMetricsDto } from './dashboardAttendanceMetricsDto';
 import type { DashboardNutritionMetricsDto } from './dashboardNutritionMetricsDto';
@@ -17,9 +15,9 @@ export interface DashboardResponseDto {
   from: string;
   to: string;
   /** @nullable */
-  districtId: DashboardResponseDtoDistrictId;
+  districtId: string | null;
   /** @nullable */
-  centerId: DashboardResponseDtoCenterId;
+  centerId: string | null;
   centersInScope: number;
   children: DashboardChildrenMetricsDto;
   attendance: DashboardAttendanceMetricsDto;

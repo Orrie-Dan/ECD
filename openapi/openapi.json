@@ -8257,12 +8257,12 @@
             "$ref": "#/components/schemas/UserRole"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -8373,12 +8373,12 @@
             "$ref": "#/components/schemas/UserRole"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -8391,7 +8391,7 @@
             ]
           },
           "email": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "caregiver01@example.com",
             "description": "Account email when set"
@@ -8489,12 +8489,12 @@
             "description": "Stable client-generated device identifier"
           },
           "platform": {
-            "type": "object",
+            "type": "string",
             "example": "android",
             "nullable": true
           },
           "appVersion": {
-            "type": "object",
+            "type": "string",
             "example": "1.2.0",
             "nullable": true
           },
@@ -8628,12 +8628,12 @@
             "example": "op-uuid-or-client-id"
           },
           "localId": {
-            "type": "object",
+            "type": "string",
             "example": "local-temp-id",
             "nullable": true
           },
           "entityId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -8648,7 +8648,7 @@
             "$ref": "#/components/schemas/SyncOperationStatus"
           },
           "conflictReason": {
-            "type": "object",
+            "type": "string",
             "nullable": true
           },
           "replayed": {
@@ -8657,7 +8657,7 @@
             "description": "True when this push replayed a previously accepted operation"
           },
           "sessionId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           }
@@ -8679,7 +8679,7 @@
         "type": "object",
         "properties": {
           "sessionId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -8925,7 +8925,7 @@
             "$ref": "#/components/schemas/SyncOperationStatus"
           },
           "conflictReason": {
-            "type": "object",
+            "type": "string",
             "nullable": true
           },
           "processedAt": {
@@ -9107,7 +9107,7 @@
             "nullable": true
           },
           "acceptedBy": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -9458,12 +9458,12 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Kigali ECD Center"
           },
           "classroomId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -9476,27 +9476,27 @@
             "format": "uuid"
           },
           "province": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Kigali"
           },
           "district": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Gasabo"
           },
           "sector": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Remera"
           },
           "cell": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Rukiri I"
           },
           "village": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Amahoro"
           },
@@ -9522,7 +9522,7 @@
             "format": "date-time"
           },
           "classroomLabel": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Grade 1 / Umwaka wa 1"
           },
@@ -9531,12 +9531,12 @@
             "example": "Jean"
           },
           "middleName": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Pierre"
           },
           "lastName": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Uwimana"
           },
@@ -9546,27 +9546,27 @@
             "description": "Primary guardian relationship"
           },
           "guardian2Name": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Habimana Paul"
           },
           "guardian2Phone": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "+250788654321"
           },
           "guardian2Relation": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "father"
           },
           "notes": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Prefers morning sessions"
           },
           "specialNeeds": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Hearing impairment"
           },
@@ -9577,7 +9577,7 @@
             "description": "Date the child was registered at the center"
           },
           "archiveReason": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Family relocated"
           },
@@ -9659,12 +9659,12 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Kigali ECD Center"
           },
           "classroomId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -9677,27 +9677,27 @@
             "format": "uuid"
           },
           "province": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Kigali"
           },
           "district": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Gasabo"
           },
           "sector": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Remera"
           },
           "cell": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Rukiri I"
           },
           "village": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Amahoro"
           },
@@ -10385,7 +10385,7 @@
             "nullable": true
           },
           "screeningId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -10716,7 +10716,7 @@
             "example": "Local market"
           },
           "recordedBy": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -10906,7 +10906,7 @@
             "$ref": "#/components/schemas/AbsentReason"
           },
           "notes": {
-            "type": "object",
+            "type": "string",
             "nullable": true,
             "example": "Arrived late"
           },
@@ -11168,7 +11168,7 @@
             "example": "Jane Doe"
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+250788123456",
             "nullable": true
           },
@@ -11253,7 +11253,7 @@
             "example": "Jane Doe"
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+250788123456",
             "nullable": true
           },
@@ -11364,7 +11364,7 @@
             "maxLength": 200
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+250788123456",
             "maxLength": 50,
             "nullable": true
@@ -11899,22 +11899,22 @@
             "example": "Kigali ECD Center"
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+250788123456",
             "nullable": true
           },
           "capacity": {
-            "type": "object",
+            "type": "number",
             "example": 40,
             "nullable": true
           },
           "latitude": {
-            "type": "object",
+            "type": "number",
             "example": -1.9441,
             "nullable": true
           },
           "longitude": {
-            "type": "object",
+            "type": "number",
             "example": 30.0619,
             "nullable": true
           },
@@ -11926,7 +11926,7 @@
             "format": "uuid"
           },
           "districtName": {
-            "type": "object",
+            "type": "string",
             "example": "Gasabo",
             "nullable": true
           },
@@ -11935,7 +11935,7 @@
             "format": "uuid"
           },
           "villageName": {
-            "type": "object",
+            "type": "string",
             "example": "Kimironko",
             "nullable": true
           },
@@ -12037,22 +12037,22 @@
             "example": "Kigali ECD Center"
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+250788123456",
             "nullable": true
           },
           "capacity": {
-            "type": "object",
+            "type": "number",
             "example": 40,
             "nullable": true
           },
           "latitude": {
-            "type": "object",
+            "type": "number",
             "example": -1.9441,
             "nullable": true
           },
           "longitude": {
-            "type": "object",
+            "type": "number",
             "example": 30.0619,
             "nullable": true
           },
@@ -12064,7 +12064,7 @@
             "format": "uuid"
           },
           "districtName": {
-            "type": "object",
+            "type": "string",
             "example": "Gasabo",
             "nullable": true
           },
@@ -12073,7 +12073,7 @@
             "format": "uuid"
           },
           "villageName": {
-            "type": "object",
+            "type": "string",
             "example": "Kimironko",
             "nullable": true
           },
@@ -12104,7 +12104,7 @@
             "format": "date-time"
           },
           "provinceName": {
-            "type": "object",
+            "type": "string",
             "example": "Kigali",
             "nullable": true
           },
@@ -12167,24 +12167,24 @@
             "maxLength": 200
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+250788123456",
             "maxLength": 30,
             "nullable": true
           },
           "capacity": {
-            "type": "object",
+            "type": "number",
             "example": 40,
             "minimum": 0,
             "nullable": true
           },
           "latitude": {
-            "type": "object",
+            "type": "number",
             "example": -1.9441,
             "nullable": true
           },
           "longitude": {
-            "type": "object",
+            "type": "number",
             "example": 30.0619,
             "nullable": true
           },
@@ -12358,7 +12358,7 @@
             "example": 80
           },
           "rate": {
-            "type": "object",
+            "type": "number",
             "example": 87.5,
             "nullable": true
           },
@@ -12483,12 +12483,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -12595,32 +12595,32 @@
             "example": "Child requires urgent referral"
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerName": {
-            "type": "object",
+            "type": "string",
             "example": "Kigali ECD Center",
             "nullable": true
           },
           "childId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "childName": {
-            "type": "object",
+            "type": "string",
             "example": "Jane Doe",
             "nullable": true
           },
           "entityType": {
-            "type": "object",
+            "type": "string",
             "example": "ChildNutritionScreening",
             "nullable": true
           },
           "entityId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -12702,12 +12702,12 @@
             "$ref": "#/components/schemas/FollowUpAlertCountsDto"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           }
@@ -12740,7 +12740,7 @@
             "example": 100
           },
           "attendanceRate": {
-            "type": "object",
+            "type": "number",
             "example": 80,
             "nullable": true
           }
@@ -12769,7 +12769,7 @@
             "example": 5
           },
           "rate": {
-            "type": "object",
+            "type": "number",
             "example": 80,
             "nullable": true
           }
@@ -12805,7 +12805,7 @@
             "example": 8
           },
           "rate": {
-            "type": "object",
+            "type": "number",
             "example": 80,
             "nullable": true
           }
@@ -12831,17 +12831,17 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "sectorId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -12932,7 +12932,7 @@
             "example": 10
           },
           "screeningCoverage": {
-            "type": "object",
+            "type": "number",
             "example": 90,
             "nullable": true
           }
@@ -13004,12 +13004,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13084,7 +13084,7 @@
             "example": 48
           },
           "feedingCoverage": {
-            "type": "object",
+            "type": "number",
             "example": 41.7,
             "nullable": true
           },
@@ -13129,7 +13129,7 @@
             "example": 1
           },
           "coverage": {
-            "type": "object",
+            "type": "number",
             "example": 83.3,
             "nullable": true
           }
@@ -13155,12 +13155,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13225,12 +13225,12 @@
             "example": 100
           },
           "coverage": {
-            "type": "object",
+            "type": "number",
             "example": 40,
             "nullable": true
           },
           "averageScore": {
-            "type": "object",
+            "type": "number",
             "example": 72.5,
             "nullable": true
           },
@@ -13307,7 +13307,7 @@
             "example": 6
           },
           "averageScore": {
-            "type": "object",
+            "type": "number",
             "example": 70,
             "nullable": true
           }
@@ -13329,12 +13329,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13440,7 +13440,7 @@
             }
           },
           "classificationNullRate": {
-            "type": "object",
+            "type": "number",
             "example": 0.5,
             "nullable": true,
             "description": "Share of assessments with null overallClassification (sparse when REST-only)"
@@ -13469,12 +13469,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13576,12 +13576,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13621,7 +13621,7 @@
             "example": 2
           },
           "averageCompletionDays": {
-            "type": "object",
+            "type": "number",
             "example": 4.5,
             "nullable": true
           }
@@ -13679,12 +13679,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13810,12 +13810,12 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "centerId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13889,7 +13889,7 @@
             "nullable": true
           },
           "archiveReason": {
-            "type": "object",
+            "type": "string",
             "example": "Moved away",
             "nullable": true
           }
@@ -13915,7 +13915,7 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -13972,7 +13972,7 @@
             "example": 8
           },
           "rate": {
-            "type": "object",
+            "type": "number",
             "example": 80,
             "nullable": true
           }
@@ -14094,7 +14094,7 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -14152,7 +14152,7 @@
             "example": 2
           },
           "attendanceRate": {
-            "type": "object",
+            "type": "number",
             "example": 87.5,
             "nullable": true
           },
@@ -14202,7 +14202,7 @@
             "example": "2026-08-06T23:59:59.999Z"
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -14236,7 +14236,7 @@
             "$ref": "#/components/schemas/PrismaAuditAction"
           },
           "changedById": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -14330,7 +14330,7 @@
             "format": "date-time"
           },
           "updatedById": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           }
@@ -14386,12 +14386,12 @@
             "$ref": "#/components/schemas/AdministrativeLevel"
           },
           "parentId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
           "districtId": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -14404,12 +14404,12 @@
             "example": "VIL-001"
           },
           "latitude": {
-            "type": "object",
+            "type": "number",
             "example": -1.9441,
             "nullable": true
           },
           "longitude": {
-            "type": "object",
+            "type": "number",
             "example": 30.0619,
             "nullable": true
           },
@@ -14522,12 +14522,12 @@
             "example": "Kigali ECD Center"
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+250788123456",
             "nullable": true
           },
           "capacity": {
-            "type": "object",
+            "type": "number",
             "example": 40,
             "nullable": true
           },
@@ -14539,17 +14539,17 @@
             "format": "uuid"
           },
           "villageName": {
-            "type": "object",
+            "type": "string",
             "example": "Kimironko",
             "nullable": true
           },
           "latitude": {
-            "type": "object",
+            "type": "number",
             "example": -1.9441,
             "nullable": true
           },
           "longitude": {
-            "type": "object",
+            "type": "number",
             "example": 30.0619,
             "nullable": true
           }
@@ -14630,7 +14630,7 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "object",
+            "type": "string",
             "example": "Kigali ECD Center",
             "nullable": true
           },
@@ -14653,7 +14653,7 @@
             "$ref": "#/components/schemas/AssessmentStatus"
           },
           "submittedById": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -14663,7 +14663,7 @@
             "nullable": true
           },
           "verifiedById": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -14787,12 +14787,12 @@
             "$ref": "#/components/schemas/ItemResponse"
           },
           "score": {
-            "type": "object",
+            "type": "number",
             "example": 1,
             "nullable": true
           },
           "evidenceNotes": {
-            "type": "object",
+            "type": "string",
             "example": "Evidence notes",
             "nullable": true
           },
@@ -14801,7 +14801,7 @@
             "$ref": "#/components/schemas/GapSeverity"
           },
           "gapImprovementAction": {
-            "type": "object",
+            "type": "string",
             "example": "Install handwashing station",
             "nullable": true
           },
@@ -14862,7 +14862,7 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "object",
+            "type": "string",
             "example": "Kigali ECD Center",
             "nullable": true
           },
@@ -14885,7 +14885,7 @@
             "$ref": "#/components/schemas/AssessmentStatus"
           },
           "submittedById": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -14895,7 +14895,7 @@
             "nullable": true
           },
           "verifiedById": {
-            "type": "object",
+            "type": "string",
             "format": "uuid",
             "nullable": true
           },
@@ -15020,11 +15020,11 @@
             "example": "Safe drinking water available"
           },
           "description": {
-            "type": "object",
+            "type": "string",
             "nullable": true
           },
           "weight": {
-            "type": "object",
+            "type": "number",
             "example": 1,
             "nullable": true
           },
@@ -15159,7 +15159,7 @@
             "format": "uuid"
           },
           "centerName": {
-            "type": "object",
+            "type": "string",
             "example": "Kigali ECD Center",
             "nullable": true
           },
@@ -15176,7 +15176,7 @@
             "example": true
           },
           "waterSourceType": {
-            "type": "object",
+            "type": "string",
             "example": "piped",
             "nullable": true
           },
@@ -15185,7 +15185,7 @@
             "example": true
           },
           "latrineCount": {
-            "type": "object",
+            "type": "number",
             "example": 2,
             "nullable": true
           },
@@ -15198,7 +15198,7 @@
             "example": true
           },
           "notes": {
-            "type": "object",
+            "type": "string",
             "nullable": true
           },
           "recordedById": {

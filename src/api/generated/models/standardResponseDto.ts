@@ -6,8 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { StandardDomain } from './standardDomain';
-import type { StandardResponseDtoDescription } from './standardResponseDtoDescription';
-import type { StandardResponseDtoWeight } from './standardResponseDtoWeight';
 
 export interface StandardResponseDto {
   id: string;
@@ -15,9 +13,9 @@ export interface StandardResponseDto {
   code: string;
   title: string;
   /** @nullable */
-  description: StandardResponseDtoDescription;
+  description: string | null;
   /** @nullable */
-  weight: StandardResponseDtoWeight;
+  weight: number | null;
   version: string;
   isActive: boolean;
   createdAt: string;

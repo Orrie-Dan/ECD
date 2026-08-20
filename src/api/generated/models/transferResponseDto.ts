@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { TransferStatus } from './transferStatus';
-import type { TransferResponseDtoAcceptedBy } from './transferResponseDtoAcceptedBy';
 
 export interface TransferResponseDto {
   id: string;
@@ -23,7 +22,7 @@ export interface TransferResponseDto {
   /** @nullable */
   acceptedAt: string | null;
   /** @nullable */
-  acceptedBy: TransferResponseDtoAcceptedBy;
+  acceptedBy: string | null;
   /** Optimistic-lock version; send back on accept/cancel */
   version: number;
   createdAt: string;

@@ -44,6 +44,8 @@ export default defineConfig({
       },
       workbox: {
         // Precache app shell only. Never network-first API caching.
+        // Main bundle is ~2.2 MB; default 2 MiB would skip it and break offline boot.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],

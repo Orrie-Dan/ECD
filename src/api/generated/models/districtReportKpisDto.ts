@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { DistrictReportKpisDtoAttendanceRate } from './districtReportKpisDtoAttendanceRate';
 
 export interface DistrictReportKpisDto {
   centersInScope: number;
@@ -13,7 +12,7 @@ export interface DistrictReportKpisDto {
   newRegistrations: number;
   dropouts: number;
   /** @nullable */
-  attendanceRate: DistrictReportKpisDtoAttendanceRate;
+  attendanceRate: number | null;
   nutritionScreenings: number;
   severeNutrition: number;
   pendingReferrals: number;

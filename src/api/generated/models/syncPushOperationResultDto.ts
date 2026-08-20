@@ -5,27 +5,23 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { SyncPushOperationResultDtoLocalId } from './syncPushOperationResultDtoLocalId';
-import type { SyncPushOperationResultDtoEntityId } from './syncPushOperationResultDtoEntityId';
 import type { PrismaAuditAction } from './prismaAuditAction';
 import type { SyncOperationStatus } from './syncOperationStatus';
-import type { SyncPushOperationResultDtoConflictReason } from './syncPushOperationResultDtoConflictReason';
-import type { SyncPushOperationResultDtoSessionId } from './syncPushOperationResultDtoSessionId';
 
 export interface SyncPushOperationResultDto {
   id: string;
   clientOperationId: string;
   /** @nullable */
-  localId: SyncPushOperationResultDtoLocalId;
+  localId: string | null;
   /** @nullable */
-  entityId: SyncPushOperationResultDtoEntityId;
+  entityId: string | null;
   entityType: string;
   operation: PrismaAuditAction;
   status: SyncOperationStatus;
   /** @nullable */
-  conflictReason: SyncPushOperationResultDtoConflictReason;
+  conflictReason: string | null;
   /** True when this push replayed a previously accepted operation */
   replayed: boolean;
   /** @nullable */
-  sessionId: SyncPushOperationResultDtoSessionId;
+  sessionId: string | null;
 }

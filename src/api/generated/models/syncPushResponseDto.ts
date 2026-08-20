@@ -5,13 +5,12 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { SyncPushResponseDtoSessionId } from './syncPushResponseDtoSessionId';
 import type { SyncOperationStatus } from './syncOperationStatus';
 import type { SyncPushOperationResultDto } from './syncPushOperationResultDto';
 
 export interface SyncPushResponseDto {
   /** @nullable */
-  sessionId: SyncPushResponseDtoSessionId;
+  sessionId: string | null;
   accepted: number;
   created: number;
   deduplicated: number;

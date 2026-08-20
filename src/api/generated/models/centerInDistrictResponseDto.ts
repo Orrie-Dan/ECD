@@ -5,27 +5,22 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { CenterInDistrictResponseDtoPhone } from './centerInDistrictResponseDtoPhone';
-import type { CenterInDistrictResponseDtoCapacity } from './centerInDistrictResponseDtoCapacity';
 import type { EcdCenterStatus } from './ecdCenterStatus';
-import type { CenterInDistrictResponseDtoVillageName } from './centerInDistrictResponseDtoVillageName';
-import type { CenterInDistrictResponseDtoLatitude } from './centerInDistrictResponseDtoLatitude';
-import type { CenterInDistrictResponseDtoLongitude } from './centerInDistrictResponseDtoLongitude';
 
 export interface CenterInDistrictResponseDto {
   id: string;
   code: string;
   name: string;
   /** @nullable */
-  phone: CenterInDistrictResponseDtoPhone;
+  phone: string | null;
   /** @nullable */
-  capacity: CenterInDistrictResponseDtoCapacity;
+  capacity: number | null;
   status: EcdCenterStatus;
   villageId: string;
   /** @nullable */
-  villageName: CenterInDistrictResponseDtoVillageName;
+  villageName: string | null;
   /** @nullable */
-  latitude: CenterInDistrictResponseDtoLatitude;
+  latitude: number | null;
   /** @nullable */
-  longitude: CenterInDistrictResponseDtoLongitude;
+  longitude: number | null;
 }

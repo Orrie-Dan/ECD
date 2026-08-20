@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { SettingResponseDtoUpdatedById } from './settingResponseDtoUpdatedById';
 
 export interface SettingResponseDto {
   id: string;
@@ -14,5 +13,5 @@ export interface SettingResponseDto {
   value: string;
   updatedAt: string;
   /** @nullable */
-  updatedById: SettingResponseDtoUpdatedById;
+  updatedById: string | null;
 }

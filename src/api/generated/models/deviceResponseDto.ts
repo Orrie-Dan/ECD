@@ -5,8 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { DeviceResponseDtoPlatform } from './deviceResponseDtoPlatform';
-import type { DeviceResponseDtoAppVersion } from './deviceResponseDtoAppVersion';
 import type { DeviceStatus } from './deviceStatus';
 
 export interface DeviceResponseDto {
@@ -14,9 +12,9 @@ export interface DeviceResponseDto {
   /** Stable client-generated device identifier */
   deviceUuid: string;
   /** @nullable */
-  platform: DeviceResponseDtoPlatform;
+  platform: string | null;
   /** @nullable */
-  appVersion: DeviceResponseDtoAppVersion;
+  appVersion: string | null;
   status: DeviceStatus;
   /**
    * Legacy alias for last sync / heartbeat. Same value as lastSyncAt (DB last_sync_at).

@@ -5,35 +5,28 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { CenterDetailResponseDtoPhone } from './centerDetailResponseDtoPhone';
-import type { CenterDetailResponseDtoCapacity } from './centerDetailResponseDtoCapacity';
-import type { CenterDetailResponseDtoLatitude } from './centerDetailResponseDtoLatitude';
-import type { CenterDetailResponseDtoLongitude } from './centerDetailResponseDtoLongitude';
 import type { EcdCenterStatus } from './ecdCenterStatus';
-import type { CenterDetailResponseDtoDistrictName } from './centerDetailResponseDtoDistrictName';
-import type { CenterDetailResponseDtoVillageName } from './centerDetailResponseDtoVillageName';
 import type { ComplianceClassification } from './complianceClassification';
-import type { CenterDetailResponseDtoProvinceName } from './centerDetailResponseDtoProvinceName';
 
 export interface CenterDetailResponseDto {
   id: string;
   code: string;
   name: string;
   /** @nullable */
-  phone: CenterDetailResponseDtoPhone;
+  phone: string | null;
   /** @nullable */
-  capacity: CenterDetailResponseDtoCapacity;
+  capacity: number | null;
   /** @nullable */
-  latitude: CenterDetailResponseDtoLatitude;
+  latitude: number | null;
   /** @nullable */
-  longitude: CenterDetailResponseDtoLongitude;
+  longitude: number | null;
   status: EcdCenterStatus;
   districtId: string;
   /** @nullable */
-  districtName: CenterDetailResponseDtoDistrictName;
+  districtName: string | null;
   villageId: string;
   /** @nullable */
-  villageName: CenterDetailResponseDtoVillageName;
+  villageName: string | null;
   /** @nullable */
   currentComplianceLevel: ComplianceClassification;
   /** @nullable */
@@ -44,7 +37,7 @@ export interface CenterDetailResponseDto {
   createdAt: string;
   updatedAt: string;
   /** @nullable */
-  provinceName: CenterDetailResponseDtoProvinceName;
+  provinceName: string | null;
   caregiversCount: number;
   attendancePresentToday: number;
   attendanceAbsentToday: number;

@@ -5,10 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { UpdateCenterDtoPhone } from './updateCenterDtoPhone';
-import type { UpdateCenterDtoCapacity } from './updateCenterDtoCapacity';
-import type { UpdateCenterDtoLatitude } from './updateCenterDtoLatitude';
-import type { UpdateCenterDtoLongitude } from './updateCenterDtoLongitude';
 import type { EcdCenterStatus } from './ecdCenterStatus';
 
 export interface UpdateCenterDto {
@@ -26,16 +22,16 @@ export interface UpdateCenterDto {
    * @maxLength 30
    * @nullable
    */
-  phone?: UpdateCenterDtoPhone;
+  phone?: string | null;
   /**
    * @minimum 0
    * @nullable
    */
-  capacity?: UpdateCenterDtoCapacity;
+  capacity?: number | null;
   /** @nullable */
-  latitude?: UpdateCenterDtoLatitude;
+  latitude?: number | null;
   /** @nullable */
-  longitude?: UpdateCenterDtoLongitude;
+  longitude?: number | null;
   status?: EcdCenterStatus;
   villageId?: string;
   /** Optional device id for offline sync attribution */

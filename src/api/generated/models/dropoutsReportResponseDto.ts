@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { DropoutsReportResponseDtoDistrictId } from './dropoutsReportResponseDtoDistrictId';
 import type { DropoutInterpretationDto } from './dropoutInterpretationDto';
 import type { DropoutSummaryDto } from './dropoutSummaryDto';
 import type { DropoutItemDto } from './dropoutItemDto';
@@ -14,7 +13,7 @@ export interface DropoutsReportResponseDto {
   from: string;
   to: string;
   /** @nullable */
-  districtId?: DropoutsReportResponseDtoDistrictId;
+  districtId?: string | null;
   interpretation: DropoutInterpretationDto;
   summary: DropoutSummaryDto;
   items: DropoutItemDto[];

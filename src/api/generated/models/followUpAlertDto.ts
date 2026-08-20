@@ -7,12 +7,6 @@
  */
 import type { FollowUpAlertCategory } from './followUpAlertCategory';
 import type { FollowUpAlertPriority } from './followUpAlertPriority';
-import type { FollowUpAlertDtoCenterId } from './followUpAlertDtoCenterId';
-import type { FollowUpAlertDtoCenterName } from './followUpAlertDtoCenterName';
-import type { FollowUpAlertDtoChildId } from './followUpAlertDtoChildId';
-import type { FollowUpAlertDtoChildName } from './followUpAlertDtoChildName';
-import type { FollowUpAlertDtoEntityType } from './followUpAlertDtoEntityType';
-import type { FollowUpAlertDtoEntityId } from './followUpAlertDtoEntityId';
 import type { FollowUpAlertMetricDto } from './followUpAlertMetricDto';
 
 export interface FollowUpAlertDto {
@@ -23,17 +17,17 @@ export interface FollowUpAlertDto {
   title: string;
   description: string;
   /** @nullable */
-  centerId: FollowUpAlertDtoCenterId;
+  centerId: string | null;
   /** @nullable */
-  centerName: FollowUpAlertDtoCenterName;
+  centerName: string | null;
   /** @nullable */
-  childId: FollowUpAlertDtoChildId;
+  childId: string | null;
   /** @nullable */
-  childName: FollowUpAlertDtoChildName;
+  childName: string | null;
   /** @nullable */
-  entityType: FollowUpAlertDtoEntityType;
+  entityType: string | null;
   /** @nullable */
-  entityId: FollowUpAlertDtoEntityId;
+  entityId: string | null;
   /** ISO-8601 detection timestamp */
   detectedAt: string;
   metrics: FollowUpAlertMetricDto[];

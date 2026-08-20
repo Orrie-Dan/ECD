@@ -10,8 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "api:generate": "orval --config orval.config.ts",
-    "api:sync-openapi": "node scripts/sync-openapi.mjs"
+    "api:generate": "node scripts/patch-openapi-nullable-scalars.mjs && orval --config orval.config.ts",
+    "api:sync-openapi": "node scripts/sync-openapi.mjs && node scripts/patch-openapi-nullable-scalars.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",

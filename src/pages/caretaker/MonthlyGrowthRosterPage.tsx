@@ -65,7 +65,7 @@ export function MonthlyGrowthRosterPage() {
     [children, user?.centerId],
   )
 
-  const { selectedGrade, setSelectedGrade, gradeChildren: gradeCenterChildren, goBack, isGradeSelected } =
+  const { setSelectedGrade, gradeChildren: gradeCenterChildren, goBack, isGradeSelected } =
     useClassroomGateway(centerChildren)
 
   const { pending, measured } = useMemo(

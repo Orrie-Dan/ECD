@@ -186,7 +186,7 @@ function GukurikiranaPageLive() {
   const [category, setCategory] = useState<LiveCategoryFilter>('all')
   const filters = useMemo(
     () => ({
-      category: category === 'all' ? undefined : (category as FollowUpAlertCategory),
+      category: category === 'all' ? undefined : category,
       limit: 100,
     }),
     [category],

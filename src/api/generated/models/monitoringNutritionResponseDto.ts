@@ -5,8 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { MonitoringNutritionResponseDtoDistrictId } from './monitoringNutritionResponseDtoDistrictId';
-import type { MonitoringNutritionResponseDtoCenterId } from './monitoringNutritionResponseDtoCenterId';
 import type { MonitoringNutritionSummaryDto } from './monitoringNutritionSummaryDto';
 import type { MonitoringNutritionCenterItemDto } from './monitoringNutritionCenterItemDto';
 
@@ -14,9 +12,9 @@ export interface MonitoringNutritionResponseDto {
   from: string;
   to: string;
   /** @nullable */
-  districtId: MonitoringNutritionResponseDtoDistrictId;
+  districtId: string | null;
   /** @nullable */
-  centerId: MonitoringNutritionResponseDtoCenterId;
+  centerId: string | null;
   summary: MonitoringNutritionSummaryDto;
   items: MonitoringNutritionCenterItemDto[];
   total: number;

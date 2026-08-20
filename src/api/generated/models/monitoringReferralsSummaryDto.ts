@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { MonitoringReferralsSummaryDtoAverageCompletionDays } from './monitoringReferralsSummaryDtoAverageCompletionDays';
 
 export interface MonitoringReferralsSummaryDto {
   created: number;
@@ -14,5 +13,5 @@ export interface MonitoringReferralsSummaryDto {
   cancelled: number;
   overdue: number;
   /** @nullable */
-  averageCompletionDays: MonitoringReferralsSummaryDtoAverageCompletionDays;
+  averageCompletionDays: number | null;
 }

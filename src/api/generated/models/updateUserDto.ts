@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { UpdateUserDtoPhone } from './updateUserDtoPhone';
 import type { ApiUserStatus } from './apiUserStatus';
 
 export interface UpdateUserDto {
@@ -18,6 +17,6 @@ export interface UpdateUserDto {
    * @maxLength 50
    * @nullable
    */
-  phone?: UpdateUserDtoPhone;
+  phone?: string | null;
   status?: ApiUserStatus;
 }

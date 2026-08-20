@@ -2,7 +2,8 @@ import { defineConfig } from 'orval'
 
 /**
  * Generates typed models + React Query hooks from the Phase 1 OpenAPI contract.
- * Spec is copied from ECD Backend (`openapi/openapi.json`).
+ * Spec is copied from ECD Backend (`openapi/openapi.json`), then nullable scalars
+ * mis-emitted as empty objects are patched before Orval runs.
  *
  * Re-run: npm run api:generate
  */

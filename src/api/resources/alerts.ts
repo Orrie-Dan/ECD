@@ -3,10 +3,32 @@
  * District Gukurikirana LIVE reads only (GET). No dismiss/ack mutations in contract.
  */
 import { alertsControllerGetFollowUp } from '@/api/generated/endpoints/alerts/alerts'
-import type { AlertsControllerGetFollowUpParams } from '@/api/generated/models'
+import type {
+  AlertsControllerGetFollowUpParams,
+  FollowUpCategory,
+} from '@/api/generated/models'
 import type { FollowUpAlertsViewModel } from '@/models/alerts'
 
-export type FollowUpAlertsFilters = AlertsControllerGetFollowUpParams
+export type FollowUpAlertsFilters = Omit<AlertsControllerGetFollowUpParams, 'category'> & {
+  /** UI may include categories not yet in the OpenAPI FollowUpCategory enum. */
+  category?: string
+}
+
+const API_FOLLOW_UP_CATEGORIES = new Set<string>([
+  'nutrition',
+  'attendance',
+  'referral',
+  'data_quality',
+])
+
+/** Map UI category filters onto the OpenAPI FollowUpCategory enum. */
+export function toFollowUpApiCategory(
+  category: string | undefined,
+): FollowUpCategory | undefined {
+  if (!category || category === 'all') return undefined
+  if (API_FOLLOW_UP_CATEGORIES.has(category)) return category as FollowUpCategory
+  return undefined
+}
 
 export async function fetchFollowUpAlerts(
   filters: FollowUpAlertsFilters = {},
@@ -14,7 +36,7 @@ export async function fetchFollowUpAlerts(
   const dto = await alertsControllerGetFollowUp({
     districtId: filters.districtId,
     centerId: filters.centerId,
-    category: filters.category,
+    category: toFollowUpApiCategory(filters.category),
     limit: filters.limit ?? 100,
   })
 
@@ -41,10 +63,11 @@ export async function fetchFollowUpAlerts(
       attendance: dto.counts.attendance,
       referral: dto.counts.referral,
       data_quality: dto.counts.data_quality,
-      sted: (dto.counts as Record<string, number>).sted ?? 0,
-      transfer: (dto.counts as Record<string, number>).transfer ?? 0,
-      compliance: (dto.counts as Record<string, number>).compliance ?? 0,
-      capacity: (dto.counts as Record<string, number>).capacity ?? 0,
+      // Not yet in FollowUpAlertCountsDto contract — keep view-model shape stable.
+      sted: 0,
+      transfer: 0,
+      compliance: 0,
+      capacity: 0,
       high: dto.counts.high,
     },
     districtId: dto.districtId,

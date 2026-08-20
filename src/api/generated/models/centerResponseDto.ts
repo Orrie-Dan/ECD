@@ -5,13 +5,7 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { CenterResponseDtoPhone } from './centerResponseDtoPhone';
-import type { CenterResponseDtoCapacity } from './centerResponseDtoCapacity';
-import type { CenterResponseDtoLatitude } from './centerResponseDtoLatitude';
-import type { CenterResponseDtoLongitude } from './centerResponseDtoLongitude';
 import type { EcdCenterStatus } from './ecdCenterStatus';
-import type { CenterResponseDtoDistrictName } from './centerResponseDtoDistrictName';
-import type { CenterResponseDtoVillageName } from './centerResponseDtoVillageName';
 import type { ComplianceClassification } from './complianceClassification';
 
 export interface CenterResponseDto {
@@ -19,20 +13,20 @@ export interface CenterResponseDto {
   code: string;
   name: string;
   /** @nullable */
-  phone: CenterResponseDtoPhone;
+  phone: string | null;
   /** @nullable */
-  capacity: CenterResponseDtoCapacity;
+  capacity: number | null;
   /** @nullable */
-  latitude: CenterResponseDtoLatitude;
+  latitude: number | null;
   /** @nullable */
-  longitude: CenterResponseDtoLongitude;
+  longitude: number | null;
   status: EcdCenterStatus;
   districtId: string;
   /** @nullable */
-  districtName: CenterResponseDtoDistrictName;
+  districtName: string | null;
   villageId: string;
   /** @nullable */
-  villageName: CenterResponseDtoVillageName;
+  villageName: string | null;
   /** @nullable */
   currentComplianceLevel: ComplianceClassification;
   /** @nullable */

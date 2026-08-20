@@ -19,6 +19,7 @@ export const notificationsLocale = {
     transfer_cancelled: 'Kwimura bihagaritswe',
     child_enrolled: 'Umwana yanditswe',
     child_archived: 'Umwana mu bubiko',
+    assessment_due: 'Isuzuma rizateganyijwe',
     referral_created: 'Ihererekanya rishya',
     referral_updated: 'Ihererekanya rihinduwe',
     nutrition_alert: 'Imikurire — impugukirwa',

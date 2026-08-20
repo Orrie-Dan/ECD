@@ -7,7 +7,6 @@
  */
 import type { PrismaAuditAction } from './prismaAuditAction';
 import type { SyncOperationStatus } from './syncOperationStatus';
-import type { SyncSessionOperationDtoConflictReason } from './syncSessionOperationDtoConflictReason';
 
 export interface SyncSessionOperationDto {
   id: string;
@@ -16,7 +15,7 @@ export interface SyncSessionOperationDto {
   operation: PrismaAuditAction;
   status: SyncOperationStatus;
   /** @nullable */
-  conflictReason: SyncSessionOperationDtoConflictReason;
+  conflictReason: string | null;
   /** @nullable */
   processedAt: string | null;
 }

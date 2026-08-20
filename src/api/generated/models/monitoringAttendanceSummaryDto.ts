@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { MonitoringAttendanceSummaryDtoAttendanceRate } from './monitoringAttendanceSummaryDtoAttendanceRate';
 
 export interface MonitoringAttendanceSummaryDto {
   enrolledChildren: number;
@@ -13,5 +12,5 @@ export interface MonitoringAttendanceSummaryDto {
   absent: number;
   totalRecords: number;
   /** @nullable */
-  attendanceRate: MonitoringAttendanceSummaryDtoAttendanceRate;
+  attendanceRate: number | null;
 }

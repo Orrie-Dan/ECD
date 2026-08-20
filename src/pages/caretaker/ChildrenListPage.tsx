@@ -88,7 +88,7 @@ export function ChildrenListPage() {
   const [reactivateChild, setReactivateChild] = useState<Child | null>(null)
   const [measureChild, setMeasureChild] = useState<Child | null>(null)
 
-  const { selectedGrade, setSelectedGrade, gradeChildren, goBack, isGradeSelected } =
+  const { setSelectedGrade, gradeChildren, goBack, isGradeSelected } =
     useClassroomGateway(enrolledChildren)
 
   useEffect(() => {

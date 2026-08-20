@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { MonitoringStedCenterItemDtoAverageScore } from './monitoringStedCenterItemDtoAverageScore';
 
 export interface MonitoringStedCenterItemDto {
   centerId?: string;
@@ -15,5 +14,5 @@ export interface MonitoringStedCenterItemDto {
   assessmentsCompleted: number;
   childrenAssessed?: number;
   /** @nullable */
-  averageScore: MonitoringStedCenterItemDtoAverageScore;
+  averageScore: number | null;
 }

@@ -8,7 +8,6 @@ import {
   Apple,
   Stethoscope,
   ClipboardCheck,
-  AlertTriangle,
   Users,
   FileWarning,
   Check,

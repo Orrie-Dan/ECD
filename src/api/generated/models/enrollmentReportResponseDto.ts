@@ -5,8 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { EnrollmentReportResponseDtoDistrictId } from './enrollmentReportResponseDtoDistrictId';
-import type { EnrollmentReportResponseDtoCenterId } from './enrollmentReportResponseDtoCenterId';
 import type { EnrollmentReportResponseDtoInterpretation } from './enrollmentReportResponseDtoInterpretation';
 import type { EnrollmentSummaryDto } from './enrollmentSummaryDto';
 import type { EnrollmentTrendPointDto } from './enrollmentTrendPointDto';
@@ -15,9 +13,9 @@ export interface EnrollmentReportResponseDto {
   from: string;
   to: string;
   /** @nullable */
-  districtId: EnrollmentReportResponseDtoDistrictId;
+  districtId: string | null;
   /** @nullable */
-  centerId?: EnrollmentReportResponseDtoCenterId;
+  centerId?: string | null;
   /**
    * Always null on enrollment reports (dropout interpretation lives on /reports/dropouts)
    * @nullable

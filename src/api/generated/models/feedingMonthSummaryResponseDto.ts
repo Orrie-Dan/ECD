@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { FeedingMonthSummaryResponseDtoRecordedBy } from './feedingMonthSummaryResponseDtoRecordedBy';
 
 export interface FeedingMonthSummaryResponseDto {
   id: string;
@@ -15,7 +14,7 @@ export interface FeedingMonthSummaryResponseDto {
   flourKg: number;
   foodSource: string;
   /** @nullable */
-  recordedBy: FeedingMonthSummaryResponseDtoRecordedBy;
+  recordedBy: string | null;
   recordedAt: string;
   /** Optimistic-lock version; send back on update */
   version: number;

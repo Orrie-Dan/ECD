@@ -41,7 +41,7 @@ import { CheckCircle2 } from 'lucide-react'
 
 export function AttendancePage() {
   const { user } = useAuth()
-  const { children, attendance, recordAttendance, clearTodayAttendance, childrenNeedOnlineBootstrap } =
+  const { attendance, recordAttendance, clearTodayAttendance, childrenNeedOnlineBootstrap } =
     useData()
   const enrolledChildren = useEnrollmentChildren()
   const { showSuccess, showError } = useToast()
@@ -157,7 +157,7 @@ export function AttendancePage() {
     )
     : caretaker.attendance.subtitle
 
-  const getAttendanceDetail = (grade: ClassroomGrade, kids: Child[]) => {
+  const getAttendanceDetail = (_grade: ClassroomGrade, kids: Child[]) => {
     let present = 0
     let recorded = 0
     for (const kid of kids) {

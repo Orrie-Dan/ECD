@@ -5,7 +5,6 @@
  * Early Childhood Development management system API.
  * OpenAPI spec version: 1.0
  */
-import type { CreateUserResponseDtoPhone } from './createUserResponseDtoPhone';
 import type { UserRole } from './userRole';
 import type { ApiUserStatus } from './apiUserStatus';
 import type { CreateUserResponseDtoDistrict } from './createUserResponseDtoDistrict';
@@ -17,7 +16,7 @@ export interface CreateUserResponseDto {
   username: string;
   fullName: string;
   /** @nullable */
-  phone: CreateUserResponseDtoPhone;
+  phone: string | null;
   role: UserRole;
   status: ApiUserStatus;
   /** @nullable */
