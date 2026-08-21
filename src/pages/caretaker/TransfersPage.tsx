@@ -14,25 +14,25 @@ import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
 import { formatApiErrorMessage, normalizeApiError } from '@/api/errors'
 import {
-  useTransfersControllerFindIncoming,
-  useTransfersControllerFindOutgoing,
   useTransfersControllerAccept,
   useTransfersControllerCancel,
-  getTransfersControllerFindIncomingQueryKey,
-  getTransfersControllerFindOutgoingQueryKey,
 } from '@/api/generated/endpoints/transfers/transfers'
 import type { TransferResponseDto } from '@/api/generated/models'
 import { TransferStatus } from '@/api/generated/models/transferStatus'
 import { TransferDetailModal } from '@/components/transfers/TransferDetailModal'
 import { useCentersControllerFindAll } from '@/api/generated/endpoints/centers/centers'
-import { useData } from '@/contexts/AppContext'
+import { useAuth, useData } from '@/contexts/AppContext'
 import { useQueryClient } from '@tanstack/react-query'
 import { env } from '@/config/env'
+import { isEcdDirector } from '@/api/roles'
+import { transfers } from '@/api/query-keys'
 import { invalidateChildrenQueries } from '@/features/children/mutations'
 import {
   refreshChildFromApiLocal,
   revertChildPendingTransferLocal,
 } from '@/features/children/transfer-local'
+import { useCenterTransferHistory } from '@/features/transfers'
+import { useReconcileOutgoingTransfers } from '@/hooks/useReconcileOutgoingTransfers'
 import { getLocalStore } from '@/storage'
 import { getSyncEngine } from '@/sync/sync-engine'
 
@@ -85,7 +85,7 @@ type Tab = 'incoming' | 'outgoing'
 
 const TAB_OPTIONS = [
   { id: 'incoming' as const, label: caretaker.incomingTransfers.title },
-  { id: 'outgoing' as const, label: caretaker.nav.transfers },
+  { id: 'outgoing' as const, label: caretaker.incomingTransfers.outgoingTitle },
 ]
 
 const STATUS_BADGE: Record<string, BadgeVariant> = {
@@ -101,10 +101,10 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_FILTER_OPTIONS: { value: 'all' | TransferStatus; label: string }[] = [
+  { value: 'all', label: 'Byose' },
   { value: TransferStatus.pending, label: caretaker.incomingTransfers.statusPending },
   { value: TransferStatus.accepted, label: caretaker.incomingTransfers.statusAccepted },
   { value: TransferStatus.cancelled, label: 'Byahagaritswe' },
-  { value: 'all', label: 'Byose' },
 ]
 
 function formatDate(iso: string): string {
@@ -174,16 +174,14 @@ function TransferCard({
           </div>
         </dl>
 
-        {isPending && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <p className="text-caption text-primary font-semibold">
-              {direction === 'incoming'
-                ? caretaker.incomingTransfers.accept
-                : caretaker.incomingTransfers.viewDetails}
-              {' →'}
-            </p>
-          </div>
-        )}
+        <div className="mt-3 pt-3 border-t border-border">
+          <p className="text-caption text-primary font-semibold">
+            {isPending && direction === 'incoming'
+              ? caretaker.incomingTransfers.accept
+              : caretaker.incomingTransfers.viewDetails}
+            {' →'}
+          </p>
+        </div>
       </div>
     </Card>
   )
@@ -201,30 +199,48 @@ function TransferListSkeleton() {
 
 export function TransfersPage() {
   const [tab, setTab] = useState<Tab>('incoming')
-  const [statusFilter, setStatusFilter] = useState<'all' | TransferStatus>(TransferStatus.pending)
+  const [statusFilter, setStatusFilter] = useState<'all' | TransferStatus>('all')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [selectedTransfer, setSelectedTransfer] = useState<TransferResponseDto | null>(null)
   const { showToast } = useToast()
+  useReconcileOutgoingTransfers()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const { children } = useData()
+  const canUseTransfers = env.isLive && isEcdDirector(user) && Boolean(user?.centerId)
 
-  const incomingQuery = useTransfersControllerFindIncoming(
-    { page: tab === 'incoming' ? page : 1, pageSize },
+  const historyFilters = useMemo(
+    () => ({
+      page,
+      pageSize,
+      direction: tab,
+      ...(statusFilter === 'all' ? {} : { status: statusFilter }),
+    }),
+    [page, pageSize, tab, statusFilter],
   )
 
-  const outgoingQuery = useTransfersControllerFindOutgoing(
-    { page: tab === 'outgoing' ? page : 1, pageSize },
+  const historyQuery = useCenterTransferHistory(
+    user?.centerId,
+    historyFilters,
+    canUseTransfers,
   )
 
-  const activeQuery = tab === 'incoming' ? incomingQuery : outgoingQuery
-  const data = activeQuery.data
-  const allTransfers = data?.items ?? []
-  const transfers = statusFilter === 'all'
-    ? allTransfers
-    : allTransfers.filter((t) => t.status === statusFilter)
-  const total = transfers.length
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const pendingIncomingQuery = useCenterTransferHistory(
+    user?.centerId,
+    {
+      page: 1,
+      pageSize: 1,
+      direction: 'incoming',
+      status: TransferStatus.pending,
+    },
+    canUseTransfers,
+  )
+
+  const transfersList = historyQuery.data?.items ?? []
+  const total = historyQuery.data?.total ?? 0
+  const totalPages =
+    historyQuery.data?.totalPages ?? Math.max(1, Math.ceil(total / Math.max(1, pageSize)))
 
   const localChildMap = useMemo(() => {
     const map = new Map<string, { name: string; version?: number }>()
@@ -259,8 +275,7 @@ export function TransfersPage() {
   const cancelMutation = useTransfersControllerCancel()
 
   const invalidateAll = () => {
-    void queryClient.invalidateQueries({ queryKey: getTransfersControllerFindIncomingQueryKey() })
-    void queryClient.invalidateQueries({ queryKey: getTransfersControllerFindOutgoingQueryKey() })
+    void queryClient.invalidateQueries({ queryKey: transfers.keys.all })
   }
 
   const refreshChildAfterTransfer = async (childId: string, kind: 'accept' | 'cancel') => {
@@ -336,12 +351,10 @@ export function TransfersPage() {
   const handleTabChange = (newTab: Tab) => {
     setTab(newTab)
     setPage(1)
-    setStatusFilter(TransferStatus.pending)
+    setStatusFilter('all')
   }
 
-  const pendingIncoming = (incomingQuery.data?.items ?? []).filter(
-    (t) => t.status === TransferStatus.pending,
-  ).length
+  const pendingIncoming = pendingIncomingQuery.data?.total ?? 0
 
   return (
     <CaretakerLayout pageTitle={caretaker.nav.transfers}>
@@ -378,21 +391,21 @@ export function TransfersPage() {
             ))}
           </div>
 
-          {activeQuery.isLoading && <TransferListSkeleton />}
+          {historyQuery.isLoading && <TransferListSkeleton />}
 
-          {activeQuery.isError && (
+          {historyQuery.isError && (
             <EmptyState
               title="Hari ikibazo"
-              description="Ntibyashobotse kubona aboherejwe. Gerageza nanone."
+              description="Ntibyashobotse kubona amateka yo kwimura. Gerageza nanone."
               action={
-                <Button variant="primary" onClick={() => activeQuery.refetch()}>
+                <Button variant="primary" onClick={() => void historyQuery.refetch()}>
                   Ongera ugerageze
                 </Button>
               }
             />
           )}
 
-          {!activeQuery.isLoading && !activeQuery.isError && transfers.length === 0 && (
+          {!historyQuery.isLoading && !historyQuery.isError && transfersList.length === 0 && (
             <EmptyState
               icon={
                 tab === 'incoming' ? (
@@ -403,25 +416,25 @@ export function TransfersPage() {
               }
               title={
                 tab === 'incoming'
-                  ? caretaker.incomingTransfers.empty
-                  : 'Nta mwana woherejwe'
+                  ? caretaker.incomingTransfers.emptyHistory
+                  : caretaker.incomingTransfers.emptyOutgoingHistory
               }
               description={
                 tab === 'incoming'
-                  ? caretaker.incomingTransfers.emptyDesc
-                  : "Igihe wohereza umwana ku kindi kigo, azagaragara hano."
+                  ? caretaker.incomingTransfers.emptyHistoryDesc
+                  : caretaker.incomingTransfers.emptyOutgoingHistoryDesc
               }
             />
           )}
 
-          {!activeQuery.isLoading && !activeQuery.isError && transfers.length > 0 && (
+          {!historyQuery.isLoading && !historyQuery.isError && transfersList.length > 0 && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {transfers.map((transfer) => (
+                {transfersList.map((transfer) => (
                   <TransferCard
                     key={transfer.id}
                     transfer={transfer}
-                    direction={tab}
+                    direction={transfer.direction ?? tab}
                     onView={setSelectedTransfer}
                     childName={resolveChildName(transfer)}
                     fromCenterName={resolveCenterName(transfer.fromCenterId)}
@@ -435,7 +448,7 @@ export function TransfersPage() {
                 pageSize={pageSize}
                 total={total}
                 totalPages={totalPages}
-                startIndex={(page - 1) * pageSize + 1}
+                startIndex={total === 0 ? 0 : (page - 1) * pageSize + 1}
                 endIndex={Math.min(page * pageSize, total)}
                 hasPrevious={page > 1}
                 hasNext={page < totalPages}

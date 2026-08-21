@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { StatCard } from '@/components/caretaker/dashboard/StatCard'
 import { ProgressCard } from '@/components/caretaker/dashboard/ProgressCard'
 import { ActivityTimeline, type ActivityItem } from '@/components/caretaker/dashboard/ActivityTimeline'
+import { AlertsPanel } from '@/components/caretaker/dashboard/AlertsPanel'
 import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
 import { useAuth, useData } from '@/contexts/AppContext'
 import { caretaker } from '@/locales/rw/caretaker'
@@ -113,6 +114,10 @@ export function CaretakerDashboardPage() {
             <StatCard icon={<Baby size={22} />} label={caretaker.dashboard.totalChildren} value={enrolledChildren.length} />
             <StatCard icon={<CheckCircle2 size={22} />} label={caretaker.dashboard.presentToday} value={presentCount} variant="success" />
             <StatCard icon={<Hourglass size={22} />} label={caretaker.dashboard.notYetArrived} value={waitingCount} variant="warning" />
+          </section>
+
+          <section aria-label={caretaker.dashboard.priorityAlerts} className="mb-8">
+            <AlertsPanel centerId={user?.centerId} />
           </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

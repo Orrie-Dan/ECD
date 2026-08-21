@@ -32,6 +32,8 @@ function createChildrenKeys() {
     list: (filters: ChildrenListFilters = {}) => [...lists(), filters] as const,
     details,
     detail: (id: string) => [...details(), id] as const,
+    transferHistory: (id: string, filters: { page?: number; pageSize?: number } = {}) =>
+      [...all, 'transfer-history', id, filters] as const,
   }
 }
 
@@ -399,6 +401,22 @@ function createClassroomKeys() {
   }
 }
 
+function createTransfersKeys() {
+  const all = ['transfers'] as const
+  return {
+    all,
+    history: (
+      centerId: string,
+      filters: {
+        page?: number
+        pageSize?: number
+        status?: string
+        direction?: string
+      } = {},
+    ) => [...all, 'center-history', centerId, filters] as const,
+  }
+}
+
 /**
  * ECD director caregiver-governance queries — center-scoped user admin.
  */
@@ -432,6 +450,7 @@ export const queryKeys = {
   ecdCenter: createEcdCenterKeys(),
   classrooms: createClassroomKeys(),
   notifications: createNotificationKeys(),
+  transfers: createTransfersKeys(),
 } as const
 
 export const auth = { keys: queryKeys.auth }
@@ -450,6 +469,8 @@ export const ecdCenter = { keys: queryKeys.ecdCenter }
 export const classrooms = { keys: queryKeys.classrooms }
 
 export const notifications = { keys: queryKeys.notifications }
+
+export const transfers = { keys: queryKeys.transfers }
 
 export const authKeys = queryKeys.auth
 export const childrenKeys = queryKeys.children
@@ -475,6 +496,8 @@ export const queryStaleTimes = {
   authMe: 60_000,
   childrenList: 30_000,
   childrenDetail: 30_000,
+  childrenTransferHistory: 30_000,
+  centerTransferHistory: 30_000,
   attendanceList: 30_000,
   attendanceChild: 30_000,
   growthHistory: 30_000,

@@ -20,7 +20,9 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from '@/features/notifications'
+import { useData } from '@/contexts/AppContext'
 import { getNotificationLink } from '@/lib/notification-links'
+import { formatNotification } from '@/lib/format-notification'
 import { notificationsLocale as t } from '@/locales/rw/notifications'
 import type { NotificationType, NotificationViewModel } from '@/models/notifications'
 
@@ -59,6 +61,7 @@ export function NotificationBell({ rolePrefix }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const { children } = useData()
 
   const { data: unread } = useUnreadCount(env.isLive)
   const { data: recent } = useNotifications({ page: 1, pageSize: 8 }, env.isLive && open)
@@ -128,6 +131,7 @@ export function NotificationBell({ rolePrefix }: NotificationBellProps) {
             ) : (
               recent?.items.map((n) => {
                 const Icon = typeIcons[n.type] ?? Bell
+                const copy = formatNotification(n, children)
                 return (
                   <button
                     key={n.id}
@@ -146,9 +150,9 @@ export function NotificationBell({ rolePrefix }: NotificationBellProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-body truncate ${!n.isRead ? 'font-semibold text-text' : 'text-text-secondary'}`}>
-                        {n.title}
+                        {copy.title}
                       </p>
-                      <p className="text-caption text-text-muted truncate mt-0.5">{n.message}</p>
+                      <p className="text-caption text-text-muted truncate mt-0.5">{copy.message}</p>
                       <p className="text-caption text-text-muted mt-1">{timeAgo(n.createdAt)}</p>
                     </div>
                     {!n.isRead && (

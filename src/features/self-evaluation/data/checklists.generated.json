@@ -1503,7 +1503,7 @@
             },
             {
               "number": 2,
-              "text": "The distance from home to the facility does not exceed 500 m. /Urugendo abana bakora kuva mu rugo iwabo kugera ku rugo mbonezamikurire ntirurenga metero 500",
+              "text": "The distance from home to the facility does not exceed 500 m. /Urugendo abana biga kuva mu rugo iwabo kugera ku rugo mbonezamikurire ntirurenga metero 500",
               "maxScore": 1,
               "indicators": [],
               "id": "community_based-s1-2"
@@ -2210,7 +2210,7 @@
           "items": [
             {
               "number": 1,
-              "text": "Activities are planned around the six learning areas of the pre-primary curriculum. /Abana bakoraibikorwa biteza imbere ubushobozi mu byigwa bitandatu by’integanyanyigisho.",
+              "text": "Activities are planned around the six learning areas of the pre-primary curriculum. /abana bigaibikorwa biteza imbere ubushobozi mu byigwa bitandatu by’integanyanyigisho.",
               "maxScore": 2,
               "indicators": [],
               "id": "community_based-s11-1"

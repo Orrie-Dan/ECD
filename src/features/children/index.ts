@@ -9,7 +9,7 @@
  *   models/         — re-exports UI view models
  *   components/     — optional; shared child UI remains under components/children
  */
-export { useChildrenList, useChildDetail } from './queries'
+export { useChildrenList, useChildDetail, useChildTransferHistory } from './queries'
 export {
   useCreateChild,
   useUpdateChild,

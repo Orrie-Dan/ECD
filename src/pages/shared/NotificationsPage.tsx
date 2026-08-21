@@ -26,7 +26,9 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from '@/features/notifications'
+import { useData } from '@/contexts/AppContext'
 import { getNotificationLink } from '@/lib/notification-links'
+import { formatNotification } from '@/lib/format-notification'
 import { notificationsLocale as t } from '@/locales/rw/notifications'
 import { common } from '@/locales/rw/common'
 import type { NotificationType, NotificationViewModel } from '@/models/notifications'
@@ -64,6 +66,7 @@ interface NotificationsPageContentProps {
 
 export function NotificationsPageContent({ rolePrefix }: NotificationsPageContentProps) {
   const navigate = useNavigate()
+  const { children } = useData()
   const [page, setPage] = useState(1)
   const [filterRead, setFilterRead] = useState<boolean | undefined>(undefined)
   const pageSize = 20
@@ -166,6 +169,7 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
             <div className="space-y-2">
               {data!.items.map((n) => {
                 const Icon = typeIcons[n.type] ?? Bell
+                const copy = formatNotification(n, children)
                 return (
                   <button
                     key={n.id}
@@ -187,11 +191,11 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className={`text-body truncate ${!n.isRead ? 'font-semibold text-text' : 'text-text-secondary'}`}>
-                          {n.title}
+                          {copy.title}
                         </p>
                         {!n.isRead && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
                       </div>
-                      <p className="text-caption text-text-muted mt-0.5 line-clamp-2">{n.message}</p>
+                      <p className="text-caption text-text-muted mt-0.5 line-clamp-2">{copy.message}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-caption text-text-muted">{timeAgo(n.createdAt)}</span>
                         <span className="text-caption font-medium text-text-muted bg-background-subtle px-2 py-0.5 rounded">

@@ -20,10 +20,12 @@ import { ArchiveDialog } from '@/components/children/ArchiveDialog'
 import { ReactivateChildDialog } from '@/components/children/ReactivateChildDialog'
 import { AssignClassroomDialog } from '@/components/children/AssignClassroomDialog'
 import { InitiateTransferModal } from '@/components/transfers/InitiateTransferModal'
+import { ChildTransferHistorySection } from '@/components/transfers/ChildTransferHistorySection'
 import { useTransfersControllerFindOutgoing } from '@/api/generated/endpoints/transfers/transfers'
 import { TransferStatus } from '@/api/generated/models/transferStatus'
 import { useAuth, useData } from '@/contexts/AppContext'
 import { isEcdCenterUser as userIsEcdCenter, isEcdDirector } from '@/api/roles'
+import { env } from '@/config/env'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
@@ -123,7 +125,7 @@ export function ChildDetailContent({
 
   const outgoingQuery = useTransfersControllerFindOutgoing(
     { pageSize: 100 },
-    { query: { enabled: isDirector } },
+    { query: { enabled: env.isLive && isDirector } },
   )
   const hasPendingTransfer = (outgoingQuery.data?.items ?? []).some(
     (t) => t.childId === child.id && t.status === TransferStatus.pending,
@@ -343,6 +345,8 @@ export function ChildDetailContent({
               ))}
             </ol>
           </Card>
+
+          <ChildTransferHistorySection childId={child.id} />
         </div>
       )}
 

@@ -501,7 +501,7 @@ export const district = {
     topPerforming: 'Ibigo Bikora Neza',
     needsSupport: 'Ibigo Bikeneye Gufashwa',
     registrationGrowth: 'Izamuka ry\'ukwiyandikisha',
-    activeChildren: 'Abana Bakora',
+    activeChildren: 'abana biga',
     dataCompleteness: 'Ubwuzure bw\'Amakuru',
     consistentActivity: 'Ibikorwa Bihoraho',
     decliningRegistrations: 'Kwiyandikisha Kugabanuka',
@@ -829,7 +829,7 @@ export const district = {
   },
   monitoringHub: {
     title: 'Imikorere',
-    subtitle: 'Reba uko ibigo n\'abana bakora mu karere',
+    subtitle: 'Reba uko ibigo n\'abana biga mu karere',
     overview: 'Incamake',
     kpisTitle: 'Ibipimo',
     trendsTitle: 'Imiterere',

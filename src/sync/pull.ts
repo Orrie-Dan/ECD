@@ -1,4 +1,8 @@
 import { syncControllerPull } from '@/api/generated/endpoints/sync/sync'
+import {
+  adjustPulledChildForLocalCenter,
+  applyPulledTransferToLocalChild,
+} from '@/features/children/transfer-local'
 import type { LocalStore } from '@/storage/local-store'
 import { META_KEYS } from '@/storage/types'
 import { mapPullChildToLocal } from '@/sync/child-sync-mapper'
@@ -35,6 +39,7 @@ export async function pullOnce(
   })
 
   const conflictIds = await conflictedEntityIds(store)
+  const localCenterId = await store.getMeta(META_KEYS.centerId)
 
   const childRows = [
     ...response.created.child,
@@ -71,6 +76,11 @@ export async function pullOnce(
     ...response.updated.sted_assessment,
   ] as Array<Record<string, unknown>>
 
+  const transferRows = [
+    ...response.created.child_transfer,
+    ...response.updated.child_transfer,
+  ] as Array<Record<string, unknown>>
+
   await store.runTransaction(
     [
       'children',
@@ -90,7 +100,18 @@ export async function pullOnce(
         if (!id) continue
         const existing = await tx.getChild(id)
         if (shouldSkipDirtyPull(existing?._localStatus, id, conflictIds)) continue
-        await tx.putChild(mapPullChildToLocal(row, existing))
+        const mapped = mapPullChildToLocal(row, existing)
+        await tx.putChild(adjustPulledChildForLocalCenter(mapped, existing, localCenterId))
+      }
+
+      for (const row of transferRows) {
+        const childId = typeof row.childId === 'string' ? row.childId : null
+        if (!childId) continue
+        const existing = await tx.getChild(childId)
+        if (!existing) continue
+        if (shouldSkipDirtyPull(existing._localStatus, childId, conflictIds)) continue
+        const next = applyPulledTransferToLocalChild(existing, row, localCenterId)
+        if (next) await tx.putChild(next)
       }
 
       for (const row of response.deleted.child as Array<Record<string, unknown>>) {

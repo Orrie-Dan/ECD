@@ -948,7 +948,7 @@ C. ECD Mapping Tool for Community-Based ECD Facilities
 The facility has access to the road./ Urugo mbonezamikurire rugeraho umuhanda.
 2
 2
-The distance from home to the facility does not exceed 500 m. /Urugendo abana bakora kuva mu rugo iwabo kugera ku rugo mbonezamikurire ntirurenga metero 500
+The distance from home to the facility does not exceed 500 m. /Urugendo abana biga kuva mu rugo iwabo kugera ku rugo mbonezamikurire ntirurenga metero 500
 1
 3
 Children are accompanied by an adult to and from school. /Umwana agera ku rugo mbonezamikurire akanataha aherekejwe n’umuntu mukuru.
@@ -1281,7 +1281,7 @@ S/TOTAL
 11. Information about Organisation of Teaching and Learning Activities/Play activities/Kuyobora ibikorwa by’imyigire n’imyigishirize.
 Weighted Score
 1
-Activities are planned around the six learning areas of the pre-primary curriculum. /Abana bakoraibikorwa biteza imbere ubushobozi mu byigwa bitandatu by’integanyanyigisho.
+Activities are planned around the six learning areas of the pre-primary curriculum. /abana bigaibikorwa biteza imbere ubushobozi mu byigwa bitandatu by’integanyanyigisho.
 2
 2
 Children are engaged in activities that develop fine motor and pre-writing skills./ Abana bahabwa ibikorwa bibafasha kuzamura ubushobozi bwo gukoresha intoki n’ibibategura kwandika.

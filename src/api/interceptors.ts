@@ -136,7 +136,12 @@ export function attachAuthInterceptors(client: import('axios').AxiosInstance): v
       const isAuthEndpoint401 =
         status === 401 && original && shouldSkipRefresh(original.url)
 
-      if (!isAuthEndpoint401) {
+      // Forbidden GETs are usually role/scope mismatches on optional polls
+      // (e.g. transfers/outgoing). Pages handle empty/error UI — don't toast.
+      const isForbiddenGet =
+        status === 403 && (original?.method ?? 'get').toLowerCase() === 'get'
+
+      if (!isAuthEndpoint401 && !isForbiddenGet) {
         listeners.onApiError?.(apiError)
       }
 

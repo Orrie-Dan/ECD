@@ -49,6 +49,8 @@ export const caretaker = {
     childrenListDesc: 'Reba abana bose wanditse',
     attendanceReport: "Raporo y'Abitabiriye",
     attendanceReportDesc: 'Reba imibare y\'ubwitabire',
+    priorityAlerts: "Ibyitonderwa by'Ibanze",
+    viewAlerts: 'Reba gukurikirana',
   },
   settings: {
     title: 'Igenamiterere',
@@ -284,7 +286,7 @@ export const caretaker = {
     resetFilters: 'Siba ibyo wahisemo',
     showingCount: 'abana {count} kuri {total}',
     loading: 'Turimo gushaka abana...',
-    activeOnlyHint: 'Abana bakora gusa',
+    activeOnlyHint: 'abana biga gusa',
     filterActive: 'Abakora',
     filterArchived: 'Mu bubiko',
     filterAllStatus: 'Bose',
@@ -371,6 +373,12 @@ export const caretaker = {
     notesPlaceholder: 'Andika ibindi bisobanuro (ntibisabwa)...',
     confirm: 'Ohereza',
     alreadyPending: 'Kwimura bitegereje',
+    historyTitle: 'Amateka yo kwimura',
+    historyEmpty: 'Nta mateka yo kwimura aboneka',
+    historyEmptyDesc: 'Igihe umwana yoherejwe cyangwa yakiriwe, bizagaragara hano.',
+    historyLoading: 'Turimo gushaka amateka yo kwimura...',
+    historyUnavailable: 'Ntibyashoboye kubona amateka yo kwimura.',
+    historyCount: 'kwimura {count}',
     reasons: {
       relocation: 'Kwimuka',
       guardian_request: 'Kubusabe kw\'umubyeyi/umurera',
@@ -380,6 +388,7 @@ export const caretaker = {
   },
   incomingTransfers: {
     title: 'Abana Boherejwe',
+    outgoingTitle: 'Aboherejwe',
     subtitle: 'Emera abana boherejwe ku kigo cyawe',
     listTitle: 'Abategereje kwakirwa',
     childName: 'Izina ry\'umwana',
@@ -395,6 +404,12 @@ export const caretaker = {
     viewDetails: 'Reba ibirambuye',
     empty: 'Nta mwana utegereje kwakirwa',
     emptyDesc: 'Igihe ikindi kigo cyohereza umwana ku kigo cyawe, azagaragara hano.',
+    emptyHistory: 'Nta mateka yo kwakira',
+    emptyHistoryDesc:
+      'Igihe ikindi kigo cyohereza umwana ku kigo cyawe (bitegerejwe cyangwa byakiriwe), bizagaragara hano.',
+    emptyOutgoingHistory: 'Nta mateka yo kohereza',
+    emptyOutgoingHistoryDesc:
+      'Igihe wohereza umwana ku kindi kigo, amateka yose (bitegerejwe, byakiriwe, cyangwa byahagaritswe) azagaragara hano.',
     acceptTitle: 'Emera kwimura',
     acceptConfirm: 'Emera kwimura',
     acceptSummary: 'Incamake y\'umwana',

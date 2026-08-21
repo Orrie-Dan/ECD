@@ -28,6 +28,8 @@ export * from './reporting'
 
 export * from './centers'
 
+export * from './transfers'
+
 // Remaining domains stay as generated re-exports until migrated.
 
 export * from '@/api/generated/endpoints/transfers/transfers'

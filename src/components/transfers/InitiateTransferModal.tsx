@@ -14,6 +14,7 @@ import {
   useTransfersControllerCreate,
   getTransfersControllerFindOutgoingQueryKey,
 } from '@/api/generated/endpoints/transfers/transfers'
+import { transfers } from '@/api/query-keys'
 import { useCentersControllerFindAll } from '@/api/generated/endpoints/centers/centers'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Child } from '@/types'
@@ -105,6 +106,7 @@ export function InitiateTransferModal({
           void queryClient.invalidateQueries({
             queryKey: getTransfersControllerFindOutgoingQueryKey(),
           })
+          void queryClient.invalidateQueries({ queryKey: transfers.keys.all })
           if (env.isLive) {
             void markChildPendingTransferLocal(getLocalStore(), child.id).then(() =>
               invalidateChildrenQueries(queryClient, child.id),

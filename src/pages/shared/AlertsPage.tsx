@@ -9,9 +9,15 @@ import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { Button } from '@/components/ui/Button'
 import { env } from '@/config/env'
 import { useFollowUpAlerts } from '@/features/alerts'
+import { useData } from '@/contexts/AppContext'
 import { notificationsLocale as t } from '@/locales/rw/notifications'
 import { common } from '@/locales/rw/common'
-import type { FollowUpAlertCategory, FollowUpAlertPriority } from '@/models/alerts'
+import {
+  formatFollowUpAlert,
+  resolveFollowUpAlertPath,
+  summarizeActionableFollowUpAlerts,
+} from '@/lib/follow-up-alerts'
+import type { FollowUpAlertCategory, FollowUpAlertPriority, FollowUpAlertViewModel } from '@/models/alerts'
 
 const ALL_CATEGORIES: FollowUpAlertCategory[] = [
   'nutrition', 'attendance', 'referral', 'data_quality',
@@ -32,11 +38,15 @@ interface AlertsPageContentProps {
 
 export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPageContentProps) {
   const navigate = useNavigate()
+  const { children } = useData()
   const [category, setCategory] = useState<FollowUpAlertCategory | 'all'>('all')
+  const filterByRoster = rolePrefix === '/caretaker'
 
   const { data, isLoading, isError, refetch } = useFollowUpAlerts(
     {
-      category: category === 'all' ? undefined : category,
+      // Caretaker: always load the full page so chip/high counts exclude archived kids.
+      // District/NCDA: keep server category filter + server counts.
+      category: filterByRoster || category === 'all' ? undefined : category,
       limit: 200,
       districtId,
       centerId,
@@ -74,14 +84,18 @@ export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPa
     )
   }
 
-  const counts = data?.counts
+  const roster = filterByRoster ? children : undefined
+  const summary = summarizeActionableFollowUpAlerts(data?.items ?? [], roster)
+  const counts = filterByRoster ? summary.counts : (data?.counts ?? summary.counts)
+  const total = filterByRoster ? summary.total : (data?.total ?? summary.total)
+  const items = filterByRoster
+    ? category === 'all'
+      ? summary.items
+      : summary.items.filter((alert) => alert.category === category)
+    : summary.items
 
-  function handleAlertClick(entityType: string | null, entityId: string | null, centerId: string | null) {
-    if (entityType === 'child' && entityId) {
-      navigate(`${rolePrefix}/abana/${entityId}`)
-    } else if (centerId) {
-      navigate(`${rolePrefix}/ibigo/${centerId}`)
-    }
+  function handleAlertClick(alert: FollowUpAlertViewModel) {
+    navigate(resolveFollowUpAlertPath(alert, rolePrefix, roster))
   }
 
   return (
@@ -89,7 +103,7 @@ export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPa
       <PageHeader
         title={t.alerts.title}
         action={
-          counts && counts.high > 0 ? (
+          counts.high > 0 ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-caption font-bold">
               <AlertTriangle size={14} />
               {counts.high} {t.alerts.critical}
@@ -101,7 +115,7 @@ export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPa
         <div className="flex flex-wrap gap-2 mb-5 overflow-x-auto pb-1">
           {(['all', ...ALL_CATEGORIES] as const).map((cat) => {
             const isActive = category === cat
-            const count = cat === 'all' ? data?.total : counts?.[cat as keyof typeof counts]
+            const count = cat === 'all' ? total : counts[cat]
             return (
               <button
                 key={cat}
@@ -114,7 +128,7 @@ export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPa
                 }`}
               >
                 {t.alerts.categories[cat]}
-                {count != null && count > 0 && (
+                {count > 0 && (
                   <span
                     className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[11px] font-bold leading-none ${
                       isActive ? 'bg-white/20 text-white' : 'bg-border text-text-muted'
@@ -134,31 +148,32 @@ export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPa
               <Skeleton key={i} className="h-24 w-full rounded-xl" />
             ))}
           </div>
-        ) : (data?.items ?? []).length === 0 ? (
+        ) : items.length === 0 ? (
           <Card padding="lg" className="border-success/20 bg-success-light/20 text-center py-12">
             <p className="text-body font-semibold text-success">{t.alerts.empty}</p>
             <p className="text-caption text-text-secondary mt-1">{t.alerts.emptyDesc}</p>
           </Card>
         ) : (
           <div className="space-y-2">
-            {data!.items.map((alert) => {
+            {items.map((alert) => {
               const styles = priorityStyles[alert.priority] ?? priorityStyles.medium
+              const copy = formatFollowUpAlert(alert, roster)
               return (
                 <button
                   key={alert.id}
                   type="button"
-                  onClick={() => handleAlertClick(alert.entityType, alert.entityId, alert.centerId)}
+                  onClick={() => handleAlertClick(alert)}
                   className={`w-full flex items-start gap-4 p-4 rounded-xl border transition-colors text-left group ${styles.bg} ${styles.border} hover:shadow-sm`}
                 >
                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-2 ${styles.dot}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`text-body font-semibold ${styles.text}`}>{alert.title}</p>
+                      <p className={`text-body font-semibold ${styles.text}`}>{copy.heading}</p>
                       <span className={`text-caption font-medium px-2 py-0.5 rounded ${styles.bg} ${styles.text} border ${styles.border}`}>
                         {t.alerts.priority[alert.priority]}
                       </span>
                     </div>
-                    <p className="text-caption text-text-secondary mt-1">{alert.description}</p>
+                    <p className="text-caption text-text-secondary mt-1">{copy.detail}</p>
                     {alert.centerName && (
                       <p className="text-caption text-text-muted mt-1">{alert.centerName}</p>
                     )}

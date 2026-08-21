@@ -2,6 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
 import { children, localFirstQueryOptions, queryStaleTimes } from '@/api/query-keys'
 import { fetchChildDetail, fetchChildrenList } from '@/api/resources/children'
+import {
+  fetchChildTransferHistory,
+  type ChildTransferHistoryFilters,
+} from '@/api/resources/transfers'
 import { getLocalStore } from '@/storage'
 import { META_KEYS } from '@/storage/types'
 import { listChildrenFromLocal, localChildToViewModel } from '@/features/children/local-children'
@@ -87,5 +91,22 @@ export function useChildDetail(id: string | undefined, enabled = true) {
     enabled: env.isLive && enabled && !!id,
     staleTime: queryStaleTimes.childrenDetail,
     ...localFirstQueryOptions,
+  })
+}
+
+/** LIVE child transfer timeline — GET /api/v1/children/{id}/transfer-history */
+export function useChildTransferHistory(
+  childId: string | undefined,
+  filters: ChildTransferHistoryFilters = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: children.keys.transferHistory(childId ?? '', filters),
+    queryFn: () => {
+      if (!childId) throw new Error('Child id required')
+      return fetchChildTransferHistory(childId, filters)
+    },
+    enabled: env.isLive && enabled && Boolean(childId),
+    staleTime: queryStaleTimes.childrenTransferHistory,
   })
 }
