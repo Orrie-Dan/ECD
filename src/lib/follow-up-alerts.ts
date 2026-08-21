@@ -160,7 +160,7 @@ export function summarizeActionableFollowUpAlerts(
   }
 
   for (const alert of items) {
-    if (alert.category in counts && alert.category !== 'high') {
+    if (alert.category in counts) {
       counts[alert.category as keyof Omit<FollowUpAlertCounts, 'high'>] += 1
     }
     if (alert.priority === 'high') counts.high += 1

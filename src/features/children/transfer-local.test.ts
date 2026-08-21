@@ -11,7 +11,6 @@ import {
   adjustPulledChildForLocalCenter,
   applyPulledTransferToLocalChild,
   markChildPendingTransferLocal,
-  markChildTransferredOutLocal,
   reconcileOutgoingTransfersLocal,
 } from '@/features/children/transfer-local'
 import type { LocalChildRecord } from '@/storage/types'
@@ -101,7 +100,7 @@ describe('transfer-local', () => {
       registrationNumber: child.registrationNumber,
       fullName: child.fullName,
       firstName: child.firstName,
-      lastName: child.lastName,
+      lastName: child.lastName ?? undefined,
       centerId: 'dest-center',
       centerName: 'Dest ECD',
       dateOfBirth: child.dateOfBirth,

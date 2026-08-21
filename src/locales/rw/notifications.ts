@@ -50,7 +50,7 @@ export const notificationsLocale = {
     sted_followup: '{name} akeneye gukurikiranwa kwa STED',
     sted_followupNoName: 'Hari gukurikiranwa kwa STED gikenewe',
     compliance_update: 'Hari impinduka ku isuzuma ry\'ubuziranenge kuri {center}',
-    capacity_warning: '{center} rufite ikibazo cy\'ubwinshi',
+    capacity_warning: '{center} rifite ikibazo cy\'ubwinshi',
     general: '{message}',
   },
   alerts: {
@@ -85,7 +85,7 @@ export const notificationsLocale = {
       complianceTitle: "Isuzuma ry'ubuziranenge",
       complianceGeneric: "{center} rikeneye isuzuma ry'ubuziranenge",
       attendanceMissingTitle: 'Nta bwitabire bwanditswe uyu munsi',
-      attendanceMissing: '{center} afite abana biga ariko nta bwitabire bwanditswe uyu munsi',
+      attendanceMissing: '{center} fite abana biga ariko nta bwitabire bwanditswe uyu munsi',
       attendanceTitle: 'Ubwitabire',
       attendanceGeneric: '{center} rufite ikibazo cy\'ubwitabire gikenewe gukurikiranwa',
       neverScreened: '{name} ntabwo yigeze apimwa (STED)',
