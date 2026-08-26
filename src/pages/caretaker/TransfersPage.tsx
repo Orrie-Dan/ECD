@@ -382,7 +382,7 @@ export function TransfersPage() {
                 onClick={() => { setStatusFilter(opt.value); setPage(1) }}
                 className={`px-3 py-1.5 rounded-full text-caption font-semibold transition-colors ${
                   statusFilter === opt.value
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary !text-white shadow-sm [&_*]:!text-white'
                     : 'bg-background-subtle text-text-secondary hover:bg-border'
                 }`}
               >

@@ -141,7 +141,7 @@ function ChildResultCard({
       <div className="flex items-start gap-3">
         <span
           className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-            selected ? 'bg-primary text-white' : 'bg-background-subtle text-text-muted'
+            selected ? 'bg-primary !text-white [&_svg]:!text-white' : 'bg-background-subtle text-text-muted'
           }`}
           aria-hidden
         >
@@ -566,7 +566,7 @@ export function ChildPicker({
                     onClick={() => setFilter(f.id)}
                     className={`min-h-9 rounded-full px-3 py-1.5 text-caption font-semibold transition-colors ${
                       filter === f.id
-                        ? 'bg-primary text-white'
+                        ? 'bg-primary !text-white shadow-sm [&_*]:!text-white'
                         : 'bg-background-subtle text-text-secondary hover:bg-border/60'
                     }`}
                   >

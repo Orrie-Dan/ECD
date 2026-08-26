@@ -117,7 +117,7 @@ export function Pagination({
                         focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2
                         ${
                           pageNumber === page
-                            ? 'bg-primary text-white shadow-sm'
+                            ? 'bg-primary !text-white shadow-sm'
                             : 'text-text-secondary hover:bg-background-subtle hover:text-text'
                         }
                       `}

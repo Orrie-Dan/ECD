@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   Users,
   FileWarning,
+  CalendarDays,
   Check,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -39,6 +40,8 @@ const typeIcons: Record<NotificationType, LucideIcon> = {
   sted_followup: ClipboardCheck,
   compliance_update: FileWarning,
   capacity_warning: Users,
+  attendance_absence: CalendarDays,
+  attendance_low_rate: CalendarDays,
   general: Bell,
 }
 
@@ -83,7 +86,7 @@ export function NotificationBell({ rolePrefix }: NotificationBellProps) {
   function handleClick(n: NotificationViewModel) {
     if (!n.isRead) markRead.mutate(n.id)
     setOpen(false)
-    navigate(getNotificationLink(n.entityType, n.entityId, rolePrefix))
+    navigate(getNotificationLink(n.entityType, n.entityId, rolePrefix, n.type))
   }
 
   return (

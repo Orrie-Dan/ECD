@@ -26,6 +26,8 @@ export const notificationsLocale = {
     sted_followup: 'STED — gukurikirana',
     compliance_update: 'Isuzuma — impinduka',
     capacity_warning: 'Ubwinshi — impugukirwa',
+    attendance_absence: 'Ubwitabire — kubura',
+    attendance_low_rate: 'Ubwitabire buri hasi',
     general: 'Itangazo',
   },
   messages: {
@@ -51,6 +53,10 @@ export const notificationsLocale = {
     sted_followupNoName: 'Hari gukurikiranwa kwa STED gikenewe',
     compliance_update: 'Hari impinduka ku isuzuma ry\'ubuziranenge kuri {center}',
     capacity_warning: '{center} rifite ikibazo cy\'ubwinshi',
+    attendance_absence:
+      '{name} yasibye iminsi {days} mu minsi 7 ishize — akeneye gukurikiranwa',
+    attendance_absenceNoName: 'Hari umwana wasibye iminsi 3+ mu minsi 7 ishize',
+    attendance_low_rate: '{center} ufite ubwitabire bwa {rate}% mu minsi 7 ishize',
     general: '{message}',
   },
   alerts: {
@@ -86,6 +92,11 @@ export const notificationsLocale = {
       complianceGeneric: "{center} rikeneye isuzuma ry'ubuziranenge",
       attendanceMissingTitle: 'Nta bwitabire bwanditswe uyu munsi',
       attendanceMissing: '{center} fite abana banditswe ariko nta bwitabire bwanditswe uyu munsi',
+      attendanceAbsenceRisk:
+        '{name} yasibye iminsi {days} mu minsi 7 ishize — akeneye gukurikiranwa',
+      attendanceLowRateTitle: 'Ubwitabire buri hasi',
+      attendanceLowRate:
+        '{center} ufite ubwitabire buri munsi ya {rate}% mu minsi 7 ishize',
       attendanceTitle: 'Ubwitabire',
       attendanceGeneric: '{center} rufite ikibazo cy\'ubwitabire gikenewe gukurikiranwa',
       neverScreened: '{name} ntabwo yigeze apimwa (STED)',

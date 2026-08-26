@@ -1,4 +1,5 @@
 import { isSyntheticChildLabel } from '@/lib/follow-up-alerts'
+import { resolveAbsentDaysInWindow } from '@/lib/attendance-absence-days'
 import { notificationsLocale as t } from '@/locales/rw/notifications'
 import type { NotificationType, NotificationViewModel } from '@/models/notifications'
 import type { Child } from '@/types'
@@ -28,6 +29,7 @@ function metaString(
   for (const key of keys) {
     const value = metadata[key]
     if (typeof value === 'string' && value.trim()) return value.trim()
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   }
   // Nested objects commonly used by APIs: { child: { id, fullName } }
   for (const nestedKey of ['child', 'payload', 'data', 'entity']) {
@@ -180,12 +182,29 @@ export function formatNotification(
   const name = resolveChildName(n, children)
   const center = resolveCenterName(n)
   const template = messageTemplate(type, Boolean(name))
+  const days =
+    type === 'attendance_absence'
+      ? String(
+          resolveAbsentDaysInWindow({
+            description: n.message,
+            title: n.title,
+            metadata: n.metadata,
+          }),
+        )
+      : metaString(n.metadata, 'days') ?? '3'
+  const rate =
+    type === 'attendance_low_rate'
+      ? metaString(n.metadata, 'rate') ??
+        String(n.message.match(/(\d{1,3})\s*%/)?.[1] ?? '—')
+      : metaString(n.metadata, 'rate') ?? '—'
 
   const scrubbedApi = scrubSyntheticIds(n.message || n.title || '', name ?? '')
 
   const message = replaceTokens(template, {
     name: name ?? '',
     center,
+    days,
+    rate,
     message: scrubbedApi || typeTitle(type),
   })
     .replace(/\s{2,}/g, ' ')

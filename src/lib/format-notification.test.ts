@@ -68,4 +68,73 @@ describe('formatNotification', () => {
     expect(copy.message).toContain('Paul Victor')
     expect(copy.message).not.toMatch(/Umwana|enrolled/i)
   })
+
+  it('formats attendance absence from metadata without leaking referral day counts', () => {
+    const copy = formatNotification(
+      notification({
+        type: 'attendance_absence',
+        title: 'Repeated absences',
+        message: 'Paul Victor was absent 15 days in the last 7 days.',
+        entityType: 'child',
+        entityId: 'child-paul',
+        metadata: {
+          code: 'ATTENDANCE_ABSENCE_RISK',
+          childId: 'child-paul',
+          childName: 'Paul Victor',
+          centerName: 'Center 1',
+          absentDays: 4,
+          days: 28,
+        },
+      }),
+      [{ id: 'child-paul', fullName: 'Paul Victor' }],
+    )
+    expect(copy.message).toContain('4')
+    expect(copy.message).not.toContain('15')
+    expect(copy.message).not.toContain('28')
+  })
+
+  it('formats attendance absence from metadata', () => {
+    const copy = formatNotification(
+      notification({
+        type: 'attendance_absence',
+        title: 'Repeated absences',
+        message: 'Paul Victor was absent 4 days in the last 7 days.',
+        entityType: 'child',
+        entityId: 'child-paul',
+        metadata: {
+          code: 'ATTENDANCE_ABSENCE_RISK',
+          childId: 'child-paul',
+          childName: 'Paul Victor',
+          centerName: 'Center 1',
+          absentDays: 4,
+        },
+      }),
+      [{ id: 'child-paul', fullName: 'Paul Victor' }],
+    )
+    expect(copy.title).toContain('Paul Victor')
+    expect(copy.message).toContain('Paul Victor')
+    expect(copy.message).toContain('4')
+    expect(copy.message).not.toMatch(/absent|Repeated/i)
+  })
+
+  it('formats center low attendance from metadata', () => {
+    const copy = formatNotification(
+      notification({
+        type: 'attendance_low_rate',
+        title: 'Low attendance rate',
+        message: 'Center 1 attendance is 64% over the last 7 days.',
+        entityType: 'ecd_center',
+        entityId: 'c1',
+        metadata: {
+          code: 'ATTENDANCE_LOW_RATE',
+          centerName: 'Center 1',
+          rate: 64,
+        },
+      }),
+    )
+    expect(copy.title).toBe('Ubwitabire buri hasi')
+    expect(copy.message).toContain('Center 1')
+    expect(copy.message).toContain('64')
+    expect(copy.message).not.toMatch(/attendance is/i)
+  })
 })

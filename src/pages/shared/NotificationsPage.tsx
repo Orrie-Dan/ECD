@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   Users,
   FileWarning,
+  CalendarDays,
   Check,
   CheckCheck,
 } from 'lucide-react'
@@ -46,6 +47,8 @@ const typeIcons: Record<NotificationType, LucideIcon> = {
   sted_followup: ClipboardCheck,
   compliance_update: FileWarning,
   capacity_warning: Users,
+  attendance_absence: CalendarDays,
+  attendance_low_rate: CalendarDays,
   general: Bell,
 }
 
@@ -80,7 +83,7 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
 
   function handleClick(n: NotificationViewModel) {
     if (!n.isRead) markRead.mutate(n.id)
-    navigate(getNotificationLink(n.entityType, n.entityId, rolePrefix))
+    navigate(getNotificationLink(n.entityType, n.entityId, rolePrefix, n.type))
   }
 
   if (!env.isLive) {
@@ -143,7 +146,7 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
               onClick={() => { setFilterRead(value); setPage(1) }}
               className={`px-3 py-1.5 rounded-lg text-caption font-semibold transition-colors ${
                 filterRead === value
-                  ? 'bg-primary text-white'
+                  ? 'bg-primary !text-white shadow-sm [&_*]:!text-white'
                   : 'bg-background-subtle text-text-secondary hover:bg-background'
               }`}
             >

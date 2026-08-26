@@ -90,7 +90,7 @@ export function SchoolsAttentionPanel({ items, onViewSchool, compact = false }: 
                   onClick={() => setSeverityFilter(filter)}
                   className={`px-2 py-1 rounded-md text-caption font-medium transition-colors ${
                     severityFilter === filter
-                      ? 'bg-primary text-white'
+                      ? 'bg-primary !text-white shadow-sm [&_*]:!text-white'
                       : 'text-text-secondary hover:bg-background-subtle'
                   }`}
                 >

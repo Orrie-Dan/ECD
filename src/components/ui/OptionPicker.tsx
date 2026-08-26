@@ -75,7 +75,7 @@ export function OptionPicker({
                   ? 'flex flex-col items-center justify-center gap-2 min-h-[72px] px-4 py-4 text-center sm:min-h-[80px]'
                   : 'flex items-center gap-3 min-h-[56px] px-4 py-3 text-left'}
                 ${selected
-                  ? 'bg-primary text-white border-primary shadow-md'
+                  ? 'bg-primary !text-white border-primary shadow-md [&_*]:!text-white'
                   : 'bg-background-subtle/60 text-text border-border hover:border-primary/40 hover:bg-primary-light/40'}
               `}
             >

@@ -34,17 +34,17 @@ const baseClasses = `
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary !text-white border-primary shadow-sm enabled:hover:bg-primary-dark enabled:hover:border-primary-dark',
+    'bg-primary !text-white border-primary shadow-sm enabled:hover:bg-primary-dark enabled:hover:border-primary-dark [&_*]:!text-white',
   secondary:
     'bg-primary-light text-primary border-primary/30 shadow-sm enabled:hover:bg-primary-light enabled:hover:border-primary enabled:hover:shadow-md',
   outline:
     'bg-surface text-primary border-2 border-primary shadow-sm enabled:hover:bg-primary-light enabled:hover:border-primary-dark',
   danger:
-    'bg-error !text-white border-error shadow-sm enabled:hover:bg-error-dark enabled:hover:border-error-dark',
+    'bg-error !text-white border-error shadow-sm enabled:hover:bg-error-dark enabled:hover:border-error-dark [&_*]:!text-white',
   ghost:
     'bg-transparent text-text-secondary border-transparent enabled:hover:bg-surface-muted enabled:hover:text-text enabled:hover:shadow-sm',
   success:
-    'bg-success !text-white border-success shadow-sm enabled:hover:bg-success-dark enabled:hover:border-success-dark',
+    'bg-success !text-white border-success shadow-sm enabled:hover:bg-success-dark enabled:hover:border-success-dark [&_*]:!text-white',
   tertiary:
     'bg-transparent text-text-secondary border-transparent enabled:hover:bg-surface-muted enabled:hover:text-text enabled:hover:shadow-sm',
 }

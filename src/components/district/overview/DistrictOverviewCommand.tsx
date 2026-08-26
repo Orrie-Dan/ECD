@@ -707,7 +707,7 @@ function CentrePreview({
         <div className="mt-4 pt-3 border-t border-border flex flex-col gap-2">
           <Link
             to={`${DISTRICT_PATHS.centers}/${centerId}`}
-            className="inline-flex items-center justify-center min-h-11 px-4 rounded-xl font-semibold bg-primary text-white"
+            className="inline-flex items-center justify-center min-h-11 px-4 rounded-xl font-semibold bg-primary !text-white"
           >
             {district.overview.viewCentre}
           </Link>

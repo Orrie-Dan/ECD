@@ -1,4 +1,5 @@
 import { notificationsLocale as t } from '@/locales/rw/notifications'
+import { resolveAbsentDaysInWindow } from '@/lib/attendance-absence-days'
 import { buildChildDetailPath, slugifyChildName } from '@/lib/child-routes'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import type { FollowUpAlertViewModel, FollowUpAlertsViewModel } from '@/models/alerts'
@@ -8,6 +9,8 @@ export type FollowUpAlertKind =
   | 'referral_pending'
   | 'compliance_overdue'
   | 'attendance_missing_today'
+  | 'attendance_absence_risk'
+  | 'attendance_low_rate'
   | 'never_screened'
   | 'nutrition_severe'
   | 'nutrition_generic'
@@ -75,7 +78,24 @@ export function getFollowUpAlertKind(alert: FollowUpAlertViewModel): FollowUpAle
     return 'compliance_overdue'
   }
   if (
-    code.includes('ATTENDANCE') ||
+    code.includes('ABSENCE_RISK') ||
+    code.includes('REPEATED_ABSENCE') ||
+    blob.includes('repeated absence') ||
+    (blob.includes('absent') && blob.includes('last 7'))
+  ) {
+    return 'attendance_absence_risk'
+  }
+  if (
+    code.includes('LOW_RATE') ||
+    code.includes('LOW_ATTENDANCE') ||
+    blob.includes('low attendance') ||
+    (blob.includes('attendance is') && blob.includes('%'))
+  ) {
+    return 'attendance_low_rate'
+  }
+  if (
+    code.includes('NO_ATTENDANCE_TODAY') ||
+    code.includes('MISSING_TODAY') ||
     blob.includes('no attendance recorded') ||
     blob.includes('no attendance today')
   ) {
@@ -108,6 +128,7 @@ export function getFollowUpAlertKind(alert: FollowUpAlertViewModel): FollowUpAle
 function isCenterLevelKind(kind: FollowUpAlertKind): boolean {
   return (
     kind === 'attendance_missing_today' ||
+    kind === 'attendance_low_rate' ||
     kind === 'attendance_generic' ||
     kind === 'compliance_overdue' ||
     kind === 'compliance_generic' ||
@@ -205,6 +226,11 @@ function extractMonths(text: string): number | null {
   return match ? Number(match[1]) : null
 }
 
+function extractRate(text: string): number | null {
+  const match = text.match(/(\d{1,3})\s*%/)
+  return match ? Number(match[1]) : null
+}
+
 /**
  * Localize follow-up alert copy and prefer real names from the local roster.
  */
@@ -240,6 +266,26 @@ export function formatFollowUpAlert(
       return {
         heading: messages.attendanceMissingTitle,
         detail: replaceTokens(messages.attendanceMissing, { center }),
+      }
+    case 'attendance_absence_risk':
+      return {
+        heading: child,
+        detail: replaceTokens(messages.attendanceAbsenceRisk, {
+          name: child,
+          days: resolveAbsentDaysInWindow({
+            description: alert.description,
+            title: alert.title,
+            metrics: alert.metrics,
+          }),
+        }),
+      }
+    case 'attendance_low_rate':
+      return {
+        heading: messages.attendanceLowRateTitle,
+        detail: replaceTokens(messages.attendanceLowRate, {
+          center,
+          rate: extractRate(alert.description) ?? '—',
+        }),
       }
     case 'never_screened':
       return {
@@ -352,8 +398,11 @@ export function resolveFollowUpAlertPath(
   if (prefix === '/caretaker') {
     switch (kind) {
       case 'attendance_missing_today':
+      case 'attendance_low_rate':
       case 'attendance_generic':
         return '/caretaker/ubwitabire'
+      case 'attendance_absence_risk':
+        return childHref('attendance') ?? '/caretaker/ubwitabire'
       case 'compliance_overdue':
       case 'compliance_generic':
         return '/caretaker/isuzuma'
@@ -382,8 +431,11 @@ export function resolveFollowUpAlertPath(
   if (prefix === '/district') {
     switch (kind) {
       case 'attendance_missing_today':
+      case 'attendance_low_rate':
       case 'attendance_generic':
         return DISTRICT_PATHS.monitoringAttendance
+      case 'attendance_absence_risk':
+        return childHref('attendance') ?? DISTRICT_PATHS.monitoringAttendance
       case 'compliance_overdue':
       case 'compliance_generic':
         return DISTRICT_PATHS.followup
@@ -424,8 +476,11 @@ export function resolveFollowUpAlertPath(
       case 'referral_generic':
         return alert.childId ? `/ncda/children/${alert.childId}` : '/ncda/children'
       case 'attendance_missing_today':
+      case 'attendance_low_rate':
       case 'attendance_generic':
         return '/ncda/monitoring'
+      case 'attendance_absence_risk':
+        return alert.childId ? `/ncda/children/${alert.childId}` : '/ncda/monitoring'
       case 'capacity_generic':
       case 'data_quality_generic':
         return alert.centerId ? `/ncda/centers/${alert.centerId}` : '/ncda/centers'

@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { Button } from '@/components/ui/Button'
-import { env } from '@/config/env'
 import { useFollowUpAlerts } from '@/features/alerts'
 import { useData } from '@/contexts/AppContext'
 import { notificationsLocale as t } from '@/locales/rw/notifications'
@@ -51,19 +50,8 @@ export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPa
       districtId,
       centerId,
     },
-    env.isLive,
+    true,
   )
-
-  if (!env.isLive) {
-    return (
-      <PageContainer>
-        <PageHeader title={t.alerts.title} />
-        <PageContent>
-          <LiveUnavailableState title={t.alerts.title} description={t.alerts.emptyDesc} />
-        </PageContent>
-      </PageContainer>
-    )
-  }
 
   if (isError) {
     return (

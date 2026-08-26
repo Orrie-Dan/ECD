@@ -88,6 +88,35 @@ describe('follow-up alert formatting', () => {
     expect(attendance.detail).toContain('APPEK Kamuhoza')
     expect(attendance.detail).not.toMatch(/attendance/i)
 
+    const absence = formatFollowUpAlert(
+      alert({
+        category: 'attendance',
+        code: 'ATTENDANCE_ABSENCE_RISK',
+        title: 'Repeated absences',
+        description: 'Paul Victor was absent 4 days in the last 7 days',
+        childId: 'child-paul',
+        childName: 'Paul Victor',
+      }),
+      [activePaul],
+    )
+    expect(absence.heading).toBe('Paul Victor')
+    expect(absence.detail).toContain('4')
+    expect(absence.detail).not.toMatch(/no attendance recorded/i)
+
+    const capped = formatFollowUpAlert(
+      alert({
+        category: 'attendance',
+        code: 'ATTENDANCE_ABSENCE_RISK',
+        title: 'Repeated absences',
+        description: 'Paul Victor was absent 15 days in the last 7 days',
+        childId: 'child-paul',
+        childName: 'Paul Victor',
+      }),
+      [activePaul],
+    )
+    expect(capped.detail).toContain('7')
+    expect(capped.detail).not.toContain('15')
+
     const compliance = formatFollowUpAlert(
       alert({
         category: 'compliance',

@@ -16,7 +16,7 @@ export const caretaker = {
   },
   more: {
     title: 'Ibindi',
-    subtitle: 'Ibikorwa bidakoreshwa buri munsi',
+    subtitle: 'Ibikorwa bitari ibya buri munsi',
     registerDesc: 'Andika umwana mushya mu sisitemu',
     imirireDesc: 'Andika ibyo abana bagaburiwe',
     stedDesc: 'Suzuma imikurire no gutahura ubumuga hakiri kare',
@@ -951,7 +951,7 @@ export const caretaker = {
   },
   director: {
     groups: {
-      daily: 'Imikorwa ya buri munsi',
+      daily: 'Ibikorwa bya buri munsi',
       ikigo: 'Ikigo',
       book: "Igitabo cya ECD",
     },
