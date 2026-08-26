@@ -70,6 +70,7 @@ describe('District portal information architecture', () => {
         DISTRICT_PATHS.monitoring,
         DISTRICT_PATHS.followup,
         DISTRICT_PATHS.reports,
+        DISTRICT_PATHS.book,
         DISTRICT_PATHS.caregivers,
         DISTRICT_PATHS.settings,
       ])

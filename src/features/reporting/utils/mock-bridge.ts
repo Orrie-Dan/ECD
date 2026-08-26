@@ -13,6 +13,7 @@ import type {
 } from '@/models/reporting'
 import type { MonitoringAttendanceViewModel } from '@/models/monitoring'
 import type { MonitoringNutritionViewModel } from '@/models/monitoring'
+import { district } from '@/locales/rw/district'
 import { roundPct } from './filters'
 
 /** MOCK attendance comparison preserving existing ReportsPage UX. */
@@ -195,9 +196,9 @@ export function nutritionPreviewCards(data: MonitoringNutritionViewModel | undef
   if (!data) return []
   const s = data.summary
   return [
-    { label: 'Coverage', value: `${roundPct(s.screeningCoverage)}%` },
-    { label: 'Screenings', value: String(s.screenings) },
-    { label: 'Severe', value: String(s.severe) },
-    { label: 'Overdue', value: String(s.overdueScreenings) },
+    { label: district.reports.previewCoverage, value: `${roundPct(s.screeningCoverage)}%` },
+    { label: district.reports.previewScreenings, value: String(s.screenings) },
+    { label: district.reports.previewSevere, value: String(s.severe) },
+    { label: district.reports.previewOverdue, value: String(s.overdueScreenings) },
   ]
 }

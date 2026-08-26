@@ -34,7 +34,7 @@ export function OptionPicker({
       <div className="flex items-start gap-3 mb-4">
         {step !== undefined && (
           <span
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary-light text-primary text-body font-bold shrink-0"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary !text-white text-body font-bold shrink-0"
             aria-hidden="true"
           >
             {step}

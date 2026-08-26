@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Download } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { StatCard, Card } from '@/components/ui/Card'
@@ -13,6 +14,12 @@ import { NcdaDashboardSection } from '@/components/ncda/NcdaDashboardSection'
 import { env } from '@/config/env'
 import { effectiveRangeToMonitoringDates } from '@/features/monitoring'
 import { roundPct } from '@/features/monitoring'
+import { useExcelExport } from '@/features/reporting'
+import {
+  buildNcdaReportWorkbook,
+  ncdaExcelExportAvailable,
+} from '@/features/reporting/exporters'
+import { buildExcelFilename } from '@/lib/export'
 import {
   NCDA_REPORTING_UNAVAILABLE,
   useNcdaCentersReport,
@@ -22,6 +29,7 @@ import {
   useNcdaReportingDistrictOptions,
 } from '@/features/ncda/reporting/queries'
 import { ncda } from '@/locales/rw/ncda'
+import { common } from '@/locales/rw/common'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
@@ -43,6 +51,20 @@ export function NcdaReportsPage() {
           title={ncda.sections.reports.title}
           subtitle={ncda.reports.subtitle}
           size="compact"
+          action={
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              icon={<Download size={18} />}
+              disabled
+              title={ncda.reports.mockOnlyTitle}
+              fullWidth
+              className="sm:w-auto"
+            >
+              {ncda.reports.exportExcel}
+            </Button>
+          }
         />
         <PageContent>
           <LiveUnavailableState
@@ -60,6 +82,7 @@ export function NcdaReportsPage() {
 type ReportId = 'national' | 'enrollment' | 'dropouts' | 'centers'
 
 function NcdaReportsLive() {
+  const { exporting, exportWorkbook } = useExcelExport()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
   const [districtId, setDistrictId] = useState('all')
   const [reportId, setReportId] = useState<ReportId | null>(null)
@@ -114,12 +137,86 @@ function NcdaReportsLive() {
   const dropoutsEnd =
     dropoutsTotal === 0 ? 0 : Math.min(dropoutsPage * dropoutsPageSize, dropoutsTotal)
 
+  const reportLoading =
+    (reportId === 'national' && districtReport.isLoading) ||
+    (reportId === 'enrollment' && enrollment.isLoading) ||
+    (reportId === 'dropouts' && dropouts.isLoading) ||
+    (reportId === 'centers' && centersReport.isLoading)
+
+  const excelReady = ncdaExcelExportAvailable({
+    reportId,
+    loading: reportLoading,
+    district: districtReport.data,
+    enrollment: enrollment.data,
+    dropouts: dropouts.data,
+    centers: centersReport.data,
+  })
+
+  const selectedDistrictLabel =
+    districtId === 'all'
+      ? ncda.reports.districtAll
+      : (districts.data?.items ?? []).find((d) => d.id === districtId)?.name ??
+        ncda.reports.districtAll
+
+  const reportTitle =
+    reportId === 'national'
+      ? ncda.reports.nationalPerformance
+      : reportId === 'enrollment'
+        ? ncda.reports.enrollmentTitle
+        : reportId === 'dropouts'
+          ? ncda.reports.dropoutsTitle
+          : reportId === 'centers'
+            ? ncda.reports.centersTitle
+            : ncda.sections.reports.title
+
+  const handleExportExcel = () => {
+    if (!reportId || !excelReady) return
+    const spec = buildNcdaReportWorkbook({
+      reportId,
+      title: reportTitle,
+      periodLabel: effectiveRange.timeLabel,
+      dateFrom: scope.from?.slice(0, 10),
+      dateTo: scope.to?.slice(0, 10),
+      districtLabel: selectedDistrictLabel,
+      district: districtReport.data,
+      enrollment: enrollment.data,
+      dropouts: dropouts.data,
+      centers: centersReport.data,
+    })
+    void exportWorkbook(
+      spec,
+      buildExcelFilename([
+        'ncda',
+        reportId,
+        selectedDistrictLabel,
+        scope.from?.slice(0, 10),
+        scope.to?.slice(0, 10),
+      ]),
+    )
+  }
+
   return (
     <PageContainer>
       <PageHeader
         title={ncda.sections.reports.title}
         subtitle={ncda.reports.subtitle}
         size="compact"
+        action={
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            icon={<Download size={18} />}
+            disabled={!excelReady}
+            loading={exporting}
+            onClick={handleExportExcel}
+            title={!reportId ? ncda.reports.excelNeedReport : ncda.reports.excelHint}
+            fullWidth
+            className="sm:w-auto"
+          >
+            {ncda.reports.exportExcel}
+          </Button>
+        }
       />
       <PageContent>
         <p className="mb-2 text-caption text-text-secondary">{ncda.reports.scopeLabel}</p>
@@ -189,9 +286,31 @@ function NcdaReportsLive() {
             </div>
           </div>
           <div className="space-y-1">
-            <Button type="button" variant="secondary" disabled title={ncda.reports.exportDisabledHint}>
-              {ncda.reports.exportCsv}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                icon={<Download size={18} />}
+                disabled={!excelReady}
+                loading={exporting}
+                onClick={handleExportExcel}
+                title={!reportId ? ncda.reports.excelNeedReport : ncda.reports.excelHint}
+              >
+                {ncda.reports.exportExcel}
+              </Button>
+              <Button type="button" variant="secondary" disabled title={ncda.reports.exportDisabledHint}>
+                {ncda.reports.exportCsv}
+              </Button>
+            </div>
+            <p className="text-caption text-text-muted">
+              {!reportId
+                ? ncda.reports.excelNeedReport
+                : excelReady
+                  ? ncda.reports.excelHint
+                  : reportLoading
+                    ? common.loading
+                    : ncda.reports.excelNeedData}
+            </p>
             <p className="text-caption text-text-muted">{ncda.reports.exportUnavailable}</p>
           </div>
         </div>
@@ -375,7 +494,9 @@ function NcdaReportsLive() {
                       {centersItems.map((row) => (
                         <tr key={row.centerId} className="border-b border-border/70">
                           <td className="py-2.5 pr-3 font-medium" data-label={ncda.reports.colCenter}>{row.centerName}</td>
-                          <td className="py-2.5 pr-3" data-label={ncda.reports.colStatus}>{row.status}</td>
+                          <td className="py-2.5 pr-3" data-label={ncda.reports.colStatus}>
+                            {row.status === 'active' ? ncda.centers.statusActive : ncda.centers.statusInactive}
+                          </td>
                           <td className="py-2.5 pr-3" data-label={ncda.reports.colEnrolled}>{row.enrolledChildren}</td>
                           <td className="py-2.5 pr-3" data-label={ncda.reports.colAttendance}>{formatRate(row.attendance.rate)}</td>
                           <td className="py-2.5 pr-3" data-label={ncda.reports.colNutrition}>{row.nutritionSevereScreenings}</td>

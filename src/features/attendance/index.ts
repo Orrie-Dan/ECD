@@ -15,6 +15,12 @@ export {
 } from './mutations'
 export { useAttendanceRepository } from './repository'
 export {
+  runAttendanceAutoAbsentIfDue,
+  runMockAttendanceAutoAbsentIfDue,
+  AUTO_ABSENT_REASON,
+} from './auto-absent'
+export { useAttendanceAutoAbsent } from './useAttendanceAutoAbsent'
+export {
   upsertAttendanceLocalFirst,
   softDeleteAttendanceLocalFirst,
   listAttendanceFromLocal,

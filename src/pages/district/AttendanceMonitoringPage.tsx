@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Building2, CalendarDays, CheckCircle2, Eye, AlertTriangle, XCircle } from 'lucide-react'
+import { ArrowLeft, Building2, CalendarDays, CheckCircle2, Download, Eye, AlertTriangle, XCircle } from 'lucide-react'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
@@ -13,8 +13,17 @@ import { FormField, SelectInput, TextInput } from '@/components/ui/FormField'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
 import { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusBadge'
-import { useData } from '@/contexts/AppContext'
+import { useData, useAuth } from '@/contexts/AppContext'
 import { useAttendanceMonitoringView, roundPct } from '@/features/monitoring'
+import { useExcelExport } from '@/features/reporting'
+import { buildDistrictAttendanceMonitoringWorkbook } from '@/features/reporting/exporters'
+import {
+  districtAttendanceMonitoringExportAvailable,
+  districtAttendanceMonitoringFilenamePrefix,
+  districtAttendanceMonitoringTitle,
+  mapCenterDailyRowsToExport,
+} from '@/features/reporting/export-datasets'
+import { buildExcelFilename } from '@/lib/export'
 import { useDistrictCenterDayAttendanceRoster } from '@/features/district'
 import { useMonitoringCentre } from '@/features/district/monitoring/useMonitoringCentre'
 import { usePagination } from '@/hooks/usePagination'
@@ -87,6 +96,8 @@ function DistrictAttendancePageShared({
   children: Child[]
   attendance: AttendanceRecord[]
 }) {
+  const { user } = useAuth()
+  const { exporting, exportWorkbook } = useExcelExport()
   const today = getTodayDate()
   const yesterday = getYesterdayDate()
   const { centreId: scopedCentreId, setCentreId: setScopedCentreId } = useMonitoringCentre()
@@ -240,12 +251,86 @@ function DistrictAttendancePageShared({
     setLiveDrillPage(1)
   }
 
+  const exportFilters = useMemo(() => {
+    const items: { label: string; value: string }[] = [
+      {
+        label: district.attendanceMonitoring.centerLabel,
+        value:
+          centerId === 'all'
+            ? district.attendanceMonitoring.centerAll
+            : (centerFilterOptions.find((c) => c.id === centerId)?.name ?? centerId),
+      },
+      {
+        label: district.attendanceMonitoring.statusLabel,
+        value:
+          statusFilter === 'all'
+            ? district.attendanceMonitoring.statusAll
+            : statusFilter === 'submitted'
+              ? district.attendanceMonitoring.statusSubmitted
+              : statusFilter === 'missing'
+                ? district.attendanceMonitoring.statusMissing
+                : district.attendanceMonitoring.statusPartial,
+      },
+    ]
+    const q = search.trim()
+    if (q) {
+      items.push({ label: district.attendanceMonitoring.searchLabel, value: q })
+    }
+    return items
+  }, [centerFilterOptions, centerId, search, statusFilter])
+
+  const exportRows = useMemo(
+    () => mapCenterDailyRowsToExport(filteredRows, selectedDate, centerId === 'all'),
+    [centerId, filteredRows, selectedDate],
+  )
+
+  const excelReady = districtAttendanceMonitoringExportAvailable(exportRows)
+
+  const handleExportExcel = () => {
+    if (!excelReady) return
+    const spec = buildDistrictAttendanceMonitoringWorkbook({
+      input: {
+        title: districtAttendanceMonitoringTitle(),
+        districtName: user?.districtName,
+        dateFrom: selectedDate,
+        dateTo: selectedDate,
+        isMock: !env.isLive,
+        filters: exportFilters,
+      },
+      rows: exportRows,
+    })
+    void exportWorkbook(
+      spec,
+      buildExcelFilename([
+        districtAttendanceMonitoringFilenamePrefix(),
+        'akarere',
+        selectedDate,
+      ]),
+    )
+  }
+
   return (
     <>
       <PageContainer>
         <PageHeader
           title={district.attendanceMonitoring.title}
           subtitle={district.attendanceMonitoring.subtitle}
+          action={
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              icon={<Download size={18} />}
+              onClick={handleExportExcel}
+              loading={exporting}
+              disabled={!excelReady || isLoading}
+              title={!excelReady ? district.attendanceMonitoring.excelNeedData : undefined}
+              fullWidth
+              className="sm:w-auto"
+            >
+              {common.reportPreview.exportExcel}
+            </Button>
+          }
         />
         <DistrictWorkspaceNav
           items={DISTRICT_MONITORING_TABS}
@@ -338,6 +423,24 @@ function DistrictAttendancePageShared({
               ))}
             </SelectInput>
           </FormField>
+        </div>
+
+        <div className="flex flex-wrap gap-3 pt-1 border-t border-border">
+          <Button
+            type="button"
+            variant="primary"
+            size="md"
+            icon={<Download size={18} />}
+            onClick={handleExportExcel}
+            loading={exporting}
+            disabled={!excelReady || isLoading}
+            title={!excelReady ? district.attendanceMonitoring.excelNeedData : undefined}
+          >
+            {common.reportPreview.exportExcel}
+          </Button>
+          <p className="text-caption text-text-muted self-center">
+            {env.isLive ? common.excelExport.clientSide : common.excelExport.mockDataNote}
+          </p>
         </div>
       </Card>
 

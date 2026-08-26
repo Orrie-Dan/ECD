@@ -46,9 +46,9 @@ const liveCategoryLabels: Record<(typeof OPERATIONAL_CATEGORIES)[number], string
 }
 
 const priorityStyles = {
-  high: { emoji: '🔴', badge: 'bg-error-light text-error border-error/30' },
-  medium: { emoji: '🟡', badge: 'bg-warning-light text-warning border-warning/30' },
-  low: { emoji: '🟢', badge: 'bg-success-light text-success border-success/30' },
+  high: { emoji: '🔴', badge: 'bg-error !text-white border-error' },
+  medium: { emoji: '🟡', badge: 'bg-warning !text-white border-warning' },
+  low: { emoji: '🟢', badge: 'bg-success !text-white border-success' },
 } as const
 
 function isOperationalCategory(
@@ -101,7 +101,7 @@ function LiveFollowUpAlertCard({ alert }: { alert: FollowUpAlertViewModel }) {
           </p>
         </div>
         <span
-          className={`text-caption font-semibold px-2.5 py-1 rounded-full border shrink-0 ${style.badge}`}
+          className={`px-2.5 py-1 rounded-full border shrink-0 text-[0.875rem] font-semibold ${style.badge}`}
         >
           <span aria-hidden>{style.emoji} </span>
           {alert.priority === 'high'
@@ -135,11 +135,11 @@ function LiveFollowUpAlertCard({ alert }: { alert: FollowUpAlertViewModel }) {
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-primary/20 bg-primary-light/30 px-4 py-3">
-        <p className="text-caption font-semibold text-primary mb-1">
+      <div className="rounded-lg border border-primary bg-primary px-4 py-3">
+        <p className="text-[0.875rem] font-semibold !text-white mb-1">
           {district.followup.suggestedAction}
         </p>
-        <p className="text-body text-text">{suggestedActionFor(alert)}</p>
+        <p className="text-body !text-white">{suggestedActionFor(alert)}</p>
       </div>
     </div>
   )
@@ -222,23 +222,27 @@ function GukurikiranaPageLive() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
               <StatCard
                 compact
+                filled
                 label={district.followup.totalAlerts}
                 value={operationalTotal || items.length}
                 variant="info"
               />
               <StatCard
                 compact
+                filled
                 label={district.followup.highPriority}
                 value={items.filter((item) => item.priority === 'high').length}
                 variant="danger"
               />
               <StatCard
                 compact
+                filled
                 label={district.followup.filterAttendance}
                 value={counts?.attendance ?? 0}
               />
               <StatCard
                 compact
+                filled
                 label={district.followup.filterNutrition}
                 value={counts?.nutrition ?? 0}
                 variant="warning"
@@ -318,23 +322,27 @@ function GukurikiranaPageMock() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
           <StatCard
             compact
+            filled
             label={district.followup.totalAlerts}
             value={operationalAlerts.length}
             variant="info"
           />
           <StatCard
             compact
+            filled
             label={district.followup.highPriority}
             value={highCount}
             variant="danger"
           />
           <StatCard
             compact
+            filled
             label={district.followup.filterAttendance}
             value={operationalAlerts.filter((a) => a.category === 'attendance').length}
           />
           <StatCard
             compact
+            filled
             label={district.followup.filterNutrition}
             value={operationalAlerts.filter((a) => a.category === 'nutrition').length}
             variant="warning"

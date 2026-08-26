@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/Card'
 import { caretaker } from '@/locales/rw/caretaker'
+import { bilingualPrimary } from '@/lib/self-eval-text'
 import { RANK_COLORS } from '@/features/self-evaluation/scoring'
 import type { SelfEvalScoreResult } from '@/features/self-evaluation/types'
 
@@ -38,7 +39,7 @@ export function SelfEvalScoreSummary({ score, compact = false }: SelfEvalScoreSu
               key={section.sectionId}
               className="flex items-start justify-between gap-3 text-body"
             >
-              <span className="min-w-0 flex-1 line-clamp-2">{section.title}</span>
+              <span className="min-w-0 flex-1 line-clamp-2">{bilingualPrimary(section.title)}</span>
               <span className="shrink-0 font-medium tabular-nums">
                 {section.earned}/{section.max}
               </span>

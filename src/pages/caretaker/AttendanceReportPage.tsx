@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ClassroomCards } from '@/components/classrooms/ClassroomCards'
 import { ClassroomBackLink } from '@/components/classrooms/ClassroomBackLink'
-import { useClassroomGateway } from '@/hooks/useClassroomGateway'
+import { useClassroomGateway, type ClassroomSelection } from '@/hooks/useClassroomGateway'
 import { useEnrollmentChildren } from '@/hooks/useEnrollmentChildren'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card } from '@/components/ui/Card'
@@ -19,12 +19,18 @@ import {
 import { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusBadge'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
 import { SkeletonPage } from '@/components/ui/Skeleton'
-import { useData } from '@/contexts/AppContext'
-import { useToast } from '@/components/ui/Toast'
+import { useAuth, useData } from '@/contexts/AppContext'
 import { env } from '@/config/env'
 import { caretaker } from '@/locales/rw/caretaker'
-import { common, messages } from '@/locales/rw/common'
+import { common } from '@/locales/rw/common'
 import { formatDate } from '@/lib/mock-data'
+import { useExcelExport } from '@/features/reporting'
+import {
+  buildAttendanceWorkbook,
+  mapRangeAttendanceRows,
+  mapSingleDayAttendanceRows,
+} from '@/features/reporting/exporters'
+import { buildExcelFilename } from '@/lib/export'
 import {
   clampDateRange,
   computeAttendanceSummary,
@@ -39,12 +45,21 @@ import {
   getTodayDate,
   getYesterdayDate,
 } from '@/lib/attendance-utils'
-import { CalendarDays, Eye } from 'lucide-react'
+import { CalendarDays, Download, Eye } from 'lucide-react'
 import type { AttendanceRecord, Child } from '@/types'
 import { usePagination } from '@/hooks/usePagination'
 import { Pagination } from '@/components/ui/Pagination'
 
 const PREVIEW_ROW_LIMIT = 8
+
+function classroomLabel(grade: ClassroomSelection | null): string | undefined {
+  if (grade == null) return undefined
+  if (grade === 'unassigned') return caretaker.classrooms.noClassroom
+  if (grade === 'grade_1') return caretaker.classrooms.grade1
+  if (grade === 'grade_2') return caretaker.classrooms.grade2
+  if (grade === 'grade_3') return caretaker.classrooms.grade3
+  return undefined
+}
 
 function statusFilterLabel(filter: ReportStatusFilter): string {
   switch (filter) {
@@ -67,8 +82,9 @@ function statusFilterLabel(filter: ReportStatusFilter): string {
  */
 export function AttendanceReportPage() {
   const { children, attendance } = useData()
+  const { user } = useAuth()
   const enrolledChildren = useEnrollmentChildren()
-  const { showSuccess, showError } = useToast()
+  const { exporting, exportWorkbook, notifyPdfUnavailable } = useExcelExport()
   const [viewEntry, setViewEntry] = useState<{ child: Child; record: AttendanceRecord } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [dateFrom, setDateFrom] = useState(getTodayDate)
@@ -98,8 +114,13 @@ export function AttendanceReportPage() {
 
   const childrenById = useMemo(() => new Map(children.map((child) => [child.id, child])), [children])
 
-  const { setSelectedGrade, gradeChildren: gradeActiveChildren, goBack, isGradeSelected } =
-    useClassroomGateway(enrolledChildren)
+  const {
+    setSelectedGrade,
+    selectedGrade,
+    gradeChildren: gradeActiveChildren,
+    goBack,
+    isGradeSelected,
+  } = useClassroomGateway(enrolledChildren)
 
   const applyRange = (from: string, to: string) => {
     const next = clampDateRange(from, to, today)
@@ -188,15 +209,33 @@ export function AttendanceReportPage() {
   const previewRows = reportRows.slice(0, PREVIEW_ROW_LIMIT)
   const previewRecords = rangeRecords.slice(0, PREVIEW_ROW_LIMIT)
 
-  const handleMockExport = (format: 'PDF' | 'Excel') => {
-    if (env.isLive) {
-      showError(messages.liveExportUnavailable)
-      return
-    }
-    showSuccess(
-      `${common.reportPreview.exportStarted} (${caretaker.report.title} — ${format})`,
+  const handleExportExcel = () => {
+    if (!isGradeSelected) return
+    const rows = isSingleDay
+      ? mapSingleDayAttendanceRows(reportRows)
+      : mapRangeAttendanceRows(rangeRecords, childrenById, user)
+    const spec = buildAttendanceWorkbook({
+      title: caretaker.report.title,
+      centerName: user?.centerName,
+      classroomLabel: classroomLabel(selectedGrade),
+      dateFrom,
+      dateTo,
+      isMock: !env.isLive,
+      filters: previewFilters,
+      summary,
+      summaryLabels: {
+        total: summaryLabels.total,
+        present: summaryLabels.present,
+        absent: summaryLabels.absent,
+        rate: summaryLabels.rate,
+      },
+      mode: isSingleDay ? 'single-day' : 'range',
+      rows,
+    })
+    void exportWorkbook(
+      spec,
+      buildExcelFilename(['ubwitabire', user?.centerName, dateFrom, dateTo]),
     )
-    setPreviewOpen(false)
   }
 
   const goBackToClassrooms = () => {
@@ -226,6 +265,22 @@ export function AttendanceReportPage() {
                 </span>
               )}
             </>
+          }
+          action={
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              icon={<Download size={18} />}
+              onClick={handleExportExcel}
+              loading={exporting}
+              disabled={!isGradeSelected}
+              title={!isGradeSelected ? caretaker.report.excelNeedClassroom : undefined}
+              fullWidth
+              className="sm:w-auto"
+            >
+              {common.reportPreview.exportExcel}
+            </Button>
           }
         />
 
@@ -261,6 +316,11 @@ export function AttendanceReportPage() {
         onSelectToday={() => setSingleDate(today)}
         onSelectYesterday={() => setSingleDate(yesterday)}
         onPreviewExport={() => setPreviewOpen(true)}
+        onExportExcel={handleExportExcel}
+        excelLoading={exporting}
+        previewNote={
+          env.isLive ? common.excelExport.clientSide : common.excelExport.mockDataNote
+        }
       />
 
       {isLoading ? (
@@ -409,10 +469,13 @@ export function AttendanceReportPage() {
         summary={summary}
         summaryLabels={summaryLabels}
         showLate={isSingleDay}
-        exportMockNote={env.isLive ? common.live.exportUnavailable : caretaker.report.exportMock}
-        exportDisabled={env.isLive}
-        onExportPdf={() => handleMockExport('PDF')}
-        onExportExcel={() => handleMockExport('Excel')}
+        exportNote={
+          env.isLive ? common.excelExport.clientSide : common.excelExport.mockDataNote
+        }
+        pdfDisabled
+        excelLoading={exporting}
+        onExportPdf={notifyPdfUnavailable}
+        onExportExcel={handleExportExcel}
         tablePreview={
           isSingleDay ? (
             reportRows.length === 0 ? (

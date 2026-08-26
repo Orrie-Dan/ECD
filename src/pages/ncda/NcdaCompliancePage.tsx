@@ -208,10 +208,10 @@ function NcdaComplianceLive() {
                 }}
               >
                 <option value="all">{ncda.compliance.statusAll}</option>
-                <option value="draft">draft</option>
-                <option value="submitted">submitted</option>
-                <option value="verified">verified</option>
-                <option value="rejected">rejected</option>
+                <option value="draft">{ncda.compliance.statusLabels.draft}</option>
+                <option value="submitted">{ncda.compliance.statusLabels.submitted}</option>
+                <option value="verified">{ncda.compliance.statusLabels.verified}</option>
+                <option value="rejected">{ncda.compliance.statusLabels.rejected}</option>
               </SelectInput>
             </div>
             <div>
@@ -285,9 +285,9 @@ function NcdaComplianceLive() {
                       <tr key={row.id} className="border-b border-border/70">
                         <td className="py-2.5 pr-3" data-label={ncda.compliance.colDate}>{formatDate(row.assessmentDate)}</td>
                         <td className="py-2.5 pr-3" data-label={ncda.compliance.colCenter}>{row.centerName ?? '—'}</td>
-                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colType}>{row.assessmentType}</td>
-                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colStatus}>{row.status}</td>
-                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colClass}>{row.overallClassification ?? '—'}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colType}>{assessmentTypeLabel(row.assessmentType)}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colStatus}>{assessmentStatusLabel(row.status)}</td>
+                        <td className="py-2.5 pr-3" data-label={ncda.compliance.colClass}>{classificationLabel(row.overallClassification)}</td>
                         <td className="py-2.5 td-actions" data-label={ncda.compliance.colAction}>
                           <Button
                             type="button"
@@ -379,15 +379,15 @@ function NcdaComplianceLive() {
                   </div>
                   <div>
                     <dt className="text-caption text-text-secondary">{ncda.compliance.colType}</dt>
-                    <dd>{detail.data.assessmentType}</dd>
+                    <dd>{assessmentTypeLabel(detail.data.assessmentType)}</dd>
                   </div>
                   <div>
                     <dt className="text-caption text-text-secondary">{ncda.compliance.colStatus}</dt>
-                    <dd>{detail.data.status}</dd>
+                    <dd>{assessmentStatusLabel(detail.data.status)}</dd>
                   </div>
                   <div>
                     <dt className="text-caption text-text-secondary">{ncda.compliance.colClass}</dt>
-                    <dd>{detail.data.overallClassification ?? '—'}</dd>
+                    <dd>{classificationLabel(detail.data.overallClassification)}</dd>
                   </div>
                   <div>
                     <dt className="text-caption text-text-secondary">
@@ -426,9 +426,9 @@ function NcdaComplianceLive() {
                             ? ` — ${standardsById.get(item.standardId)?.title}`
                             : ''}
                           {' '}
-                          · {item.response}
-                          {item.score != null ? ` · score ${item.score}` : ''}
-                          {item.gapSeverity ? ` · gap ${item.gapSeverity}` : ''}
+                          · {itemResponseLabel(item.response)}
+                          {item.score != null ? ` · ${ncda.compliance.itemScore} ${item.score}` : ''}
+                          {item.gapSeverity ? ` · ${gapSeverityLabel(item.gapSeverity)}` : ''}
                         </span>
                       </li>
                     ))}
@@ -441,4 +441,30 @@ function NcdaComplianceLive() {
       </PageContent>
     </PageContainer>
   )
+}
+
+function assessmentStatusLabel(status: string): string {
+  const labels = ncda.compliance.statusLabels
+  return labels[status as keyof typeof labels] ?? status
+}
+
+function assessmentTypeLabel(type: string): string {
+  const labels = ncda.compliance.typeLabels
+  return labels[type as keyof typeof labels] ?? type
+}
+
+function classificationLabel(value: string | null | undefined): string {
+  if (!value) return '—'
+  const labels = ncda.compliance.classificationLabels
+  return labels[value as keyof typeof labels] ?? value
+}
+
+function itemResponseLabel(value: string): string {
+  const labels = ncda.compliance.itemResponseLabels
+  return labels[value as keyof typeof labels] ?? value
+}
+
+function gapSeverityLabel(value: string): string {
+  const labels = ncda.compliance.gapLabels
+  return labels[value as keyof typeof labels] ?? value
 }

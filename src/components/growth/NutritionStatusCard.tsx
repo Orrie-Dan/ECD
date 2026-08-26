@@ -65,6 +65,14 @@ export function NutritionStatusCard({
             </div>
             <div>
               <dt className="text-caption font-semibold uppercase tracking-wide text-text-muted">
+                {caretaker.growth.heightShort}
+              </dt>
+              <dd className="text-body font-semibold text-text mt-0.5 tabular-nums">
+                {measurement.heightCm > 0 ? `${measurement.heightCm} cm` : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-caption font-semibold uppercase tracking-wide text-text-muted">
                 {caretaker.growth.muacShort}
               </dt>
               <dd className="text-body font-semibold text-text mt-0.5 tabular-nums">

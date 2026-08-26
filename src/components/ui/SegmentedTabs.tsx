@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 export interface SegmentedTabOption<T extends string> {
   id: T
   label: ReactNode
-  /** Optional selected accent — default uses primary soft fill. */
+  /** Optional selected accent — default uses filled primary with white text. */
   tone?: 'default' | 'danger'
 }
 
@@ -26,7 +26,7 @@ const columnClass: Record<2 | 3 | 4 | 5, string> = {
 
 /**
  * Filter / view switcher matching Attendance option-tile language.
- * Selected = soft primary (or soft danger); never filled solid green pills.
+ * Selected uses a filled primary (or danger) tile so labels stay white.
  */
 export function SegmentedTabs<T extends string>({
   options,
@@ -55,8 +55,8 @@ export function SegmentedTabs<T extends string>({
             className={`min-h-11 rounded-xl border-2 px-3 py-2.5 text-body font-semibold transition-all focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 ${
               selected
                 ? danger
-                  ? 'bg-error-light text-error border-error shadow-sm'
-                  : 'bg-primary-light text-primary border-primary shadow-sm'
+                  ? 'bg-error !text-white border-error shadow-sm [&_*]:!text-white'
+                  : 'bg-primary !text-white border-primary shadow-sm [&_*]:!text-white'
                 : 'bg-surface text-text-secondary border-border hover:border-primary/40 hover:bg-surface-muted'
             }`}
           >

@@ -5,12 +5,13 @@ import { normalizeRole, UnknownUserRoleError } from '@/api/roles'
 import { isUnsafeProductionApiBaseUrl } from '@/config/env'
 
 describe('Sprint 5.4 District production readiness', () => {
-  it('retired referral routes redirect into Gukurikirana', () => {
+  it('exposes operational referrals list at /district/referrals', () => {
     const content = fs.readFileSync(path.resolve(__dirname, '../../App.tsx'), 'utf8')
     expect(content).not.toContain('ReferralMonitoringPage')
     expect(content).toContain('path="/district/referrals"')
+    expect(content).toContain('DistrictReferralsPage')
     expect(content).toContain('path="/district/gukurikirana/ivuriro"')
-    expect(content).toContain('to={DISTRICT_PATHS.followup}')
+    expect(content).toContain('to="/district/referrals"')
   })
 
   it('District navigation groups monitoring domains under Imikorere', () => {

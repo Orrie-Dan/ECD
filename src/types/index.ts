@@ -29,7 +29,7 @@ export type GuardianRelation =
 
 export type BroughtBy = GuardianRelation
 
-export type AbsentReason = 'sick' | 'family' | 'transport' | 'weather' | 'other'
+export type AbsentReason = 'sick' | 'family' | 'transport' | 'weather' | 'unknown' | 'other'
 
 export type AttendanceDayStatus = 'present' | 'absent' | 'unrecorded'
 
@@ -128,13 +128,12 @@ export type NutritionStatus = 'normal' | 'at_risk' | 'moderate' | 'severe'
 
 export type AssessmentDueStatus = 'up_to_date' | 'due' | 'overdue' | 'never'
 
-/** Form VII routine fields: weightKg + muacCm. heightCm / headCircumferenceCm retained for future use. */
+/** Form VII routine fields: weightKg + heightCm + muacCm. headCircumferenceCm retained for future use. */
 export interface GrowthMeasurement {
   id: string
   childId: string
   date: string
   weightKg: number
-  /** Not collected in Form VII UI; retained for future enhancements. */
   heightCm: number
   muacCm: number
   /** Not collected in Form VII UI; retained for future enhancements. */

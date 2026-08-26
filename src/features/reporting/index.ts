@@ -6,7 +6,8 @@
  * 2. /monitoring/* for attendance & nutrition aggregates (canonical)
  * 3. Operational APIs for caretaker child-level attendance history
  *
- * No backend file export endpoints — UI export remains toast/mock.
+ * No backend file export endpoints. Excel is generated client-side from
+ * the dataset already loaded for the report preview. PDF remains unavailable.
  * No /reports/sectors — product gap.
  */
 export {
@@ -23,3 +24,13 @@ export {
 export * from './mappers'
 export type * from './models'
 export { datesToReportingRange, roundPct } from './utils/filters'
+export { useExcelExport } from './use-excel-export'
+export {
+  buildAttendanceWorkbook,
+  buildDistrictReportWorkbook,
+  buildNcdaReportWorkbook,
+  districtExcelExportAvailable,
+  mapRangeAttendanceRows,
+  mapSingleDayAttendanceRows,
+  ncdaExcelExportAvailable,
+} from './exporters'

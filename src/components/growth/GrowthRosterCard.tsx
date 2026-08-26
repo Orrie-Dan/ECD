@@ -111,6 +111,14 @@ export function GrowthRosterCard({
             </div>
             <div>
               <dt className="text-text-muted uppercase tracking-wide font-semibold">
+                {caretaker.growth.heightShort}
+              </dt>
+              <dd className="font-semibold text-text mt-0.5 tabular-nums">
+                {monthMeasurement.heightCm > 0 ? `${monthMeasurement.heightCm} cm` : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-text-muted uppercase tracking-wide font-semibold">
                 {caretaker.growth.muacShort}
               </dt>
               <dd className="font-semibold text-text mt-0.5 tabular-nums">

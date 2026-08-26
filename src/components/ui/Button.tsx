@@ -34,17 +34,17 @@ const baseClasses = `
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-primary text-white border-primary shadow-sm enabled:hover:bg-primary-dark enabled:hover:border-primary-dark',
+    'bg-primary !text-white border-primary shadow-sm enabled:hover:bg-primary-dark enabled:hover:border-primary-dark',
   secondary:
     'bg-primary-light text-primary border-primary/30 shadow-sm enabled:hover:bg-primary-light enabled:hover:border-primary enabled:hover:shadow-md',
   outline:
     'bg-surface text-primary border-2 border-primary shadow-sm enabled:hover:bg-primary-light enabled:hover:border-primary-dark',
   danger:
-    'bg-error text-white border-error shadow-sm enabled:hover:bg-error-dark enabled:hover:border-error-dark',
+    'bg-error !text-white border-error shadow-sm enabled:hover:bg-error-dark enabled:hover:border-error-dark',
   ghost:
     'bg-transparent text-text-secondary border-transparent enabled:hover:bg-surface-muted enabled:hover:text-text enabled:hover:shadow-sm',
   success:
-    'bg-success text-white border-success shadow-sm enabled:hover:bg-success-dark enabled:hover:border-success-dark',
+    'bg-success !text-white border-success shadow-sm enabled:hover:bg-success-dark enabled:hover:border-success-dark',
   tertiary:
     'bg-transparent text-text-secondary border-transparent enabled:hover:bg-surface-muted enabled:hover:text-text enabled:hover:shadow-sm',
 }
@@ -58,7 +58,7 @@ const iconSizeClasses: Record<ButtonSize, string> = {
 
 /** Caretaker targets ≥52px (md+); sm stays ≥44px for compact chrome. */
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'min-h-11 px-3.5 text-caption rounded-lg',
+  sm: 'min-h-11 px-3.5 text-[0.875rem] leading-5 rounded-lg',
   md: 'min-h-[3.25rem] px-5 text-body rounded-xl',
   lg: 'min-h-[3.25rem] px-5 text-body-lg rounded-xl',
   xl: 'min-h-14 px-6 text-subheading rounded-xl font-bold',

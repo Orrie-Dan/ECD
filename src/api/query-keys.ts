@@ -433,6 +433,76 @@ function createEcdCenterKeys() {
   }
 }
 
+/** Section VIII — parent contributions (center register). */
+function createContributionsKeys() {
+  const all = ['contributions'] as const
+  return {
+    all,
+    list: (filters: Record<string, unknown> = {}) =>
+      [...all, 'list', filters] as const,
+    summary: (filters: Record<string, unknown> = {}) =>
+      [...all, 'summary', filters] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  }
+}
+
+/** Section IX — parenting sessions (center register). */
+function createParentingSessionsKeys() {
+  const all = ['parentingSessions'] as const
+  return {
+    all,
+    list: (filters: Record<string, unknown> = {}) =>
+      [...all, 'list', filters] as const,
+    summary: (filters: Record<string, unknown> = {}) =>
+      [...all, 'summary', filters] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  }
+}
+
+/** Section X — ECD committee members (center register). */
+function createCommitteeMembersKeys() {
+  const all = ['committeeMembers'] as const
+  return {
+    all,
+    list: (filters: Record<string, unknown> = {}) =>
+      [...all, 'list', filters] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  }
+}
+
+/** Section XII — centre support received (center register). */
+function createCenterSupportKeys() {
+  const all = ['centerSupport'] as const
+  return {
+    all,
+    list: (filters: Record<string, unknown> = {}) =>
+      [...all, 'list', filters] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  }
+}
+
+/** Section XIII — centre visitor log (center register). */
+function createCenterVisitsKeys() {
+  const all = ['centerVisits'] as const
+  return {
+    all,
+    list: (filters: Record<string, unknown> = {}) =>
+      [...all, 'list', filters] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  }
+}
+
+/** Section XIV — staff trainings (center register). */
+function createStaffTrainingsKeys() {
+  const all = ['staffTrainings'] as const
+  return {
+    all,
+    list: (filters: Record<string, unknown> = {}) =>
+      [...all, 'list', filters] as const,
+    detail: (id: string) => [...all, 'detail', id] as const,
+  }
+}
+
 export const queryKeys = {
   auth: createAuthKeys(),
   children: createChildrenKeys(),
@@ -448,6 +518,12 @@ export const queryKeys = {
   district: createDistrictKeys(),
   ncda: createNcdaKeys(),
   ecdCenter: createEcdCenterKeys(),
+  contributions: createContributionsKeys(),
+  parentingSessions: createParentingSessionsKeys(),
+  committeeMembers: createCommitteeMembersKeys(),
+  centerSupport: createCenterSupportKeys(),
+  centerVisits: createCenterVisitsKeys(),
+  staffTrainings: createStaffTrainingsKeys(),
   classrooms: createClassroomKeys(),
   notifications: createNotificationKeys(),
   transfers: createTransfersKeys(),
@@ -466,6 +542,12 @@ export const reporting = { keys: queryKeys.reporting }
 export const district = { keys: queryKeys.district }
 export const ncda = { keys: queryKeys.ncda }
 export const ecdCenter = { keys: queryKeys.ecdCenter }
+export const contributions = { keys: queryKeys.contributions }
+export const parentingSessions = { keys: queryKeys.parentingSessions }
+export const committeeMembers = { keys: queryKeys.committeeMembers }
+export const centerSupport = { keys: queryKeys.centerSupport }
+export const centerVisits = { keys: queryKeys.centerVisits }
+export const staffTrainings = { keys: queryKeys.staffTrainings }
 export const classrooms = { keys: queryKeys.classrooms }
 
 export const notifications = { keys: queryKeys.notifications }
@@ -543,6 +625,18 @@ export const queryStaleTimes = {
   districtUsers: 30_000,
   /** ECD director caregiver admin — short stale; mutations invalidate list/detail. */
   ecdCenterUsers: 30_000,
+  /** Parent contributions list/summary — short stale; mutations invalidate. */
+  contributions: 30_000,
+  /** Parenting sessions list/summary — short stale; mutations invalidate. */
+  parentingSessions: 30_000,
+  /** Committee members list — short stale; mutations invalidate. */
+  committeeMembers: 30_000,
+  /** Centre support list — short stale; mutations invalidate. */
+  centerSupport: 30_000,
+  /** Centre visitor log — short stale; mutations invalidate. */
+  centerVisits: 30_000,
+  /** Staff trainings list — short stale; mutations invalidate. */
+  staffTrainings: 30_000,
   /** Classrooms per center — rarely changes; 2m stale window. */
   classrooms: 120_000,
   /** Notifications list — short stale; mutations invalidate. */

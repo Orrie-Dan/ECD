@@ -1,8 +1,8 @@
 # Self-Evaluation Tool — Digitization Spec
 
-**Source:** `Self Evaluation Tool for Compliance with ECD Standards.docx`  
-**Extract:** `docs/self-evaluation-tool-extract.txt` (generated)  
-**Structured data:** `src/features/self-evaluation/data/checklists.generated.json` (via `scripts/parse-self-eval-doc.py`)  
+**Source:** `docs/ECD Standard Question Draft.xlsx` (Survey123 XLSForm)  
+**Structured data:** `src/features/self-evaluation/data/checklists.generated.json` (via `scripts/parse-self-eval-xlsx.py`)  
+**Legacy:** `docs/self-evaluation-tool-extract.txt` + `scripts/parse-self-eval-doc.py` (older DOCX, 4 facility types)  
 **Status:** Caretaker wizard v1 (local draft); API sync pending
 
 ---
@@ -12,7 +12,7 @@
 Centers conduct **self-assessment** against the **National ECD Standards (2024)** before opening and during service delivery. The digitized tool must:
 
 1. Capture **general facility information** (mapping fields, shared across types).
-2. Present the **facility-type-specific checklist** (4 main types).
+2. Present the **facility-type-specific checklist** (2 types from ECD Standards inspection form).
 3. Score each item by **weight**, roll up **section subtotals**, compute **grand total as %**.
 4. Assign a **color rank**: Green 90–100%, Blue 70–89%, Yellow 50–69%, Red &lt;50%.
 
@@ -26,16 +26,14 @@ Shared mapping fields for all settings: name, GPS, admin location, start year, *
 
 **App gap:** Center record has name, code, village, GPS, capacity — not facility type, license, opening days, grade breakdown, or general-info block. These belong on center profile + ArcGIS mapping integration (ToR 4.4).
 
-### 2.2 Four facility-specific checklists
+### 2.2 Facility-specific checklists (from XLSX)
 
-| ID | Document section | Sections | Items (parsed) | Max score |
+| ID | Facility type | Sections | Items | Max score |
 |---|---|---:|---:|---:|
-| `daycare` | A. Daycare / crèche | 16 | 130 | 195 |
-| `home_based` | B. Home-based | 8 | 49 | 66 |
-| `community_based` | C. Community-based | 15 | 119 | 161 |
-| `school_model` | D. School-based & model | 22 | 171 | 251 |
+| `daycare` | Day Care ECD (0–3 years) | 16 | 199 | 199 |
+| `ecd_3_5` | ECD Facility (3–5 years) | 22 | 271 | 271 |
 
-Each section has a **subtotal** (e.g. Nutrition `/15`). **Grand total** is the sum of all section weights for that facility type.
+Each section groups related yes/no standards (e.g. 7.1.1 Care and Support for the Mother and Child During Pregnancy). All items carry **weight 1** in the current XLSX; grand total % = earned / total items × 100.
 
 ### 2.3 Scoring rules (from document)
 
@@ -47,6 +45,12 @@ Each section has a **subtotal** (e.g. Nutrition `/15`). **Grand total** is the s
 6. **Rank** from percent bands (Green / Blue / Yellow / Red).
 
 Implementation: `src/features/self-evaluation/scoring.ts`.
+
+### 2.4 Bilingual text format
+
+Questions and section titles use `English / Kinyarwanda` in checklist JSON. The UI shows Kinyarwanda prominently with English as secondary (`src/lib/self-eval-text.ts`).
+
+To translate: fill `label_rw` in `docs/ECD-self-eval-translations.xlsx`, then run `python scripts/self-eval-translations.py apply`.
 
 ---
 
@@ -71,8 +75,11 @@ Current backend (`EcdStandard`, `ComplianceAssessment`, `ComplianceAssessmentIte
 
 | Piece | Path |
 |---|---|
-| DOCX text extract | `docs/self-evaluation-tool-extract.txt` |
-| Parser script | `scripts/parse-self-eval-doc.py` |
+| Source XLSX | `docs/ECD Standard Question Draft.xlsx` |
+| Translation workbook (CSV) | `docs/ECD-self-eval-questions-for-translation.csv` |
+| Translation workbook (Excel) | `docs/ECD-self-eval-translations.xlsx` |
+| Parser script | `scripts/parse-self-eval-xlsx.py` |
+| Translation merge | `scripts/self-eval-translations.py apply` |
 | Checklist JSON | `src/features/self-evaluation/data/checklists.generated.json` |
 | Scoring + ranks | `src/features/self-evaluation/scoring.ts` |
 | Local draft storage | `src/features/self-evaluation/draft-storage.ts` |

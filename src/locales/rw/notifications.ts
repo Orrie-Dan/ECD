@@ -70,7 +70,7 @@ export const notificationsLocale = {
     },
     priority: {
       high: 'Byihutirwa',
-      medium: 'Biringaniye',
+      medium: 'Hagati',
       low: 'Ntabwo byihutirwa',
     },
     critical: 'Byihutirwa cyane',
@@ -85,7 +85,7 @@ export const notificationsLocale = {
       complianceTitle: "Isuzuma ry'ubuziranenge",
       complianceGeneric: "{center} rikeneye isuzuma ry'ubuziranenge",
       attendanceMissingTitle: 'Nta bwitabire bwanditswe uyu munsi',
-      attendanceMissing: '{center} fite abana biga ariko nta bwitabire bwanditswe uyu munsi',
+      attendanceMissing: '{center} fite abana banditswe ariko nta bwitabire bwanditswe uyu munsi',
       attendanceTitle: 'Ubwitabire',
       attendanceGeneric: '{center} rufite ikibazo cy\'ubwitabire gikenewe gukurikiranwa',
       neverScreened: '{name} ntabwo yigeze apimwa (STED)',

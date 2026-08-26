@@ -135,6 +135,8 @@ interface StatCardProps {
   trend?: string
   variant?: 'default' | 'success' | 'warning' | 'info' | 'danger'
   compact?: boolean
+  /** Solid semantic fill with white numbers/labels. */
+  filled?: boolean
   /** When set, the card becomes a filter/toggle control. */
   onClick?: () => void
   selected?: boolean
@@ -149,6 +151,14 @@ const statVariants = {
   danger: 'border-error/20 bg-error-light/30',
 }
 
+const statFilledVariants = {
+  default: '!border-primary !bg-primary',
+  success: '!border-success !bg-success',
+  warning: '!border-warning !bg-warning',
+  info: '!border-secondary !bg-secondary',
+  danger: '!border-error !bg-error',
+}
+
 export function StatCard({
   label,
   value,
@@ -156,6 +166,7 @@ export function StatCard({
   trend,
   variant = 'default',
   compact = false,
+  filled = false,
   onClick,
   selected = false,
   'aria-label': ariaLabel,
@@ -163,26 +174,39 @@ export function StatCard({
   const selectedRing = selected
     ? 'ring-2 ring-primary ring-offset-2 border-primary shadow-md'
     : ''
+  const surface = filled ? statFilledVariants[variant] : statVariants[variant]
 
   const content = (
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
         <p
-          className={`font-medium uppercase tracking-wide text-text-secondary ${
-            compact ? 'text-caption leading-tight' : 'text-caption'
+          className={`font-medium uppercase tracking-wide leading-tight ${
+            filled
+              ? 'text-[0.875rem] !text-white/90'
+              : `text-caption text-text-secondary ${compact ? 'leading-tight' : ''}`
           }`}
         >
           {label}
         </p>
-        <p className={`text-text tabular-nums break-all ${compact ? 'text-heading mt-0.5' : 'text-display mt-0.5'}`}>
+        <p
+          className={`tabular-nums break-all ${compact ? 'text-heading mt-0.5' : 'text-display mt-0.5'} ${
+            filled ? '!text-white' : 'text-text'
+          }`}
+        >
           {value}
         </p>
-        {trend && <p className="text-caption mt-1">{trend}</p>}
+        {trend && (
+          <p className={`mt-1 ${filled ? 'text-[0.875rem] !text-white/90' : 'text-caption'}`}>{trend}</p>
+        )}
       </div>
       {icon && (
         <div
-          className={`flex items-center justify-center rounded-lg bg-surface shadow-sm border border-border shrink-0 ${
+          className={`flex items-center justify-center rounded-lg shrink-0 ${
             compact ? 'w-10 h-10' : 'w-12 h-12 rounded-xl'
+          } ${
+            filled
+              ? 'bg-white/15 border border-white/25'
+              : 'bg-surface shadow-sm border border-border'
           }`}
         >
           {icon}
@@ -198,7 +222,7 @@ export function StatCard({
         onClick={onClick}
         aria-pressed={selected}
         aria-label={ariaLabel ?? label}
-        className={`w-full h-full text-left rounded-xl border transition-all focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 ${statVariants[variant]} ${selectedRing} ${
+        className={`w-full h-full text-left rounded-xl border transition-all focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 ${surface} ${selectedRing} ${
           compact ? 'p-3' : 'p-5'
         } hover:shadow-md`}
       >
@@ -208,7 +232,7 @@ export function StatCard({
   }
 
   return (
-    <Card className={`${statVariants[variant]} ${selectedRing}`} padding={compact ? 'sm' : 'md'}>
+    <Card className={`${surface} ${selectedRing}`} padding={compact ? 'sm' : 'md'}>
       {content}
     </Card>
   )

@@ -10,7 +10,7 @@ interface GrowthTrendChartProps {
   className?: string
 }
 
-/** Form VII charts: weight trend (required) and MUAC history (retained). */
+/** Form VII charts: weight, height, and MUAC trends. */
 export function GrowthTrendChart({
   measurements,
   height = 260,
@@ -19,6 +19,7 @@ export function GrowthTrendChart({
   const points = buildTrendPoints(measurements).map((p) => ({
     date: p.date,
     weightKg: p.weightKg,
+    heightCm: p.heightCm,
     muacCm: p.muacCm,
     label: formatDate(p.date),
   }))
@@ -32,6 +33,11 @@ export function GrowthTrendChart({
           dataKey: 'weightKg',
           label: caretaker.growth.trendWeight,
           color: 'var(--color-primary, #1a6b52)',
+        },
+        {
+          dataKey: 'heightCm',
+          label: caretaker.growth.trendHeight,
+          color: 'var(--color-secondary, #2563eb)',
         },
         {
           dataKey: 'muacCm',

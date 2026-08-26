@@ -9,7 +9,10 @@ import {
   updateUser,
   type UsersListFilters,
 } from '@/api/resources/users'
-import type { CreateUserDto, UpdateUserDto } from '@/api/generated/models'
+import type {
+  CreateCenterCaregiverDto,
+  UpdateCenterUserDto,
+} from '@/api/resources/users'
 
 export type CenterUsersListFilters = Omit<UsersListFilters, 'role' | 'districtId'>
 
@@ -56,7 +59,7 @@ function invalidateCenterUserQueries(
 export function useCenterCreateCaregiver() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (dto: CreateUserDto) => createCenterCaregiver(dto),
+    mutationFn: (dto: CreateCenterCaregiverDto) => createCenterCaregiver(dto),
     onSuccess: () => {
       invalidateCenterUserQueries(queryClient)
     },
@@ -66,7 +69,7 @@ export function useCenterCreateCaregiver() {
 export function useCenterUpdateUser(userId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (dto: UpdateUserDto) => updateUser(userId, dto),
+    mutationFn: (dto: UpdateCenterUserDto) => updateUser(userId, dto),
     onSuccess: () => {
       invalidateCenterUserQueries(queryClient, userId)
     },

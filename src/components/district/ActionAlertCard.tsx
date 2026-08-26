@@ -8,9 +8,9 @@ import { district } from '@/locales/rw/district'
 import type { ActionAlert, ActionAlertCategory, ActionAlertPriority } from '@/types'
 
 const priorityStyles: Record<ActionAlertPriority, { emoji: string; badge: string }> = {
-  high: { emoji: '🔴', badge: 'bg-error-light text-error border-error/30' },
-  medium: { emoji: '🟡', badge: 'bg-warning-light text-warning border-warning/30' },
-  low: { emoji: '🟢', badge: 'bg-success-light text-success border-success/30' },
+  high: { emoji: '🔴', badge: 'bg-error !text-white border-error' },
+  medium: { emoji: '🟡', badge: 'bg-warning !text-white border-warning' },
+  low: { emoji: '🟢', badge: 'bg-success !text-white border-success' },
 }
 
 const priorityLabels: Record<ActionAlertPriority, string> = {
@@ -44,7 +44,7 @@ function ActionAlertCard({ alert }: { alert: ActionAlert }) {
             <h3 className="text-body font-bold text-text truncate">{alert.centerName}</h3>
           </div>
           <span
-            className={`text-caption font-semibold px-2.5 py-1 rounded-full border shrink-0 ${style.badge}`}
+            className={`px-2.5 py-1 rounded-full border shrink-0 text-[0.875rem] font-semibold ${style.badge}`}
           >
             {priorityLabels[alert.priority]}
           </span>
@@ -70,11 +70,11 @@ function ActionAlertCard({ alert }: { alert: ActionAlert }) {
           </div>
         )}
 
-        <div className="rounded-lg border border-primary/20 bg-primary-light/30 px-4 py-3">
-          <p className="text-caption font-semibold text-primary mb-1">
+        <div className="rounded-lg border border-primary bg-primary px-4 py-3">
+          <p className="text-[0.875rem] font-semibold !text-white mb-1">
             {district.followup.suggestedAction}
           </p>
-          <p className="text-body text-text">{alert.suggestedAction}</p>
+          <p className="text-body !text-white">{alert.suggestedAction}</p>
         </div>
       </div>
 

@@ -299,6 +299,7 @@ function Field({ label, value }: { label: string; value: string }) {
 
 function roleLabel(role: string): string {
   if (role === 'caregiver') return ncda.users.roleCaregiver
+  if (role === 'ecd_director') return ncda.users.roleDirector
   if (role === 'district_focal_person') return ncda.users.roleDistrict
   if (role === 'ncda_admin') return ncda.users.roleNcda
   return role

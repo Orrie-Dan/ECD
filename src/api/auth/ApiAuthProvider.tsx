@@ -16,6 +16,7 @@ import { normalizeApiError, type ApiError } from '@/api/errors'
 import { getSyncEngine } from '@/sync/sync-engine'
 import { deactivateLocalWorkspace } from '@/storage/local-workspace'
 import { clearBrowserDeviceIdentity } from '@/features/device'
+import { auth } from '@/locales/rw/auth'
 import type {
   AuthMeResponseDto,
   AuthTokensResponseDto,
@@ -157,8 +158,8 @@ export function ApiAuthProvider({ children }: { children: ReactNode }) {
         }
         setLastError({
           statusCode: 401,
-          message: 'Session expired. Please sign in again.',
-          messages: ['Session expired. Please sign in again.'],
+          message: auth.login.sessionExpired,
+          messages: [auth.login.sessionExpired],
           isNetworkError: false,
           isUnauthorized: true,
           isForbidden: false,

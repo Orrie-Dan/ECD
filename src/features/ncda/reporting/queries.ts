@@ -1,7 +1,8 @@
 /**
  * NCDA Reporting — JSON report contracts only.
  * Centers report uses DB pagination at national scope (Sprint 5.5I).
- * Export endpoints do not exist — never invent CSV/PDF.
+ * Export PDF/CSV endpoints do not exist. Excel is generated client-side
+ * from the JSON report already loaded on this page.
  */
 import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
@@ -79,8 +80,8 @@ export function useNcdaReportingDistrictOptions(enabled = true) {
 
 export const NCDA_REPORTING_UNAVAILABLE = [
   {
-    id: 'export-csv-pdf',
-    reason: 'BACKEND CONTRACT GAP — no report export endpoints',
+    id: 'export-pdf',
+    reason: 'BACKEND CONTRACT GAP — no PDF/CSV export endpoints. Excel is generated client-side from the loaded report.',
   },
   {
     id: 'enrollment-trend-national',

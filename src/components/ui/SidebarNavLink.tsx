@@ -6,6 +6,8 @@ export interface SidebarNavItem {
   label: string
   icon: LucideIcon
   matchPaths?: string[]
+  /** Match this path only — do not treat child routes as active. */
+  exact?: boolean
 }
 
 interface SidebarNavLinkProps {
@@ -14,22 +16,24 @@ interface SidebarNavLinkProps {
   collapsed?: boolean
   onNavigate?: () => void
   activeStyle?: 'filled' | 'tinted'
+  /** Visual highlight for a parent whose child route is current. */
+  inSection?: boolean
 }
 
 export function isSidebarNavActive(pathname: string, item: SidebarNavItem): boolean {
-  if (item.matchPaths) {
-    return item.matchPaths.some((path) => {
-      // Root portal paths are exact-only so they never prefix-match child routes.
-      if (path === '/ncda' || path === '/district' || path === '/caretaker') {
-        return pathname === path
-      }
-      return pathname === path || pathname.startsWith(path + '/')
-    })
-  }
-  if (item.path === '/caretaker' || item.path === '/district' || item.path === '/ncda') {
-    return pathname === item.path
-  }
-  return pathname === item.path || pathname.startsWith(item.path + '/')
+  const paths = item.matchPaths?.length ? item.matchPaths : [item.path]
+  return paths.some((path) => {
+    // Root portal paths and explicit exact items never prefix-match child routes.
+    if (
+      item.exact ||
+      path === '/ncda' ||
+      path === '/district' ||
+      path === '/caretaker'
+    ) {
+      return pathname === path
+    }
+    return pathname === path || pathname.startsWith(`${path}/`)
+  })
 }
 
 export function SidebarNavLink({
@@ -38,15 +42,15 @@ export function SidebarNavLink({
   collapsed = false,
   onNavigate,
   activeStyle = 'filled',
+  inSection = false,
 }: SidebarNavLinkProps) {
   const Icon = item.icon
 
-  const activeClasses =
-    activeStyle === 'filled'
-      ? 'bg-primary text-white shadow-sm'
-      : 'bg-primary-light text-primary shadow-sm'
-
+  const filledClasses = 'bg-primary !text-white shadow-sm'
+  const tintedClasses = 'bg-primary-light text-primary shadow-sm'
   const inactiveClasses = 'text-text-secondary hover:bg-background-subtle hover:text-text'
+  const activeClasses = activeStyle === 'filled' ? filledClasses : tintedClasses
+  const visualClasses = active ? activeClasses : inSection ? tintedClasses : inactiveClasses
 
   return (
     <Link
@@ -56,11 +60,11 @@ export function SidebarNavLink({
       className={`
         flex items-center gap-2.5 rounded-lg text-body font-medium transition-colors
         ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
-        ${active ? activeClasses : inactiveClasses}
+        ${visualClasses}
       `}
       aria-current={active ? 'page' : undefined}
     >
-      <Icon size={20} strokeWidth={active ? 2.5 : 2} className="shrink-0" aria-hidden="true" />
+      <Icon size={20} strokeWidth={active || inSection ? 2.5 : 2} className="shrink-0" aria-hidden="true" />
       {!collapsed && <span className="truncate leading-snug">{item.label}</span>}
     </Link>
   )

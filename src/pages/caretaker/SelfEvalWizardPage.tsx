@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
+import { bilingualPrimary, splitBilingualText } from '@/lib/self-eval-text'
 import { resolveCenterId } from '@/lib/resolve-center-id'
 import { getTodayDate } from '@/lib/nutrition-utils'
 import {
@@ -65,7 +66,7 @@ export function SelfEvalWizardPage() {
       { title: caretaker.selfEval.stepSetup },
       ...checklist.sections.map((section, index) => ({
         title: caretaker.selfEval.sectionStep.replace('{n}', String(index + 1)),
-        description: section.title,
+        description: bilingualPrimary(section.title),
       })),
       { title: caretaker.selfEval.stepReview },
     ]
@@ -167,8 +168,22 @@ export function SelfEvalWizardPage() {
           {isSectionStep && checklist && (
             <div className="space-y-4">
               <Card className="p-4">
-                <p className="text-title font-semibold">{checklist.sections[sectionIndex].title}</p>
-                <p className="text-caption text-text-muted">
+                {(() => {
+                  const sectionLabels = splitBilingualText(
+                    checklist.sections[sectionIndex].title,
+                  )
+                  return (
+                    <>
+                      {sectionLabels.rw && (
+                        <p className="text-title font-semibold">{sectionLabels.rw}</p>
+                      )}
+                      {sectionLabels.en && sectionLabels.en !== sectionLabels.rw && (
+                        <p className="text-caption text-text-muted mt-1">{sectionLabels.en}</p>
+                      )}
+                    </>
+                  )
+                })()}
+                <p className="text-caption text-text-muted mt-2">
                   {caretaker.selfEval.sectionProgress
                     .replace('{current}', String(sectionIndex + 1))
                     .replace('{total}', String(checklist.sections.length))}

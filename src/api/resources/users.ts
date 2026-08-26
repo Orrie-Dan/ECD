@@ -18,6 +18,21 @@ import type {
   UserResponseDto,
   UserRole,
 } from '@/api/generated/models'
+import type {
+  CenterCaregiverProfileFields,
+  EducationLevel,
+  PersonSex,
+} from '@/models/center-educators'
+
+/** Backend already returns these; Orval client types are stale. */
+export type CenterUserResponse = UserResponseDto & {
+  gender?: PersonSex | null
+  educationLevel?: EducationLevel | null
+}
+
+export type CreateCenterCaregiverDto = CreateUserDto & CenterCaregiverProfileFields
+
+export type UpdateCenterUserDto = UpdateUserDto & CenterCaregiverProfileFields
 
 const MAX_PAGE_SIZE = 100
 
@@ -102,7 +117,7 @@ export async function createDistrictCaregiver(
 
 /** ECD director — create caregiver accounts at the director's center. */
 export async function createCenterCaregiver(
-  dto: CreateUserDto,
+  dto: CreateCenterCaregiverDto,
 ): Promise<CreateUserResponseDto> {
   if (!ECD_DIRECTOR_CREATABLE_ROLES.includes(dto.role)) {
     throw new Error('ECD director can only create caregiver accounts')
@@ -116,14 +131,16 @@ export async function createCenterCaregiver(
     phone: dto.phone,
     role: 'caregiver',
     centerId: dto.centerId.trim(),
-  })
+    ...(dto.gender ? { gender: dto.gender } : {}),
+    ...(dto.educationLevel ? { educationLevel: dto.educationLevel } : {}),
+  } as CreateUserDto)
 }
 
 export async function updateUser(
   id: string,
-  dto: UpdateUserDto,
+  dto: UpdateCenterUserDto,
 ): Promise<UserResponseDto> {
-  return usersControllerUpdate(id, dto)
+  return usersControllerUpdate(id, dto as UpdateUserDto)
 }
 
 /** Server generates temporary password when newPassword omitted. */

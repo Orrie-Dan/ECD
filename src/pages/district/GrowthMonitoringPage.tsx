@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, HeartPulse, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Download, HeartPulse, ShieldAlert } from 'lucide-react'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
@@ -17,9 +17,20 @@ import {
 } from '@/components/district/growth'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
-import { useData } from '@/contexts/AppContext'
+import { useData, useAuth } from '@/contexts/AppContext'
 import { useNutritionMonitoringView, roundPct, yearMonthToMonitoringRange } from '@/features/monitoring'
 import { useDistrictNutritionAlerts, useDistrictNutritionScreenings } from '@/features/district'
+import { useExcelExport } from '@/features/reporting'
+import { buildDistrictGrowthWorkbook } from '@/features/reporting/exporters'
+import {
+  districtGrowthExportAvailable,
+  districtGrowthFilenamePrefix,
+  districtGrowthTitle,
+  mapGrowthChildRowsToExportRows,
+  mapScreeningItemToGrowthExportRow,
+} from '@/features/reporting/export-datasets'
+import { fetchAllNutritionScreenings } from '@/api/resources/nutrition'
+import { buildExcelFilename } from '@/lib/export'
 import { useDebounce } from '@/hooks/useDebounce'
 import { usePagination } from '@/hooks/usePagination'
 import { env } from '@/config/env'
@@ -126,6 +137,8 @@ function GrowthMonitoringPageShared({
   growthMeasurements: GrowthMeasurement[]
   nutritionAssessments: NutritionAssessment[]
 }) {
+  const { user } = useAuth()
+  const { exporting, exportWorkbook } = useExcelExport()
   const { centreId: scopedCentreId, setCentreId: setScopedCentreId } = useMonitoringCentre()
   const [filters, setFilters] = useState<DistrictGrowthFilters>(() => ({
     ...DEFAULT_DISTRICT_GROWTH_FILTERS,
@@ -339,10 +352,142 @@ function GrowthMonitoringPageShared({
     [setScopedCentreId],
   )
 
+  const exportFilters = useMemo(() => {
+    const items: { label: string; value: string }[] = [
+      {
+        label: district.growth.center,
+        value:
+          effectiveFilters.centerId === 'all'
+            ? district.growth.centerAll
+            : (filterCenters.find((c) => c.id === effectiveFilters.centerId)?.name ??
+              effectiveFilters.centerId),
+      },
+    ]
+    if (effectiveFilters.yearMonth) {
+      items.push({ label: district.growth.monthLabel, value: effectiveFilters.yearMonth })
+    }
+    if (effectiveFilters.status !== 'all') {
+      items.push({
+        label: district.growth.statusFilterLabel,
+        value:
+          effectiveFilters.status === 'normal'
+            ? district.growth.statusNormal
+            : effectiveFilters.status === 'at_risk'
+              ? district.growth.statusAtRisk
+              : effectiveFilters.status === 'moderate'
+                ? district.growth.statusModerate
+                : district.growth.statusSevere,
+      })
+    }
+    if (effectiveFilters.ageGroup !== 'all') {
+      items.push({
+        label: district.growth.ageGroupLabel,
+        value:
+          effectiveFilters.ageGroup === '3-4'
+            ? district.growth.age34
+            : effectiveFilters.ageGroup === '5-6'
+              ? district.growth.age56
+              : district.growth.ageOther,
+      })
+    }
+    const q = effectiveFilters.search.trim()
+    if (q && !env.isLive) {
+      items.push({ label: district.growth.searchLabel, value: q })
+    }
+    return items
+  }, [effectiveFilters, filterCenters])
+
+  const exportDateRange = useMemo(() => {
+    if (effectiveFilters.yearMonth) {
+      return yearMonthToDateOnlyRange(effectiveFilters.yearMonth)
+    }
+    return { from: '—', to: '—' }
+  }, [effectiveFilters.yearMonth])
+
+  const excelReady = env.isLive
+    ? !liveScreeningsQ.isLoading &&
+      !liveScreeningsQ.isError &&
+      (liveScreeningsQ.data?.total ?? 0) > 0
+    : districtGrowthExportAvailable(
+        mapGrowthChildRowsToExportRows(filteredRows, growthMeasurements),
+      )
+
+  const handleExportExcel = () => {
+    if (!excelReady || exporting) return
+
+    const run = async () => {
+      let rows =
+        env.isLive
+          ? (await fetchAllNutritionScreenings({
+              centerId,
+              from: screeningDateRange.from,
+              to: screeningDateRange.to,
+              nutritionStatus:
+                effectiveFilters.status !== 'all' ? effectiveFilters.status : undefined,
+            })).map((item) =>
+              mapScreeningItemToGrowthExportRow(item, calculateAge(item.childDateOfBirth)),
+            )
+          : mapGrowthChildRowsToExportRows(filteredRows, growthMeasurements)
+
+      if (effectiveFilters.ageGroup !== 'all') {
+        rows = rows.filter((row) => {
+          if (row.age == null) return false
+          if (effectiveFilters.ageGroup === '3-4') return row.age >= 3 && row.age <= 4
+          if (effectiveFilters.ageGroup === '5-6') return row.age >= 5 && row.age <= 6
+          return row.age < 3 || row.age > 6
+        })
+      }
+
+      if (!districtGrowthExportAvailable(rows)) return
+
+      const spec = buildDistrictGrowthWorkbook({
+        input: {
+          title: districtGrowthTitle(),
+          districtName: user?.districtName,
+          dateFrom: exportDateRange.from,
+          dateTo: exportDateRange.to,
+          isMock: !env.isLive,
+          filters: exportFilters,
+        },
+        rows,
+      })
+      await exportWorkbook(
+        spec,
+        buildExcelFilename([
+          districtGrowthFilenamePrefix(),
+          'akarere',
+          exportDateRange.from !== '—' ? exportDateRange.from : 'byose',
+          exportDateRange.to !== '—' ? exportDateRange.to : 'byose',
+        ]),
+      )
+    }
+
+    void run()
+  }
+
   return (
     <>
       <PageContainer>
-        <PageHeader title={district.growth.title} description={district.growth.subtitle} />
+        <PageHeader
+          title={district.growth.title}
+          description={district.growth.subtitle}
+          action={
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              icon={<Download size={18} />}
+              onClick={handleExportExcel}
+              loading={exporting}
+              disabled={!excelReady}
+              title={!excelReady ? district.growth.excelNeedData : undefined}
+              fullWidth
+              className="sm:w-auto"
+            >
+              {common.reportPreview.exportExcel}
+            </Button>
+          }
+        />
         <DistrictWorkspaceNav
           items={DISTRICT_MONITORING_TABS}
           ariaLabel={district.monitoringHub.title}
@@ -431,6 +576,24 @@ function GrowthMonitoringPageShared({
             showReset={showReset}
             liveMode={env.isLive}
           />
+
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              icon={<Download size={18} />}
+              onClick={handleExportExcel}
+              loading={exporting}
+              disabled={!excelReady}
+              title={!excelReady ? district.growth.excelNeedData : undefined}
+            >
+              {common.reportPreview.exportExcel}
+            </Button>
+            <p className="text-caption text-text-muted self-center">
+              {env.isLive ? common.excelExport.clientSide : common.excelExport.mockDataNote}
+            </p>
+          </div>
 
           {hasActiveFilters && !env.isLive && (
             <FilterResultsBar

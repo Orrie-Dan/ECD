@@ -124,6 +124,25 @@ export async function fetchNutritionScreeningList(
   return mapPaginatedScreeningsToViewModel(dto)
 }
 
+/** Fetch every page matching filters — used for scoped Excel export. */
+export async function fetchAllNutritionScreenings(
+  filters: Omit<NutritionScreeningListFilters, 'page' | 'pageSize'> = {},
+): Promise<NutritionScreeningListResult['items']> {
+  const pageSize = 200
+  let page = 1
+  const items: NutritionScreeningListResult['items'] = []
+
+  for (;;) {
+    const result = await fetchNutritionScreeningList({ ...filters, page, pageSize })
+    items.push(...result.items)
+    const totalPages = Math.max(1, result.totalPages)
+    if (page >= totalPages) break
+    page += 1
+  }
+
+  return items
+}
+
 export async function fetchChildGrowthChart(childId: string): Promise<GrowthChartViewModel> {
   const dto = await nutritionControllerGetGrowthChart(childId)
   return mapGrowthChartToViewModel(dto)

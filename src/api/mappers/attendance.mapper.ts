@@ -11,13 +11,19 @@ import type {
 } from '@/models/attendance'
 import type { AbsentReason, AttendanceRecord } from '@/types'
 
-const UI_ABSENT_REASONS: AbsentReason[] = ['sick', 'family', 'transport', 'weather', 'other']
+const UI_ABSENT_REASONS: AbsentReason[] = [
+  'sick',
+  'family',
+  'transport',
+  'weather',
+  'unknown',
+  'other',
+]
 
 function mapAbsentReasonToUi(
   value: ApiAbsentReason | string | null | undefined,
 ): AbsentReason | undefined {
   if (!value) return undefined
-  if (value === 'unknown') return 'other'
   if (UI_ABSENT_REASONS.includes(value as AbsentReason)) {
     return value as AbsentReason
   }

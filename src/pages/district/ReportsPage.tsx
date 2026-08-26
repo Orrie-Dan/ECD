@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -20,14 +20,21 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
 import { AttendanceHistoryTable } from '@/components/attendance/AttendanceHistoryTable'
 import { ReportPreviewModal } from '@/components/reports/ReportPreviewModal'
-import { useToast } from '@/components/ui/Toast'
 import { useData } from '@/contexts/AppContext'
 import { env } from '@/config/env'
 import {
   useDistrictAttendanceReport,
+  useExcelExport,
   useReportPreviewData,
   roundPct,
 } from '@/features/reporting'
+import {
+  buildDistrictReportWorkbook,
+  districtExcelExportAvailable,
+  districtExcelFilenamePrefix,
+  districtKindHasExportData,
+} from '@/features/reporting/exporters'
+import { buildExcelFilename } from '@/lib/export'
 import type { ReportPreviewKind } from '@/models/reporting'
 import { usePagination } from '@/hooks/usePagination'
 import { Pagination } from '@/components/ui/Pagination'
@@ -39,7 +46,7 @@ import {
   getYesterdayDate,
 } from '@/lib/attendance-utils'
 import { district } from '@/locales/rw/district'
-import { common, messages } from '@/locales/rw/common'
+import { common } from '@/locales/rw/common'
 import { caretaker } from '@/locales/rw/caretaker'
 
 const otherReports: {
@@ -124,7 +131,7 @@ function DistrictReportsPageShared({
   children: import('@/types').Child[]
   attendance: import('@/types').AttendanceRecord[]
 }) {
-  const { showSuccess, showError } = useToast()
+  const { exporting, exportWorkbook, notifyPdfUnavailable } = useExcelExport()
   const today = getTodayDate()
   const yesterday = getYesterdayDate()
 
@@ -142,6 +149,8 @@ function DistrictReportsPageShared({
     title: string
     description?: string
   } | null>(null)
+  const [excelKind, setExcelKind] = useState<ReportPreviewKind | null>(null)
+  const pendingExcelRef = useRef<{ kind: ReportPreviewKind; title: string } | null>(null)
 
   const applyRange = (from: string, to: string) => {
     const next = clampDateRange(from, to, today)
@@ -171,7 +180,7 @@ function DistrictReportsPageShared({
   })
 
   const previewData = useReportPreviewData({
-    kind: previewReport?.key ?? null,
+    kind: previewReport?.key ?? excelKind,
     dateFrom,
     dateTo,
   })
@@ -231,14 +240,109 @@ function DistrictReportsPageShared({
 
   const previewComparisonRows = comparisonRows.slice(0, 8)
 
-  const handleMockExport = (reportTitle: string, format: 'PDF' | 'Excel') => {
-    if (env.isLive) {
-      showError(messages.liveExportUnavailable)
+  const runDistrictExcel = useCallback(
+    (kind: ReportPreviewKind, title: string) => {
+      const spec = buildDistrictReportWorkbook({
+        kind,
+        title,
+        dateFrom,
+        dateTo,
+        isMock: !env.isLive,
+        filters: previewFilters,
+        attendance: {
+          summary: districtSummary,
+          rows: comparisonRows,
+        },
+        enrollment: previewData.enrollment,
+        dropouts: previewData.dropouts,
+        centers: previewData.centers,
+        nutrition: previewData.nutrition,
+      })
+      void exportWorkbook(
+        spec,
+        buildExcelFilename([districtExcelFilenamePrefix(kind), 'akarere', dateFrom, dateTo]),
+      )
+    },
+    [
+      comparisonRows,
+      dateFrom,
+      dateTo,
+      districtSummary,
+      exportWorkbook,
+      previewData.centers,
+      previewData.dropouts,
+      previewData.enrollment,
+      previewData.nutrition,
+      previewFilters,
+    ],
+  )
+
+  const excelAvailable =
+    !!previewReport &&
+    districtKindHasExportData({
+      kind: previewReport.key,
+      loading: previewData.isLoading,
+      enrollment: previewData.enrollment,
+      dropouts: previewData.dropouts,
+      centers: previewData.centers,
+      nutrition: previewData.nutrition,
+    })
+
+  const requestDistrictExcel = (kind: ReportPreviewKind, title: string) => {
+    if (!districtExcelExportAvailable(kind)) {
+      setPreviewReport({ key: kind, title })
       return
     }
-    showSuccess(`${district.reports.exportStarted} (${reportTitle} — ${format})`)
-    setPreviewReport(null)
+    const ready = districtKindHasExportData({
+      kind,
+      loading: previewData.isLoading && excelKind === kind,
+      enrollment: previewData.enrollment,
+      dropouts: previewData.dropouts,
+      centers: previewData.centers,
+      nutrition: previewData.nutrition,
+    })
+    if (kind === 'attendance' || ready) {
+      runDistrictExcel(kind, title)
+      return
+    }
+    pendingExcelRef.current = { kind, title }
+    setExcelKind(kind)
   }
+
+  useEffect(() => {
+    const pending = pendingExcelRef.current
+    if (!pending || pending.kind !== excelKind || previewData.isLoading) return
+    const hasData = districtKindHasExportData({
+      kind: pending.kind,
+      loading: false,
+      enrollment: previewData.enrollment,
+      dropouts: previewData.dropouts,
+      centers: previewData.centers,
+      nutrition: previewData.nutrition,
+    })
+    pendingExcelRef.current = null
+    setExcelKind(null)
+    if (hasData) {
+      runDistrictExcel(pending.kind, pending.title)
+      return
+    }
+    setPreviewReport({ key: pending.kind, title: pending.title })
+  }, [
+    excelKind,
+    previewData.centers,
+    previewData.dropouts,
+    previewData.enrollment,
+    previewData.isLoading,
+    previewData.nutrition,
+    runDistrictExcel,
+  ])
+
+  const handleExportExcel = () => {
+    if (!previewReport || !excelAvailable) return
+    runDistrictExcel(previewReport.key, previewReport.title)
+  }
+
+  const excelBusy = exporting || !!excelKind
 
   const openAttendancePreview = () => {
     setPreviewReport({
@@ -273,7 +377,7 @@ function DistrictReportsPageShared({
           <p className="text-body text-text-secondary">{previewReport?.description}</p>
           <p className="text-body text-text-muted">{district.reports.otherPreviewHint}</p>
           <p className="text-caption text-warning">
-            No /reports/sectors endpoint — sector rollup is not available from the API.
+            {district.reports.sectorsUnavailable}
           </p>
         </div>
       )
@@ -288,9 +392,9 @@ function DistrictReportsPageShared({
       return (
         <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <Card padding="md"><p className="text-caption text-text-muted">Active</p><p className="text-subheading">{s.active}</p></Card>
-            <Card padding="md"><p className="text-caption text-text-muted">New</p><p className="text-subheading">{s.newRegistrations}</p></Card>
-            <Card padding="md"><p className="text-caption text-text-muted">Archived</p><p className="text-subheading">{s.archived}</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewActive}</p><p className="text-subheading">{s.active}</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewNew}</p><p className="text-subheading">{s.newRegistrations}</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewArchived}</p><p className="text-subheading">{s.archived}</p></Card>
           </div>
         </div>
       )
@@ -302,22 +406,22 @@ function DistrictReportsPageShared({
       return (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Card padding="md"><p className="text-caption text-text-muted">Dropouts</p><p className="text-subheading">{s.dropouts}</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewDropouts}</p><p className="text-subheading">{s.dropouts}</p></Card>
           </div>
           {items.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-left responsive-table-cards">
                 <thead>
                   <tr className="border-b border-border text-caption text-text-muted">
-                    <th className="pb-2 pr-3">Child</th>
-                    <th className="pb-2">Center</th>
+                    <th className="pb-2 pr-3">{district.reports.previewChild}</th>
+                    <th className="pb-2">{district.reports.previewCenter}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.childId} className="border-b border-border/60">
-                      <td className="py-2 pr-3 text-body" data-label="Child">{item.childName}</td>
-                      <td className="py-2 text-body" data-label="Center">{item.centerName}</td>
+                      <td className="py-2 pr-3 text-body" data-label={district.reports.previewChild}>{item.childName}</td>
+                      <td className="py-2 text-body" data-label={district.reports.previewCenter}>{item.centerName}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -335,17 +439,17 @@ function DistrictReportsPageShared({
           <table className="w-full text-left responsive-table-cards">
             <thead>
               <tr className="border-b border-border text-caption text-text-muted">
-                <th className="pb-2 pr-3">Center</th>
-                <th className="pb-2 pr-3">Children</th>
-                <th className="pb-2">Rate</th>
+                <th className="pb-2 pr-3">{district.reports.previewCenter}</th>
+                <th className="pb-2 pr-3">{district.reports.previewChildren}</th>
+                <th className="pb-2">{district.reports.previewRate}</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
                 <tr key={item.centerId} className="border-b border-border/60">
-                  <td className="py-2 pr-3 text-body" data-label="Center">{item.centerName}</td>
-                  <td className="py-2 pr-3 text-body" data-label="Children">{item.enrolledChildren}</td>
-                  <td className="py-2 text-body" data-label="Rate">{roundPct(item.attendance.rate)}%</td>
+                  <td className="py-2 pr-3 text-body" data-label={district.reports.previewCenter}>{item.centerName}</td>
+                  <td className="py-2 pr-3 text-body" data-label={district.reports.previewChildren}>{item.enrolledChildren}</td>
+                  <td className="py-2 text-body" data-label={district.reports.previewRate}>{roundPct(item.attendance.rate)}%</td>
                 </tr>
               ))}
             </tbody>
@@ -366,27 +470,27 @@ function DistrictReportsPageShared({
       return (
         <div className="space-y-3">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card padding="md"><p className="text-caption text-text-muted">Coverage</p><p className="text-subheading">{roundPct(s.screeningCoverage)}%</p></Card>
-            <Card padding="md"><p className="text-caption text-text-muted">Screenings</p><p className="text-subheading">{s.screenings}</p></Card>
-            <Card padding="md"><p className="text-caption text-text-muted">Severe</p><p className="text-subheading">{s.severe}</p></Card>
-            <Card padding="md"><p className="text-caption text-text-muted">Overdue</p><p className="text-subheading">{s.overdueScreenings}</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewCoverage}</p><p className="text-subheading">{roundPct(s.screeningCoverage)}%</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewScreenings}</p><p className="text-subheading">{s.screenings}</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewSevere}</p><p className="text-subheading">{s.severe}</p></Card>
+            <Card padding="md"><p className="text-caption text-text-muted">{district.reports.previewOverdue}</p><p className="text-subheading">{s.overdueScreenings}</p></Card>
           </div>
           {key === 'nutritionCenters' && items.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-left responsive-table-cards">
                 <thead>
                   <tr className="border-b border-border text-caption text-text-muted">
-                    <th className="pb-2 pr-3">Center</th>
-                    <th className="pb-2 pr-3">Screenings</th>
-                    <th className="pb-2">Severe</th>
+                    <th className="pb-2 pr-3">{district.reports.previewCenter}</th>
+                    <th className="pb-2 pr-3">{district.reports.previewScreenings}</th>
+                    <th className="pb-2">{district.reports.previewSevere}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.centerId} className="border-b border-border/60">
-                      <td className="py-2 pr-3 text-body" data-label="Center">{item.centerName}</td>
-                      <td className="py-2 pr-3 text-body" data-label="Screenings">{item.screenings}</td>
-                      <td className="py-2 text-body" data-label="Severe">{item.severe}</td>
+                      <td className="py-2 pr-3 text-body" data-label={district.reports.previewCenter}>{item.centerName}</td>
+                      <td className="py-2 pr-3 text-body" data-label={district.reports.previewScreenings}>{item.screenings}</td>
+                      <td className="py-2 text-body" data-label={district.reports.previewSevere}>{item.severe}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -408,7 +512,24 @@ function DistrictReportsPageShared({
   return (
     <>
       <PageContainer>
-        <PageHeader title={district.reports.title} subtitle={district.reports.attendanceSubtitle} />
+        <PageHeader
+          title={district.reports.title}
+          subtitle={district.reports.attendanceSubtitle}
+          action={
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              icon={<Download size={18} />}
+              onClick={() => requestDistrictExcel('attendance', district.reports.attendance)}
+              loading={excelBusy}
+              fullWidth
+              className="sm:w-auto"
+            >
+              {common.reportPreview.exportExcel}
+            </Button>
+          }
+        />
         <PageContent>
       <Card padding="lg" className="mb-6 space-y-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
@@ -500,15 +621,25 @@ function DistrictReportsPageShared({
 
         <div className="flex flex-wrap gap-3 pt-1">
           <Button
-            variant="secondary"
+            type="button"
+            variant="primary"
             size="md"
             icon={<Download size={18} />}
+            onClick={() => requestDistrictExcel('attendance', district.reports.attendance)}
+            loading={excelBusy}
+          >
+            {common.reportPreview.exportExcel}
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
             onClick={openAttendancePreview}
+            disabled={excelBusy}
           >
             {district.reports.exportPreview}
           </Button>
           <p className="text-caption text-text-muted self-center">
-            {env.isLive ? common.live.exportUnavailable : district.reports.exportMock}
+            {env.isLive ? common.excelExport.clientSide : common.excelExport.mockDataNote}
           </p>
         </div>
       </Card>
@@ -726,9 +857,25 @@ function DistrictReportsPageShared({
               </div>
               <div className="flex flex-wrap gap-3 mt-auto pt-4 border-t border-border">
                 <Button
-                  variant="secondary"
+                  type="button"
+                  variant="primary"
                   size="md"
                   icon={<Download size={18} />}
+                  onClick={() => requestDistrictExcel(report.key, report.title)}
+                  loading={excelKind === report.key}
+                  disabled={!districtExcelExportAvailable(report.key)}
+                  title={
+                    districtExcelExportAvailable(report.key)
+                      ? undefined
+                      : district.reports.sectorsUnavailable
+                  }
+                  className="flex-1 min-w-[9rem] sm:flex-none"
+                >
+                  {common.reportPreview.exportExcel}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="md"
                   onClick={() =>
                     setPreviewReport({
                       key: report.key,
@@ -736,6 +883,7 @@ function DistrictReportsPageShared({
                       description: report.description,
                     })
                   }
+                  disabled={excelBusy}
                   className="flex-1 min-w-[9rem] sm:flex-none"
                 >
                   {district.reports.exportPreview}
@@ -764,14 +912,18 @@ function DistrictReportsPageShared({
             : undefined
         }
         showLate={false}
-        exportMockNote={env.isLive ? common.live.exportUnavailable : district.reports.exportMock}
-        exportDisabled={env.isLive}
-        onExportPdf={() =>
-          previewReport && handleMockExport(previewReport.title, 'PDF')
+        exportNote={
+          previewReport?.key === 'sectors'
+            ? district.reports.sectorsUnavailable
+            : env.isLive
+              ? common.excelExport.clientSide
+              : common.excelExport.mockDataNote
         }
-        onExportExcel={() =>
-          previewReport && handleMockExport(previewReport.title, 'Excel')
-        }
+        pdfDisabled
+        excelDisabled={!excelAvailable}
+        excelLoading={exporting}
+        onExportPdf={notifyPdfUnavailable}
+        onExportExcel={handleExportExcel}
         tablePreview={
           previewReport?.key === 'attendance' ? (
             previewComparisonRows.length === 0 ? (

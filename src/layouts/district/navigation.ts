@@ -7,6 +7,7 @@ import {
   FileText,
   UserCog,
   Settings,
+  BookOpen,
   type LucideIcon,
 } from 'lucide-react'
 import { district } from '@/locales/rw/district'
@@ -18,6 +19,7 @@ export type DistrictSectionId =
   | 'monitoring'
   | 'followup'
   | 'reports'
+  | 'book'
   | 'caregivers'
   | 'settings'
   | 'gis'
@@ -49,6 +51,7 @@ export const DISTRICT_PATHS = {
   monitoringSted: '/district/imikorere/sted',
   followup: '/district/gukurikirana',
   reports: '/district/raporo',
+  book: '/district/igitabo',
   caregivers: '/district/abakoresha',
   settings: '/district/igenamiterere',
   /** Deprecated — GIS lives on Incamake. */
@@ -113,6 +116,13 @@ export const DISTRICT_NAV_GROUPS: DistrictNavGroup[] = [
         label: district.nav.reports,
         icon: FileText,
         matchPaths: [DISTRICT_PATHS.reports],
+      },
+      {
+        id: 'book',
+        path: DISTRICT_PATHS.book,
+        label: district.registers.nav,
+        icon: BookOpen,
+        matchPaths: [DISTRICT_PATHS.book],
       },
     ],
   },

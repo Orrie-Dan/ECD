@@ -4,10 +4,10 @@ import { loadChecklistCatalog, scoreSelfEvaluation } from './scoring'
 describe('self-evaluation scoring', () => {
   const catalog = loadChecklistCatalog()
 
-  it('loads four facility checklists from generated JSON', () => {
-    expect(catalog.facilityTypes).toHaveLength(4)
+  it('loads facility checklists from generated JSON', () => {
+    expect(catalog.facilityTypes).toHaveLength(2)
     const ids = catalog.facilityTypes.map((f) => f.id)
-    expect(ids).toEqual(['daycare', 'home_based', 'community_based', 'school_model'])
+    expect(ids).toEqual(['daycare', 'ecd_3_5'])
   })
 
   it('scores 100% green when all items are met (daycare sample)', () => {
@@ -31,8 +31,8 @@ describe('self-evaluation scoring', () => {
   })
 
   it('scores 0% red when nothing is met', () => {
-    const home = catalog.facilityTypes.find((f) => f.id === 'home_based')!
-    const result = scoreSelfEvaluation(home, {}, catalog.ranks)
+    const ecd = catalog.facilityTypes.find((f) => f.id === 'ecd_3_5')!
+    const result = scoreSelfEvaluation(ecd, {}, catalog.ranks)
     expect(result.percent).toBe(0)
     expect(result.rank.id).toBe('red')
   })

@@ -111,11 +111,11 @@ function MilestoneCard({
     >
       <div className="flex items-start gap-2">
         <span
-          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-caption font-bold ${
+          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[0.875rem] font-bold ${
             needsAttention
-              ? 'bg-error text-white'
+              ? 'bg-error !text-white'
               : answered
-                ? 'bg-success-light text-success'
+                ? 'bg-success !text-white'
                 : 'bg-background-subtle text-text-muted'
           }`}
         >

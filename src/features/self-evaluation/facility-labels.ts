@@ -6,19 +6,11 @@ export const FACILITY_TYPE_LABELS: Record<
 > = {
   daycare: {
     rw: 'Irerero (abana bari munsi y’imyaka 3)',
-    en: 'Daycare / crèche (under 3 years)',
+    en: 'Day Care ECD Facility (0 to 3 Years)',
   },
-  home_based: {
-    rw: 'Urugo mbonezamikurire rukorera mu rugo',
-    en: 'Home-based ECD facility',
-  },
-  community_based: {
-    rw: 'Urugo mbonezamikurire rukorera mu mudugudu',
-    en: 'Community-based ECD facility',
-  },
-  school_model: {
-    rw: 'Urugo rw’ikitegererezo / rukorera ku ishuri',
-    en: 'Model or school-based ECD facility',
+  ecd_3_5: {
+    rw: 'Urugo mbonezamikurire (abana bari hagati y’imyaka 3–5)',
+    en: 'ECD Facility for Children Aged 3–5 Years',
   },
 }
 

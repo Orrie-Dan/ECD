@@ -23,6 +23,12 @@ import { caretaker } from '@/locales/rw/caretaker'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 import type { ApiUserStatus } from '@/api/generated/models'
 import { normalizeApiError } from '@/api/errors'
+import {
+  EDUCATION_LEVEL_OPTIONS,
+  PERSON_SEX_OPTIONS,
+  type EducationLevel,
+  type PersonSex,
+} from '@/models/center-educators'
 
 const USERS_PATH = '/caretaker/abakoresha'
 
@@ -69,6 +75,8 @@ function CenterUsersLive() {
     username: '',
     fullName: '',
     phone: '',
+    gender: '' as PersonSex | '',
+    educationLevel: '' as EducationLevel | '',
   })
 
   const debouncedSearch = useDebounce(search, 300)
@@ -106,10 +114,18 @@ function CenterUsersLive() {
         phone: createForm.phone.trim() || undefined,
         role: 'caregiver',
         centerId,
+        gender: createForm.gender || undefined,
+        educationLevel: createForm.educationLevel || undefined,
       })
       setTempSecret(result.temporaryPassword)
       setShowCreate(false)
-      setCreateForm({ username: '', fullName: '', phone: '' })
+      setCreateForm({
+        username: '',
+        fullName: '',
+        phone: '',
+        gender: '',
+        educationLevel: '',
+      })
       showSuccess(caretaker.users.createSuccess)
     } catch (err) {
       showError(normalizeApiError(err).message || caretaker.users.createError)
@@ -191,6 +207,48 @@ function CenterUsersLive() {
                         setCreateForm((f) => ({ ...f, phone: e.target.value }))
                       }
                     />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                      {caretaker.director.educators.gender}
+                    </label>
+                    <SelectInput
+                      value={createForm.gender}
+                      onChange={(e) =>
+                        setCreateForm((f) => ({
+                          ...f,
+                          gender: e.target.value as PersonSex | '',
+                        }))
+                      }
+                    >
+                      <option value="">{caretaker.director.educators.optionalBlank}</option>
+                      {PERSON_SEX_OPTIONS.map((value) => (
+                        <option key={value} value={value}>
+                          {caretaker.director.educators.genderLabels[value]}
+                        </option>
+                      ))}
+                    </SelectInput>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                      {caretaker.director.educators.educationLevel}
+                    </label>
+                    <SelectInput
+                      value={createForm.educationLevel}
+                      onChange={(e) =>
+                        setCreateForm((f) => ({
+                          ...f,
+                          educationLevel: e.target.value as EducationLevel | '',
+                        }))
+                      }
+                    >
+                      <option value="">{caretaker.director.educators.optionalBlank}</option>
+                      {EDUCATION_LEVEL_OPTIONS.map((value) => (
+                        <option key={value} value={value}>
+                          {caretaker.director.educators.educationLabels[value]}
+                        </option>
+                      ))}
+                    </SelectInput>
                   </div>
                   <p className="sm:col-span-2 text-caption text-text-muted">
                     {caretaker.users.roleFixed}
@@ -294,7 +352,9 @@ function CenterUsersLive() {
                               {row.username}
                             </td>
                             <td className="py-2.5 pr-3" data-label={caretaker.users.colStatus}>
-                              {row.status}
+                              {row.status === 'ACTIVE'
+                                ? caretaker.users.statusActive
+                                : caretaker.users.statusSuspended}
                             </td>
                             <td className="py-2.5 td-actions" data-label={caretaker.users.colAction}>
                               <Link

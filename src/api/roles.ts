@@ -110,6 +110,11 @@ export function isEcdDirector(user: RoleBearer): boolean {
   return hasRole(user, 'ecdDirector')
 }
 
+/** Director-only ECD book registers and center management mutations. */
+export function canDirectorMutate(user: RoleBearer): boolean {
+  return isEcdDirector(user)
+}
+
 /** Caregiver or ECD director — same center operational pages. */
 export function isEcdCenterUser(user: RoleBearer): boolean {
   return hasRole(user, ECD_CENTER_ROLES)

@@ -43,7 +43,7 @@ function RankingList({ title, subtitle, schools, variant, icon, onViewSchool }: 
           const rankBadge =
             isTop && index < 3 ? (
               <span
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-caption font-bold text-white ${
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[0.75rem] font-bold !text-white ${
                   index === 0 ? 'bg-amber-500' : index === 1 ? 'bg-slate-400' : 'bg-amber-700'
                 }`}
               >

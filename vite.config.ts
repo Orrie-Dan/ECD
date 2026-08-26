@@ -19,7 +19,7 @@ export default defineConfig({
       injectRegister: false,
       includeAssets: ['ncda-logo.png', 'icons.svg'],
       manifest: {
-        name: "Sisitemu y'Ubwitabire bw'Abana",
+        name: "Sisitemu y'Imbonezamikurire y'Abana Bato",
         short_name: 'ECD',
         description: "Ubuyobozi bw'Iterambere ry'Abana Bato — ECD Rwanda",
         theme_color: '#0B6E4F',
@@ -78,5 +78,8 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  optimizeDeps: {
+    include: ['exceljs'],
   },
 })

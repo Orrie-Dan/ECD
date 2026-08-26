@@ -17,10 +17,9 @@ import type { Child, GrowthMeasurement } from '@/types'
 export interface MeasurementDialogResult {
   date: string
   weightKg: number
-  /** Retained on the model for future use; not collected in Form VII UI. */
   heightCm: number
   muacCm: number
-  /** Retained on the model for future use; not collected in Form VII UI. */
+  /** Not collected in Form VII UI; retained for future use. */
   headCircumferenceCm?: number
   notes?: string
 }
@@ -31,7 +30,7 @@ interface MeasurementDialogProps {
   existing?: GrowthMeasurement | null
   /** When set, date must fall in this YYYY-MM (one measurement per child per month). */
   sessionYearMonth?: string
-  /** Preserves prior height on the data model when not collected in Form VII. */
+  /** Pre-fills height when editing or when a prior measurement exists. */
   fallbackHeightCm?: number
   onClose: () => void
   onConfirm: (result: MeasurementDialogResult) => void
@@ -55,7 +54,7 @@ function defaultDateForSession(sessionYearMonth: string | undefined, today: stri
 
 /**
  * Form VII (paper register) measurement entry:
- * Weight (kg) + MUAC (cm) + optional notes. Height / HC are not collected.
+ * Weight (kg) + height (cm) + MUAC (cm) + optional notes.
  */
 export function MeasurementDialog({
   open,
@@ -71,6 +70,7 @@ export function MeasurementDialog({
 
   const [date, setDate] = useState(today)
   const [weightKg, setWeightKg] = useState('')
+  const [heightCm, setHeightCm] = useState('')
   const [muacCm, setMuacCm] = useState('')
   const [notes, setNotes] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -79,10 +79,17 @@ export function MeasurementDialog({
     if (!open) return
     setDate(existing?.date ?? defaultDateForSession(sessionYearMonth, today))
     setWeightKg(existing ? String(existing.weightKg) : '')
+    setHeightCm(
+      existing
+        ? String(existing.heightCm)
+        : fallbackHeightCm > 0
+          ? String(fallbackHeightCm)
+          : '',
+    )
     setMuacCm(existing ? String(existing.muacCm) : '')
     setNotes(existing?.notes ?? '')
     setErrors({})
-  }, [open, child?.id, existing?.id, today, sessionYearMonth])
+  }, [open, child?.id, existing?.id, today, sessionYearMonth, fallbackHeightCm])
 
   if (!child) return null
 
@@ -91,12 +98,12 @@ export function MeasurementDialog({
       {
         date,
         weightKg,
-        heightCm: '',
+        heightCm,
         muacCm,
         headCircumferenceCm: '',
       },
       today,
-      { requireHeight: false },
+      { requireHeight: true },
     )
 
     if (sessionYearMonth && date && toYearMonth(date) !== sessionYearMonth) {
@@ -116,7 +123,7 @@ export function MeasurementDialog({
     const parsed = parseMeasurementInput(
       {
         weightKg,
-        heightCm: '',
+        heightCm,
         muacCm,
         headCircumferenceCm: '',
       },
@@ -192,7 +199,7 @@ export function MeasurementDialog({
           />
         </FormField>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <FormField label={caretaker.growth.weight} required error={errors.weightKg}>
             <TextInput
               type="number"
@@ -203,6 +210,19 @@ export function MeasurementDialog({
               value={weightKg}
               error={!!errors.weightKg}
               onChange={(e) => setWeightKg(e.target.value)}
+              className="text-heading font-semibold tabular-nums"
+            />
+          </FormField>
+          <FormField label={caretaker.growth.height} required error={errors.heightCm}>
+            <TextInput
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              min={0.1}
+              max={150}
+              value={heightCm}
+              error={!!errors.heightCm}
+              onChange={(e) => setHeightCm(e.target.value)}
               className="text-heading font-semibold tabular-nums"
             />
           </FormField>

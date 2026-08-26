@@ -27,8 +27,10 @@ interface ReportPreviewModalProps {
   }
   showLate?: boolean
   tablePreview: ReactNode
-  exportMockNote?: string
-  exportDisabled?: boolean
+  exportNote?: string
+  pdfDisabled?: boolean
+  excelDisabled?: boolean
+  excelLoading?: boolean
   onExportPdf: () => void
   onExportExcel: () => void
 }
@@ -43,8 +45,10 @@ export function ReportPreviewModal({
   summaryLabels,
   showLate = false,
   tablePreview,
-  exportMockNote = common.reportPreview.exportMock,
-  exportDisabled = false,
+  exportNote = common.excelExport.clientSide,
+  pdfDisabled = true,
+  excelDisabled = false,
+  excelLoading = false,
   onExportPdf,
   onExportExcel,
 }: ReportPreviewModalProps) {
@@ -58,7 +62,7 @@ export function ReportPreviewModal({
       size="xl"
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-caption text-text-muted">{exportMockNote}</p>
+          <p className="text-caption text-text-muted">{exportNote}</p>
           <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
             <Button variant="tertiary" onClick={onClose} fullWidth className="sm:w-auto">
               {common.close}
@@ -69,7 +73,8 @@ export function ReportPreviewModal({
               onClick={onExportPdf}
               fullWidth
               className="sm:w-auto"
-              disabled={exportDisabled}
+              disabled={pdfDisabled || excelLoading}
+              title={pdfDisabled ? common.excelExport.pdfUnavailable : undefined}
             >
               {labels.exportPdf}
             </Button>
@@ -79,7 +84,8 @@ export function ReportPreviewModal({
               onClick={onExportExcel}
               fullWidth
               className="sm:w-auto"
-              disabled={exportDisabled}
+              disabled={excelDisabled}
+              loading={excelLoading}
             >
               {labels.exportExcel}
             </Button>

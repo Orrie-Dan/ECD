@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
@@ -10,8 +10,11 @@ import { TextInput, SelectInput } from '@/components/ui/FormField'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { TempPasswordBanner } from '@/components/district/TempPasswordBanner'
+import { StaffTrainingHistoryList } from '@/components/staff-trainings/StaffTrainingHistoryList'
+import { StaffTrainingViewSheet } from '@/components/staff-trainings/StaffTrainingViewSheet'
 import { useToast } from '@/components/ui/Toast'
 import { env } from '@/config/env'
+import { useAuth } from '@/contexts/AppContext'
 import {
   useCenterResetUserPassword,
   useCenterUpdateUser,
@@ -19,7 +22,20 @@ import {
 } from '@/features/caretaker/users/queries'
 import { caretaker } from '@/locales/rw/caretaker'
 import { normalizeApiError } from '@/api/errors'
-import type { ApiUserStatus, UserResponseDto } from '@/api/generated/models'
+import type { ApiUserStatus } from '@/api/generated/models'
+import type { CenterUserResponse } from '@/api/resources/users'
+import {
+  EDUCATION_LEVEL_OPTIONS,
+  PERSON_SEX_OPTIONS,
+  type EducationLevel,
+  type PersonSex,
+} from '@/models/center-educators'
+import {
+  formatEducationLevel,
+  formatPersonSex,
+} from '@/lib/committee-educator-format'
+import { DEFAULT_PAGE_SIZE } from '@/types'
+import type { StaffTrainingViewModel } from '@/models/staff-trainings'
 
 const USERS_PATH = '/caretaker/abakoresha'
 
@@ -60,9 +76,24 @@ export function CenterUserDetailPage() {
 
 function CenterUserDetailLive() {
   const { userId = '' } = useParams<{ userId: string }>()
+  const { user } = useAuth()
   const { showError, showSuccess } = useToast()
   const detail = useCenterUserDetail(userId)
   const [tempSecret, setTempSecret] = useState<string | null>(null)
+  const [trainingPage, setTrainingPage] = useState(1)
+  const [trainingPageSize, setTrainingPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [viewingTraining, setViewingTraining] = useState<StaffTrainingViewModel | null>(null)
+
+  const centerId = user?.centerId?.trim() || detail.data?.center?.id || ''
+  const trainingFilters = useMemo(
+    () => ({
+      centerId,
+      traineeUserId: userId,
+      page: trainingPage,
+      pageSize: trainingPageSize,
+    }),
+    [centerId, userId, trainingPage, trainingPageSize],
+  )
 
   const backLink = (
     <Link
@@ -133,7 +164,24 @@ function CenterUserDetailLive() {
                   <Field label={caretaker.users.colUsername} value={detail.data.username} />
                   <Field label={caretaker.users.colFullName} value={detail.data.fullName} />
                   <Field label={caretaker.users.colPhone} value={detail.data.phone ?? '—'} />
-                  <Field label={caretaker.users.colStatus} value={detail.data.status} />
+                  <Field
+                    label={caretaker.director.educators.gender}
+                    value={formatPersonSex((detail.data as CenterUserResponse).gender)}
+                  />
+                  <Field
+                    label={caretaker.director.educators.educationLevel}
+                    value={formatEducationLevel(
+                      (detail.data as CenterUserResponse).educationLevel,
+                    )}
+                  />
+                  <Field
+                    label={caretaker.users.colStatus}
+                    value={
+                      detail.data.status === 'ACTIVE'
+                        ? caretaker.users.statusActive
+                        : caretaker.users.statusSuspended
+                    }
+                  />
                   <Field
                     label={caretaker.users.colCreated}
                     value={formatDate(detail.data.createdAt)}
@@ -141,6 +189,32 @@ function CenterUserDetailLive() {
                 </dl>
                 <p className="mt-3 text-caption text-text-muted">{caretaker.users.roleFixed}</p>
               </Card>
+
+              <Card padding="md" className="border-border space-y-3">
+                <h2 className="text-subheading font-semibold text-text">
+                  {caretaker.director.trainings.title}
+                </h2>
+                <StaffTrainingHistoryList
+                  filters={trainingFilters}
+                  enabled={Boolean(centerId && userId)}
+                  emptyTitle={caretaker.director.trainings.emptyProfile}
+                  page={trainingPage}
+                  pageSize={trainingPageSize}
+                  onPageChange={setTrainingPage}
+                  onPageSizeChange={(size) => {
+                    setTrainingPageSize(size)
+                    setTrainingPage(1)
+                  }}
+                  onSelect={setViewingTraining}
+                />
+              </Card>
+
+              <StaffTrainingViewSheet
+                open={Boolean(viewingTraining)}
+                record={viewingTraining}
+                canMutate={false}
+                onClose={() => setViewingTraining(null)}
+              />
 
               <CaregiverEditForm
                 key={`${detail.data.id}:${detail.data.updatedAt}`}
@@ -177,7 +251,7 @@ function CaregiverEditForm({
   showSuccess,
 }: {
   userId: string
-  initial: UserResponseDto
+  initial: CenterUserResponse
   onSaved: () => void
   onTempPassword: (secret: string) => void
   showError: (message: string) => void
@@ -188,6 +262,10 @@ function CaregiverEditForm({
   const [fullName, setFullName] = useState(initial.fullName)
   const [phone, setPhone] = useState(initial.phone ?? '')
   const [status, setStatus] = useState<ApiUserStatus>(initial.status)
+  const [gender, setGender] = useState<PersonSex | ''>(initial.gender ?? '')
+  const [educationLevel, setEducationLevel] = useState<EducationLevel | ''>(
+    initial.educationLevel ?? '',
+  )
 
   async function onSave(e: FormEvent) {
     e.preventDefault()
@@ -196,6 +274,8 @@ function CaregiverEditForm({
         fullName: fullName.trim(),
         phone: phone.trim() || null,
         status,
+        gender: gender || null,
+        educationLevel: educationLevel || null,
       })
       showSuccess(caretaker.users.updateSuccess)
       onSaved()
@@ -242,6 +322,38 @@ function CaregiverEditForm({
           >
             <option value="ACTIVE">{caretaker.users.statusActive}</option>
             <option value="SUSPENDED">{caretaker.users.statusSuspended}</option>
+          </SelectInput>
+        </div>
+        <div>
+          <label className="mb-1 block text-caption font-semibold text-text-secondary">
+            {caretaker.director.educators.gender}
+          </label>
+          <SelectInput
+            value={gender}
+            onChange={(e) => setGender(e.target.value as PersonSex | '')}
+          >
+            <option value="">{caretaker.director.educators.optionalBlank}</option>
+            {PERSON_SEX_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {caretaker.director.educators.genderLabels[value]}
+              </option>
+            ))}
+          </SelectInput>
+        </div>
+        <div>
+          <label className="mb-1 block text-caption font-semibold text-text-secondary">
+            {caretaker.director.educators.educationLevel}
+          </label>
+          <SelectInput
+            value={educationLevel}
+            onChange={(e) => setEducationLevel(e.target.value as EducationLevel | '')}
+          >
+            <option value="">{caretaker.director.educators.optionalBlank}</option>
+            {EDUCATION_LEVEL_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {caretaker.director.educators.educationLabels[value]}
+              </option>
+            ))}
           </SelectInput>
         </div>
         <div className="sm:col-span-2 flex flex-wrap gap-2">

@@ -381,7 +381,11 @@ function DistrictCaregiversLive() {
                                 ? `${row.center.name} (${row.center.code})`
                                 : '—'}
                             </td>
-                            <td className="py-2.5 pr-3" data-label={district.caregivers.colStatus}>{row.status}</td>
+                            <td className="py-2.5 pr-3" data-label={district.caregivers.colStatus}>
+                              {row.status === 'ACTIVE'
+                                ? district.caregivers.statusActive
+                                : district.caregivers.statusSuspended}
+                            </td>
                             <td className="py-2.5 td-actions" data-label={district.caregivers.colAction}>
                               <Link
                                 to={`${CAREGIVERS_PATH}/${row.id}`}

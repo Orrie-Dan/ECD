@@ -98,10 +98,10 @@ export function validateMeasurementInput(
     headCircumferenceCm: string
   },
   today = getTodayDate(),
-  /** Form VII default: weight + MUAC only. Height/HC remain optional for future use. */
+  /** Form VII default: weight + height + MUAC. HC remains optional. */
   options: { requireHeight?: boolean } = {},
 ): Record<string, string> {
-  const { requireHeight = false } = options
+  const { requireHeight = true } = options
   const errors: Record<string, string> = {}
 
   if (!input.date) {
@@ -330,7 +330,7 @@ export function computeCenterGrowthComparison(
   })
 }
 
-/** Chart series for Form VII: weight + MUAC. heightCm kept on points for future use. */
+/** Chart series for Form VII: weight, height, and MUAC. */
 export function buildTrendPoints(
   measurements: GrowthMeasurement[],
 ): { date: string; weightKg: number; heightCm: number; muacCm: number }[] {

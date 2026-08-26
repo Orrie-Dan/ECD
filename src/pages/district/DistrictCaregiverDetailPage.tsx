@@ -137,7 +137,14 @@ function DistrictCaregiverDetailLive() {
                     <Field label={district.caregivers.colUsername} value={detail.data.username} />
                     <Field label={district.caregivers.colFullName} value={detail.data.fullName} />
                     <Field label={district.caregivers.colPhone} value={detail.data.phone ?? '—'} />
-                    <Field label={district.caregivers.colStatus} value={detail.data.status} />
+                    <Field
+                      label={district.caregivers.colStatus}
+                      value={
+                        detail.data.status === 'ACTIVE'
+                          ? district.caregivers.statusActive
+                          : district.caregivers.statusSuspended
+                      }
+                    />
                     <Field
                       label={district.caregivers.colCenter}
                       value={

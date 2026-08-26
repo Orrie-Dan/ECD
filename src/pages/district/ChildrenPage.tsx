@@ -169,8 +169,7 @@ function DistrictChildrenPageLive() {
           <p className="text-caption text-text-muted mb-4">{common.live.enrollmentKpiLimited}</p>
 
           <p className="text-caption text-text-muted mb-4">
-            LIVE: Gushakisha (amazina) na `status` bigakurikizwa kuri API.
-            Izindi filter (umubyeyi/igitsina/imyaka/ahantu) ziboneka muri MOCK gusa.
+            {district.children.liveFiltersHint}
           </p>
 
           <DistrictChildrenFilterBar

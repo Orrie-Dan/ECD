@@ -74,6 +74,9 @@ export function MeasurementHistoryTable({
                   {caretaker.growth.weightShort}
                 </th>
                 <th className="text-caption font-semibold uppercase tracking-wide text-text-secondary px-2 py-3 pr-4">
+                  {caretaker.growth.heightShort}
+                </th>
+                <th className="text-caption font-semibold uppercase tracking-wide text-text-secondary px-2 py-3 pr-4">
                   {caretaker.growth.muacShort}
                 </th>
                 <th className="text-caption font-semibold uppercase tracking-wide text-text-secondary px-2 py-3 pr-4">
@@ -127,6 +130,12 @@ export function MeasurementHistoryTable({
                       data-label={caretaker.growth.weight}
                     >
                       {record.weightKg}
+                    </td>
+                    <td
+                      className="py-3 px-2 pr-4 text-body font-medium tabular-nums"
+                      data-label={caretaker.growth.height}
+                    >
+                      {record.heightCm > 0 ? record.heightCm : '—'}
                     </td>
                     <td
                       className="py-3 px-2 pr-4 text-body font-medium tabular-nums"

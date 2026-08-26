@@ -121,9 +121,9 @@ export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPa
                 key={cat}
                 type="button"
                 onClick={() => setCategory(cat)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-caption font-semibold transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.875rem] font-semibold transition-colors whitespace-nowrap ${
                   isActive
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary !text-white'
                     : 'bg-background-subtle text-text-secondary hover:bg-background'
                 }`}
               >

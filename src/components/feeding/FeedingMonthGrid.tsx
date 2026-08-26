@@ -259,7 +259,7 @@ export function FeedingMonthGrid({
                       <span className="inline-flex items-center gap-2">
                         <span className="tabular-nums w-6">{dayNum}</span>
                         {isToday && (
-                          <span className="rounded-full bg-primary text-white px-2 py-0.5 text-caption font-semibold">
+                          <span className="rounded-full bg-primary !text-white px-2 py-0.5 text-[0.875rem] font-semibold">
                             {caretaker.imirire.today}
                           </span>
                         )}

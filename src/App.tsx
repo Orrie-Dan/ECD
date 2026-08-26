@@ -3,6 +3,7 @@ import { ApiProviders } from '@/api/providers/ApiProviders'
 import { ApiErrorBridge } from '@/api/providers/ApiErrorBridge'
 import { DeviceRegistrationBridge } from '@/offline/DeviceRegistrationBridge'
 import { AuthProvider, DataProvider } from '@/contexts/AppContext'
+import { AttendanceAutoAbsentRuntime } from '@/components/attendance/AttendanceAutoAbsentRuntime'
 import { AppErrorBoundary } from '@/components/AppErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -30,6 +31,18 @@ import { SelfEvalPage } from '@/pages/caretaker/SelfEvalPage'
 import { SelfEvalWizardPage } from '@/pages/caretaker/SelfEvalWizardPage'
 import { CenterUsersPage } from '@/pages/caretaker/CenterUsersPage'
 import { CenterUserDetailPage } from '@/pages/caretaker/CenterUserDetailPage'
+import {
+  DirectorIkigoPage,
+  DirectorManagementPage,
+  DirectorBookHubPage,
+} from '@/pages/caretaker/director/DirectorPages'
+import { ParentContributionsPage } from '@/pages/caretaker/director/ParentContributionsPage'
+import { ParentingSessionsPage } from '@/pages/caretaker/director/ParentingSessionsPage'
+import { CommitteeMembersPage } from '@/pages/caretaker/director/CommitteeMembersPage'
+import { EducatorsPage } from '@/pages/caretaker/director/EducatorsPage'
+import { CenterSupportPage } from '@/pages/caretaker/director/CenterSupportPage'
+import { CenterVisitorsPage } from '@/pages/caretaker/director/CenterVisitorsPage'
+import { StaffTrainingsPage } from '@/pages/caretaker/director/StaffTrainingsPage'
 import { CaretakerNotificationsPage } from '@/pages/caretaker/NotificationsPage'
 import { CaretakerAlertsPage } from '@/pages/caretaker/AlertsPage'
 import { DistrictLayout } from '@/layouts/DistrictLayout'
@@ -45,12 +58,17 @@ import { GrowthMonitoringPage } from '@/pages/district/GrowthMonitoringPage'
 import { FeedingMonitoringPage } from '@/pages/district/FeedingMonitoringPage'
 import { StedMonitoringPage } from '@/pages/district/StedMonitoringPage'
 import { GukurikiranaPage } from '@/pages/district/GukurikiranaPage'
+import { DistrictReferralsPage } from '@/pages/district/ReferralsPage'
 import { DistrictNotificationsPage } from '@/pages/district/NotificationsPage'
 import { DistrictAlertsPage } from '@/pages/district/AlertsPage'
 import { DistrictMonitoringPage } from '@/pages/district/DistrictMonitoringPage'
 import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
 import { DistrictCaregiversPage } from '@/pages/district/DistrictCaregiversPage'
 import { DistrictCaregiverDetailPage } from '@/pages/district/DistrictCaregiverDetailPage'
+import {
+  DistrictRegisterHubPage,
+  DistrictRegisterSectionPage,
+} from '@/pages/district/registers/DistrictRegisterPages'
 import { NcdaLayout } from '@/layouts/NcdaLayout'
 import { NcdaNotificationsPage } from '@/pages/ncda/NotificationsPage'
 import { NcdaAlertsPage } from '@/pages/ncda/AlertsPage'
@@ -72,6 +90,10 @@ import {
   NcdaRolesPage,
   NcdaSettingsPage,
 } from '@/pages/ncda/NcdaPages'
+import {
+  NcdaRegisterHubPage,
+  NcdaRegisterSectionPage,
+} from '@/pages/ncda/registers/NcdaRegisterPages'
 import { useAuth } from '@/contexts/AppContext'
 import { ECD_CENTER_ROLES, homePathForUser } from '@/api/roles'
 
@@ -102,6 +124,7 @@ export default function App() {
         <BrowserRouter>
           <AuthProvider>
             <DataProvider>
+              <AttendanceAutoAbsentRuntime />
               <ToastProvider>
                 <ApiErrorBridge />
                 <DeviceRegistrationBridge />
@@ -132,6 +155,25 @@ export default function App() {
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRole="ecdDirector" />}>
+                  <Route path="/caretaker/ikigo" element={<DirectorIkigoPage />} />
+                  <Route path="/caretaker/imicungire" element={<DirectorManagementPage />} />
+                  <Route path="/caretaker/igitabo" element={<DirectorBookHubPage />} />
+                  <Route
+                    path="/caretaker/igitabo/umusanzu"
+                    element={<ParentContributionsPage />}
+                  />
+                  <Route
+                    path="/caretaker/igitabo/ibiganiro"
+                    element={<ParentingSessionsPage />}
+                  />
+                  <Route
+                    path="/caretaker/igitabo/komite"
+                    element={<CommitteeMembersPage />}
+                  />
+                  <Route path="/caretaker/igitabo/abarezi" element={<EducatorsPage />} />
+                  <Route path="/caretaker/igitabo/ubufasha" element={<CenterSupportPage />} />
+                  <Route path="/caretaker/igitabo/abashyitsi" element={<CenterVisitorsPage />} />
+                  <Route path="/caretaker/igitabo/amahugurwa" element={<StaffTrainingsPage />} />
                   <Route path="/caretaker/kwimura" element={<TransfersPage />} />
                   <Route path="/caretaker/isuzuma" element={<SelfEvalPage />} />
                   <Route path="/caretaker/isuzuma/new" element={<SelfEvalWizardPage />} />
@@ -157,6 +199,11 @@ export default function App() {
                     <Route path="/district/amatangazo" element={<DistrictNotificationsPage />} />
                     <Route path="/district/impugukirwa" element={<DistrictAlertsPage />} />
                     <Route path="/district/raporo" element={<DistrictReportsPage />} />
+                    <Route path="/district/igitabo" element={<DistrictRegisterHubPage />} />
+                    <Route
+                      path="/district/igitabo/:section"
+                      element={<DistrictRegisterSectionPage />}
+                    />
                     <Route path="/district/igenamiterere" element={<DistrictSettingsPage />} />
                     <Route
                       path="/district/attendance"
@@ -174,13 +221,10 @@ export default function App() {
                       path="/district/sted"
                       element={<RedirectWithSearch to={DISTRICT_PATHS.monitoringSted} />}
                     />
-                    <Route
-                      path="/district/referrals"
-                      element={<Navigate to={DISTRICT_PATHS.followup} replace />}
-                    />
+                    <Route path="/district/referrals" element={<DistrictReferralsPage />} />
                     <Route
                       path="/district/gukurikirana/ivuriro"
-                      element={<Navigate to={DISTRICT_PATHS.followup} replace />}
+                      element={<Navigate to="/district/referrals" replace />}
                     />
                     <Route
                       path="/district/ikarita"
@@ -225,6 +269,11 @@ export default function App() {
                     <Route path="/ncda/centers/:centerId" element={<NcdaCenterDetailPage />} />
                     <Route path="/ncda/children" element={<NcdaChildrenPage />} />
                     <Route path="/ncda/children/:childId" element={<NcdaChildDetailPage />} />
+                    <Route path="/ncda/igitabo" element={<NcdaRegisterHubPage />} />
+                    <Route
+                      path="/ncda/igitabo/:section"
+                      element={<NcdaRegisterSectionPage />}
+                    />
                     <Route
                       path="/ncda/compliance"
                       element={<RedirectWithSearch to="/ncda/inspections" />}

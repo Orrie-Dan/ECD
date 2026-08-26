@@ -2,20 +2,13 @@ import { SelectTile } from '@/components/feeding/SelectTile'
 import { Card } from '@/components/ui/Card'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
+import { splitBilingualText } from '@/lib/self-eval-text'
 import type { SelfEvalItem, SelfEvalItemAnswers } from '@/features/self-evaluation/types'
 
 interface SelfEvalSectionFormProps {
   items: SelfEvalItem[]
   answers: SelfEvalItemAnswers
   onChange: (answers: SelfEvalItemAnswers) => void
-}
-
-function splitItemText(text: string): { en?: string; rw?: string } {
-  const parts = text.split('/').map((p) => p.trim()).filter(Boolean)
-  if (parts.length >= 2) {
-    return { en: parts[0], rw: parts.slice(1).join(' / ') }
-  }
-  return { rw: text }
 }
 
 export function SelfEvalSectionForm({ items, answers, onChange }: SelfEvalSectionFormProps) {
@@ -26,7 +19,7 @@ export function SelfEvalSectionForm({ items, answers, onChange }: SelfEvalSectio
   return (
     <div className="space-y-4">
       {items.map((item) => {
-        const labels = splitItemText(item.text)
+        const labels = splitBilingualText(item.text)
         return (
           <Card key={item.id} className="p-4 space-y-3">
             <div>
@@ -62,7 +55,7 @@ export function SelfEvalSectionForm({ items, answers, onChange }: SelfEvalSectio
                     : caretaker.selfEval.indicatorAllHint}
                 </p>
                 {item.indicators.map((indicator) => {
-                  const indLabels = splitItemText(indicator.label)
+                  const indLabels = splitBilingualText(indicator.label)
                   return (
                     <SelectTile
                       key={indicator.id}

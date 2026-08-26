@@ -25,8 +25,12 @@ interface AttendanceFiltersProps {
   onSearchChange: (value: string) => void
   onSelectToday: () => void
   onSelectYesterday: () => void
-  /** Opens report preview before mocked PDF/Excel export. */
+  /** Opens report preview. */
   onPreviewExport?: () => void
+  /** Direct Excel download for the current report view. */
+  onExportExcel?: () => void
+  excelLoading?: boolean
+  previewNote?: string
   /** Hide unrecorded option (e.g. multi-day record history). */
   hideUnrecorded?: boolean
   /** Optional extra filter slot (e.g. center select for district). */
@@ -50,6 +54,9 @@ export function AttendanceFilters({
   onSelectToday,
   onSelectYesterday,
   onPreviewExport,
+  onExportExcel,
+  excelLoading = false,
+  previewNote,
   hideUnrecorded = false,
   extraFilter,
 }: AttendanceFiltersProps) {
@@ -145,18 +152,34 @@ export function AttendanceFilters({
 
       {extraFilter}
 
-      {onPreviewExport && (
+      {(onExportExcel || onPreviewExport) && (
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-          <Button
-            type="button"
-            variant="secondary"
-            size="md"
-            icon={<Download size={18} />}
-            onClick={onPreviewExport}
-          >
-            {caretaker.report.exportPreview}
-          </Button>
-          <p className="text-caption text-text-muted self-center">{caretaker.report.exportMock}</p>
+          {onExportExcel && (
+            <Button
+              type="button"
+              variant="primary"
+              size="md"
+              icon={<Download size={18} />}
+              onClick={onExportExcel}
+              loading={excelLoading}
+            >
+              {common.reportPreview.exportExcel}
+            </Button>
+          )}
+          {onPreviewExport && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={onPreviewExport}
+              disabled={excelLoading}
+            >
+              {caretaker.report.exportPreview}
+            </Button>
+          )}
+          <p className="text-caption text-text-muted self-center">
+            {previewNote ?? common.excelExport.clientSide}
+          </p>
         </div>
       )}
     </Card>

@@ -1,5 +1,6 @@
 import axios, { type AxiosError, isAxiosError } from 'axios'
 import { common, messages } from '@/locales/rw/common'
+import { auth } from '@/locales/rw/auth'
 
 /** Normalized API error used across interceptors, React Query, and UI. */
 export interface ApiError {
@@ -215,6 +216,9 @@ export function formatApiErrorMessage(error: unknown): string {
   const raw = apiError.message || ''
   if (isInternalErrorCopy(raw)) {
     return messages.mutationFailed
+  }
+  if (apiError.isUnauthorized) {
+    return auth.login.sessionExpired
   }
   if (apiError.isConflict) {
     return raw || common.sync.conflict

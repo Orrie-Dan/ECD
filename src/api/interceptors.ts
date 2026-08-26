@@ -3,6 +3,13 @@ import { env } from '@/config/env'
 import { tokenStorage } from '@/api/token-storage'
 import { isRequestCanceled, normalizeApiError, type ApiError } from '@/api/errors'
 
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    /** Skip the global API error toast (caller will recover or surface the error). */
+    skipApiErrorToast?: boolean
+  }
+}
+
 type RetriableConfig = import('axios').InternalAxiosRequestConfig & { _retry?: boolean }
 
 export type TokenPair = { accessToken: string; refreshToken: string }
@@ -141,7 +148,7 @@ export function attachAuthInterceptors(client: import('axios').AxiosInstance): v
       const isForbiddenGet =
         status === 403 && (original?.method ?? 'get').toLowerCase() === 'get'
 
-      if (!isAuthEndpoint401 && !isForbiddenGet) {
+      if (!isAuthEndpoint401 && !isForbiddenGet && !original?.skipApiErrorToast) {
         listeners.onApiError?.(apiError)
       }
 

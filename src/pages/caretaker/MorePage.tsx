@@ -8,6 +8,9 @@ import {
   ClipboardCheck,
   Users,
   ArrowLeftRight,
+  Building2,
+  Settings2,
+  BookOpen,
 } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { ActionCard } from '@/components/ui/Card'
@@ -16,10 +19,11 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { useAuth } from '@/contexts/AppContext'
 import { isEcdDirector } from '@/api/roles'
 import { caretaker } from '@/locales/rw/caretaker'
+import { CARETAKER_PATHS } from '@/layouts/caretaker/navigation'
 
 const hubItems = [
   {
-    path: '/caretaker/kwiyandikisha',
+    path: CARETAKER_PATHS.register,
     title: caretaker.nav.register,
     description: caretaker.more.registerDesc,
     icon: UserPlus,
@@ -27,7 +31,7 @@ const hubItems = [
     directorOnly: false,
   },
   {
-    path: '/caretaker/imirire',
+    path: CARETAKER_PATHS.imirire,
     title: caretaker.nav.imirire,
     description: caretaker.more.imirireDesc,
     icon: UtensilsCrossed,
@@ -35,7 +39,7 @@ const hubItems = [
     directorOnly: false,
   },
   {
-    path: '/caretaker/sted',
+    path: CARETAKER_PATHS.sted,
     title: caretaker.nav.sted,
     description: caretaker.more.stedDesc,
     icon: Accessibility,
@@ -43,7 +47,31 @@ const hubItems = [
     directorOnly: false,
   },
   {
-    path: '/caretaker/abakoresha',
+    path: CARETAKER_PATHS.ikigo,
+    title: caretaker.director.nav.ikigo,
+    description: caretaker.director.ikigo.subtitle,
+    icon: Building2,
+    accent: 'teal' as const,
+    directorOnly: true,
+  },
+  {
+    path: CARETAKER_PATHS.book,
+    title: caretaker.director.nav.book,
+    description: caretaker.director.book.subtitle,
+    icon: BookOpen,
+    accent: 'amber' as const,
+    directorOnly: true,
+  },
+  {
+    path: CARETAKER_PATHS.management,
+    title: caretaker.director.nav.management,
+    description: caretaker.director.management.subtitle,
+    icon: Settings2,
+    accent: 'blue' as const,
+    directorOnly: true,
+  },
+  {
+    path: CARETAKER_PATHS.users,
     title: caretaker.nav.users,
     description: caretaker.more.usersDesc,
     icon: Users,
@@ -51,7 +79,7 @@ const hubItems = [
     directorOnly: true,
   },
   {
-    path: '/caretaker/isuzuma',
+    path: CARETAKER_PATHS.selfEval,
     title: caretaker.selfEval.title,
     description: caretaker.selfEval.startDesc,
     icon: ClipboardCheck,
@@ -59,7 +87,7 @@ const hubItems = [
     directorOnly: true,
   },
   {
-    path: '/caretaker/kwimura',
+    path: CARETAKER_PATHS.transfers,
     title: caretaker.nav.transfers,
     description: caretaker.more.transfersDesc,
     icon: ArrowLeftRight,
@@ -67,7 +95,7 @@ const hubItems = [
     directorOnly: true,
   },
   {
-    path: '/caretaker/raporo',
+    path: CARETAKER_PATHS.reports,
     title: caretaker.nav.reports,
     description: caretaker.more.reportsDesc,
     icon: BarChart3,
@@ -75,7 +103,7 @@ const hubItems = [
     directorOnly: false,
   },
   {
-    path: '/caretaker/igenamiterere',
+    path: CARETAKER_PATHS.settings,
     title: caretaker.nav.settings,
     description: caretaker.more.settingsDesc,
     icon: Settings,

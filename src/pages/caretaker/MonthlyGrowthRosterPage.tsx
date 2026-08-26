@@ -366,6 +366,9 @@ export function MonthlyGrowthRosterPage() {
                           {caretaker.growth.weightShort}
                         </th>
                         <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
+                          {caretaker.growth.heightShort}
+                        </th>
+                        <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
                           {caretaker.growth.muacShort}
                         </th>
                         <th className="text-caption font-semibold text-text-muted pb-3 pr-4">
@@ -432,6 +435,14 @@ export function MonthlyGrowthRosterPage() {
                               data-label={caretaker.growth.weightShort}
                             >
                               {monthMeasurement ? `${monthMeasurement.weightKg}` : '—'}
+                            </td>
+                            <td
+                              className="py-3 pr-4 text-body font-medium tabular-nums"
+                              data-label={caretaker.growth.heightShort}
+                            >
+                              {monthMeasurement && monthMeasurement.heightCm > 0
+                                ? `${monthMeasurement.heightCm}`
+                                : '—'}
                             </td>
                             <td
                               className="py-3 pr-4 text-body font-medium tabular-nums"

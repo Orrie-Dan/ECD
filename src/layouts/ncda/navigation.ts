@@ -12,6 +12,7 @@ import {
   Droplets,
   Smartphone,
   RefreshCw,
+  BookOpen,
   type LucideIcon,
 } from 'lucide-react'
 import { ncda } from '@/locales/rw/ncda'
@@ -32,6 +33,7 @@ export type NcdaSectionId =
   | 'wash'
   | 'devices'
   | 'sync'
+  | 'book'
 
 export interface NcdaNavItem {
   id: NcdaSectionId
@@ -67,6 +69,7 @@ export const NCDA_PATHS = {
   wash: '/ncda/wash',
   devices: '/ncda/devices',
   sync: '/ncda/sync',
+  book: '/ncda/igitabo',
 } as const
 
 const overviewItem: NcdaNavItem = {
@@ -162,6 +165,13 @@ export const NCDA_CONTEXTUAL_ITEMS: NcdaNavItem[] = [
     label: ncda.nav.children,
     icon: Baby,
     matchPaths: [NCDA_PATHS.children],
+  },
+  {
+    id: 'book',
+    path: NCDA_PATHS.book,
+    label: ncda.registers.nav,
+    icon: BookOpen,
+    matchPaths: [NCDA_PATHS.book],
   },
   {
     id: 'compliance',

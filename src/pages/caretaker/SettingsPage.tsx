@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -7,12 +7,17 @@ import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { PendingSyncPanel } from '@/components/offline/SyncStatusIndicator'
+import { StaffTrainingHistoryList } from '@/components/staff-trainings/StaffTrainingHistoryList'
+import { StaffTrainingViewSheet } from '@/components/staff-trainings/StaffTrainingViewSheet'
 import { useAuth } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { env } from '@/config/env'
+import { isCaretaker } from '@/api/roles'
 import { isValidRwandaPhone } from '@/lib/child-form'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common, messages } from '@/locales/rw/common'
+import { DEFAULT_PAGE_SIZE } from '@/types'
+import type { StaffTrainingViewModel } from '@/models/staff-trainings'
 
 type LanguagePreference = 'rw'
 
@@ -35,6 +40,22 @@ export function SettingsPage() {
   const [language, setLanguage] = useState<LanguagePreference>('rw')
   const [errors, setErrors] = useState<FieldErrors>({})
   const [isSaving, setIsSaving] = useState(false)
+  const [trainingPage, setTrainingPage] = useState(1)
+  const [trainingPageSize, setTrainingPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [viewingTraining, setViewingTraining] = useState<StaffTrainingViewModel | null>(null)
+
+  const centerId = user?.centerId?.trim() ?? ''
+  const ownUserId = user?.id?.trim() ?? ''
+  const viewingOwnHistory = isCaretaker(user)
+  const trainingFilters = useMemo(
+    () => ({
+      centerId,
+      traineeUserId: ownUserId,
+      page: trainingPage,
+      pageSize: trainingPageSize,
+    }),
+    [centerId, ownUserId, trainingPage, trainingPageSize],
+  )
 
   const validate = (): FieldErrors => {
     const next: FieldErrors = {}
@@ -174,9 +195,38 @@ export function SettingsPage() {
                 </div>
               </form>
             </Card>
+
+            {env.isLive && centerId && ownUserId ? (
+              <Card padding="lg" className="lg:col-span-2 space-y-3">
+                <h2 className="text-subheading text-text">{caretaker.director.trainings.title}</h2>
+                <StaffTrainingHistoryList
+                  filters={trainingFilters}
+                  emptyTitle={
+                    viewingOwnHistory
+                      ? caretaker.director.trainings.emptyOwn
+                      : caretaker.director.trainings.emptyProfile
+                  }
+                  hint={viewingOwnHistory ? caretaker.director.trainings.ownHistoryHint : undefined}
+                  page={trainingPage}
+                  pageSize={trainingPageSize}
+                  onPageChange={setTrainingPage}
+                  onPageSizeChange={(size) => {
+                    setTrainingPageSize(size)
+                    setTrainingPage(1)
+                  }}
+                  onSelect={setViewingTraining}
+                />
+              </Card>
+            ) : null}
           </div>
         </PageContent>
       </PageContainer>
+      <StaffTrainingViewSheet
+        open={Boolean(viewingTraining)}
+        record={viewingTraining}
+        canMutate={false}
+        onClose={() => setViewingTraining(null)}
+      />
     </CaretakerLayout>
   )
 }
