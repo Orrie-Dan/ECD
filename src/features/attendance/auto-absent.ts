@@ -3,7 +3,6 @@ import {
   datesReadyForAutoAbsent,
   DEFAULT_ATTENDANCE_CUTOFF_TIME,
 } from '@/lib/attendance-cutoff'
-import { getRecordForDate } from '@/lib/attendance-utils'
 import { upsertAttendanceLocalFirst } from '@/features/attendance/local-attendance'
 import type { LocalStore } from '@/storage/local-store'
 import type { AbsentReason, AttendanceRecord, Child } from '@/types'
@@ -16,12 +15,16 @@ export interface AutoAbsentRunResult {
   markedCount: number
 }
 
+type AttendanceDateLookup = Pick<AttendanceRecord, 'childId' | 'date'>
+
 export function findUnrecordedChildIds(
   enrolledChildIds: string[],
-  attendance: AttendanceRecord[],
+  attendance: AttendanceDateLookup[],
   date: string,
 ): string[] {
-  return enrolledChildIds.filter((childId) => !getRecordForDate(attendance, childId, date))
+  return enrolledChildIds.filter(
+    (childId) => !attendance.some((record) => record.childId === childId && record.date === date),
+  )
 }
 
 async function wasAutoAbsentApplied(
