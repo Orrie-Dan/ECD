@@ -18,6 +18,7 @@ import {
 } from '@/features/ncda/districts/queries'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
+import { buildDistrictDetailPath } from '@/lib/entity-routes'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
@@ -226,7 +227,7 @@ function NcdaDistrictsLive() {
                             </td>
                             <td className="py-2.5 td-actions" data-label={ncda.districts.colAction}>
                               <Link
-                                to={`${NCDA_PATHS.districts}/${row.id}`}
+                                to={buildDistrictDetailPath(NCDA_PATHS.districts, row)}
                                 className="text-primary font-semibold hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
                               >
                                 {ncda.districts.viewDetail}

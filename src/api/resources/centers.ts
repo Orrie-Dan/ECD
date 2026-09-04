@@ -141,4 +141,31 @@ export async function getCenterDirectoryItem(id: string): Promise<CenterDirector
   return mapDetailCenter(dto)
 }
 
+/**
+ * Resolve a user-facing route key (business `code` or legacy UUID) to a center id.
+ * Prefer exact code match when searching; UUID keys short-circuit to themselves.
+ */
+export async function resolveCenterRouteKey(
+  routeKey: string,
+): Promise<{ id: string; code: string } | null> {
+  const key = routeKey.trim()
+  if (!key) return null
+
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  if (UUID_RE.test(key)) {
+    try {
+      const detail = await getCenterDetail(key)
+      return { id: detail.id, code: detail.code }
+    } catch {
+      return { id: key, code: '' }
+    }
+  }
+
+  const page = await listCentersPage({ search: key, page: 1, pageSize: 40 })
+  const exact = page.items.find((item) => item.code.toLowerCase() === key.toLowerCase())
+  if (!exact) return null
+  return { id: exact.id, code: exact.code }
+}
+
 export const CENTERS_MAX_PAGE_SIZE = MAX_PAGE_SIZE

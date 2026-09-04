@@ -19,6 +19,7 @@ import {
 } from '@/features/ncda/centers/queries'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
+import { buildCenterDetailPath } from '@/lib/entity-routes'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 import type { EcdCenterStatus } from '@/api/generated/models'
 
@@ -254,7 +255,7 @@ function NcdaCentersLive() {
                             </td>
                             <td className="py-2.5 td-actions" data-label={ncda.centers.colAction}>
                               <Link
-                                to={`${NCDA_PATHS.centers}/${row.id}`}
+                                to={buildCenterDetailPath(NCDA_PATHS.centers, row)}
                                 className="text-primary font-semibold hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
                               >
                                 {ncda.centers.viewDetail}

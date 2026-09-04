@@ -1,75 +1,31 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  Bell,
-  ArrowRightLeft,
-  UserPlus,
-  Archive,
-  Apple,
-  Stethoscope,
-  ClipboardCheck,
-  Users,
-  FileWarning,
-  CalendarDays,
-  Check,
-  CheckCheck,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { Bell, Check, CheckCheck } from 'lucide-react'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
+import { NotificationItem } from '@/components/notifications/NotificationItem'
 import { env } from '@/config/env'
 import {
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from '@/features/notifications'
-import { useData } from '@/contexts/AppContext'
-import { getNotificationLink } from '@/lib/notification-links'
-import { formatNotification } from '@/lib/format-notification'
+import { getNotificationActionPath } from '@/lib/notification-utils'
 import { notificationsLocale as t } from '@/locales/rw/notifications'
 import { common } from '@/locales/rw/common'
-import type { NotificationType, NotificationViewModel } from '@/models/notifications'
-
-const typeIcons: Record<NotificationType, LucideIcon> = {
-  transfer_request: ArrowRightLeft,
-  transfer_accepted: ArrowRightLeft,
-  transfer_cancelled: ArrowRightLeft,
-  child_enrolled: UserPlus,
-  child_archived: Archive,
-  assessment_due: ClipboardCheck,
-  referral_created: Stethoscope,
-  referral_updated: Stethoscope,
-  nutrition_alert: Apple,
-  sted_followup: ClipboardCheck,
-  compliance_update: FileWarning,
-  capacity_warning: Users,
-  attendance_absence: CalendarDays,
-  attendance_low_rate: CalendarDays,
-  general: Bell,
-}
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diff / 60_000)
-  if (mins < 1) return t.timeAgo.justNow
-  if (mins < 60) return t.timeAgo.minutesAgo.replace('{count}', String(mins))
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return t.timeAgo.hoursAgo.replace('{count}', String(hrs))
-  const days = Math.floor(hrs / 24)
-  return t.timeAgo.daysAgo.replace('{count}', String(days))
-}
+import type { NotificationViewModel } from '@/models/notifications'
 
 interface NotificationsPageContentProps {
-  rolePrefix: string
+  /** @deprecated Backend action paths are role-aware; prop retained for layout wrappers. */
+  rolePrefix?: string
 }
 
-export function NotificationsPageContent({ rolePrefix }: NotificationsPageContentProps) {
+export function NotificationsPageContent({ rolePrefix }: NotificationsPageContentProps = {}) {
   const navigate = useNavigate()
-  const { children } = useData()
   const [page, setPage] = useState(1)
   const [filterRead, setFilterRead] = useState<boolean | undefined>(undefined)
   const pageSize = 20
@@ -83,7 +39,8 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
 
   function handleClick(n: NotificationViewModel) {
     if (!n.isRead) markRead.mutate(n.id)
-    navigate(getNotificationLink(n.entityType, n.entityId, rolePrefix, n.type))
+    const path = getNotificationActionPath(n, rolePrefix)
+    if (path) navigate(path)
   }
 
   if (!env.isLive) {
@@ -104,10 +61,10 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
         <PageContent>
           <LiveUnavailableState
             title={t.title}
-            description={common.live.unavailableDesc}
+            description={t.loadError}
             action={
               <Button variant="primary" size="sm" onClick={() => void refetch()}>
-                {common.reset}
+                {t.retry}
               </Button>
             }
           />
@@ -137,7 +94,7 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
       <PageContent>
         <div className="flex gap-2 mb-4">
           {([
-            [undefined, t.title] as const,
+            [undefined, t.filterAll] as const,
             [false, t.unread] as const,
           ]).map(([value, label]) => (
             <button
@@ -170,43 +127,13 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
         ) : (
           <>
             <div className="space-y-2">
-              {data!.items.map((n) => {
-                const Icon = typeIcons[n.type] ?? Bell
-                const copy = formatNotification(n, children)
-                return (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => handleClick(n)}
-                    className={`w-full flex items-start gap-4 p-4 rounded-xl border transition-colors text-left ${
-                      !n.isRead
-                        ? 'border-primary/20 bg-primary-light/5 hover:border-primary/40'
-                        : 'border-border bg-surface hover:bg-background-subtle'
-                    }`}
-                  >
-                    <div
-                      className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 ${
-                        !n.isRead ? 'bg-primary-light text-primary' : 'bg-background-subtle text-text-muted'
-                      }`}
-                    >
-                      <Icon size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className={`text-body truncate ${!n.isRead ? 'font-semibold text-text' : 'text-text-secondary'}`}>
-                          {copy.title}
-                        </p>
-                        {!n.isRead && <span className="w-2 h-2 rounded-full bg-primary shrink-0" />}
-                      </div>
-                      <p className="text-caption text-text-muted mt-0.5 line-clamp-2">{copy.message}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-caption text-text-muted">{timeAgo(n.createdAt)}</span>
-                        <span className="text-caption font-medium text-text-muted bg-background-subtle px-2 py-0.5 rounded">
-                          {t.types[n.type] ?? n.type}
-                        </span>
-                      </div>
-                    </div>
-                    {!n.isRead && (
+              {data!.items.map((n) => (
+                <NotificationItem
+                  key={n.id}
+                  notification={n}
+                  onClick={handleClick}
+                  trailing={
+                    !n.isRead ? (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -219,10 +146,10 @@ export function NotificationsPageContent({ rolePrefix }: NotificationsPageConten
                       >
                         <Check size={16} />
                       </button>
-                    )}
-                  </button>
-                )
-              })}
+                    ) : undefined
+                  }
+                />
+              ))}
             </div>
 
             {data && data.totalPages > 1 && (

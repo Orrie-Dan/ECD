@@ -34,6 +34,9 @@ import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 import type { EcdCenterStatus } from '@/api/generated/models'
+import { useResolvedDistrictRoute } from '@/hooks/useResolvedEntityRoute'
+import { buildCenterDetailPath } from '@/lib/entity-routes'
+import { getProvinceDisplayName, getProvinceKeyForDistrict } from '@/lib/rwanda-admin'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
 
@@ -85,7 +88,7 @@ export function NcdaDistrictDetailPage() {
 }
 
 function NcdaDistrictDetailLive() {
-  const { districtId = '' } = useParams<{ districtId: string }>()
+  const { districtId: routeParam = '' } = useParams<{ districtId: string }>()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
   const effectiveRange = useMemo(
     () => resolveEffectiveDateRange(periodFilter),
@@ -102,7 +105,10 @@ function NcdaDistrictDetailLive() {
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const debouncedCenterSearch = useDebounce(centerSearch, 300)
 
-  const detail = useNcdaDistrictDetail(districtId)
+  const resolved = useResolvedDistrictRoute(routeParam, NCDA_PATHS.districts)
+  const districtId = resolved.districtId ?? ''
+
+  const detail = useNcdaDistrictDetail(districtId, Boolean(districtId))
   const summary = useNcdaDistrictSummary(districtId, dateFilters, Boolean(districtId))
   const centers = useNcdaDistrictCenters(
     {
@@ -125,7 +131,7 @@ function NcdaDistrictDetailLive() {
         {ncda.districts.backToList}
       </Link>
       <Link
-        to={`${NCDA_PATHS.dashboard}?district=${encodeURIComponent(districtId)}`}
+        to={`${NCDA_PATHS.dashboard}?district=${encodeURIComponent(resolved.code || districtId)}`}
         className="text-caption font-semibold text-primary hover:underline"
       >
         {ncda.overview.openOnMap}
@@ -213,9 +219,12 @@ function NcdaDistrictDetailLive() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-caption text-text-secondary">{ncda.districts.provinceId}</dt>
-                    <dd className="font-mono text-caption text-text-secondary">
-                      {detail.data.provinceId}
+                    <dt className="text-caption text-text-secondary">{ncda.districts.province}</dt>
+                    <dd className="font-semibold text-text">
+                      {(() => {
+                        const provinceKey = getProvinceKeyForDistrict(detail.data.name)
+                        return provinceKey ? getProvinceDisplayName(provinceKey) : '—'
+                      })()}
                     </dd>
                   </div>
                   <div>
@@ -390,7 +399,7 @@ function NcdaDistrictDetailLive() {
                           <tr key={row.id} className="border-b border-border/70">
                             <td className="py-2.5 pr-3 font-medium text-text" data-label={ncda.districts.colCenter}>
                               <Link
-                                to={`${NCDA_PATHS.centers}/${row.id}`}
+                                to={buildCenterDetailPath(NCDA_PATHS.centers, row)}
                                 className="text-primary font-semibold hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
                               >
                                 {row.name}

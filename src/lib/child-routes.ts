@@ -21,7 +21,13 @@ export function slugifyChildName(name: string): string {
 }
 
 export function buildChildDetailPath(basePath: string, child: ChildRouteLike, tab?: string): string {
-  const path = `${basePath}/${slugifyChildName(child.fullName)}`
+  // LIVE detail APIs require the database UUID. Prefer id when present so
+  // district/NCDA pages can resolve without a hydrated roster. This is an
+  // intentional remaining URL exposure until a stable child publicId exists.
+  // Do not put nationalId in URLs (sensitive). Do not use bare name slugs as
+  // the primary key (non-unique). Mock-only flows may fall back to a slug.
+  const routeKey = child.id?.trim() || slugifyChildName(child.fullName)
+  const path = `${basePath}/${encodeURIComponent(routeKey)}`
   return tab ? `${path}?tab=${encodeURIComponent(tab)}` : path
 }
 

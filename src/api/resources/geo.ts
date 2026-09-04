@@ -87,6 +87,32 @@ export async function getDistrict(id: string): Promise<DistrictResponseDto> {
 }
 
 /**
+ * Resolve a user-facing route key (business `code` or legacy UUID) to a district id.
+ */
+export async function resolveDistrictRouteKey(
+  routeKey: string,
+): Promise<{ id: string; code: string } | null> {
+  const key = routeKey.trim()
+  if (!key) return null
+
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  if (UUID_RE.test(key)) {
+    try {
+      const detail = await getDistrict(key)
+      return { id: detail.id, code: detail.code }
+    } catch {
+      return { id: key, code: '' }
+    }
+  }
+
+  const page = await listDistrictsPage({ search: key, page: 1, pageSize: 40 })
+  const exact = page.items.find((item) => item.code.toLowerCase() === key.toLowerCase())
+  if (!exact) return null
+  return { id: exact.id, code: exact.code }
+}
+
+/**
  * Centers in a district via GET /centers?districtId= (DB pagination + search/status).
  * Prefer this over unfiltered national center lists.
  */

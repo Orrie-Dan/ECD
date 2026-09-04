@@ -32,6 +32,7 @@ import {
 } from '@/features/ncda/centers/queries'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
+import { useResolvedCenterRoute } from '@/hooks/useResolvedEntityRoute'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
 const OPS_PAGE_SIZE = 10
@@ -88,11 +89,14 @@ export function NcdaCenterDetailPage() {
 }
 
 function NcdaCenterDetailLive() {
-  const { centerId = '' } = useParams<{ centerId: string }>()
+  const { centerId: routeParam = '' } = useParams<{ centerId: string }>()
   const { user } = useAuth()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
   const [section, setSection] = useState<OpsSection>('overview')
   const [opsPage, setOpsPage] = useState(1)
+
+  const resolved = useResolvedCenterRoute(routeParam, NCDA_PATHS.centers)
+  const centerId = resolved.centerId ?? ''
 
   const effectiveRange = useMemo(
     () => resolveEffectiveDateRange(periodFilter),
@@ -103,7 +107,7 @@ function NcdaCenterDetailLive() {
     [effectiveRange],
   )
 
-  const detail = useNcdaCenterDetail(centerId)
+  const detail = useNcdaCenterDetail(centerId, Boolean(centerId))
   const summary = useNcdaCenterSummary(centerId, dateFilters, Boolean(centerId))
 
   const childrenQ = useNcdaCenterChildren(
@@ -148,13 +152,48 @@ function NcdaCenterDetailLive() {
         {ncda.centers.backToList}
       </Link>
       <Link
-        to={`${NCDA_PATHS.dashboard}?centre=${encodeURIComponent(centerId)}`}
+        to={`${NCDA_PATHS.dashboard}?centre=${encodeURIComponent(resolved.code || centerId)}`}
         className="text-caption font-semibold text-primary hover:underline"
       >
         {ncda.overview.openOnMap}
       </Link>
     </div>
   )
+
+  if ((resolved.isLoading && !centerId) || (detail.isLoading && !detail.data && centerId)) {
+    return (
+      <PageContainer>
+        <PageHeader
+          title={ncda.sections.centers.title}
+          subtitle={ncda.centers.detailSubtitle}
+          size="compact"
+        />
+        <PageContent>
+          <div className="mb-3">{backLink}</div>
+          <Skeleton className="h-48 w-full" rounded="xl" />
+        </PageContent>
+      </PageContainer>
+    )
+  }
+
+  if ((resolved.isError || (!resolved.isLoading && !centerId)) && !detail.data) {
+    return (
+      <PageContainer>
+        <PageHeader
+          title={ncda.sections.centers.title}
+          subtitle={ncda.centers.detailSubtitle}
+          size="compact"
+        />
+        <PageContent>
+          <div className="mb-3">{backLink}</div>
+          <LiveUnavailableState
+            title={ncda.centers.notFound}
+            description={ncda.centers.detailError}
+          />
+        </PageContent>
+      </PageContainer>
+    )
+  }
 
   if (detail.isError && !detail.data) {
     const is404 =
