@@ -1,50 +1,74 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  AlertTriangle,
+  Baby,
+  Building2,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Layers,
   SlidersHorizontal,
+  Users,
   X,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { SearchInput } from '@/components/ui/SearchInput'
-import { SelectInput } from '@/components/ui/FormField'
+import { FormField, SelectInput } from '@/components/ui/FormField'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
-import { effectiveRangeToMonitoringDates } from '@/features/monitoring'
 import { roundPct } from '@/features/monitoring'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useNcdaDashboard } from '@/features/ncda/dashboard/useNcdaDashboard'
-import { NCDA_UNSUPPORTED_METRICS } from '@/features/ncda/dashboard/definitions'
 import {
   useNcdaCenterDetail,
   useNcdaCenterSummary,
 } from '@/features/ncda/centers/queries'
 import { useNcdaDistrictDetail, useNcdaDistrictSummary } from '@/features/ncda/districts/queries'
-import { useNcdaMonitoringSted } from '@/features/ncda/monitoring/queries'
 import {
   useNcdaOverviewAdminUnits,
   useNcdaOverviewCenters,
-  useNcdaOverviewDistricts,
 } from '@/features/ncda/overview/queries'
-import { buildNcdaMapLayers } from '@/features/ncda/overview/layers'
+import { useNcdaOverviewData } from '@/features/ncda/overview/useNcdaOverviewData'
+import type { OverviewKpi } from '@/features/ncda/overview/types'
 import { findSectorForVillage, getProvinceDisplayName, getProvinceKeyForDistrict } from '@/lib/rwanda-admin'
+import { kpiDrillDownHref, ncdaDemographicsPath, ncdaNutritionAlertsPath } from '@/lib/ncda-drill-down'
+import { buildCenterDetailPath, buildDistrictDetailPath } from '@/lib/entity-routes'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
+import { common } from '@/locales/rw/common'
 import { EcdCenterStatus, type EcdCenterStatus as CenterStatus } from '@/api/generated/models'
-import { GisPendingPlaceholder } from '@/components/gis/GisPendingPlaceholder'
+import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
+
+const KPI_ICONS: Record<OverviewKpi['key'], ReactNode> = {
+  children: <Baby size={18} aria-hidden />,
+  activeCenters: <Building2 size={18} aria-hidden />,
+  attendance: <Users size={18} aria-hidden />,
+  compliantCenters: <CheckCircle2 size={18} aria-hidden />,
+}
+
+const KPI_ICON_TONES: Record<OverviewKpi['key'], string> = {
+  children: 'bg-primary-light text-primary',
+  activeCenters: 'bg-secondary-light text-secondary',
+  attendance: 'bg-success-light text-success',
+  compliantCenters: 'bg-primary-light text-primary',
+}
 
 function formatRate(rate: number | null | undefined): string {
   if (rate == null) return ncda.dashboard.noRate
   return `${roundPct(rate)}%`
+}
+
+function formatTrend(value: number): string {
+  const abs = Math.abs(value)
+  const digits = abs >= 10 ? 0 : 1
+  const body = abs.toFixed(digits).replace(/\.0$/, '')
+  if (value > 0) return `↑ ${body}%`
+  if (value < 0) return `↓ ${body}%`
+  return `${body}%`
 }
 
 export function NcdaOverviewCommand() {
@@ -52,8 +76,6 @@ export function NcdaOverviewCommand() {
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<'all' | CenterStatus>('all')
-  const [layers, setLayers] = useState(buildNcdaMapLayers)
-  const [layersOpen, setLayersOpen] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -62,7 +84,6 @@ export function NcdaOverviewCommand() {
   const centreId = params.get('centre')?.trim() || ''
   const debouncedSearch = useDebounce(search, 300)
   const range = useMemo(() => resolveEffectiveDateRange(periodFilter), [periodFilter])
-  const dateFilters = useMemo(() => effectiveRangeToMonitoringDates(range), [range])
 
   const patchParams = (next: {
     district?: string | null
@@ -80,12 +101,9 @@ export function NcdaOverviewCommand() {
     setParams(copy, { replace: true })
   }
 
-  const dashboard = useNcdaDashboard(range)
-  const districtsQuery = useNcdaOverviewDistricts()
-  const sted = useNcdaMonitoringSted(
-    { ...dateFilters, page: 1, pageSize: 100 },
-    true,
-  )
+  const data = useNcdaOverviewData(range, 'overall')
+  const { dashboard, dateFilters } = data
+
   const sectorsQuery = useNcdaOverviewAdminUnits(
     { districtId, level: 'sector' },
     Boolean(districtId),
@@ -116,33 +134,15 @@ export function NcdaOverviewCommand() {
     Boolean(centreId),
   )
 
-  const districts = districtsQuery.data?.items ?? []
+  const districts = data.districts
   const selectedDistrict = districts.find((d) => d.id === districtId) ?? districtDetail.data ?? null
-  const sectors = sectorsQuery.data ?? []
+  const sectors = useMemo(() => sectorsQuery.data ?? [], [sectorsQuery.data])
   const selectedSector = sectors.find((s) => s.id === sectorId) ?? null
-  const attentionDistrictIds = useMemo(() => {
-    const items = (sted.data?.items ?? []).filter((row) => row.districtId)
-    if (items.length === 0) return new Set<string>()
-    const ranked = [...items].sort((a, b) => {
-      const aVal = a.childrenAssessed != null && sted.data?.summary ? (a.assessmentsCompleted ?? 0) : (a.averageScore ?? 0)
-      const bVal = b.childrenAssessed != null && sted.data?.summary ? (b.assessmentsCompleted ?? 0) : (b.averageScore ?? 0)
-      const aCov = a.childrenAssessed ? a.assessmentsCompleted / Math.max(a.childrenAssessed, 1) : aVal
-      const bCov = b.childrenAssessed ? b.assessmentsCompleted / Math.max(b.childrenAssessed, 1) : bVal
-      return aCov - bCov
-    })
-    return new Set(ranked.slice(0, 5).map((row) => row.districtId!).filter(Boolean))
-  }, [sted.data])
 
-  const stedAttention = useMemo(() => {
-    return (sted.data?.items ?? [])
-      .filter((row) => row.districtId && attentionDistrictIds.has(row.districtId))
-      .slice(0, 5)
-  }, [sted.data, attentionDistrictIds])
-
-  const rawCenters = districtId
-    ? (districtCenters.data?.items ?? [])
-    : []
-
+  const rawCenters = useMemo(
+    () => (districtId ? (districtCenters.data?.items ?? []) : []),
+    [districtId, districtCenters.data],
+  )
   const filteredCenters = useMemo(() => {
     if (!selectedSector || !selectedDistrict) return rawCenters
     return rawCenters.filter((center) => {
@@ -158,8 +158,12 @@ export function NcdaOverviewCommand() {
     const q = search.trim().toLowerCase()
     if (q.length < 2) return { districts: [], sectors: [], centers: [] }
     return {
-      districts: districts.filter((d) => d.name.toLowerCase().includes(q) || d.code.toLowerCase().includes(q)).slice(0, 6),
-      sectors: sectors.filter((s) => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q)).slice(0, 6),
+      districts: districts
+        .filter((d) => d.name.toLowerCase().includes(q) || d.code.toLowerCase().includes(q))
+        .slice(0, 6),
+      sectors: sectors
+        .filter((s) => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))
+        .slice(0, 6),
       centers: districtId
         ? rawCenters
             .filter((c) =>
@@ -170,10 +174,11 @@ export function NcdaOverviewCommand() {
     }
   }, [search, districts, sectors, rawCenters, districtId, nationalSearch.data?.items])
 
-  const inactiveDistricts = districts.filter((d) => !d.isActive)
-  const centersWithoutCoords = filteredCenters.filter((c) => c.latitude == null || c.longitude == null).length
+  const isNationalView = !districtId && !centreId
   const overview = dashboard.overview.data
   const network = dashboard.network.data
+  const overviewError = dashboard.overview.isError && !dashboard.overview.data
+  const networkError = dashboard.network.isError && !dashboard.network.data
 
   const selectDistrict = (id: string) => {
     setSearch('')
@@ -182,7 +187,9 @@ export function NcdaOverviewCommand() {
   }
 
   const selectSector = (id: string) => {
-    patchParams({ sector: id, centre: null })
+    setSearch('')
+    setSearchOpen(false)
+    patchParams({ sector: id || null, centre: null })
   }
 
   const selectCenter = (id: string) => {
@@ -205,11 +212,30 @@ export function NcdaOverviewCommand() {
         description={ncda.overview.intelligence}
         size="compact"
         action={
-          <ChartPeriodFilter
-            value={periodFilter}
-            onChange={setPeriodFilter}
-            className="w-full md:max-w-md"
-          />
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-xl">
+            <SelectInput
+              className="min-h-10 w-full"
+              value={districtId}
+              onChange={(e) => {
+                const value = e.target.value
+                if (!value) patchParams({ district: null, sector: null, centre: null })
+                else selectDistrict(value)
+              }}
+              aria-label={ncda.overview.geographyLabel}
+            >
+              <option value="">{ncda.overview.country}</option>
+              {districts.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </SelectInput>
+            <ChartPeriodFilter
+              value={periodFilter}
+              onChange={setPeriodFilter}
+              className="w-full"
+            />
+          </div>
         }
       />
 
@@ -240,9 +266,88 @@ export function NcdaOverviewCommand() {
           </>
         ) : null}
         <span className="ml-auto text-text-muted">
-          {ncda.overview.country} · {ncda.overview.year} · {ncda.overview.periodLabel}: {range.timeLabel}
+          {ncda.overview.periodFilterLabel}: {range.timeLabel}
         </span>
       </div>
+
+      {isNationalView ? (
+        <section aria-labelledby="ncda-kpis">
+          <h2 id="ncda-kpis" className="sr-only">
+            {ncda.overview.nationalPulse}
+          </h2>
+          {data.isBootstrapping ? (
+            <Skeleton className="h-[4.5rem] w-full" rounded="xl" />
+          ) : overviewError && networkError ? (
+            <Card padding="md" className="border-border">
+              <p className="text-body text-text-secondary">{ncda.dashboard.sectionError}</p>
+              <Button
+                type="button"
+                variant="primary"
+                className="mt-3"
+                onClick={() => {
+                  void dashboard.overview.refetch()
+                  void dashboard.network.refetch()
+                }}
+              >
+                {ncda.dashboard.retry}
+              </Button>
+            </Card>
+          ) : (
+            <Card padding="none" className="overflow-hidden border-border">
+              <div className="grid grid-cols-2 divide-border sm:grid-cols-4 sm:divide-x">
+                {data.kpis.map((kpi) => (
+                  <CompactOverviewKpi key={kpi.key} kpi={kpi} />
+                ))}
+              </div>
+            </Card>
+          )}
+        </section>
+      ) : !centreId ? (
+        <section aria-labelledby="ncda-district-pulse">
+          <h2 id="ncda-district-pulse" className="sr-only">
+            {ncda.overview.districtPulse}
+          </h2>
+          {districtSummary.isLoading && !districtSummary.data ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full" rounded="xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <PulseStat
+                label={ncda.overview.panelChildren}
+                value={districtSummary.data?.overview.children.active ?? ncda.dashboard.noRate}
+                href={districtId ? ncdaDemographicsPath({ districtId }) : undefined}
+              />
+              <PulseStat
+                label={ncda.overview.panelAttendance}
+                value={formatRate(districtSummary.data?.overview.attendance.rate)}
+              />
+              <PulseStat
+                label={ncda.overview.panelNutrition}
+                value={districtSummary.data?.overview.nutrition.severe ?? ncda.dashboard.noRate}
+                href={
+                  districtId
+                    ? ncdaNutritionAlertsPath({
+                        districtId,
+                        status: 'severe_nutrition',
+                      })
+                    : undefined
+                }
+              />
+              <PulseStat
+                label={ncda.dashboard.centers}
+                value={
+                  districtCenters.data?.total != null
+                    ? `${filteredCenters.length} / ${districtCenters.data.total}`
+                    : filteredCenters.length
+                }
+              />
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
         <div className="relative min-w-0 flex-1">
@@ -259,7 +364,7 @@ export function NcdaOverviewCommand() {
           />
           {searchOpen && search.trim().length >= 2 ? (
             <div
-              className="absolute z-30 mt-1 w-full rounded-lg border border-border bg-surface shadow-lg max-h-80 overflow-y-auto"
+              className="absolute z-30 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg"
               role="listbox"
             >
               {searchHits.districts.length === 0 &&
@@ -316,21 +421,7 @@ export function NcdaOverviewCommand() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => {
-              setLayersOpen((open) => !open)
-              setFiltersOpen(false)
-            }}
-          >
-            <Layers size={16} aria-hidden />
-            {ncda.overview.layers}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setFiltersOpen((open) => !open)
-              setLayersOpen(false)
-            }}
+            onClick={() => setFiltersOpen((open) => !open)}
           >
             <SlidersHorizontal size={16} aria-hidden />
             {ncda.overview.filters}
@@ -338,73 +429,25 @@ export function NcdaOverviewCommand() {
         </div>
       </div>
 
-      {layersOpen ? (
-        <Card padding="md" className="border-border">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-subheading font-semibold">{ncda.overview.layers}</h2>
-            <button type="button" onClick={() => setLayersOpen(false)} aria-label={ncda.overview.clearFilters}>
-              <X size={16} />
-            </button>
-          </div>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
-            {layers.map((layer) => (
-              <li key={layer.id}>
-                <label
-                  className={`flex items-start gap-2 rounded-lg border px-3 py-2 ${
-                    layer.availability === 'unavailable'
-                      ? 'border-border bg-background-subtle/50 text-text-muted'
-                      : 'border-border bg-surface'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="mt-1"
-                    checked={layer.enabled}
-                    disabled={layer.availability === 'unavailable'}
-                    onChange={() =>
-                      setLayers((prev) =>
-                        prev.map((item) =>
-                          item.id === layer.id ? { ...item, enabled: !item.enabled } : item,
-                        ),
-                      )
-                    }
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-body font-medium text-text">{layer.label}</span>
-                    <span className="block text-caption text-text-secondary">{layer.description}</span>
-                    {layer.availability === 'unavailable' ? (
-                      <Badge variant="neutral" className="mt-1">
-                        {ncda.overview.layerUnavailable}
-                      </Badge>
-                    ) : null}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
-
       {filtersOpen ? (
-        <Card padding="md" className="border-border">
-          <div className="flex items-center justify-between mb-3">
+        <Card padding="md">
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-subheading font-semibold">{ncda.overview.filters}</h2>
             <Button
               type="button"
               variant="ghost"
               onClick={() => {
                 setStatus('all')
-                patchParams({ district: null, sector: null, centre: null })
+                if (districtId) patchParams({ sector: null, centre: null })
+                else patchParams({ district: null, sector: null, centre: null })
               }}
             >
               {ncda.overview.clearFilters}
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <label className="block text-caption font-semibold text-text-secondary">
-              {ncda.overview.filterDistrict}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <FormField label={ncda.overview.filterDistrict}>
               <SelectInput
-                className="mt-1"
                 value={districtId}
                 onChange={(e) => {
                   const value = e.target.value
@@ -419,14 +462,12 @@ export function NcdaOverviewCommand() {
                   </option>
                 ))}
               </SelectInput>
-            </label>
-            <label className="block text-caption font-semibold text-text-secondary">
-              {ncda.overview.filterSector}
+            </FormField>
+            <FormField label={ncda.overview.filterSector}>
               <SelectInput
-                className="mt-1"
                 value={sectorId}
-                disabled={!districtId}
                 onChange={(e) => selectSector(e.target.value)}
+                disabled={!districtId}
               >
                 <option value="">
                   {districtId ? ncda.overview.filterAll : ncda.overview.filterNeedsDistrict}
@@ -437,178 +478,262 @@ export function NcdaOverviewCommand() {
                   </option>
                 ))}
               </SelectInput>
-            </label>
-            <label className="block text-caption font-semibold text-text-secondary">
-              {ncda.overview.filterStatus}
+            </FormField>
+            <FormField label={ncda.overview.filterStatus}>
               <SelectInput
-                className="mt-1"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as 'all' | CenterStatus)}
+                disabled={!districtId}
               >
                 <option value="all">{ncda.overview.filterAll}</option>
                 <option value={EcdCenterStatus.active}>{ncda.centers.statusActive}</option>
                 <option value={EcdCenterStatus.inactive}>{ncda.centers.statusInactive}</option>
               </SelectInput>
-            </label>
+            </FormField>
           </div>
         </Card>
       ) : null}
 
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_20rem] gap-4 items-stretch">
-        <Card padding="none" elevated={false} className="border-border overflow-hidden min-h-[32rem]">
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border bg-surface">
-            <div>
-              <p className="text-body font-semibold text-text">{ncda.overview.mapTitle}</p>
-              <p className="text-caption text-text-muted">{ncda.overview.mapHint}</p>
+      <div className="grid grid-cols-1 items-stretch gap-3 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)]">
+          <Card padding="none" className="flex h-full min-h-[32rem] flex-col overflow-hidden lg:min-h-[40rem]">
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3">
+              <div>
+                <h2 className="text-body font-semibold text-text">{ncda.overview.mapTitle}</h2>
+                <p className="text-caption text-text-muted">{ncda.overview.mapHint}</p>
+              </div>
             </div>
-            {districtId ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => patchParams({ district: null, sector: null, centre: null })}
-              >
-                {ncda.overview.zoomOut}
-              </Button>
-            ) : null}
-          </div>
-          <GisPendingPlaceholder className="m-4 min-h-[22rem]" />
-        </Card>
-
-        <aside className="space-y-3 xl:max-h-[calc(100vh-10rem)] xl:overflow-y-auto">
-          {centreId ? (
-            <EntityPanel
-              title={centerDetail.data?.name ?? ncda.overview.selectCenter}
-              onClose={() => patchParams({ centre: null })}
-            >
-              {centerDetail.isError && !centerDetail.data ? (
-                <p className="text-caption text-text-secondary">{ncda.centers.detailError}</p>
-              ) : centerDetail.isLoading && !centerDetail.data ? (
-                <Skeleton height="8rem" className="w-full" rounded="md" />
-              ) : centerDetail.data ? (
-                <CenterPanelBody
-                  center={centerDetail.data}
-                  summary={centerSummary.data}
-                  sectorName={
-                    findSectorForVillage(
-                      centerDetail.data.districtName ?? '',
-                      centerDetail.data.villageName ?? '',
-                    ) ?? null
-                  }
-                />
-              ) : null}
-            </EntityPanel>
-          ) : districtId ? (
-            <EntityPanel
-              title={selectedDistrict?.name ?? ncda.overview.selectDistrict}
-              onClose={() => patchParams({ district: null, sector: null, centre: null })}
-            >
-              {districtDetail.isError && !districtDetail.data ? (
-                <p className="text-caption text-text-secondary">{ncda.districts.detailError}</p>
-              ) : districtSummary.isLoading && !districtSummary.data ? (
-                <Skeleton height="8rem" className="w-full" rounded="md" />
-              ) : (
-                <DistrictPanelBody
-                  districtId={districtId}
-                  districtName={selectedDistrict?.name ?? '—'}
-                  isActive={selectedDistrict?.isActive ?? true}
-                  provinceKey={getProvinceKeyForDistrict(selectedDistrict?.name ?? '')}
-                  summary={districtSummary.data}
-                  centersShown={filteredCenters.length}
-                  centersTotal={districtCenters.data?.total}
-                  withoutCoords={centersWithoutCoords}
-                  centers={filteredCenters}
-                  onSelectCenter={selectCenter}
-                />
-              )}
-            </EntityPanel>
-          ) : (
-            <Card padding="md" className="border-border space-y-3">
-              <h2 className="text-subheading font-semibold text-text">
-                {ncda.overview.nationalSummary}
-              </h2>
-              <SummaryRow label={ncda.dashboard.districts} value={network?.districts ?? '—'} />
-              <SummaryRow
-                label={ncda.dashboard.centers}
-                value={overview?.centersInScope ?? '—'}
+            <div className="min-h-0 flex-1">
+              <ArcGisMapEmbed
+                title={ncda.overview.mapTitle}
+                fill
+                minHeight="24rem"
+                className="h-full rounded-none border-0"
               />
-              <SummaryRow
-                label={ncda.dashboard.activeCenters}
-                value={network?.activeCenters ?? '—'}
-              />
-              <SummaryRow
-                label={ncda.dashboard.activeChildren}
-                value={overview?.children.active ?? '—'}
-              />
-              <SummaryRow
-                label={ncda.dashboard.attendanceRate}
-                value={formatRate(overview?.attendance.rate)}
-              />
-              <p className="text-caption text-text-muted">{ncda.overview.selectDistrict}</p>
-            </Card>
-          )}
-        </aside>
-      </div>
-
-      <section className="space-y-3" aria-labelledby="ncda-priority">
-        <h2 id="ncda-priority" className="text-subheading font-semibold text-text">
-          {ncda.overview.priorityInsights}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
-          <InsightChip
-            label={ncda.overview.inactiveDistricts}
-            value={inactiveDistricts.length}
-            tone={inactiveDistricts.length > 0 ? 'warning' : 'neutral'}
-          />
-          <InsightChip
-            label={ncda.overview.severeNutrition}
-            value={overview?.nutrition.severe ?? '—'}
-            tone="danger"
-          />
-        </div>
-        <details className="rounded-lg border border-border bg-surface px-4 py-3">
-          <summary className="cursor-pointer text-body font-semibold text-text">
-            {ncda.dashboard.unavailableTitle}
-          </summary>
-          <p className="mt-2 text-caption text-text-secondary">{ncda.dashboard.unavailableIntro}</p>
-          <p className="mt-2 text-caption text-text-muted">{ncda.dashboard.trendsUnavailable}</p>
-          <ul className="mt-2 list-disc pl-5 text-caption text-text-secondary space-y-1">
-            {NCDA_UNSUPPORTED_METRICS.map((metric) => (
-              <li key={metric.id}>
-                <span className="font-medium">{metric.name}</span>: {metric.unavailableReason}
-              </li>
-            ))}
-          </ul>
-        </details>
-
-        {stedAttention.length > 0 ? (
-          <Card padding="md" className="border-border">
-            <p className="text-body font-semibold text-text">{ncda.overview.stedAttention}</p>
-            <p className="text-caption text-text-muted mb-2">{ncda.overview.stedAttentionHint}</p>
-            <ul className="divide-y divide-border">
-              {stedAttention.map((row) => (
-                <li key={row.districtId} className="flex items-center justify-between py-2 gap-3">
-                  <button
-                    type="button"
-                    className="text-left font-medium text-primary hover:underline"
-                    onClick={() => row.districtId && selectDistrict(row.districtId)}
-                  >
-                    {row.districtName ?? '—'}
-                  </button>
-                  <span className="text-caption tabular-nums text-text-secondary">
-                    {ncda.monitoring.stedCoverage}:{' '}
-                    {row.childrenAssessed
-                      ? formatRate(row.assessmentsCompleted / Math.max(row.childrenAssessed, 1))
-                      : ncda.overview.stedNoScore}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            </div>
           </Card>
-        ) : (
-          <p className="text-caption text-text-secondary">{ncda.overview.noPriority}</p>
-        )}
-      </section>
+
+          {centreId ? (
+            <Card padding="md" className="h-full">
+              <EntityPanel
+                title={centerDetail.data?.name ?? ncda.overview.selectCenter}
+                onClose={() => patchParams({ centre: null })}
+              >
+                {centerDetail.isError && !centerDetail.data ? (
+                  <p className="text-caption text-text-secondary">{ncda.centers.detailError}</p>
+                ) : centerDetail.isLoading && !centerDetail.data ? (
+                  <Skeleton height="8rem" className="w-full" rounded="md" />
+                ) : centerDetail.data ? (
+                  <CenterPanelBody
+                    center={centerDetail.data}
+                    summary={centerSummary.data}
+                    sectorName={
+                      findSectorForVillage(
+                        centerDetail.data.districtName ?? '',
+                        centerDetail.data.villageName ?? '',
+                      ) ?? null
+                    }
+                  />
+                ) : null}
+              </EntityPanel>
+            </Card>
+          ) : districtId ? (
+            <Card padding="md" className="h-full">
+              <EntityPanel
+                title={selectedDistrict?.name ?? ncda.overview.selectDistrict}
+                onClose={() => patchParams({ district: null, sector: null, centre: null })}
+              >
+                {districtDetail.isError && !districtDetail.data ? (
+                  <p className="text-caption text-text-secondary">{ncda.districts.detailError}</p>
+                ) : districtSummary.isLoading && !districtSummary.data ? (
+                  <Skeleton height="8rem" className="w-full" rounded="md" />
+                ) : (
+                  <DistrictPanelBody
+                    districtId={districtId}
+                    districtCode={selectedDistrict?.code}
+                    districtName={selectedDistrict?.name ?? '—'}
+                    isActive={selectedDistrict?.isActive ?? true}
+                    provinceKey={getProvinceKeyForDistrict(selectedDistrict?.name ?? '')}
+                    summary={districtSummary.data}
+                    centersShown={filteredCenters.length}
+                    centersTotal={districtCenters.data?.total}
+                    centers={filteredCenters}
+                    onSelectCenter={selectCenter}
+                  />
+                )}
+              </EntityPanel>
+            </Card>
+          ) : (
+            <NationalSummaryPanel
+              centers={network?.activeCenters}
+              childrenCount={overview?.children.active}
+              attendanceRate={overview?.attendance.rate}
+              nutritionSevere={overview?.nutrition.severe}
+              loading={data.isBootstrapping}
+            />
+          )}
+        </div>
     </div>
+  )
+}
+
+function PulseStat({
+  label,
+  value,
+  href,
+}: {
+  label: string
+  value: string | number
+  href?: string
+}) {
+  const body = (
+    <>
+      <p className="text-caption font-medium text-text-secondary">{label}</p>
+      <p className="mt-1 text-[1.25rem] font-bold tabular-nums text-text">{value}</p>
+    </>
+  )
+
+  if (!href) {
+    return (
+      <Card padding="none" className="border-border px-4 py-3">
+        {body}
+      </Card>
+    )
+  }
+
+  return (
+    <Link
+      to={href}
+      className="block rounded-xl border border-border bg-surface px-4 py-3 shadow-sm transition-all duration-150 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none"
+      title={ncda.overview.drillDownHint}
+    >
+      {body}
+    </Link>
+  )
+}
+
+function compactTrendTextClass(kpi: { trend?: number; higherIsBetter: boolean }): string {
+  if (kpi.trend == null || Math.abs(kpi.trend) < 0.05) return 'text-text-muted'
+  const improved = kpi.higherIsBetter ? kpi.trend > 0 : kpi.trend < 0
+  return improved ? 'text-success' : 'text-error'
+}
+
+function CompactOverviewKpi({ kpi }: { kpi: OverviewKpi }) {
+  const display =
+    kpi.value == null || kpi.status === 'unavailable' ? ncda.dashboard.noRate : kpi.value
+  const href = kpiDrillDownHref(kpi)
+
+  const body = (
+    <div className="flex min-w-0 items-center gap-2.5 px-3 py-3 sm:px-4">
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${KPI_ICON_TONES[kpi.key]}`}
+      >
+        {KPI_ICONS[kpi.key]}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[0.6875rem] font-medium text-text-secondary">{kpi.label}</p>
+        <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <p className="text-lg font-bold leading-none tabular-nums text-text">{display}</p>
+          {kpi.trend != null && kpi.status !== 'unavailable' ? (
+            <span
+              className={`text-[0.6875rem] font-semibold tabular-nums ${compactTrendTextClass(kpi)}`}
+            >
+              {formatTrend(kpi.trend)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+
+  if (!href) {
+    return body
+  }
+
+  return (
+    <Link
+      to={href}
+      className="block transition-colors hover:bg-surface-muted/60"
+      title={ncda.overview.drillDownHint}
+    >
+      {body}
+    </Link>
+  )
+}
+
+function NationalSummaryPanel({
+  centers,
+  childrenCount,
+  attendanceRate,
+  nutritionSevere,
+  loading,
+}: {
+  centers: number | null | undefined
+  childrenCount: number | null | undefined
+  attendanceRate: number | null | undefined
+  nutritionSevere: number | null | undefined
+  loading: boolean
+}) {
+  return (
+    <Card padding="md" className="h-full">
+      <h2 className="mb-3 text-body font-semibold text-text">{ncda.overview.nationalSummary}</h2>
+      {loading ? (
+        <div className="space-y-2" aria-busy="true">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-full" rounded="md" />
+          ))}
+        </div>
+      ) : (
+        <>
+          <dl className="space-y-3">
+            <SummaryRow
+              label={ncda.dashboard.activeCenters}
+              value={centers == null ? ncda.dashboard.noRate : centers.toLocaleString()}
+              href={NCDA_PATHS.centers}
+            />
+            <SummaryRow
+              label={ncda.overview.panelChildren}
+              value={
+                childrenCount == null ? ncda.dashboard.noRate : childrenCount.toLocaleString()
+              }
+              href={ncdaDemographicsPath()}
+            />
+            <SummaryRow
+              label={ncda.overview.panelAttendance}
+              value={formatRate(attendanceRate)}
+            />
+            <SummaryRow
+              label={ncda.overview.panelNutrition}
+              value={
+                nutritionSevere == null
+                  ? ncda.dashboard.noRate
+                  : nutritionSevere.toLocaleString()
+              }
+              href={ncdaNutritionAlertsPath({ status: 'severe_nutrition' })}
+            />
+          </dl>
+          <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
+            <Link
+              to={ncdaDemographicsPath()}
+              className="text-caption font-semibold text-primary hover:underline"
+            >
+              {ncda.overview.viewChildren}
+            </Link>
+            <Link
+              to={NCDA_PATHS.districts}
+              className="text-caption font-semibold text-primary hover:underline"
+            >
+              {ncda.dashboard.districts}
+            </Link>
+            <Link
+              to={NCDA_PATHS.monitoring}
+              className="text-caption font-semibold text-primary hover:underline"
+            >
+              {ncda.overview.viewMonitoring}
+            </Link>
+          </div>
+        </>
+      )}
+    </Card>
   )
 }
 
@@ -655,74 +780,74 @@ function EntityPanel({
   children: ReactNode
 }) {
   return (
-    <Card padding="md" className="border-border space-y-3">
+    <div className="space-y-3">
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-subheading font-semibold text-text">{title}</h2>
-        <button type="button" onClick={onClose} aria-label={ncda.overview.zoomOut}>
+        <button type="button" onClick={onClose} aria-label={common.close}>
           <X size={16} />
         </button>
       </div>
       {children}
-    </Card>
+    </div>
   )
 }
 
-function SummaryRow({ label, value }: { label: string; value: string | number }) {
-  return (
+function SummaryRow({
+  label,
+  value,
+  href,
+}: {
+  label: string
+  value: string | number
+  href?: string
+}) {
+  const row = (
     <div className="flex items-baseline justify-between gap-3 border-b border-border/70 py-1.5 last:border-0">
       <span className="text-caption text-text-secondary">{label}</span>
       <span className="text-body font-semibold tabular-nums text-text">{value}</span>
     </div>
   )
-}
 
-function InsightChip({
-  label,
-  value,
-  tone,
-}: {
-  label: string
-  value: string | number
-  tone: 'warning' | 'danger' | 'neutral'
-}) {
-  const toneClass =
-    tone === 'danger'
-      ? 'border-error/40 bg-error-light/40'
-      : tone === 'warning'
-        ? 'border-warning/40 bg-warning-light/40'
-        : 'border-border bg-surface'
+  if (!href) return row
+
   return (
-    <div className={`rounded-lg border px-3 py-2.5 ${toneClass}`}>
-      <p className="text-caption text-text-secondary">{label}</p>
-      <p className="mt-1 flex items-center gap-1.5 text-heading font-semibold tabular-nums text-text">
-        {tone !== 'neutral' ? <AlertTriangle size={16} aria-hidden /> : null}
-        {value}
-      </p>
-    </div>
+    <Link
+      to={href}
+      className="block rounded-md transition-colors hover:bg-background-subtle"
+      title={ncda.overview.drillDownHint}
+    >
+      {row}
+    </Link>
   )
 }
 
 function DistrictPanelBody({
   districtId,
+  districtCode,
   districtName,
   isActive,
   provinceKey,
   summary,
   centersShown,
   centersTotal,
-  withoutCoords,
   centers,
   onSelectCenter,
 }: {
   districtId: string
+  districtCode?: string
   districtName: string
   isActive: boolean
   provinceKey: string | null
   summary: ReturnType<typeof useNcdaDistrictSummary>['data']
   centersShown: number
   centersTotal?: number
-  withoutCoords: number
-  centers: Array<{ id: string; name: string; villageName: string | null; status: string }>
+  centers: Array<{
+    id: string
+    name: string
+    code?: string
+    villageName: string | null
+    status: string
+  }>
   onSelectCenter: (id: string) => void
 }) {
   return (
@@ -731,13 +856,12 @@ function DistrictPanelBody({
         <Badge variant={isActive ? 'success' : 'neutral'}>
           {isActive ? ncda.overview.panelOperational : ncda.overview.panelInactive}
         </Badge>
-        {provinceKey ? (
-          <Badge variant="info">{getProvinceDisplayName(provinceKey)}</Badge>
-        ) : null}
+        {provinceKey ? <Badge variant="info">{getProvinceDisplayName(provinceKey)}</Badge> : null}
       </div>
       <SummaryRow
         label={ncda.overview.panelChildren}
         value={summary?.overview.children.active ?? '—'}
+        href={ncdaDemographicsPath({ districtId })}
       />
       <SummaryRow
         label={ncda.overview.panelAttendance}
@@ -746,6 +870,7 @@ function DistrictPanelBody({
       <SummaryRow
         label={ncda.overview.panelNutrition}
         value={summary?.overview.nutrition.severe ?? '—'}
+        href={ncdaNutritionAlertsPath({ districtId, status: 'severe_nutrition' })}
       />
       <SummaryRow
         label={ncda.overview.panelSted}
@@ -754,11 +879,9 @@ function DistrictPanelBody({
       <p className="text-caption text-text-muted">
         {ncda.overview.centersInView}: {centersShown}
         {centersTotal != null ? ` / ${centersTotal}` : ''}
-        {centersTotal != null && centersTotal > 100 ? ` · ${ncda.overview.centersCapped}` : ''}
-        {withoutCoords > 0 ? ` · ${ncda.overview.centersWithoutCoords}: ${withoutCoords}` : ''}
       </p>
       {centers.length > 0 ? (
-        <ul className="max-h-40 overflow-y-auto divide-y divide-border rounded-md border border-border">
+        <ul className="max-h-40 divide-y divide-border overflow-y-auto rounded-md border border-border">
           {centers.slice(0, 12).map((center) => (
             <li key={center.id}>
               <button
@@ -784,13 +907,16 @@ function DistrictPanelBody({
       )}
       <div className="flex flex-col gap-2">
         <Link
-          to={`${NCDA_PATHS.districts}/${districtId}`}
+          to={buildDistrictDetailPath(NCDA_PATHS.districts, {
+            id: districtId,
+            code: districtCode,
+          })}
           className="text-caption font-semibold text-primary hover:underline"
         >
-          {ncda.overview.viewDistrictProfile}
+          {ncda.overview.viewDistrictProfile} →
         </Link>
         <Link
-          to={`${NCDA_PATHS.monitoring}?district=${encodeURIComponent(districtId)}`}
+          to={`${NCDA_PATHS.monitoring}?district=${encodeURIComponent(districtCode || districtId)}`}
           className="text-caption font-semibold text-primary hover:underline"
         >
           {ncda.overview.viewMonitoring}
@@ -830,17 +956,9 @@ function CenterPanelBody({
       <SummaryRow label={ncda.overview.panelCaregivers} value={center.caregiversCount ?? '—'} />
       <SummaryRow label={ncda.overview.panelCapacity} value={center.capacity ?? '—'} />
       <SummaryRow label={ncda.overview.panelPhone} value={center.phone ?? '—'} />
-      <SummaryRow
-        label={ncda.overview.panelCoords}
-        value={
-          center.latitude != null && center.longitude != null
-            ? `${center.latitude.toFixed(4)}, ${center.longitude.toFixed(4)}`
-            : '—'
-        }
-      />
       <div className="flex flex-col gap-2 pt-1">
         <Link
-          to={`${NCDA_PATHS.centers}/${center.id}`}
+          to={buildCenterDetailPath(NCDA_PATHS.centers, center)}
           className="text-caption font-semibold text-primary hover:underline"
         >
           {ncda.overview.viewCenterProfile}

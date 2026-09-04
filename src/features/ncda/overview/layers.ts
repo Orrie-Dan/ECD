@@ -1,4 +1,5 @@
 import { ncda } from '@/locales/rw/ncda'
+import type { NcdaMapMetricId } from './types'
 
 export type NcdaMapLayerId =
   | 'centers'
@@ -19,6 +20,49 @@ export interface NcdaMapLayerDefinition {
   description: string
   availability: NcdaLayerAvailability
   enabled: boolean
+}
+
+export interface NcdaMapMetricDefinition {
+  id: NcdaMapMetricId
+  label: string
+  availability: NcdaLayerAvailability
+  description: string
+}
+
+/** Compact metric switcher for the national GIS command surface. */
+export function buildNcdaMapMetrics(): NcdaMapMetricDefinition[] {
+  return [
+    {
+      id: 'overall',
+      label: ncda.overview.metricOverall,
+      availability: 'live',
+      description: ncda.overview.metricOverallDesc,
+    },
+    {
+      id: 'attendance',
+      label: ncda.overview.metricAttendance,
+      availability: 'unavailable',
+      description: ncda.overview.layerAttendanceDesc,
+    },
+    {
+      id: 'nutrition',
+      label: ncda.overview.metricNutrition,
+      availability: 'unavailable',
+      description: ncda.overview.layerNutritionDesc,
+    },
+    {
+      id: 'inspections',
+      label: ncda.overview.metricInspections,
+      availability: 'live',
+      description: ncda.overview.metricInspectionsDesc,
+    },
+    {
+      id: 'centers',
+      label: ncda.overview.metricCenters,
+      availability: 'live',
+      description: ncda.overview.layerCentersDesc,
+    },
+  ]
 }
 
 export function buildNcdaMapLayers(): NcdaMapLayerDefinition[] {
