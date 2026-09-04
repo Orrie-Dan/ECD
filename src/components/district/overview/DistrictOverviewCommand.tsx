@@ -1,17 +1,18 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
-  AlertTriangle,
+  Baby,
   Building2,
   ChevronRight,
-  Clock,
   Layers,
+  Ruler,
   SlidersHorizontal,
+  Users,
   X,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
-import { Card, StatCard } from '@/components/ui/Card'
+import { Card } from '@/components/ui/Card'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { FormField, SelectInput } from '@/components/ui/FormField'
 import { Badge } from '@/components/ui/Badge'
@@ -20,7 +21,6 @@ import { ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/cha
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useDashboardMonitoring, roundPct } from '@/features/monitoring'
-import { useFollowUpAlerts } from '@/features/alerts'
 import { useCenterDirectoryItem } from '@/features/centers'
 import { useDistrictScope } from '@/features/district/overview/useDistrictScope'
 import {
@@ -29,18 +29,36 @@ import {
 } from '@/features/district/overview/queries'
 import { buildDistrictMapLayers } from '@/features/district/overview/layers'
 import { findSectorForVillage } from '@/lib/rwanda-admin'
+import { buildCenterDetailPath, displayEntityLabel } from '@/lib/entity-routes'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
+import { demographicsCopy } from '@/locales/rw/demographics'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { env } from '@/config/env'
 import { EcdCenterStatus, type EcdCenterStatus as CenterStatus } from '@/api/generated/models'
-import { GisPendingPlaceholder } from '@/components/gis/GisPendingPlaceholder'
-import { ACTION_ALERTS, getSchoolsTableData, getUniqueSectors } from '@/lib/mock-data'
+import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
+import { getSchoolsTableData, getUniqueSectors } from '@/lib/mock-data'
 import type { CenterDirectoryItem } from '@/api/resources/centers'
 import type { Child, GrowthMeasurement, NutritionAssessment } from '@/types'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
+
+type DistrictKpiKey = 'children' | 'centers' | 'attendance' | 'nutrition'
+
+const KPI_ICONS: Record<DistrictKpiKey, ReactNode> = {
+  children: <Baby size={18} aria-hidden />,
+  centers: <Building2 size={18} aria-hidden />,
+  attendance: <Users size={18} aria-hidden />,
+  nutrition: <Ruler size={18} aria-hidden />,
+}
+
+const KPI_ICON_TONES: Record<DistrictKpiKey, string> = {
+  children: 'bg-primary-light text-primary',
+  centers: 'bg-secondary-light text-secondary',
+  attendance: 'bg-success-light text-success',
+  nutrition: 'bg-primary-light text-primary',
+}
 
 function formatRate(rate: number | null | undefined): string {
   if (rate == null) return district.overview.noRate
@@ -85,8 +103,6 @@ export function DistrictOverviewCommand({
   const {
     dashboard,
     growthCoverage,
-    growthOverdue,
-    growthAtRisk,
     isLoading,
     isError,
     refetch,
@@ -97,7 +113,6 @@ export function DistrictOverviewCommand({
     nutritionAssessments,
   })
 
-  const alertsQ = useFollowUpAlerts({ limit: 100 }, env.isLive)
   const sectorsQuery = useDistrictOverviewAdminUnits(
     { districtId: scope.districtId ?? undefined, level: 'sector' },
     Boolean(scope.districtId),
@@ -175,37 +190,44 @@ export function DistrictOverviewCommand({
     }
   }, [search, env.isLive, sectors, filteredLiveCenters, mockSectors, filteredMockCenters])
 
-  const liveAlerts = alertsQ.data?.items ?? []
-  const mockAlerts = env.isLive ? [] : ACTION_ALERTS
-  const queueItems = env.isLive
-    ? liveAlerts.slice(0, 6).map((alert) => ({
-        id: alert.id,
-        title: alert.centerName ?? alert.title,
-        detail: alert.description,
-        href: alert.centerId
-          ? `${DISTRICT_PATHS.centers}/${alert.centerId}`
-          : DISTRICT_PATHS.followup,
-        priority: alert.priority,
-      }))
-    : mockAlerts.slice(0, 6).map((alert) => ({
-        id: alert.id,
-        title: alert.centerName,
-        detail: alert.description,
-        href: `${DISTRICT_PATHS.centers}/${alert.centerId}`,
-        priority: alert.priority,
-      }))
-
-  const attentionCenterCount = env.isLive
-    ? new Set(liveAlerts.map((a) => a.centerId).filter(Boolean)).size
-    : new Set(mockAlerts.map((a) => a.centerId)).size
-  const followUpCount = env.isLive ? (alertsQ.data?.total ?? liveAlerts.length) : mockAlerts.length
-  const overdueCount = growthOverdue ?? 0
-
   const attendanceRate = roundPct(dashboard?.attendance.rate)
   const totalChildren = dashboard?.children.active ?? dashboard?.children.total ?? 0
+  const centersInScope = dashboard?.centersInScope ?? 0
   const selectedLiveCenter =
     filteredLiveCenters.find((c) => c.id === centreId) ?? centerDetail.data ?? null
   const selectedMockCenter = filteredMockCenters.find((c) => c.id === centreId) ?? null
+
+  const districtKpis: Array<{
+    key: DistrictKpiKey
+    label: string
+    value: string
+    href?: string
+  }> = [
+    {
+      key: 'children',
+      label: district.overview.children,
+      value: totalChildren.toLocaleString(),
+      href: DISTRICT_PATHS.demographics,
+    },
+    {
+      key: 'centers',
+      label: district.nav.centers,
+      value: String(centersInScope),
+      href: DISTRICT_PATHS.centers,
+    },
+    {
+      key: 'attendance',
+      label: district.overview.attendance,
+      value: `${attendanceRate}%`,
+      href: DISTRICT_PATHS.monitoringAttendance,
+    },
+    {
+      key: 'nutrition',
+      label: district.overview.nutritionCoverage,
+      value: growthCoverage == null ? district.overview.noRate : `${growthCoverage}%`,
+      href: DISTRICT_PATHS.monitoringGrowth,
+    },
+  ]
 
   const selectSector = (id: string) => {
     setSearch('')
@@ -246,7 +268,7 @@ export function DistrictOverviewCommand({
         ) : !env.isLive && sectorId ? (
           <>
             <ChevronRight size={14} aria-hidden />
-            <span className="font-semibold text-text">{sectorId}</span>
+            <span className="font-semibold text-text">{displayEntityLabel(sectorId)}</span>
           </>
         ) : null}
         {centerDetail.data || selectedMockCenter ? (
@@ -261,6 +283,23 @@ export function DistrictOverviewCommand({
           {district.overview.periodLabel}: {range.timeLabel}
         </span>
       </div>
+
+      {isError ? null : isLoading || !dashboard ? (
+        <Skeleton className="h-[4.5rem] w-full" rounded="xl" />
+      ) : (
+        <section aria-labelledby="district-kpis">
+          <h2 id="district-kpis" className="sr-only">
+            {district.overview.summaryTitle}
+          </h2>
+          <Card padding="none" className="overflow-hidden border-border">
+            <div className="grid grid-cols-2 divide-border sm:grid-cols-4 sm:divide-x">
+              {districtKpis.map((kpi) => (
+                <CompactDistrictKpi key={kpi.key} kpi={kpi} />
+              ))}
+            </div>
+          </Card>
+        </section>
+      )}
 
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
         <div className="relative min-w-0 flex-1">
@@ -429,8 +468,8 @@ export function DistrictOverviewCommand({
                 onChange={(e) => setStatus((e.target.value || 'all') as 'all' | CenterStatus)}
               >
                 <option value="all">{district.overview.statusAll}</option>
-                <option value={EcdCenterStatus.active}>{district.schools.statusGood}</option>
-                <option value={EcdCenterStatus.inactive}>{district.schools.inactiveSchools}</option>
+                <option value={EcdCenterStatus.active}>{district.schools.statusActive}</option>
+                <option value={EcdCenterStatus.inactive}>{district.schools.statusInactive}</option>
               </SelectInput>
             </FormField>
           </div>
@@ -453,39 +492,21 @@ export function DistrictOverviewCommand({
       ) : isLoading || !dashboard ? (
         <Skeleton className="h-48 w-full" />
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)] gap-3">
-          <Card padding="none" className="overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)] gap-3 items-stretch">
+          <Card padding="none" className="overflow-hidden flex h-full min-h-[32rem] flex-col lg:min-h-[40rem]">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2 shrink-0">
               <div>
                 <h2 className="text-body font-semibold text-text">{district.gis.mapViewTitle}</h2>
                 <p className="text-caption text-text-muted">{district.overview.mapHint}</p>
               </div>
             </div>
-            <div className="p-3">
-              <GisPendingPlaceholder className="min-h-[18rem] lg:min-h-[24rem]" />
-              <p className="text-caption text-text-muted mt-2">
-                {district.overview.centerListTitle}
-              </p>
-              <ul className="mt-2 max-h-48 overflow-y-auto divide-y divide-border rounded-lg border border-border">
-                {(env.isLive ? filteredLiveCenters : filteredMockCenters).slice(0, 20).map((center) => {
-                  const id = center.id
-                  const name = center.name
-                  const active = id === centreId
-                  return (
-                    <li key={id}>
-                      <button
-                        type="button"
-                        onClick={() => selectCenter(id)}
-                        className={`w-full text-left px-3 py-2 text-body hover:bg-background-subtle ${
-                          active ? 'bg-primary-light text-primary font-semibold' : 'text-text'
-                        }`}
-                      >
-                        {name}
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
+            <div className="min-h-0 flex-1">
+              <ArcGisMapEmbed
+                title={district.gis.mapViewTitle}
+                fill
+                minHeight="24rem"
+                className="h-full rounded-none border-0"
+              />
             </div>
           </Card>
 
@@ -506,85 +527,35 @@ export function DistrictOverviewCommand({
           )}
         </div>
       )}
-
-      <section aria-labelledby="priority-heading">
-        <h2 id="priority-heading" className="text-subheading text-text mb-2">
-          {district.overview.priorityTitle}
-        </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-          <Link to={DISTRICT_PATHS.followup} className="block">
-            <StatCard
-              compact
-              label={district.overview.centresNeedAttention}
-              value={attentionCenterCount}
-              icon={<Building2 size={18} className="text-warning" />}
-              variant="warning"
-            />
-          </Link>
-          <Link to={DISTRICT_PATHS.followup} className="block">
-            <StatCard
-              compact
-              label={district.overview.followUps}
-              value={followUpCount}
-              icon={<AlertTriangle size={18} className="text-error" />}
-              variant="warning"
-            />
-          </Link>
-          <Link to={DISTRICT_PATHS.monitoringGrowth} className="block">
-            <StatCard
-              compact
-              label={district.overview.overdue}
-              value={overdueCount}
-              icon={<Clock size={18} className="text-warning" />}
-              variant="warning"
-            />
-          </Link>
-        </div>
-        <p className="text-caption text-text-muted mt-2">
-          {district.overview.situationTitle}: {dashboard?.centersInScope ?? '—'} {district.nav.centers} ·{' '}
-          {totalChildren} {district.overview.children} · {attendanceRate}% {district.overview.attendance}
-          {growthAtRisk != null ? ` · ${growthAtRisk} ${district.dashboard.growthAtRisk}` : ''}
-        </p>
-      </section>
-
-      <section aria-labelledby="queue-heading">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <h2 id="queue-heading" className="text-subheading text-text">
-            {district.overview.actionQueueTitle}
-          </h2>
-          <Link
-            to={DISTRICT_PATHS.followup}
-            className="text-caption font-semibold text-primary hover:underline"
-          >
-            {district.overview.viewAllFollowup}
-          </Link>
-        </div>
-        {queueItems.length === 0 ? (
-          <Card padding="md" className="border-success/20 bg-success-light/20">
-            <p className="text-body font-semibold text-success">{district.overview.emptyQueue}</p>
-          </Card>
-        ) : (
-          <Card padding="none">
-            <ul className="divide-y divide-border">
-              {queueItems.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    to={item.href}
-                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-background-subtle"
-                  >
-                    <span className="min-w-0">
-                      <span className="block text-body font-semibold text-text truncate">{item.title}</span>
-                      <span className="block text-caption text-text-secondary truncate">{item.detail}</span>
-                    </span>
-                    <ChevronRight size={16} className="text-primary shrink-0" aria-hidden />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-      </section>
     </div>
+  )
+}
+
+function CompactDistrictKpi({
+  kpi,
+}: {
+  kpi: { key: DistrictKpiKey; label: string; value: string; href?: string }
+}) {
+  const body = (
+    <div className="flex min-w-0 items-center gap-2.5 px-3 py-3 sm:px-4">
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${KPI_ICON_TONES[kpi.key]}`}
+      >
+        {KPI_ICONS[kpi.key]}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[0.6875rem] font-medium text-text-secondary">{kpi.label}</p>
+        <p className="mt-0.5 text-lg font-bold leading-none tabular-nums text-text">{kpi.value}</p>
+      </div>
+    </div>
+  )
+
+  if (!kpi.href) return body
+
+  return (
+    <Link to={kpi.href} className="block transition-colors hover:bg-surface-muted/60">
+      {body}
+    </Link>
   )
 }
 
@@ -600,11 +571,15 @@ function DistrictSummaryPanel({
   nutritionCoverage: number | null
 }) {
   return (
-    <Card padding="md">
+    <Card padding="md" className="h-full">
       <h2 className="text-body font-semibold text-text mb-3">{district.overview.summaryTitle}</h2>
       <dl className="space-y-3">
         <SummaryRow label={district.nav.centers} value={String(centers)} />
-        <SummaryRow label={district.overview.children} value={childrenCount.toLocaleString()} />
+        <SummaryRow
+          label={district.overview.children}
+          value={childrenCount.toLocaleString()}
+          href={DISTRICT_PATHS.demographics}
+        />
         <SummaryRow label={district.overview.attendance} value={`${attendanceRate}%`} />
         <SummaryRow
           label={district.overview.nutritionCoverage}
@@ -612,6 +587,12 @@ function DistrictSummaryPanel({
         />
       </dl>
       <div className="mt-4 pt-3 border-t border-border flex flex-col gap-2">
+        <Link
+          to={DISTRICT_PATHS.demographics}
+          className="text-caption font-semibold text-primary hover:underline"
+        >
+          {demographicsCopy.title}
+        </Link>
         <Link
           to={DISTRICT_PATHS.centers}
           className="text-caption font-semibold text-primary hover:underline"
@@ -643,7 +624,7 @@ function CentrePreview({
   const name = liveCenter?.name ?? mockCenter?.name
   if (!name) {
     return (
-      <Card padding="md">
+      <Card padding="md" className="h-full">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-body font-semibold text-text">{district.gis.centerPanelTitle}</h2>
           <button type="button" onClick={onClose} aria-label={common.close}>
@@ -671,15 +652,15 @@ function CentrePreview({
         : district.overview.noRate
   const statusLabel = liveCenter
     ? liveCenter.status === 'active'
-      ? district.overview.statusGood
-      : district.schools.inactiveSchools
-    : mockCenter?.attentionStatus === 'none'
-      ? district.overview.statusGood
-      : district.overview.statusAttention
+      ? district.schools.statusActive
+      : district.schools.statusInactive
+    : mockCenter?.isActive
+      ? district.schools.statusActive
+      : district.schools.statusInactive
   const centerId = liveCenter?.id ?? mockCenter?.id
 
   return (
-    <Card padding="md">
+    <Card padding="md" className="h-full">
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="min-w-0">
           <p className="text-caption font-semibold text-text-muted uppercase tracking-wide">
@@ -706,7 +687,10 @@ function CentrePreview({
       {centerId ? (
         <div className="mt-4 pt-3 border-t border-border flex flex-col gap-2">
           <Link
-            to={`${DISTRICT_PATHS.centers}/${centerId}`}
+            to={buildCenterDetailPath(DISTRICT_PATHS.centers, {
+              id: centerId,
+              code: liveCenter?.code,
+            })}
             className="inline-flex items-center justify-center min-h-11 px-4 rounded-xl font-semibold bg-primary !text-white"
           >
             {district.overview.viewCentre}
@@ -723,11 +707,27 @@ function CentrePreview({
   )
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryRow({
+  label,
+  value,
+  href,
+}: {
+  label: string
+  value: string
+  href?: string
+}) {
+  const valueNode = href ? (
+    <Link to={href} className="text-body font-semibold text-primary tabular-nums hover:underline">
+      {value}
+    </Link>
+  ) : (
+    <span className="text-body font-semibold text-text tabular-nums">{value}</span>
+  )
+
   return (
     <div className="flex items-center justify-between gap-3">
       <dt className="text-caption text-text-secondary">{label}</dt>
-      <dd className="text-body font-semibold text-text tabular-nums">{value}</dd>
+      <dd>{valueNode}</dd>
     </div>
   )
 }
