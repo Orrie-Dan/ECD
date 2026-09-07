@@ -76,9 +76,17 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
       expect(usersResource).toContain('usersControllerUpdate')
       expect(usersResource).toContain('usersControllerResetPassword')
       expect(userDetail).toContain('useNcdaUpdateUser')
+      expect(usersPage).toContain('useNcdaUpdateUser')
+      expect(usersPage).toContain('UserProfileEditForm')
       expect(userDetail).toContain('useNcdaResetUserPassword')
       expect(userDetail).toContain('roleScopeLocked')
-      expect(usersResource).not.toMatch(/role:\s*dto\.role/)
+      const updateFn = usersResource.slice(
+        usersResource.indexOf('export async function updateUser'),
+        usersResource.indexOf('export async function resetUserPassword'),
+      )
+      expect(updateFn).not.toMatch(/\brole\s*:/)
+      expect(updateFn).not.toMatch(/\bcenterId\s*:/)
+      expect(updateFn).not.toMatch(/\bdistrictId\s*:/)
       expect(usersPage).toContain('temporaryPassword')
       expect(userDetail).toContain('temporaryPassword')
     })

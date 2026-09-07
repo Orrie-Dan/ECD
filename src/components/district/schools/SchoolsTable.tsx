@@ -1,4 +1,4 @@
-import { Eye, CheckCircle2, AlertTriangle, ShieldAlert } from 'lucide-react'
+import { Eye, CheckCircle2, Ban } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Pagination } from '@/components/ui/Pagination'
@@ -15,14 +15,6 @@ interface SchoolsTableProps {
   districtLabel?: string
 }
 
-type MonitoringStatus = 'good' | 'followup' | 'critical'
-
-function getMonitoringStatus(attentionStatus: SchoolTableData['attentionStatus']): MonitoringStatus {
-  if (attentionStatus === 'high') return 'critical'
-  if (attentionStatus === 'medium' || attentionStatus === 'low') return 'followup'
-  return 'good'
-}
-
 function locationLabel(school: SchoolTableData, districtLabel: string) {
   const parts = [districtLabel, school.sector, school.cell].filter(
     (part) => part && part !== '—',
@@ -30,35 +22,28 @@ function locationLabel(school: SchoolTableData, districtLabel: string) {
   return parts.join(' / ')
 }
 
-function MonitoringBadge({ status }: { status: MonitoringStatus }) {
-  const config = {
-    good: {
-      bg: 'bg-success-light',
-      text: 'text-success',
-      label: district.schools.statusGood,
-      icon: CheckCircle2,
-    },
-    followup: {
-      bg: 'bg-warning-light',
-      text: 'text-warning',
-      label: district.schools.statusFollowup,
-      icon: AlertTriangle,
-    },
-    critical: {
-      bg: 'bg-error/10',
-      text: 'text-error',
-      label: district.schools.statusCritical,
-      icon: ShieldAlert,
-    },
-  } as const
+function CenterStatusBadge({ isActive }: { isActive: boolean }) {
+  const config = isActive
+    ? {
+        bg: 'bg-success-light',
+        text: 'text-success',
+        label: district.schools.statusActive,
+        icon: CheckCircle2,
+      }
+    : {
+        bg: 'bg-background-subtle',
+        text: 'text-text-muted',
+        label: district.schools.statusInactive,
+        icon: Ban,
+      }
 
-  const Icon = config[status].icon
+  const Icon = config.icon
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${config[status].bg} ${config[status].text} text-caption font-semibold whitespace-nowrap`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${config.bg} ${config.text} text-caption font-semibold whitespace-nowrap`}
     >
       <Icon size={12} aria-hidden="true" />
-      {config[status].label}
+      {config.label}
     </span>
   )
 }
@@ -87,55 +72,52 @@ export function SchoolsTable({
     <Card padding="none" className="overflow-hidden">
       {/* Mobile: cards (no horizontal scrolling) */}
       <div className="lg:hidden p-4 space-y-3">
-        {pagination.items.map((school) => {
-          const status = getMonitoringStatus(school.attentionStatus)
-          return (
-            <div
-              key={school.id}
-              className="rounded-xl border border-border bg-surface shadow-card p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-body-lg font-semibold text-text line-clamp-2">
-                    {school.name}
-                  </p>
-                  <p className="text-caption text-text-muted mt-1">
-                    {locationLabel(school, districtLabel)}
-                  </p>
-                  <p className="text-caption text-text-muted mt-1">
-                    {district.schools.lastUpdated}: {formatDate(school.lastActivity)}
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  <MonitoringBadge status={status} />
-                </div>
+        {pagination.items.map((school) => (
+          <div
+            key={school.id}
+            className="rounded-xl border border-border bg-surface shadow-card p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-body-lg font-semibold text-text line-clamp-2">
+                  {school.name}
+                </p>
+                <p className="text-caption text-text-muted mt-1">
+                  {locationLabel(school, districtLabel)}
+                </p>
+                <p className="text-caption text-text-muted mt-1">
+                  {district.schools.lastUpdated}: {formatDate(school.lastActivity)}
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="rounded-lg bg-background-subtle/50 p-3">
-                  <p className="text-caption text-text-muted">{district.schools.tableChildren}</p>
-                  <p className="text-heading text-text font-bold">{school.children}</p>
-                </div>
-                <div className="rounded-lg bg-background-subtle/50 p-3">
-                  <p className="text-caption text-text-muted">{district.schools.tableCaretakers}</p>
-                  <p className="text-heading text-text font-bold">{school.caretakers}</p>
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <Button
-                  variant="secondary"
-                  size="md"
-                  className="w-full"
-                  icon={<Eye size={16} />}
-                  onClick={() => onViewSchool?.(school.id)}
-                >
-                  {district.schools.viewDetails}
-                </Button>
+              <div className="shrink-0">
+                <CenterStatusBadge isActive={school.isActive} />
               </div>
             </div>
-          )
-        })}
+
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="rounded-lg bg-background-subtle/50 p-3">
+                <p className="text-caption text-text-muted">{district.schools.tableChildren}</p>
+                <p className="text-heading text-text font-bold">{school.children}</p>
+              </div>
+              <div className="rounded-lg bg-background-subtle/50 p-3">
+                <p className="text-caption text-text-muted">{district.schools.tableCaretakers}</p>
+                <p className="text-heading text-text font-bold">{school.caretakers}</p>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full"
+                icon={<Eye size={16} />}
+                onClick={() => onViewSchool?.(school.id)}
+              >
+                {district.schools.viewDetails}
+              </Button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Desktop: compact table (no horizontal scrolling) */}
@@ -164,48 +146,45 @@ export function SchoolsTable({
             </tr>
           </thead>
           <tbody>
-            {pagination.items.map((school) => {
-              const status = getMonitoringStatus(school.attentionStatus)
-              return (
-                <tr
-                  key={school.id}
-                  className="border-b border-border last:border-b-0 hover:bg-background-subtle/60 transition-colors"
-                >
-                  <td className="px-4 py-3 align-top">
-                    <p className="text-body font-semibold text-text wrap-break-word">
-                      {school.name}
-                    </p>
-                    <p className="text-caption text-text-muted mt-1">
-                      {district.schools.lastUpdated}: {formatDate(school.lastActivity)}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <p className="text-body text-text wrap-break-word">
-                      {locationLabel(school, districtLabel)}
-                    </p>
-                  </td>
-                  <td className="px-4 py-3 text-center align-top">
-                    <span className="text-body font-semibold text-text">{school.children}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center align-top">
-                    <span className="text-body font-semibold text-text">{school.caretakers}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center align-top">
-                    <MonitoringBadge status={status} />
-                  </td>
-                  <td className="px-4 py-3 text-right align-top">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon={<Eye size={16} />}
-                      onClick={() => onViewSchool?.(school.id)}
-                    >
-                      {district.schools.viewDetails}
-                    </Button>
-                  </td>
-                </tr>
-              )
-            })}
+            {pagination.items.map((school) => (
+              <tr
+                key={school.id}
+                className="border-b border-border last:border-b-0 hover:bg-background-subtle/60 transition-colors"
+              >
+                <td className="px-4 py-3 align-top">
+                  <p className="text-body font-semibold text-text wrap-break-word">
+                    {school.name}
+                  </p>
+                  <p className="text-caption text-text-muted mt-1">
+                    {district.schools.lastUpdated}: {formatDate(school.lastActivity)}
+                  </p>
+                </td>
+                <td className="px-4 py-3 align-top">
+                  <p className="text-body text-text wrap-break-word">
+                    {locationLabel(school, districtLabel)}
+                  </p>
+                </td>
+                <td className="px-4 py-3 text-center align-top">
+                  <span className="text-body font-semibold text-text">{school.children}</span>
+                </td>
+                <td className="px-4 py-3 text-center align-top">
+                  <span className="text-body font-semibold text-text">{school.caretakers}</span>
+                </td>
+                <td className="px-4 py-3 text-center align-top">
+                  <CenterStatusBadge isActive={school.isActive} />
+                </td>
+                <td className="px-4 py-3 text-right align-top">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={<Eye size={16} />}
+                    onClick={() => onViewSchool?.(school.id)}
+                  >
+                    {district.schools.viewDetails}
+                  </Button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

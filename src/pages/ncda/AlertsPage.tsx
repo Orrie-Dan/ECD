@@ -1,5 +1,6 @@
-import { AlertsPageContent } from '@/pages/shared/AlertsPage'
+import { NcdaFollowUpPage } from '@/pages/ncda/NcdaFollowUpPage'
 
+/** @deprecated Prefer NcdaFollowUpPage — kept for any remaining imports. */
 export function NcdaAlertsPage() {
-  return <AlertsPageContent rolePrefix="/ncda" />
+  return <NcdaFollowUpPage />
 }

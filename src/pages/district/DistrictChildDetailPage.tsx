@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { ChildDetailContent } from '@/components/children/ChildDetailContent'
 import { SkeletonCard } from '@/components/ui/Skeleton'
 import { Button } from '@/components/ui/Button'
@@ -21,17 +22,21 @@ export function DistrictChildDetailPage() {
 
 function DistrictChildDetailPageLive() {
   const { id: routeKey } = useParams<{ id: string }>()
+  const decodedKey = routeKey ? decodeURIComponent(routeKey) : undefined
   const { children, childrenLoading } = useData()
-  const childFromList = findChildByRouteKey(children, routeKey)
-  const childId = childFromList?.id ?? (isUuidLike(routeKey) ? routeKey : undefined)
+  const childFromList = findChildByRouteKey(children, decodedKey)
+  // LIVE district roster is not hydrated in LocalStore — resolve UUID from the URL first.
+  const childId = isUuidLike(decodedKey) ? decodedKey!.trim() : childFromList?.id
   const detailQuery = useDistrictChildDetail(childId, !!childId)
   const child = detailQuery.data ?? childFromList
 
   if ((childrenLoading || detailQuery.isLoading) && !child) {
     return (
-      <>
-        <SkeletonCard lines={6} />
-      </>
+      <PageContainer>
+        <PageContent>
+          <SkeletonCard lines={6} />
+        </PageContent>
+      </PageContainer>
     )
   }
 
@@ -39,7 +44,41 @@ function DistrictChildDetailPageLive() {
     const notFound = isNotFoundError(detailQuery.error)
     if (notFound) {
       return (
-        <>
+        <PageContainer>
+          <PageContent>
+            <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
+            <Link
+              to="/district/abana"
+              className="inline-flex items-center gap-2 text-primary font-semibold mt-4 hover:underline"
+            >
+              <ArrowLeft size={18} aria-hidden />
+              {common.back}
+            </Link>
+          </PageContent>
+        </PageContainer>
+      )
+    }
+    return (
+      <PageContainer>
+        <PageContent>
+          <EmptyState title={common.error} description={common.live.unavailableDesc} />
+          <Button
+            type="button"
+            variant="primary"
+            className="mt-4"
+            onClick={() => void detailQuery.refetch()}
+          >
+            {common.reset}
+          </Button>
+        </PageContent>
+      </PageContainer>
+    )
+  }
+
+  if (!child) {
+    return (
+      <PageContainer>
+        <PageContent>
           <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
           <Link
             to="/district/abana"
@@ -48,84 +87,63 @@ function DistrictChildDetailPageLive() {
             <ArrowLeft size={18} aria-hidden />
             {common.back}
           </Link>
-        </>
-      )
-    }
-    return (
-      <>
-        <EmptyState title={common.error} description={common.live.unavailableDesc} />
-        <Button
-          type="button"
-          variant="primary"
-          className="mt-4"
-          onClick={() => void detailQuery.refetch()}
-        >
-          {common.reset}
-        </Button>
-      </>
-    )
-  }
-
-  if (!child) {
-    return (
-      <>
-        <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
-        <Link
-          to="/district/abana"
-          className="inline-flex items-center gap-2 text-primary font-semibold mt-4 hover:underline"
-        >
-          <ArrowLeft size={18} aria-hidden />
-          {common.back}
-        </Link>
-      </>
+        </PageContent>
+      </PageContainer>
     )
   }
 
   return (
-    <>
-      <Link
-        to="/district/abana"
-        className="inline-flex items-center gap-2 text-body font-semibold text-text-secondary hover:text-primary transition-colors mb-4"
-      >
-        <ArrowLeft size={18} aria-hidden />
-        {common.back}
-      </Link>
-      <ChildDetailContent child={child} showActions={false} />
-    </>
+    <PageContainer>
+      <PageContent>
+        <Link
+          to="/district/abana"
+          className="inline-flex items-center gap-2 text-body font-semibold text-text-secondary hover:text-primary transition-colors mb-4"
+        >
+          <ArrowLeft size={18} aria-hidden />
+          {common.back}
+        </Link>
+        <ChildDetailContent child={child} showActions={false} editBasePath="/district/abana" />
+      </PageContent>
+    </PageContainer>
   )
 }
 
 function DistrictChildDetailPageMock() {
   const { id: routeKey } = useParams<{ id: string }>()
+  const decodedKey = routeKey ? decodeURIComponent(routeKey) : undefined
   const { children } = useData()
   // In MOCK we keep the original behavior: no live query; we only render from the LocalStore roster.
-  const child = findChildByRouteKey(children, routeKey)
+  const child = findChildByRouteKey(children, decodedKey)
 
   if (!child) {
     return (
-      <>
-        <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
-        <Link
-          to="/district/abana"
-          className="inline-flex items-center gap-2 text-primary font-semibold mt-4 hover:underline"
-        >
-          <ArrowLeft size={18} aria-hidden />
-          {common.back}
-        </Link>
-      </>
+      <PageContainer>
+        <PageContent>
+          <EmptyState title={district.children.notFound} description={district.children.notFoundDesc} />
+          <Link
+            to="/district/abana"
+            className="inline-flex items-center gap-2 text-primary font-semibold mt-4 hover:underline"
+          >
+            <ArrowLeft size={18} aria-hidden />
+            {common.back}
+          </Link>
+        </PageContent>
+      </PageContainer>
     )
   }
 
   return (
-    <>
-      <Link
-        to="/district/abana"
-        className="inline-flex items-center gap-2 text-body font-semibold text-text-secondary hover:text-primary transition-colors mb-4"
-      >
-        <ArrowLeft size={18} aria-hidden />
-        {common.back}
-      </Link>
-      <ChildDetailContent child={child} showActions={false} />
-    </>
+    <PageContainer>
+      <PageContent>
+        <Link
+          to="/district/abana"
+          className="inline-flex items-center gap-2 text-body font-semibold text-text-secondary hover:text-primary transition-colors mb-4"
+        >
+          <ArrowLeft size={18} aria-hidden />
+          {common.back}
+        </Link>
+        <ChildDetailContent child={child} showActions={false} editBasePath="/district/abana" />
+      </PageContent>
+    </PageContainer>
   )
 }

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="rw">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>ECD Mapping</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/light/main.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+
+      #viewDiv {
+        height: 100%;
+        width: 100%;
+      }
+
+      .error {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 1rem;
+        font-family: system-ui, sans-serif;
+        color: #1f2937;
+        text-align: center;
+      }
+
+      .error.visible {
+        display: flex;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="viewDiv"></div>
+    <div id="error" class="error" role="alert"></div>
+    <script src="https://js.arcgis.com/4.32/"></script>
+    <script type="module">
+      const params = new URLSearchParams(location.search)
+      const webmapId = params.get('webmap') || '2b7f6d9cd1ac43bf993f811e7844014d'
+      const portalUrl = (params.get('portal') || 'https://infrastructure.space.gov.rw/portal').replace(
+        /\/$/,
+        '',
+      )
+      const gisApiBase = (params.get('gisApi') || '/api/v1/gis').replace(/\/$/, '')
+      const focusLat = Number.parseFloat(params.get('lat') || '')
+      const focusLng = Number.parseFloat(params.get('lng') || '')
+      const focusZoom = Number.parseFloat(params.get('zoom') || '16')
+      const hasFocus =
+        Number.isFinite(focusLat) &&
+        Number.isFinite(focusLng) &&
+        Math.abs(focusLat) <= 90 &&
+        Math.abs(focusLng) <= 180
+
+      const viewDiv = document.getElementById('viewDiv')
+      const errorEl = document.getElementById('error')
+
+      function showError(message) {
+        viewDiv.style.display = 'none'
+        errorEl.textContent = message
+        errorEl.classList.add('visible')
+      }
+
+      function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      }
+
+      function toProxyUrl(targetUrl) {
+        return `${gisApiBase}/proxy?url=${encodeURIComponent(targetUrl)}`
+      }
+
+      async function registerPortalToken(esriId) {
+        try {
+          const res = await fetch(`${gisApiBase}/token`)
+          if (!res.ok) {
+            console.warn('GIS token request failed', res.status)
+            return
+          }
+          const data = await res.json()
+          if (data?.token) {
+            const tokenEntry = {
+              token: data.token,
+              expires: data.expires,
+            }
+            esriId.registerToken({
+              server: `${portalUrl}/sharing/rest`,
+              ...tokenEntry,
+            })
+            esriId.registerToken({
+              server: `${portalUrl.replace(/\/portal\/?$/, '')}/server/rest`,
+              ...tokenEntry,
+            })
+          }
+        } catch (tokenError) {
+          console.warn('GIS token fetch failed', tokenError)
+        }
+      }
+
+      async function applyFocus(view, Graphic, GraphicsLayer) {
+        if (!hasFocus) return
+        const zoom = Number.isFinite(focusZoom) && focusZoom > 0 ? focusZoom : 16
+        try {
+          await view.goTo({ center: [focusLng, focusLat], zoom }, { animate: true })
+        } catch (goToError) {
+          console.warn('Map focus goTo failed', goToError)
+          return
+        }
+
+        try {
+          const highlightLayer = new GraphicsLayer({ listMode: 'hide' })
+          view.map.add(highlightLayer)
+          highlightLayer.add(
+            new Graphic({
+              geometry: {
+                type: 'point',
+                longitude: focusLng,
+                latitude: focusLat,
+              },
+              symbol: {
+                type: 'simple-marker',
+                style: 'circle',
+                color: [16, 185, 129, 0.9],
+                size: 14,
+                outline: {
+                  color: [255, 255, 255, 1],
+                  width: 2,
+                },
+              },
+            }),
+          )
+        } catch (highlightError) {
+          console.warn('Map highlight failed', highlightError)
+        }
+      }
+
+      try {
+        const [esriConfig, WebMap, MapView, Graphic, GraphicsLayer, esriId] = await $arcgis.import([
+          '@arcgis/core/config.js',
+          '@arcgis/core/WebMap.js',
+          '@arcgis/core/views/MapView.js',
+          '@arcgis/core/Graphic.js',
+          '@arcgis/core/layers/GraphicsLayer.js',
+          '@arcgis/core/identity/IdentityManager.js',
+        ])
+
+        esriConfig.portalUrl = portalUrl
+
+        const portalHost = new URL(portalUrl).hostname
+        esriConfig.request.interceptors.push({
+          urls: new RegExp(`^https://${escapeRegExp(portalHost)}/`, 'i'),
+          before: (requestParams) => {
+            requestParams.url = toProxyUrl(requestParams.url)
+          },
+        })
+
+        await registerPortalToken(esriId)
+
+        const webmap = new WebMap({
+          portalItem: { id: webmapId },
+        })
+
+        const view = new MapView({
+          container: viewDiv,
+          map: webmap,
+        })
+
+        await webmap.load()
+        await view.when()
+        await applyFocus(view, Graphic, GraphicsLayer)
+      } catch (err) {
+        showError(err?.message || 'Failed to load map.')
+        console.error(err)
+      }
+    </script>
+  </body>
+</html>

@@ -14,6 +14,8 @@ interface ChartPeriodFilterProps {
   onChange: (value: ChartPeriodFilterValue) => void
   showMonthFilter?: boolean
   className?: string
+  /** Hide built-in icons and borders so a parent can frame the control. */
+  compact?: boolean
 }
 
 export function ChartPeriodFilter({
@@ -21,6 +23,7 @@ export function ChartPeriodFilter({
   onChange,
   showMonthFilter = true,
   className = '',
+  compact = false,
 }: ChartPeriodFilterProps) {
   const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const period = e.target.value as EnrollmentPeriod
@@ -34,16 +37,24 @@ export function ChartPeriodFilter({
     onChange({ ...value, month: e.target.value })
   }
 
+  const selectClass = compact
+    ? 'min-h-10! w-full border-0 bg-transparent px-0 shadow-none'
+    : 'min-h-10! w-full'
+
   return (
     <div
-      className={`grid grid-cols-1 sm:grid-cols-2 gap-2 ${className}`}
+      className={
+        compact
+          ? `flex min-w-0 flex-wrap items-center gap-2 ${className}`
+          : `grid grid-cols-1 sm:grid-cols-2 gap-2 ${className}`
+      }
     >
-      <div className="flex items-center gap-2 min-w-0">
-        <Calendar size={16} className="text-text-muted shrink-0" aria-hidden />
+      <div className="flex min-w-0 items-center gap-2">
+        {!compact ? <Calendar size={16} className="shrink-0 text-text-muted" aria-hidden /> : null}
         <SelectInput
           value={value.period}
           onChange={handlePeriodChange}
-          className="min-h-10! w-full"
+          className={selectClass}
           aria-label={district.charts.filterPeriod}
         >
           {CHART_PERIOD_OPTIONS.map((opt) => (
@@ -55,12 +66,14 @@ export function ChartPeriodFilter({
       </div>
 
       {showMonthFilter && value.period === 'year' && (
-        <div className="flex items-center gap-2 min-w-0">
-          <CalendarDays size={16} className="text-text-muted shrink-0" aria-hidden />
+        <div className="flex min-w-0 items-center gap-2">
+          {!compact ? (
+            <CalendarDays size={16} className="shrink-0 text-text-muted" aria-hidden />
+          ) : null}
           <SelectInput
             value={value.month}
             onChange={handleMonthChange}
-            className="min-h-10! w-full"
+            className={selectClass}
             aria-label={district.schools.filterMonth}
           >
             {CHART_MONTH_OPTIONS.map((opt) => (

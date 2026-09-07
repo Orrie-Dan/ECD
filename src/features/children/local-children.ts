@@ -169,6 +169,20 @@ export async function createChildLocalFirst(
   return localChildToViewModel(child)
 }
 
+/** Outbox status for a freshly registered child (LIVE registration feedback). */
+export async function getChildCreateOutboxStatus(
+  store: LocalStore,
+  childId: string,
+): Promise<'pending' | 'blocked' | 'none'> {
+  const ops = await store.listOperations({ status: ACTIVE_MUTATION_STATUSES })
+  const op = ops.find(
+    (row) =>
+      row.entityType === 'child' && row.operation === 'create' && row.entityId === childId,
+  )
+  if (!op) return 'none'
+  return op.status === 'blocked' ? 'blocked' : 'pending'
+}
+
 async function findActiveChildMutation(
   store: LocalStore,
   entityId: string,

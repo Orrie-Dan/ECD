@@ -1085,7 +1085,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'low_attendance',
     priority: 'high',
     description: 'Ubwitabire uri munsi ya 60%',
-    suggestedAction: 'Vugana n\'ikigo kugira ngo ukurikirane.',
+    suggestedAction:
+      'Sura cyangwa uhamagare umuyobozi cyangwa umurezi w\'iki kigo kugira ngo mumenye impamvu y\'ubwitabire buke kandi mufate ingamba zo kubwongera.',
     metrics: [
       { label: 'Ubwitabire', value: '48%' },
       { label: 'Abavuye uku kwezi', value: '12' },
@@ -1100,7 +1101,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'no_submission',
     priority: 'high',
     description: 'Nta matangazo y\'ubwitabire yatanzwe uyu munsi',
-    suggestedAction: 'Vugana n\'ikigo kugira ngo ukurikirane.',
+    suggestedAction:
+      'Hamagara umurezi w\'iki kigo uyu munsi, umusabe kwandika amakuru y\'ubwitabire kuko ataratangwa.',
     metrics: [{ label: 'Ubwitabire', value: '58%' }],
   },
   {
@@ -1112,7 +1114,7 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'no_new_registrations',
     priority: 'high',
     description: 'Nta mwana mushya wanditswe mu gihe kinini',
-    suggestedAction: "Suzuma impamvu z'abavuye muri Gahunda ya ECD.",
+    suggestedAction: 'Suzuma impamvu abana baretse kwitabira gahunda ya ECD.',
     metrics: [{ label: 'Icyumweru', value: '0 bashya' }],
   },
   {
@@ -1124,7 +1126,7 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'high_dropout',
     priority: 'high',
     description: 'Abavuye muri Gahunda ya ECD benshi',
-    suggestedAction: "Suzuma impamvu z'abavuye muri Gahunda ya ECD.",
+    suggestedAction: 'Suzuma impamvu abana baretse kwitabira gahunda ya ECD.',
     metrics: [{ label: 'Abavuye uku kwezi', value: '15' }],
   },
   {
@@ -1136,7 +1138,7 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'declining_enrollment',
     priority: 'medium',
     description: 'Kwiyandikisha kugenda kugabanuka',
-    suggestedAction: "Suzuma impamvu z'abavuye muri Gahunda ya ECD.",
+    suggestedAction: 'Suzuma impamvu abana baretse kwitabira gahunda ya ECD.',
     metrics: [{ label: 'Impinduka', value: '-3' }],
   },
   {
@@ -1148,7 +1150,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'attendance_decreasing',
     priority: 'medium',
     description: 'Ubwitabire bugenda bugabanuka',
-    suggestedAction: 'Fasha umurezi mu gutanga amakuru.',
+    suggestedAction:
+      'Hamagara umurezi w\'iki kigo kugira ngo umenye impamvu y\'ubwitabire buke kandi urebe niba amakuru y\'ubwitabire yandikwa neza.',
     metrics: [{ label: 'Kugabanuka', value: '18%' }],
   },
   {
@@ -1160,7 +1163,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'incomplete_registration',
     priority: 'medium',
     description: 'Kwiyandikisha ntibyuzuye',
-    suggestedAction: 'Suzuma amakuru y\'ikigo.',
+    suggestedAction:
+      'Saba umurezi kuzuza cyangwa gukosora amakuru y\'iki kigo mbere y\'uko asuzumwa ku rwego rw\'akarere.',
     metrics: [{ label: 'Amakuru atuzuye', value: '8' }],
   },
   {
@@ -1172,7 +1176,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'missing_info',
     priority: 'low',
     description: 'Amakuru atari mu buryo',
-    suggestedAction: 'Suzuma amakuru y\'ikigo.',
+    suggestedAction:
+      'Saba umurezi kuzuza amakuru abura no gukosora amakuru atari yo, nk\'amazina, amatariki cyangwa ibipimo, mbere y\'isuzuma ry\'akarere.',
     metrics: [{ label: 'Ibice byabuze', value: '5' }],
   },
   {
@@ -1184,7 +1189,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'stale_records',
     priority: 'medium',
     description: 'Amakuru ntavuguruye',
-    suggestedAction: 'Fasha umurezi mu gutanga amakuru.',
+    suggestedAction:
+      'Fasha umurezi kuzuza no gutanga amakuru asabwa, kandi urebe niba ikigo gikeneye ubundi bufasha.',
     metrics: [{ label: 'Iminsi', value: '5' }],
   },
   {
@@ -1196,7 +1202,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'unusual_activity',
     priority: 'low',
     description: 'Ibikorwa bitunguranye byabonetse',
-    suggestedAction: 'Suzuma amakuru y\'ikigo.',
+    suggestedAction:
+      'Fasha umurezi kuzuza no gutanga amakuru asabwa, kandi urebe niba ikigo gikeneye ubundi bufasha.',
   },
   {
     id: 'aa11',
@@ -1207,7 +1214,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'high_risk_nutrition',
     priority: 'high',
     description: 'Abana benshi bafite ikibazo cy\'imirire',
-    suggestedAction: 'Suzuma imipimo y\'imikurire kandi ukurikirane abana bari mu kaga.',
+    suggestedAction:
+      'Fata ingamba zihutirwa: ohereza uyu mwana ku kigo nderabuzima vuba kandi ukurikiranire hafi imikurire n\'imirire bye.',
     metrics: [
       { label: 'Abakeneye gufashwa', value: '8' },
       { label: 'Igerageza', value: 'MUAC' },
@@ -1222,7 +1230,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'missed_assessment',
     priority: 'high',
     description: 'Abana benshi batapimwe mu gihe cyagenwe',
-    suggestedAction: 'Fasha umurezi gukora ipimo ry\'imikurire.',
+    suggestedAction:
+      'Saba umurezi gupima imikurire y\'uyu mwana vuba no kwandika ibisubizo, kandi akomeze kumupima mu bihe byagenwe.',
     metrics: [{ label: 'Batariye', value: '14' }],
   },
   {
@@ -1234,7 +1243,8 @@ export const ACTION_ALERTS: ActionAlert[] = [
     type: 'high_risk_nutrition',
     priority: 'medium',
     description: 'Hari abana bari mu kaga cy\'imirire bakenewe gukurikiranwa',
-    suggestedAction: 'Suzuma imikurire y\'abana b\'iki kigo kandi ukurikirane abari mu kaga.',
+    suggestedAction:
+      'Saba ko ibipimo by\'imikurire bifatwa vuba, kandi ukurikirane abana bafite ibyago by\'imirire mibi. Bohereze ku kigo nderabuzima igihe bibaye ngombwa.',
     metrics: [{ label: 'Mu kaga', value: '3' }],
   },
 ]

@@ -221,6 +221,8 @@ function createNcdaKeys() {
         [...dashboard, 'kpis', filters] as const,
       network: (filters: Record<string, unknown> = {}) =>
         [...dashboard, 'network', filters] as const,
+      childrenDemographics: (filters: Record<string, unknown> = {}) =>
+        [...dashboard, 'children-demographics', filters] as const,
     },
     districts: {
       all: districts,
@@ -310,6 +312,8 @@ function createNcdaKeys() {
         [...monitoring, 'compliance', filters] as const,
       wash: (filters: Record<string, unknown> = {}) =>
         [...monitoring, 'wash', filters] as const,
+      nutritionAlerts: (filters: Record<string, unknown> = {}) =>
+        [...monitoring, 'nutrition-alerts', filters] as const,
     },
     reporting: {
       all: reporting,
@@ -359,6 +363,8 @@ function createDistrictKeys() {
         [...all, 'referrals', 'list', filters] as const,
     },
     alerts: (filters: Record<string, unknown> = {}) => [...all, 'alerts', filters] as const,
+    alertSummary: (filters: Record<string, unknown> = {}) =>
+      [...all, 'alerts', 'summary', filters] as const,
     overview: {
       identity: (id: string) => [...all, 'overview', 'identity', id] as const,
       adminUnits: (filters: Record<string, unknown> = {}) =>
@@ -641,7 +647,7 @@ export const queryStaleTimes = {
   classrooms: 120_000,
   /** Notifications list — short stale; mutations invalidate. */
   notifications: 15_000,
-  /** Unread count badge — polled every 30s; very short stale. */
+  /** Unread count badge — polled every 60s; short stale. */
   notificationsUnread: 10_000,
   /** District Incamake geo identity / sectors / centres. */
   districtOverview: 60_000,

@@ -52,7 +52,7 @@ describe('District portal information architecture', () => {
       expect(app).toContain('to={DISTRICT_PATHS.monitoringFeeding}')
       expect(app).toContain('to={DISTRICT_PATHS.monitoringSted}')
       expect(app).toContain('to={DISTRICT_PATHS.followup}')
-      expect(app).toContain('to={DISTRICT_PATHS.dashboard}')
+      expect(app).toContain('GisAnalyticsPage')
       expect(app).toContain('path="/district/ikarita"')
       expect(app).toContain('path="/district/referrals"')
       expect(app).toContain('path="/district/attendance"')

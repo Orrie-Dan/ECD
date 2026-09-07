@@ -45,6 +45,8 @@ import {
 import { env } from '@/config/env'
 import { useCenterDirectoryItem } from '@/features/centers'
 import { useDistrictCaregiversList } from '@/features/district/users/queries'
+import { useResolvedCenterRoute } from '@/hooks/useResolvedEntityRoute'
+import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { useAuth } from '@/contexts/AppContext'
@@ -171,11 +173,13 @@ function CenterCaregiversSection({
 }
 
 export function CenterDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id: routeParam } = useParams<{ id: string }>()
   const { user } = useAuth()
-  const liveCenterQ = useCenterDirectoryItem(id, env.isLive)
+  const resolved = useResolvedCenterRoute(routeParam, DISTRICT_PATHS.centers)
+  const id = resolved.centerId ?? (env.isMock ? routeParam : undefined)
+  const liveCenterQ = useCenterDirectoryItem(id, env.isLive && Boolean(id))
   const [chartPeriod, setChartPeriod] = useState<ChartPeriodFilterValue>({ period: 'month', month: '' })
-  const center = env.isMock ? ECD_CENTERS.find((c) => c.id === id) : undefined
+  const center = env.isMock ? ECD_CENTERS.find((c) => c.id === id || c.id === routeParam) : undefined
 
   const attendanceTrend = useMemo(
     () => (center ? getCenterAttendanceTrendForPeriod(center.id, chartPeriod.period) : []),
@@ -303,7 +307,11 @@ export function CenterDetailPage() {
               <StatCard
                 compact
                 label={district.centerDetail.schoolHealth}
-                value={live.status}
+                value={
+                  live.status === 'active'
+                    ? district.schools.statusActive
+                    : district.schools.statusInactive
+                }
                 icon={<CheckCircle2 size={20} className="text-success" />}
               />
             </div>

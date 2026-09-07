@@ -70,11 +70,11 @@ function ActionAlertCard({ alert }: { alert: ActionAlert }) {
           </div>
         )}
 
-        <div className="rounded-lg border border-primary bg-primary px-4 py-3">
-          <p className="text-[0.875rem] font-semibold !text-white mb-1">
+        <div className="rounded-lg border border-primary/30 bg-primary-light shadow-sm px-4 py-3">
+          <p className="text-[0.875rem] font-semibold text-primary mb-1">
             {district.followup.suggestedAction}
           </p>
-          <p className="text-body !text-white">{alert.suggestedAction}</p>
+          <p className="text-body text-primary leading-snug">{alert.suggestedAction}</p>
         </div>
       </div>
 

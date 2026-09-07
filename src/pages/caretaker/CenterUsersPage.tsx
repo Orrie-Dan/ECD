@@ -17,11 +17,13 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useAuth } from '@/contexts/AppContext'
 import {
   useCenterCreateCaregiver,
+  useCenterUpdateUser,
   useCenterUsersList,
 } from '@/features/caretaker/users/queries'
+import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { caretaker } from '@/locales/rw/caretaker'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
-import type { ApiUserStatus } from '@/api/generated/models'
+import type { ApiUserStatus, UpdateUserDto, UserResponseDto } from '@/api/generated/models'
 import { normalizeApiError } from '@/api/errors'
 import {
   EDUCATION_LEVEL_OPTIONS,
@@ -70,6 +72,7 @@ function CenterUsersLive() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [showCreate, setShowCreate] = useState(false)
+  const [editing, setEditing] = useState<UserResponseDto | null>(null)
   const [tempSecret, setTempSecret] = useState<string | null>(null)
   const [createForm, setCreateForm] = useState({
     username: '',
@@ -94,6 +97,7 @@ function CenterUsersLive() {
 
   const list = useCenterUsersList(listFilters, Boolean(centerId))
   const createMutation = useCenterCreateCaregiver()
+  const updateMutation = useCenterUpdateUser(editing?.id ?? '')
 
   const total = list.data?.total ?? 0
   const totalPages = list.data?.totalPages ?? 1
@@ -132,6 +136,21 @@ function CenterUsersLive() {
     }
   }
 
+  function openEdit(row: UserResponseDto) {
+    setShowCreate(false)
+    setEditing(row)
+  }
+
+  async function onUpdate(dto: UpdateUserDto) {
+    try {
+      await updateMutation.mutateAsync(dto)
+      setEditing(null)
+      showSuccess(caretaker.users.updateSuccess)
+    } catch (err) {
+      showError(normalizeApiError(err).message || caretaker.users.updateError)
+    }
+  }
+
   return (
     <PageContainer>
       <PageHeader title={caretaker.users.title} description={caretaker.users.subtitle} />
@@ -162,10 +181,16 @@ function CenterUsersLive() {
               </p>
               <Button
                 type="button"
-                variant={showCreate ? 'secondary' : 'primary'}
-                onClick={() => setShowCreate((v) => !v)}
+                variant={showCreate || editing ? 'secondary' : 'primary'}
+                onClick={() => {
+                  if (editing) {
+                    setEditing(null)
+                    return
+                  }
+                  setShowCreate((v) => !v)
+                }}
               >
-                {showCreate ? caretaker.users.cancelCreate : caretaker.users.addCaregiver}
+                {showCreate || editing ? caretaker.users.cancelCreate : caretaker.users.addCaregiver}
               </Button>
             </div>
 
@@ -213,6 +238,7 @@ function CenterUsersLive() {
                       {caretaker.director.educators.gender}
                     </label>
                     <SelectInput
+                      required
                       value={createForm.gender}
                       onChange={(e) =>
                         setCreateForm((f) => ({
@@ -264,6 +290,37 @@ function CenterUsersLive() {
                     </Button>
                   </div>
                 </form>
+              </Card>
+            ) : null}
+
+            {editing ? (
+              <Card padding="md" className="border-border space-y-3">
+                <h2 className="text-subheading font-semibold text-text">
+                  {caretaker.users.editTitle}
+                </h2>
+                <p className="text-caption text-text-muted">@{editing.username}</p>
+                <UserProfileEditForm
+                  key={editing.id}
+                  initial={editing}
+                  labels={{
+                    fullName: caretaker.users.colFullName,
+                    phone: caretaker.users.colPhone,
+                    gender: caretaker.director.educators.gender,
+                    selectGender: caretaker.director.educators.optionalBlank,
+                    genderMale: caretaker.director.educators.genderLabels.male,
+                    genderFemale: caretaker.director.educators.genderLabels.female,
+                    educationLevel: caretaker.director.educators.educationLevel,
+                    optionalBlank: caretaker.director.educators.optionalBlank,
+                    status: caretaker.users.colStatus,
+                    statusActive: caretaker.users.statusActive,
+                    statusSuspended: caretaker.users.statusSuspended,
+                    save: caretaker.users.saveChanges,
+                    cancel: caretaker.users.cancelCreate,
+                  }}
+                  pending={updateMutation.isPending}
+                  onSubmit={onUpdate}
+                  onCancel={() => setEditing(null)}
+                />
               </Card>
             ) : null}
 
@@ -357,12 +414,21 @@ function CenterUsersLive() {
                                 : caretaker.users.statusSuspended}
                             </td>
                             <td className="py-2.5 td-actions" data-label={caretaker.users.colAction}>
-                              <Link
-                                to={`${USERS_PATH}/${row.id}`}
-                                className="text-primary font-semibold hover:underline"
-                              >
-                                {caretaker.users.viewDetail}
-                              </Link>
+                              <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                  type="button"
+                                  className="text-primary font-semibold hover:underline"
+                                  onClick={() => openEdit(row)}
+                                >
+                                  {caretaker.users.editUser}
+                                </button>
+                                <Link
+                                  to={`${USERS_PATH}/${row.id}`}
+                                  className="text-primary font-semibold hover:underline"
+                                >
+                                  {caretaker.users.viewDetail}
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         ))}

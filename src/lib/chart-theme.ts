@@ -34,6 +34,22 @@ export const CHART_METRIC_COLORS = {
   childrenTransferred: '#2563a8',
 } as const
 
+/**
+ * ECD Mapping–style demographic palette (boys/male blue, girls/female pink, totals grey).
+ * Kept separate from operational metric colors so overview charts stay on brand tokens.
+ */
+export const DEMOGRAPHIC_CHART_COLORS = {
+  boys: '#2563eb',
+  boysWithDisability: '#93c5fd',
+  girls: '#ec4899',
+  girlsWithDisability: '#f9a8d4',
+  withDisability: '#e5e7eb',
+  total: '#9ca3af',
+  male: '#2563eb',
+  female: '#ec4899',
+  unknown: '#94a3b8',
+} as const
+
 /** Sequential palette for categorical slices (compliance status, STED bands, etc.). */
 export const CHART_PALETTE = [
   '#1a6b52',

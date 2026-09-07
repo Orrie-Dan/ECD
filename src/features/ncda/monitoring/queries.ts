@@ -6,13 +6,15 @@ import { useQuery } from '@tanstack/react-query'
 import { env } from '@/config/env'
 import { ncda, queryStaleTimes } from '@/api/query-keys'
 import {
+  fetchMonitoringAttendance,
   fetchMonitoringCompliance,
   fetchMonitoringDashboard,
+  fetchMonitoringFeeding,
+  fetchMonitoringNutrition,
   fetchMonitoringSted,
   fetchMonitoringWash,
 } from '@/api/resources/monitoring'
 import { fetchDistrictReport } from '@/api/resources/reporting'
-import { fetchMonitoringAttendance } from '@/api/resources/monitoring'
 import type { MonitoringDateFilters, MonitoringScopeFilters } from '@/models/monitoring'
 import { listDistrictsPage } from '@/api/resources/geo'
 import { listCentersPage } from '@/api/resources/centers'
@@ -141,6 +143,46 @@ export function useNcdaMonitoringAttendance(
     queryKey: ncda.keys.monitoring.overview({ attendance: true, ...filters as Record<string, unknown> }),
     queryFn: () =>
       fetchMonitoringAttendance({
+        from: filters.from,
+        to: filters.to,
+        districtId: filters.districtId,
+        centerId: filters.centerId,
+        page: 1,
+        pageSize: 100,
+      }),
+    enabled: env.isLive && enabled,
+    staleTime: queryStaleTimes.ncdaMonitoring,
+  })
+}
+
+export function useNcdaMonitoringNutrition(
+  filters: NcdaMonitoringFilters = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ncda.keys.monitoring.overview({ nutrition: true, ...filters as Record<string, unknown> }),
+    queryFn: () =>
+      fetchMonitoringNutrition({
+        from: filters.from,
+        to: filters.to,
+        districtId: filters.districtId,
+        centerId: filters.centerId,
+        page: 1,
+        pageSize: 100,
+      }),
+    enabled: env.isLive && enabled,
+    staleTime: queryStaleTimes.ncdaMonitoring,
+  })
+}
+
+export function useNcdaMonitoringFeeding(
+  filters: NcdaMonitoringFilters = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ncda.keys.monitoring.overview({ feeding: true, ...filters as Record<string, unknown> }),
+    queryFn: () =>
+      fetchMonitoringFeeding({
         from: filters.from,
         to: filters.to,
         districtId: filters.districtId,

@@ -1,7 +1,4 @@
-/**
- * STED resource layer — wraps generated OpenAPI client + mappers.
- * Feature hooks import from here; UI never imports Sted*Dto types.
- */
+import { isNotFoundError } from '@/api/errors'
 import {
   stedControllerCreate,
   stedControllerFindOne,
@@ -29,11 +26,25 @@ export async function fetchChildStedHistory(
   childId: string,
   filters: StedHistoryFilters = {},
 ): Promise<StedHistoryResult> {
-  const dto = await stedControllerGetHistory(childId, {
-    page: filters.page ?? 1,
-    pageSize: filters.pageSize ?? 200,
-  })
-  return mapStedHistoryToViewModel(dto)
+  try {
+    const dto = await stedControllerGetHistory(childId, {
+      page: filters.page ?? 1,
+      pageSize: filters.pageSize ?? 200,
+    })
+    return mapStedHistoryToViewModel(dto)
+  } catch (err) {
+    if (isNotFoundError(err)) {
+      return {
+        childId,
+        items: [],
+        total: 0,
+        page: filters.page ?? 1,
+        pageSize: filters.pageSize ?? 200,
+        totalPages: 1,
+      }
+    }
+    throw err
+  }
 }
 
 /** Fetch all history pages for a child. */

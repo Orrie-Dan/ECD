@@ -48,7 +48,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//, /^\/dashboards\//],
         runtimeCaching: [
           {
             // Google fonts (optional offline typography) — cache-first, not API.
@@ -81,5 +81,13 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['exceljs'],
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
   },
 })

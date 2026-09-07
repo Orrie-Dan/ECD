@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, ChevronRight } from 'lucide-react'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -37,9 +37,19 @@ interface AlertsPageContentProps {
 
 export function AlertsPageContent({ rolePrefix, districtId, centerId }: AlertsPageContentProps) {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { children } = useData()
-  const [category, setCategory] = useState<FollowUpAlertCategory | 'all'>('all')
+  const categoryParam = searchParams.get('category')
+  const initialCategory: FollowUpAlertCategory | 'all' =
+    categoryParam && ALL_CATEGORIES.includes(categoryParam as FollowUpAlertCategory)
+      ? (categoryParam as FollowUpAlertCategory)
+      : 'all'
+  const [category, setCategory] = useState<FollowUpAlertCategory | 'all'>(initialCategory)
   const filterByRoster = rolePrefix === '/caretaker'
+
+  useEffect(() => {
+    setCategory(initialCategory)
+  }, [initialCategory])
 
   const { data, isLoading, isError, refetch } = useFollowUpAlerts(
     {

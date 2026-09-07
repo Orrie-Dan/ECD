@@ -15,16 +15,18 @@ import { env } from '@/config/env'
 import { useDebounce } from '@/hooks/useDebounce'
 import {
   useNcdaCreateUser,
+  useNcdaUpdateUser,
   useNcdaUserCenterOptions,
   useNcdaUserDistrictOptions,
   useNcdaUsersList,
   useNcdaUsersNetwork,
 } from '@/features/ncda/users/queries'
+import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { NCDA_CREATABLE_ROLES } from '@/api/resources/users'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
-import type { ApiUserStatus, UserRole } from '@/api/generated/models'
+import type { ApiUserStatus, PersonSex, UpdateUserDto, UserResponseDto, UserRole } from '@/api/generated/models'
 import { normalizeApiError } from '@/api/errors'
 
 type RoleFilter = 'all' | UserRole
@@ -67,6 +69,7 @@ function NcdaUsersLive() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [showCreate, setShowCreate] = useState(false)
+  const [editing, setEditing] = useState<UserResponseDto | null>(null)
   const [tempSecret, setTempSecret] = useState<string | null>(null)
   const debouncedSearch = useDebounce(search, 300)
   const debouncedCenterSearch = useDebounce(centerSearch, 300)
@@ -93,11 +96,13 @@ function NcdaUsersLive() {
   )
   const list = useNcdaUsersList(listFilters)
   const createMutation = useNcdaCreateUser()
+  const updateMutation = useNcdaUpdateUser(editing?.id ?? '')
 
   const [createForm, setCreateForm] = useState({
     username: '',
     fullName: '',
     phone: '',
+    gender: '' as PersonSex | '',
     role: 'district_focal_person' as UserRole,
     districtId: '',
     centerId: '',
@@ -139,7 +144,10 @@ function NcdaUsersLive() {
           ? { districtId: createForm.districtId }
           : {}),
         ...(createForm.role === 'caregiver' || createForm.role === 'ecd_director'
-          ? { centerId: createForm.centerId }
+          ? {
+              centerId: createForm.centerId,
+              gender: createForm.gender || undefined,
+            }
           : {}),
       })
       setTempSecret(result.temporaryPassword)
@@ -148,6 +156,7 @@ function NcdaUsersLive() {
         username: '',
         fullName: '',
         phone: '',
+        gender: '',
         role: 'district_focal_person',
         districtId: '',
         centerId: '',
@@ -155,6 +164,21 @@ function NcdaUsersLive() {
       showSuccess(ncda.users.createSuccess)
     } catch (err) {
       showError(normalizeApiError(err).message || ncda.users.createError)
+    }
+  }
+
+  function openEdit(row: UserResponseDto) {
+    setShowCreate(false)
+    setEditing(row)
+  }
+
+  async function onUpdate(dto: UpdateUserDto) {
+    try {
+      await updateMutation.mutateAsync(dto)
+      setEditing(null)
+      showSuccess(ncda.users.updateSuccess)
+    } catch (err) {
+      showError(normalizeApiError(err).message || ncda.users.updateError)
     }
   }
 
@@ -209,8 +233,18 @@ function NcdaUsersLive() {
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-subheading font-semibold text-text">{ncda.users.listTitle}</h2>
-              <Button type="button" variant="primary" onClick={() => setShowCreate((v) => !v)}>
-                {showCreate ? ncda.users.cancelCreate : ncda.users.createUser}
+              <Button
+                type="button"
+                variant={showCreate || editing ? 'secondary' : 'primary'}
+                onClick={() => {
+                  if (editing) {
+                    setEditing(null)
+                    return
+                  }
+                  setShowCreate((v) => !v)
+                }}
+              >
+                {showCreate || editing ? ncda.users.cancelCreate : ncda.users.createUser}
               </Button>
             </div>
 
@@ -262,6 +296,7 @@ function NcdaUsersLive() {
                           ...f,
                           role: e.target.value as UserRole,
                           centerId: '',
+                          gender: '',
                         }))
                       }
                     >
@@ -324,6 +359,27 @@ function NcdaUsersLive() {
                       </SelectInput>
                     </div>
                   ) : null}
+                  {createForm.role === 'caregiver' || createForm.role === 'ecd_director' ? (
+                    <div>
+                      <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                        {ncda.users.colGender}
+                      </label>
+                      <SelectInput
+                        required
+                        value={createForm.gender}
+                        onChange={(e) =>
+                          setCreateForm((f) => ({
+                            ...f,
+                            gender: e.target.value as PersonSex | '',
+                          }))
+                        }
+                      >
+                        <option value="">{ncda.users.selectGender}</option>
+                        <option value="male">{ncda.users.genderMale}</option>
+                        <option value="female">{ncda.users.genderFemale}</option>
+                      </SelectInput>
+                    </div>
+                  ) : null}
                   <div className="sm:col-span-2">
                     <Button
                       type="submit"
@@ -335,6 +391,33 @@ function NcdaUsersLive() {
                     </Button>
                   </div>
                 </form>
+              </Card>
+            ) : null}
+
+            {editing ? (
+              <Card padding="md" className="border-border space-y-3">
+                <h3 className="text-subheading font-semibold text-text">{ncda.users.editTitle}</h3>
+                <p className="text-caption text-text-muted">@{editing.username}</p>
+                <UserProfileEditForm
+                  key={editing.id}
+                  initial={editing}
+                  labels={{
+                    fullName: ncda.users.colFullName,
+                    phone: ncda.users.colPhone,
+                    gender: ncda.users.colGender,
+                    selectGender: ncda.users.selectGender,
+                    genderMale: ncda.users.genderMale,
+                    genderFemale: ncda.users.genderFemale,
+                    status: ncda.users.colStatus,
+                    statusActive: ncda.users.statusActive,
+                    statusSuspended: ncda.users.statusSuspended,
+                    save: ncda.users.saveChanges,
+                    cancel: ncda.users.cancelCreate,
+                  }}
+                  pending={updateMutation.isPending}
+                  onSubmit={onUpdate}
+                  onCancel={() => setEditing(null)}
+                />
               </Card>
             ) : null}
 
@@ -499,12 +582,21 @@ function NcdaUsersLive() {
                               {row.center?.name ?? row.district?.name ?? '—'}
                             </td>
                             <td className="py-2.5 td-actions" data-label={ncda.users.colAction}>
-                              <Link
-                                to={`${NCDA_PATHS.users}/${row.id}`}
-                                className="text-primary font-semibold hover:underline"
-                              >
-                                {ncda.users.viewDetail}
-                              </Link>
+                              <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                  type="button"
+                                  className="text-primary font-semibold hover:underline"
+                                  onClick={() => openEdit(row)}
+                                >
+                                  {ncda.users.editUser}
+                                </button>
+                                <Link
+                                  to={`${NCDA_PATHS.users}/${row.id}`}
+                                  className="text-primary font-semibold hover:underline"
+                                >
+                                  {ncda.users.viewDetail}
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         ))}

@@ -6,14 +6,16 @@ import { useAuth } from '@/contexts/AppContext'
 import { ConfirmModal } from '@/components/ui/Modal'
 import { NavDrawer } from '@/components/ui/NavDrawer'
 import { SidebarNavLink, isSidebarNavActive } from '@/components/ui/SidebarNavLink'
-import { NcdaUserMenu } from '@/components/ncda/NcdaUserMenu'
 import {
   NCDA_NAV_GROUPS,
   NCDA_PATHS,
   getNcdaPageTitle,
+  isNcdaFollowupPath,
+  isNcdaMonitoringPath,
   isNcdaOverviewPath,
   type NcdaNavItem,
 } from '@/layouts/ncda/navigation'
+import { NcdaUserMenu } from '@/components/ncda/NcdaUserMenu'
 import { common, messages } from '@/locales/rw/common'
 import { ncda } from '@/locales/rw/ncda'
 import ncdaLogo from '@/assets/ncda-logo.png'
@@ -81,14 +83,21 @@ function NcdaSidebarNav({
           <div className="space-y-0.5" role="group" aria-label={group.label}>
             {group.items.map((item) => {
               const sidebarItem = toSidebarItem(item)
+              const active =
+                item.id === 'monitoring'
+                  ? isNcdaMonitoringPath(pathname)
+                  : item.id === 'follow-up'
+                    ? isNcdaFollowupPath(pathname)
+                    : isSidebarNavActive(pathname, sidebarItem)
               return (
                 <SidebarNavLink
                   key={item.path}
                   item={sidebarItem}
-                  active={isSidebarNavActive(pathname, sidebarItem)}
+                  active={active}
                   collapsed={collapsed}
                   onNavigate={onNavigate}
                   activeStyle="tinted"
+                  pill
                 />
               )
             })}
@@ -191,10 +200,18 @@ export function NcdaLayout() {
                 <Menu size={22} aria-hidden="true" />
               </button>
               <div className="min-w-0">
-                <p className="hidden sm:block text-caption font-semibold uppercase tracking-wide text-accent truncate">
-                  {ncda.brand} · {ncda.brandSubtitle}
-                </p>
-                <h1 className="text-body font-bold text-text leading-tight truncate">{pageTitle}</h1>
+                {isNcdaOverviewPath(location.pathname) ? (
+                  <p className="text-caption font-semibold uppercase tracking-wide text-text-muted truncate">
+                    {ncda.brand} • {ncda.brandSubtitle} / {pageTitle}
+                  </p>
+                ) : (
+                  <>
+                    <p className="hidden sm:block text-caption font-semibold uppercase tracking-wide text-accent truncate">
+                      {ncda.brand} · {ncda.brandSubtitle}
+                    </p>
+                    <h1 className="text-body font-bold text-text leading-tight truncate">{pageTitle}</h1>
+                  </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -205,8 +222,10 @@ export function NcdaLayout() {
         </header>
 
         <main
-          className={`flex-1 w-full mx-auto p-3 sm:p-5 lg:p-6 xl:px-8 pb-8 min-w-0 ${
-            isNcdaOverviewPath(location.pathname) ? 'max-w-[96rem]' : 'max-w-7xl'
+          className={`flex-1 w-full mx-auto min-w-0 pb-8 ${
+            isNcdaOverviewPath(location.pathname)
+              ? 'max-w-[1360px] px-6 pt-5'
+              : 'max-w-7xl p-3 sm:p-5 lg:p-6 xl:px-8'
           }`}
         >
           <Outlet />

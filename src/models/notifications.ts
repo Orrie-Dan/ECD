@@ -1,3 +1,5 @@
+export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical'
+
 export type NotificationType =
   | 'transfer_request'
   | 'transfer_accepted'
@@ -25,16 +27,43 @@ export type NotificationEntityType =
   | 'ecd_center'
   | 'user_account'
 
+export interface NotificationContext {
+  child?: {
+    id: string
+    name: string
+  }
+  center?: {
+    id: string
+    name: string
+  }
+  district?: {
+    id?: string
+    name?: string
+  }
+}
+
+export interface NotificationAction {
+  type: 'route'
+  path: string
+}
+
 export interface NotificationViewModel {
   id: string
-  type: NotificationType
+  type: string
   title: string
   message: string
+  priority: NotificationPriority
   isRead: boolean
   readAt: string | null
-  entityType: NotificationEntityType | null
+  entityType: NotificationEntityType | string | null
   entityId: string | null
-  metadata: Record<string, unknown> | null
+  entity: {
+    type: string
+    id: string
+  } | null
+  context: NotificationContext | null
+  action: NotificationAction | null
+  metadata: unknown
   createdAt: string
 }
 
@@ -50,6 +79,6 @@ export interface NotificationListViewModel {
 export interface NotificationListFilters {
   page?: number
   pageSize?: number
-  type?: NotificationType
+  type?: string
   isRead?: boolean
 }

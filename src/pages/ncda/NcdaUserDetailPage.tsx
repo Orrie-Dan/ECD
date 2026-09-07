@@ -1,11 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { TextInput, SelectInput } from '@/components/ui/FormField'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { NcdaDashboardSection } from '@/components/ncda/NcdaDashboardSection'
@@ -16,10 +15,11 @@ import {
   useNcdaUpdateUser,
   useNcdaUserDetail,
 } from '@/features/ncda/users/queries'
+import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { normalizeApiError } from '@/api/errors'
-import type { ApiUserStatus, UserResponseDto } from '@/api/generated/models'
+import type { PersonSex, UpdateUserDto, UserResponseDto } from '@/api/generated/models'
 
 function formatDate(iso: string | undefined): string {
   if (!iso) return '—'
@@ -137,6 +137,10 @@ function NcdaUserDetailLive() {
                 <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-body">
                   <Field label={ncda.users.colUsername} value={detail.data.username} />
                   <Field label={ncda.users.colFullName} value={detail.data.fullName} />
+                  <Field
+                    label={ncda.users.colGender}
+                    value={genderLabel(detail.data.gender)}
+                  />
                   <Field label={ncda.users.colRole} value={roleLabel(detail.data.role)} />
                   <Field label={ncda.users.colStatus} value={statusLabel(detail.data.status)} />
                   <Field
@@ -205,18 +209,10 @@ function UserEditForm({
 }) {
   const updateMutation = useNcdaUpdateUser(userId)
   const resetMutation = useNcdaResetUserPassword(userId)
-  const [fullName, setFullName] = useState(initial.fullName)
-  const [phone, setPhone] = useState(initial.phone ?? '')
-  const [status, setStatus] = useState<ApiUserStatus>(initial.status)
 
-  async function onSave(e: FormEvent) {
-    e.preventDefault()
+  async function onSave(dto: UpdateUserDto) {
     try {
-      await updateMutation.mutateAsync({
-        fullName: fullName.trim(),
-        phone: phone.trim() || null,
-        status,
-      })
+      await updateMutation.mutateAsync(dto)
       showSuccess(ncda.users.updateSuccess)
       onSaved()
     } catch (err) {
@@ -239,40 +235,23 @@ function UserEditForm({
   return (
     <Card padding="md" className="border-border space-y-4">
       <h2 className="text-subheading font-semibold text-text">{ncda.users.editTitle}</h2>
-      <form className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={onSave}>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {ncda.users.colFullName}
-          </label>
-          <TextInput required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {ncda.users.colPhone}
-          </label>
-          <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} />
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {ncda.users.colStatus}
-          </label>
-          <SelectInput
-            value={status}
-            onChange={(e) => setStatus(e.target.value as ApiUserStatus)}
-          >
-            <option value="ACTIVE">{ncda.users.statusActive}</option>
-            <option value="SUSPENDED">{ncda.users.statusSuspended}</option>
-          </SelectInput>
-        </div>
-        <div className="sm:col-span-2 flex flex-wrap gap-2">
-          <Button
-            type="submit"
-            variant="primary"
-            loading={updateMutation.isPending}
-            disabled={updateMutation.isPending}
-          >
-            {ncda.users.saveChanges}
-          </Button>
+      <UserProfileEditForm
+        initial={initial}
+        labels={{
+          fullName: ncda.users.colFullName,
+          phone: ncda.users.colPhone,
+          gender: ncda.users.colGender,
+          selectGender: ncda.users.selectGender,
+          genderMale: ncda.users.genderMale,
+          genderFemale: ncda.users.genderFemale,
+          status: ncda.users.colStatus,
+          statusActive: ncda.users.statusActive,
+          statusSuspended: ncda.users.statusSuspended,
+          save: ncda.users.saveChanges,
+        }}
+        pending={updateMutation.isPending}
+        onSubmit={onSave}
+        extraActions={
           <Button
             type="button"
             variant="secondary"
@@ -282,8 +261,8 @@ function UserEditForm({
           >
             {ncda.users.resetPassword}
           </Button>
-        </div>
-      </form>
+        }
+      />
     </Card>
   )
 }
@@ -295,6 +274,12 @@ function Field({ label, value }: { label: string; value: string }) {
       <dd className="font-semibold text-text">{value}</dd>
     </div>
   )
+}
+
+function genderLabel(gender: PersonSex | null | undefined): string {
+  if (gender === 'male') return ncda.users.genderMale
+  if (gender === 'female') return ncda.users.genderFemale
+  return '—'
 }
 
 function roleLabel(role: string): string {

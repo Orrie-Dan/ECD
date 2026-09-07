@@ -69,6 +69,9 @@ export {
   useNcdaMonitoringSted,
   useNcdaMonitoringCompliance,
   useNcdaMonitoringWash,
+  useNcdaMonitoringAttendance,
+  useNcdaMonitoringNutrition,
+  useNcdaMonitoringFeeding,
   useNcdaMonitoringDistrictOptions,
   NCDA_MONITORING_UNAVAILABLE,
 } from './monitoring/queries'
@@ -85,4 +88,10 @@ export {
   useNcdaOverviewAdminUnits,
   useNcdaOverviewCenters,
 } from './overview/queries'
-export { buildNcdaMapLayers, type NcdaMapLayerId } from './overview/layers'
+export { useNcdaOverviewData } from './overview/useNcdaOverviewData'
+export {
+  buildNcdaMapLayers,
+  buildNcdaMapMetrics,
+  type NcdaMapLayerId,
+} from './overview/layers'
+export { getDistrictPerformanceBand } from './overview/performance-band'

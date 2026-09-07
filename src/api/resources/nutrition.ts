@@ -1,7 +1,4 @@
-/**
- * Nutrition resource layer — assessment-focused wrappers over nutrition screenings + alerts.
- * Also exposes a shared screening roster used by Growth (measurements) and Nutrition (assessments).
- */
+import { isNotFoundError } from '@/api/errors'
 import {
   nutritionControllerCreateScreening,
   nutritionControllerGetAlerts,
@@ -45,12 +42,19 @@ export async function fetchNutritionHistory(childId: string): Promise<NutritionH
 
 /** Shared per-child history for Growth dual-mapping. */
 export async function fetchScreeningHistory(childId: string): Promise<GrowthHistoryResult> {
-  const dto = await nutritionControllerGetHistory(childId)
-  return {
-    childId: dto.childId,
-    measurements: dto.items.map(mapScreeningToMeasurement),
-    assessments: dto.items.map(mapScreeningToGrowthAssessment),
-    total: dto.total,
+  try {
+    const dto = await nutritionControllerGetHistory(childId)
+    return {
+      childId: dto.childId,
+      measurements: dto.items.map(mapScreeningToMeasurement),
+      assessments: dto.items.map(mapScreeningToGrowthAssessment),
+      total: dto.total,
+    }
+  } catch (err) {
+    if (isNotFoundError(err)) {
+      return { childId, measurements: [], assessments: [], total: 0 }
+    }
+    throw err
   }
 }
 

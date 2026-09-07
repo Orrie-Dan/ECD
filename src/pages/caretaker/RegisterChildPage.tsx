@@ -17,6 +17,8 @@ import {
 } from '@/lib/child-form'
 import { env } from '@/config/env'
 import { productionMockWriteBlockedMessage } from '@/lib/live-api-guard'
+import { getLocalStore } from '@/storage'
+import { getChildCreateOutboxStatus } from '@/features/children/local-children'
 import type { ChildRegistrationForm } from '@/types'
 
 export function RegisterChildPage() {
@@ -66,14 +68,26 @@ export function RegisterChildPage() {
 
     setSubmitting(true)
     try {
-      await addChild({
+      const created = await addChild({
         ...formToChildPayload(form),
         centerId: user?.centerId,
         centerName: user?.centerName,
         _form: form,
       })
-      const offlineSave = env.isLive
-      showSuccess(offlineSave ? messages.childRegisteredLocal : messages.childRegistered)
+      if (env.isLive) {
+        const outboxStatus = await getChildCreateOutboxStatus(getLocalStore(), created.id)
+        if (outboxStatus === 'blocked') {
+          showError(messages.childRegisteredVillageBlocked)
+        } else {
+          showSuccess(
+            outboxStatus === 'pending'
+              ? messages.childRegisteredLocal
+              : messages.childRegistered,
+          )
+        }
+      } else {
+        showSuccess(messages.childRegistered)
+      }
       navigate('/caretaker/abana')
     } catch (err) {
       showError(messageForMutationFailure(err))

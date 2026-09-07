@@ -11,6 +11,11 @@ import type { NutritionAlert, NutritionAlertKind } from '@/lib/nutrition-utils'
 
 interface NutritionAlertListProps {
   alerts: NutritionAlert[]
+  /** Base path for child detail links (default: district roster). */
+  childListPath?: string
+  /** When set, overrides slug-based paths (e.g. NCDA UUID routes). */
+  childDetailPath?: (childId: string) => string
+  viewChildLabel?: string
 }
 
 const KIND_LABEL: Record<NutritionAlertKind, string> = {
@@ -61,7 +66,12 @@ function AlertIcon({ kind }: { kind: NutritionAlertKind }) {
   return <Ruler size={18} aria-hidden />
 }
 
-export function NutritionAlertList({ alerts }: NutritionAlertListProps) {
+export function NutritionAlertList({
+  alerts,
+  childListPath = '/district/abana',
+  childDetailPath,
+  viewChildLabel = district.growth.viewChild,
+}: NutritionAlertListProps) {
   return (
     <section className="space-y-3" aria-labelledby="nutrition-alerts-heading">
       <h2 id="nutrition-alerts-heading" className="text-subheading text-text">
@@ -113,13 +123,17 @@ export function NutritionAlertList({ alerts }: NutritionAlertListProps) {
 
                 <div className="mt-auto pt-3 border-t border-border">
                   <Link
-                    to={buildChildDetailPath('/district/abana', {
-                      id: alert.childId,
-                      fullName: alert.childName,
-                    })}
+                    to={
+                      childDetailPath
+                        ? childDetailPath(alert.childId)
+                        : buildChildDetailPath(childListPath, {
+                            id: alert.childId,
+                            fullName: alert.childName,
+                          })
+                    }
                     className="inline-flex items-center text-caption font-semibold text-primary hover:underline rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   >
-                    {district.growth.viewChild}
+                    {viewChildLabel}
                   </Link>
                 </div>
               </Card>

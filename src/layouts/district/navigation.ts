@@ -44,6 +44,7 @@ export const DISTRICT_PATHS = {
   dashboard: '/district',
   centers: '/district/ibigo',
   children: '/district/abana',
+  demographics: '/district/demografi',
   monitoring: '/district/imikorere',
   monitoringAttendance: '/district/imikorere/ubwitabire',
   monitoringGrowth: '/district/imikorere/imikurire',
@@ -54,7 +55,7 @@ export const DISTRICT_PATHS = {
   book: '/district/igitabo',
   caregivers: '/district/abakoresha',
   settings: '/district/igenamiterere',
-  /** Deprecated — GIS lives on Incamake. */
+  /** District GIS map page (`?centerId=` focuses a center). */
   gis: '/district/ikarita',
 } as const
 

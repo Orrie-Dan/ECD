@@ -1,4 +1,4 @@
-import { X, Calendar, CalendarDays, MapPin, AlertTriangle } from 'lucide-react'
+import { X, Calendar, CalendarDays, MapPin, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { SelectInput } from '@/components/ui/FormField'
 import { district } from '@/locales/rw/district'
@@ -9,7 +9,8 @@ export interface SchoolsFilters {
   period: EnrollmentPeriod
   month: string
   sector: string
-  monitoringStatus: 'all' | 'good' | 'followup' | 'critical'
+  /** ECD center operational status — show both; filter does not hide unlabeled rows. */
+  centerStatus: 'all' | 'active' | 'inactive'
 }
 
 interface SchoolsFilterBarProps {
@@ -28,11 +29,10 @@ const periodOptions: { value: EnrollmentPeriod; label: string }[] = [
   { value: 'year', label: district.schools.periodYear },
 ]
 
-const monitoringStatusOptions: { value: SchoolsFilters['monitoringStatus']; label: string }[] = [
+const centerStatusOptions: { value: SchoolsFilters['centerStatus']; label: string }[] = [
   { value: 'all', label: district.schools.statusAll },
-  { value: 'good', label: district.schools.statusGood },
-  { value: 'followup', label: district.schools.statusFollowup },
-  { value: 'critical', label: district.schools.statusCritical },
+  { value: 'active', label: district.schools.statusActive },
+  { value: 'inactive', label: district.schools.statusInactive },
 ]
 
 const monthOptions = CHART_MONTH_OPTIONS
@@ -57,10 +57,10 @@ export function SchoolsFilterBar({
     onFiltersChange({ ...filters, sector: e.target.value })
   }
 
-  const handleMonitoringStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleCenterStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFiltersChange({
       ...filters,
-      monitoringStatus: e.target.value as SchoolsFilters['monitoringStatus'],
+      centerStatus: e.target.value as SchoolsFilters['centerStatus'],
     })
   }
 
@@ -117,14 +117,14 @@ export function SchoolsFilterBar({
         </div>
 
         <div className="flex items-center gap-2 min-w-0">
-          <AlertTriangle size={16} className="text-text-muted shrink-0" />
+          <Building2 size={16} className="text-text-muted shrink-0" />
           <SelectInput
-            value={filters.monitoringStatus}
-            onChange={handleMonitoringStatusChange}
+            value={filters.centerStatus}
+            onChange={handleCenterStatusChange}
             className="min-h-10! w-full"
             aria-label={district.schools.filterStatus}
           >
-            {monitoringStatusOptions.map((opt) => (
+            {centerStatusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>

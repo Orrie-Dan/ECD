@@ -51,6 +51,7 @@ import { DistrictDashboardPage } from '@/pages/district/DashboardPage'
 import { CentersPage } from '@/pages/district/CentersPage'
 import { CenterDetailPage } from '@/pages/district/CenterDetailPage'
 import { DistrictChildrenPage } from '@/pages/district/ChildrenPage'
+import { DistrictChildrenDemographicsPage } from '@/pages/district/ChildrenDemographicsPage'
 import { DistrictChildDetailPage } from '@/pages/district/DistrictChildDetailPage'
 import { DistrictReportsPage } from '@/pages/district/ReportsPage'
 import { DistrictAttendancePage } from '@/pages/district/AttendanceMonitoringPage'
@@ -63,6 +64,7 @@ import { DistrictNotificationsPage } from '@/pages/district/NotificationsPage'
 import { DistrictAlertsPage } from '@/pages/district/AlertsPage'
 import { DistrictMonitoringPage } from '@/pages/district/DistrictMonitoringPage'
 import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
+import { GisAnalyticsPage } from '@/pages/district/GisAnalyticsPage'
 import { DistrictCaregiversPage } from '@/pages/district/DistrictCaregiversPage'
 import { DistrictCaregiverDetailPage } from '@/pages/district/DistrictCaregiverDetailPage'
 import {
@@ -71,7 +73,6 @@ import {
 } from '@/pages/district/registers/DistrictRegisterPages'
 import { NcdaLayout } from '@/layouts/NcdaLayout'
 import { NcdaNotificationsPage } from '@/pages/ncda/NotificationsPage'
-import { NcdaAlertsPage } from '@/pages/ncda/AlertsPage'
 import {
   NcdaDashboardPage,
   NcdaDistrictsPage,
@@ -80,26 +81,41 @@ import {
   NcdaCenterDetailPage,
   NcdaChildrenPage,
   NcdaChildDetailPage,
+  NcdaChildrenDemographicsPage,
   NcdaUsersPage,
   NcdaUserDetailPage,
   NcdaCompliancePage,
   NcdaWashPage,
   NcdaMonitoringPage,
+  NcdaFollowUpPage,
   NcdaAuditLogsPage,
   NcdaAuditLogDetailPage,
   NcdaRolesPage,
   NcdaSettingsPage,
 } from '@/pages/ncda/NcdaPages'
+import { NcdaAttendanceMonitoringPage } from '@/pages/ncda/monitoring/NcdaAttendanceMonitoringPage'
+import { NcdaGrowthMonitoringPage } from '@/pages/ncda/monitoring/NcdaGrowthMonitoringPage'
+import { NcdaFeedingMonitoringPage } from '@/pages/ncda/monitoring/NcdaFeedingMonitoringPage'
+import { NcdaStedMonitoringPage } from '@/pages/ncda/monitoring/NcdaStedMonitoringPage'
 import {
   NcdaRegisterHubPage,
   NcdaRegisterSectionPage,
 } from '@/pages/ncda/registers/NcdaRegisterPages'
+import { NCDA_LEGACY_REDIRECTS, NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { useAuth } from '@/contexts/AppContext'
 import { ECD_CENTER_ROLES, homePathForUser } from '@/api/roles'
 
 function RedirectWithSearch({ to }: { to: string }) {
   const { search } = useLocation()
   return <Navigate to={`${to}${search}`} replace />
+}
+
+function RedirectNutritionAlertsToFollowUp() {
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  if (!params.has('category')) params.set('category', 'nutrition')
+  const query = params.toString()
+  return <Navigate to={`${NCDA_PATHS.followUp}${query ? `?${query}` : ''}`} replace />
 }
 
 function HomeRoute() {
@@ -188,6 +204,10 @@ export default function App() {
                     <Route path="/district/ibigo/:id" element={<CenterDetailPage />} />
                     <Route path="/district/abana" element={<DistrictChildrenPage />} />
                     <Route path="/district/abana/:id" element={<DistrictChildDetailPage />} />
+                    <Route
+                      path="/district/demografi"
+                      element={<DistrictChildrenDemographicsPage />}
+                    />
                     <Route path="/district/abakoresha" element={<DistrictCaregiversPage />} />
                     <Route path="/district/abakoresha/:userId" element={<DistrictCaregiverDetailPage />} />
                     <Route path="/district/imikorere" element={<DistrictMonitoringPage />} />
@@ -226,10 +246,7 @@ export default function App() {
                       path="/district/gukurikirana/ivuriro"
                       element={<Navigate to="/district/referrals" replace />}
                     />
-                    <Route
-                      path="/district/ikarita"
-                      element={<Navigate to={DISTRICT_PATHS.dashboard} replace />}
-                    />
+                    <Route path="/district/ikarita" element={<GisAnalyticsPage />} />
                     <Route
                       path="/district/ibikurikiranywa"
                       element={<Navigate to={DISTRICT_PATHS.followup} replace />}
@@ -251,7 +268,33 @@ export default function App() {
                     <Route path="/ncda" element={<Navigate to="/ncda/dashboard" replace />} />
                     <Route path="/ncda/overview" element={<NcdaDashboardPage />} />
                     <Route path="/ncda/dashboard" element={<NcdaDashboardPage />} />
-                    <Route path="/ncda/monitoring" element={<NcdaMonitoringPage />} />
+                    <Route path={NCDA_PATHS.monitoring} element={<NcdaMonitoringPage />} />
+                    <Route
+                      path={NCDA_PATHS.monitoringAttendance}
+                      element={<NcdaAttendanceMonitoringPage />}
+                    />
+                    <Route
+                      path={NCDA_PATHS.monitoringGrowth}
+                      element={<NcdaGrowthMonitoringPage />}
+                    />
+                    <Route
+                      path={NCDA_PATHS.monitoringFeeding}
+                      element={<NcdaFeedingMonitoringPage />}
+                    />
+                    <Route path={NCDA_PATHS.monitoringSted} element={<NcdaStedMonitoringPage />} />
+                    <Route path={NCDA_PATHS.followUp} element={<NcdaFollowUpPage />} />
+                    <Route
+                      path={NCDA_LEGACY_REDIRECTS.monitoring}
+                      element={<RedirectWithSearch to={NCDA_PATHS.monitoring} />}
+                    />
+                    <Route
+                      path={NCDA_LEGACY_REDIRECTS.monitoringNutrition}
+                      element={<RedirectNutritionAlertsToFollowUp />}
+                    />
+                    <Route
+                      path={NCDA_LEGACY_REDIRECTS.followUp}
+                      element={<RedirectWithSearch to={NCDA_PATHS.followUp} />}
+                    />
                     <Route path="/ncda/inspections" element={<NcdaCompliancePage />} />
                     <Route
                       path="/ncda/reports"
@@ -269,6 +312,10 @@ export default function App() {
                     <Route path="/ncda/centers/:centerId" element={<NcdaCenterDetailPage />} />
                     <Route path="/ncda/children" element={<NcdaChildrenPage />} />
                     <Route path="/ncda/children/:childId" element={<NcdaChildDetailPage />} />
+                    <Route
+                      path="/ncda/demographics"
+                      element={<NcdaChildrenDemographicsPage />}
+                    />
                     <Route path="/ncda/igitabo" element={<NcdaRegisterHubPage />} />
                     <Route
                       path="/ncda/igitabo/:section"
@@ -279,7 +326,6 @@ export default function App() {
                       element={<RedirectWithSearch to="/ncda/inspections" />}
                     />
                     <Route path="/ncda/amatangazo" element={<NcdaNotificationsPage />} />
-                    <Route path="/ncda/impugukirwa" element={<NcdaAlertsPage />} />
                     <Route path="/ncda/wash" element={<NcdaWashPage />} />
                     <Route
                       path="/ncda/devices"

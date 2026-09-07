@@ -11,6 +11,8 @@ import { META_KEYS } from '@/storage/types'
 import { listChildrenFromLocal, localChildToViewModel } from '@/features/children/local-children'
 import { mapChildListItemToLocalSeed } from '@/features/children/seed-from-rest'
 import { networkState } from '@/network/network-state'
+import { shouldSkipRemoteChildHistory } from '@/sync/child-sync-state'
+import { isNotFoundError } from '@/api/errors'
 import type { ChildrenListFilters, ChildrenListResult } from '@/models/child'
 
 export type ChildrenListQueryResult = ChildrenListResult & {
@@ -102,9 +104,34 @@ export function useChildTransferHistory(
 ) {
   return useQuery({
     queryKey: children.keys.transferHistory(childId ?? '', filters),
-    queryFn: () => {
+    queryFn: async () => {
       if (!childId) throw new Error('Child id required')
-      return fetchChildTransferHistory(childId, filters)
+      const store = getLocalStore()
+      if (await shouldSkipRemoteChildHistory(store, childId)) {
+        return {
+          childId,
+          items: [],
+          total: 0,
+          page: filters.page ?? 1,
+          pageSize: filters.pageSize ?? 50,
+          totalPages: 0,
+        }
+      }
+      try {
+        return await fetchChildTransferHistory(childId, filters)
+      } catch (err) {
+        if (isNotFoundError(err)) {
+          return {
+            childId,
+            items: [],
+            total: 0,
+            page: filters.page ?? 1,
+            pageSize: filters.pageSize ?? 50,
+            totalPages: 0,
+          }
+        }
+        throw err
+      }
     },
     enabled: env.isLive && enabled && Boolean(childId),
     staleTime: queryStaleTimes.childrenTransferHistory,

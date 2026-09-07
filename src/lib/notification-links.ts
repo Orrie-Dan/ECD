@@ -38,6 +38,7 @@ export function getNotificationLinkFor(input: NotificationLinkInput): string {
     if (entityType === 'child' && entityId) {
       return `${prefix}/abana/${entityId}?tab=attendance`
     }
+    if (prefix === '/ncda') return `${prefix}/gukurikirana/impugukirwa`
     return `${prefix}/impugukirwa`
   }
 
@@ -47,7 +48,7 @@ export function getNotificationLinkFor(input: NotificationLinkInput): string {
       return entityId ? `${prefix}/ibigo/${entityId}` : DISTRICT_PATHS.monitoringAttendance
     }
     if (prefix === '/ncda') {
-      return entityId ? `${prefix}/centers/${entityId}` : `${prefix}/monitoring`
+      return entityId ? `${prefix}/centers/${entityId}` : `${prefix}/gukurikirana/ubwitabire`
     }
     return `${prefix}/impugukirwa`
   }

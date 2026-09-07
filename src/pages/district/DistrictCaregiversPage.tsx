@@ -17,18 +17,30 @@ import {
   useDistrictCaregiverCenterOptions,
   useDistrictCaregiversList,
   useDistrictCreateCaregiver,
+  useDistrictUpdateCaregiver,
 } from '@/features/district/users/queries'
+import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
+import { DISTRICT_CREATABLE_ROLES } from '@/api/resources/users'
 import { district } from '@/locales/rw/district'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
-import type { ApiUserStatus } from '@/api/generated/models'
+import type { ApiUserStatus, PersonSex, UpdateUserDto, UserResponseDto, UserRole } from '@/api/generated/models'
 import { normalizeApiError } from '@/api/errors'
 
 type StatusFilter = 'all' | ApiUserStatus
+type RoleFilter = 'all' | 'caregiver' | 'ecd_director'
+type CreatableCenterRole = (typeof DISTRICT_CREATABLE_ROLES)[number]
 
 const CAREGIVERS_PATH = '/district/abakoresha'
 
+function roleLabel(role: UserRole | string | undefined): string {
+  if (role === 'ecd_director') return district.caregivers.roleDirector
+  if (role === 'caregiver') return district.caregivers.roleCaregiver
+  return role ?? '—'
+}
+
 /**
- * District caregiver account management — server-paginated list + create (caregiver only).
+ * District center-staff account management — server-paginated list + create
+ * (caregiver or ECD director).
  */
 export function DistrictCaregiversPage() {
   if (!env.isLive) {
@@ -59,14 +71,19 @@ function DistrictCaregiversLive() {
   const [searchParams, setSearchParams] = useSearchParams()
   const presetCenterId = searchParams.get('centerId')?.trim() ?? ''
   const shouldOpenCreate = searchParams.get('create') === '1'
+  const presetRole = searchParams.get('role')?.trim()
+  const initialCreateRole: CreatableCenterRole =
+    presetRole === 'ecd_director' ? 'ecd_director' : 'caregiver'
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all')
   const [centerId, setCenterId] = useState(presetCenterId || 'all')
   const [centerSearch, setCenterSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [showCreate, setShowCreate] = useState(shouldOpenCreate)
+  const [editing, setEditing] = useState<UserResponseDto | null>(null)
   const [tempSecret, setTempSecret] = useState<string | null>(null)
 
   const debouncedSearch = useDebounce(search, 300)
@@ -86,21 +103,25 @@ function DistrictCaregiversLive() {
       search: debouncedSearch.trim() || undefined,
       status: status === 'all' ? undefined : status,
       centerId: centerId === 'all' ? undefined : centerId,
+      role: roleFilter === 'all' ? null : roleFilter,
       page,
       pageSize,
     }),
-    [debouncedSearch, status, centerId, page, pageSize],
+    [debouncedSearch, status, centerId, roleFilter, page, pageSize],
   )
 
   const filterCenters = useDistrictCaregiverCenterOptions(debouncedCenterSearch)
   const createCenters = useDistrictCaregiverCenterOptions(undefined)
   const list = useDistrictCaregiversList(listFilters)
   const createMutation = useDistrictCreateCaregiver()
+  const updateMutation = useDistrictUpdateCaregiver(editing?.id ?? '')
 
   const [createForm, setCreateForm] = useState({
     username: '',
     fullName: '',
     phone: '',
+    gender: '' as PersonSex | '',
+    role: initialCreateRole as CreatableCenterRole,
     centerId: presetCenterId,
   })
 
@@ -109,6 +130,12 @@ function DistrictCaregiversLive() {
       setCreateForm((f) => ({ ...f, centerId: presetCenterId }))
     }
   }, [presetCenterId])
+
+  useEffect(() => {
+    if (presetRole === 'ecd_director' || presetRole === 'caregiver') {
+      setCreateForm((f) => ({ ...f, role: presetRole }))
+    }
+  }, [presetRole])
 
   const total = list.data?.total ?? 0
   const totalPages = list.data?.totalPages ?? 1
@@ -119,12 +146,18 @@ function DistrictCaregiversLive() {
 
   async function onCreate(e: FormEvent) {
     e.preventDefault()
+    if (!DISTRICT_CREATABLE_ROLES.includes(createForm.role)) {
+      showError(district.caregivers.createError)
+      return
+    }
+    const createdRole = createForm.role
     try {
       const result = await createMutation.mutateAsync({
         username: createForm.username.trim(),
         fullName: createForm.fullName.trim(),
         phone: createForm.phone.trim() || undefined,
-        role: 'caregiver',
+        gender: createForm.gender || undefined,
+        role: createForm.role,
         centerId: createForm.centerId,
       })
       setTempSecret(result.temporaryPassword)
@@ -133,17 +166,39 @@ function DistrictCaregiversLive() {
         username: '',
         fullName: '',
         phone: '',
+        gender: '',
+        role: 'caregiver',
         centerId: presetCenterId || '',
       })
-      if (shouldOpenCreate || presetCenterId) {
+      if (shouldOpenCreate || presetCenterId || presetRole) {
         const next = new URLSearchParams(searchParams)
         next.delete('create')
+        next.delete('role')
         if (!presetCenterId) next.delete('centerId')
         setSearchParams(next, { replace: true })
       }
-      showSuccess(district.caregivers.createSuccess)
+      showSuccess(
+        createdRole === 'ecd_director'
+          ? district.caregivers.createDirectorSuccess
+          : district.caregivers.createSuccess,
+      )
     } catch (err) {
       showError(normalizeApiError(err).message || district.caregivers.createError)
+    }
+  }
+
+  function openEdit(row: UserResponseDto) {
+    setShowCreate(false)
+    setEditing(row)
+  }
+
+  async function onUpdate(dto: UpdateUserDto) {
+    try {
+      await updateMutation.mutateAsync(dto)
+      setEditing(null)
+      showSuccess(district.caregivers.updateSuccess)
+    } catch (err) {
+      showError(normalizeApiError(err).message || district.caregivers.updateError)
     }
   }
 
@@ -176,10 +231,16 @@ function DistrictCaregiversLive() {
               </p>
               <Button
                 type="button"
-                variant={showCreate ? 'secondary' : 'primary'}
-                onClick={() => setShowCreate((v) => !v)}
+                variant={showCreate || editing ? 'secondary' : 'primary'}
+                onClick={() => {
+                  if (editing) {
+                    setEditing(null)
+                    return
+                  }
+                  setShowCreate((v) => !v)
+                }}
               >
-                {showCreate ? district.caregivers.cancelCreate : district.caregivers.addCaregiver}
+                {showCreate || editing ? district.caregivers.cancelCreate : district.caregivers.addUser}
               </Button>
             </div>
 
@@ -227,6 +288,46 @@ function DistrictCaregiversLive() {
                   </div>
                   <div>
                     <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                      {district.caregivers.colGender}
+                    </label>
+                    <SelectInput
+                      required
+                      value={createForm.gender}
+                      onChange={(e) =>
+                        setCreateForm((f) => ({
+                          ...f,
+                          gender: e.target.value as PersonSex | '',
+                        }))
+                      }
+                    >
+                      <option value="">{district.caregivers.selectGender}</option>
+                      <option value="male">{district.caregivers.genderMale}</option>
+                      <option value="female">{district.caregivers.genderFemale}</option>
+                    </SelectInput>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                      {district.caregivers.colRole}
+                    </label>
+                    <SelectInput
+                      required
+                      value={createForm.role}
+                      onChange={(e) =>
+                        setCreateForm((f) => ({
+                          ...f,
+                          role: e.target.value as CreatableCenterRole,
+                        }))
+                      }
+                    >
+                      <option value="caregiver">{district.caregivers.roleCaregiver}</option>
+                      <option value="ecd_director">{district.caregivers.roleDirector}</option>
+                    </SelectInput>
+                    <p className="mt-1 text-caption text-text-muted">
+                      {district.caregivers.roleCreateHint}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-caption font-semibold text-text-secondary">
                       {district.caregivers.centerFilter}
                     </label>
                     <SelectInput
@@ -245,9 +346,6 @@ function DistrictCaregiversLive() {
                       ))}
                     </SelectInput>
                   </div>
-                  <p className="sm:col-span-2 text-caption text-text-muted">
-                    {district.caregivers.roleFixed}
-                  </p>
                   <div className="sm:col-span-2">
                     <Button
                       type="submit"
@@ -262,8 +360,37 @@ function DistrictCaregiversLive() {
               </Card>
             ) : null}
 
+            {editing ? (
+              <Card padding="md" className="border-border space-y-3">
+                <h2 className="text-subheading font-semibold text-text">
+                  {district.caregivers.editTitle}
+                </h2>
+                <p className="text-caption text-text-muted">@{editing.username}</p>
+                <UserProfileEditForm
+                  key={editing.id}
+                  initial={editing}
+                  labels={{
+                    fullName: district.caregivers.colFullName,
+                    phone: district.caregivers.colPhone,
+                    gender: district.caregivers.colGender,
+                    selectGender: district.caregivers.selectGender,
+                    genderMale: district.caregivers.genderMale,
+                    genderFemale: district.caregivers.genderFemale,
+                    status: district.caregivers.colStatus,
+                    statusActive: district.caregivers.statusActive,
+                    statusSuspended: district.caregivers.statusSuspended,
+                    save: district.caregivers.saveChanges,
+                    cancel: district.caregivers.cancelCreate,
+                  }}
+                  pending={updateMutation.isPending}
+                  onSubmit={onUpdate}
+                  onCancel={() => setEditing(null)}
+                />
+              </Card>
+            ) : null}
+
             <Card padding="md" className="border-border space-y-4">
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
                 <div>
                   <label
                     htmlFor="district-caregiver-search"
@@ -288,6 +415,22 @@ function DistrictCaregiversLive() {
                       placeholder={district.caregivers.searchPlaceholder}
                     />
                   </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                    {district.caregivers.colRole}
+                  </label>
+                  <SelectInput
+                    value={roleFilter}
+                    onChange={(e) => {
+                      setRoleFilter(e.target.value as RoleFilter)
+                      setPage(1)
+                    }}
+                  >
+                    <option value="all">{district.caregivers.roleAll}</option>
+                    <option value="caregiver">{district.caregivers.roleCaregiver}</option>
+                    <option value="ecd_director">{district.caregivers.roleDirector}</option>
+                  </SelectInput>
                 </div>
                 <div>
                   <label className="mb-1 block text-caption font-semibold text-text-secondary">
@@ -344,7 +487,7 @@ function DistrictCaregiversLive() {
                 <Skeleton height="8rem" className="w-full" rounded="md" />
               ) : items.length === 0 ? (
                 <p className="text-body text-text-secondary">
-                  {debouncedSearch || status !== 'all' || centerId !== 'all'
+                  {debouncedSearch || status !== 'all' || centerId !== 'all' || roleFilter !== 'all'
                     ? district.caregivers.emptyFiltered
                     : district.caregivers.empty}
                 </p>
@@ -359,6 +502,9 @@ function DistrictCaregiversLive() {
                           </th>
                           <th className="py-2 pr-3 font-semibold">
                             {district.caregivers.colUsername}
+                          </th>
+                          <th className="py-2 pr-3 font-semibold">
+                            {district.caregivers.colRole}
                           </th>
                           <th className="py-2 pr-3 font-semibold">
                             {district.caregivers.colCenter}
@@ -376,6 +522,9 @@ function DistrictCaregiversLive() {
                           <tr key={row.id} className="border-b border-border/70">
                             <td className="py-2.5 pr-3 font-medium" data-label={district.caregivers.colFullName}>{row.fullName}</td>
                             <td className="py-2.5 pr-3" data-label={district.caregivers.colUsername}>{row.username}</td>
+                            <td className="py-2.5 pr-3" data-label={district.caregivers.colRole}>
+                              {roleLabel(row.role)}
+                            </td>
                             <td className="py-2.5 pr-3" data-label={district.caregivers.colCenter}>
                               {row.center
                                 ? `${row.center.name} (${row.center.code})`
@@ -387,12 +536,21 @@ function DistrictCaregiversLive() {
                                 : district.caregivers.statusSuspended}
                             </td>
                             <td className="py-2.5 td-actions" data-label={district.caregivers.colAction}>
-                              <Link
-                                to={`${CAREGIVERS_PATH}/${row.id}`}
-                                className="text-primary font-semibold hover:underline"
-                              >
-                                {district.caregivers.viewDetail}
-                              </Link>
+                              <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                  type="button"
+                                  className="text-primary font-semibold hover:underline"
+                                  onClick={() => openEdit(row)}
+                                >
+                                  {district.caregivers.editUser}
+                                </button>
+                                <Link
+                                  to={`${CAREGIVERS_PATH}/${row.id}`}
+                                  className="text-primary font-semibold hover:underline"
+                                >
+                                  {district.caregivers.viewDetail}
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         ))}

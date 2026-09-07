@@ -103,6 +103,21 @@ describe('follow-up alert formatting', () => {
     expect(absence.detail).toContain('4')
     expect(absence.detail).not.toMatch(/no attendance recorded/i)
 
+    const overdue = formatFollowUpAlert(
+      alert({
+        category: 'nutrition',
+        code: 'NUTRITION_SCREENING_OVERDUE',
+        title: 'Screening overdue',
+        description: "Paul hasn't been screened in 30 days",
+        childId: 'child-paul',
+        childName: 'Paul Victor',
+      }),
+      [activePaul],
+    )
+    expect(overdue.detail).toContain('Paul Victor')
+    expect(overdue.detail).toContain('30')
+    expect(overdue.detail).not.toMatch(/hasn't been screened/i)
+
     const capped = formatFollowUpAlert(
       alert({
         category: 'attendance',

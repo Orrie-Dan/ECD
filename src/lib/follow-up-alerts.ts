@@ -1,7 +1,9 @@
-import { notificationsLocale as t } from '@/locales/rw/notifications'
+import { ncdaFollowUpPath, ncdaNutritionAlertsPath } from '@/lib/ncda-drill-down'
 import { resolveAbsentDaysInWindow } from '@/lib/attendance-absence-days'
 import { buildChildDetailPath, slugifyChildName } from '@/lib/child-routes'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
+import { NCDA_PATHS } from '@/layouts/ncda/navigation'
+import { notificationsLocale as t } from '@/locales/rw/notifications'
 import type { FollowUpAlertViewModel, FollowUpAlertsViewModel } from '@/models/alerts'
 import type { Child } from '@/types'
 
@@ -13,6 +15,7 @@ export type FollowUpAlertKind =
   | 'attendance_low_rate'
   | 'never_screened'
   | 'nutrition_severe'
+  | 'nutrition_overdue'
   | 'nutrition_generic'
   | 'attendance_generic'
   | 'sted_generic'
@@ -105,9 +108,23 @@ export function getFollowUpAlertKind(alert: FollowUpAlertViewModel): FollowUpAle
     code.includes('NEVER_SCREEN') ||
     code.includes('STED_NEVER') ||
     blob.includes('never been screened') ||
-    blob.includes('never screened')
+    blob.includes('never screened') ||
+    blob.includes('has never been screened')
   ) {
     return 'never_screened'
+  }
+  if (
+    code.includes('NUTRITION_OVERDUE') ||
+    code.includes('SCREENING_OVERDUE') ||
+    code.includes('ASSESSMENT_OVERDUE') ||
+    blob.includes("hasn't been screened") ||
+    blob.includes('has not been screened') ||
+    blob.includes('not been screened') ||
+    blob.includes('screening overdue') ||
+    blob.includes('assessment overdue') ||
+    (blob.includes('screened') && blob.includes('days'))
+  ) {
+    return 'nutrition_overdue'
   }
   if (code.includes('NUTRITION_SEVERE') || blob.includes('severe malnutrition')) {
     return 'nutrition_severe'
@@ -216,6 +233,32 @@ function replaceTokens(
   )
 }
 
+/** Translate common English API metric labels; leave unknown labels as-is. */
+export function localizeFollowUpMetricLabel(label: string): string {
+  const key = label.trim().toLowerCase().replace(/[\s_-]+/g, '')
+  const map = t.alerts.metricLabels
+  const byNormalized: Record<string, string> = {
+    rate: map.rate,
+    attendancerate: map.attendanceRate,
+    attendance: map.attendance,
+    days: map.days,
+    absentdays: map.absentDays,
+    daysabsent: map.absentDays,
+    children: map.children,
+    enrolled: map.enrolled,
+    present: map.present,
+    absent: map.absent,
+    overdue: map.overdue,
+    lastscreening: map.lastScreening,
+    lastassessment: map.lastScreening,
+    muac: map.muac,
+    weight: map.weight,
+    weightkg: map.weight,
+    severity: map.severity,
+  }
+  return byNormalized[key] ?? label
+}
+
 function extractDays(text: string): number | null {
   const match = text.match(/(\d+)\s*\+?\s*days?/i)
   return match ? Number(match[1]) : null
@@ -296,6 +339,14 @@ export function formatFollowUpAlert(
       return {
         heading: child,
         detail: replaceTokens(messages.nutritionSevere, { name: child }),
+      }
+    case 'nutrition_overdue':
+      return {
+        heading: child !== t.alerts.unnamedChild ? child : messages.nutritionTitle,
+        detail: replaceTokens(messages.nutritionOverdue, {
+          name: child,
+          days: days ?? '—',
+        }),
       }
     case 'nutrition_generic':
       return {
@@ -467,31 +518,42 @@ export function resolveFollowUpAlertPath(
     switch (kind) {
       case 'compliance_overdue':
       case 'compliance_generic':
-        return '/ncda/inspections'
+        return NCDA_PATHS.inspections
       case 'nutrition_severe':
       case 'nutrition_generic':
       case 'never_screened':
       case 'sted_generic':
       case 'referral_pending':
       case 'referral_generic':
-        return alert.childId ? `/ncda/children/${alert.childId}` : '/ncda/children'
+        if (alert.childId) return `${NCDA_PATHS.children}/${alert.childId}`
+        if (kind === 'nutrition_severe' || kind === 'nutrition_generic') {
+          return ncdaNutritionAlertsPath(
+            kind === 'nutrition_severe' ? { status: 'severe_nutrition' } : {},
+          )
+        }
+        if (kind === 'referral_pending' || kind === 'referral_generic') {
+          return ncdaFollowUpPath('referral')
+        }
+        return NCDA_PATHS.children
       case 'attendance_missing_today':
       case 'attendance_low_rate':
       case 'attendance_generic':
-        return '/ncda/monitoring'
+        return NCDA_PATHS.monitoringAttendance
       case 'attendance_absence_risk':
-        return alert.childId ? `/ncda/children/${alert.childId}` : '/ncda/monitoring'
+        return alert.childId
+          ? `${NCDA_PATHS.children}/${alert.childId}`
+          : NCDA_PATHS.monitoringAttendance
       case 'capacity_generic':
       case 'data_quality_generic':
-        return alert.centerId ? `/ncda/centers/${alert.centerId}` : '/ncda/centers'
+        return alert.centerId ? `${NCDA_PATHS.centers}/${alert.centerId}` : NCDA_PATHS.centers
       default:
         return alert.childId
-          ? `/ncda/children/${alert.childId}`
+          ? `${NCDA_PATHS.children}/${alert.childId}`
           : alert.centerId
-            ? `/ncda/centers/${alert.centerId}`
-            : '/ncda/impugukirwa'
+            ? `${NCDA_PATHS.centers}/${alert.centerId}`
+            : NCDA_PATHS.followUp
     }
   }
 
-  return childHref() ?? `${prefix}/impugukirwa`
+  return childHref() ?? (prefix === '/ncda' ? NCDA_PATHS.followUp : `${prefix}/impugukirwa`)
 }

@@ -14,6 +14,7 @@ import {
 import { mapScreeningRosterToLocalSeed } from '@/features/nutrition/seed-from-rest'
 import { getLocalStore } from '@/storage'
 import { networkState } from '@/network/network-state'
+import { filterSyncedChildIds, shouldSkipRemoteChildHistory } from '@/sync/child-sync-state'
 import type { GrowthRosterResult } from '@/models/growth'
 
 async function loadRosterFromLocalOrRemote(
@@ -36,8 +37,13 @@ async function loadRosterFromLocalOrRemote(
     return { measurements: [], assessments: [] }
   }
 
+  const syncedChildIds = await filterSyncedChildIds(store, childIds)
+  if (syncedChildIds.length === 0) {
+    return { measurements: [], assessments: [] }
+  }
+
   try {
-    const remote = await fetchGrowthRoster(childIds)
+    const remote = await fetchGrowthRoster(syncedChildIds)
     await mapScreeningRosterToLocalSeed(store, remote.measurements, remote.assessments)
     return remote
   } catch {
@@ -63,6 +69,9 @@ export function useChildGrowthHistory(childId: string | undefined, enabled = tru
         }
       }
       if (!networkState.getSnapshot().isOnline) {
+        return { childId, measurements: [], assessments: [], total: 0 }
+      }
+      if (await shouldSkipRemoteChildHistory(store, childId)) {
         return { childId, measurements: [], assessments: [], total: 0 }
       }
       try {
@@ -94,6 +103,7 @@ export function useChildGrowthLatest(childId: string | undefined, enabled = true
         return localScreeningToMeasurement(localRows[0])
       }
       if (!networkState.getSnapshot().isOnline) return undefined
+      if (await shouldSkipRemoteChildHistory(store, childId)) return undefined
       try {
         const history = await fetchChildGrowthHistory(childId)
         await mapScreeningRosterToLocalSeed(
@@ -130,6 +140,15 @@ export function useChildGrowthChart(childId: string | undefined, enabled = true)
         }
       }
       if (!networkState.getSnapshot().isOnline) {
+        return {
+          childId: '',
+          weight: [],
+          muac: [],
+          height: [],
+          headCircumference: [],
+        }
+      }
+      if (await shouldSkipRemoteChildHistory(getLocalStore(), childId)) {
         return {
           childId,
           weight: [],

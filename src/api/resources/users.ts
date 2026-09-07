@@ -58,8 +58,8 @@ export const NCDA_CREATABLE_ROLES: UserRole[] = [
   'caregiver',
 ]
 
-/** Roles District Focal Person may assign on create — caregiver only (UI). */
-export const DISTRICT_CREATABLE_ROLES: UserRole[] = ['caregiver']
+/** Roles District Focal Person may assign on create — center staff only. */
+export const DISTRICT_CREATABLE_ROLES: UserRole[] = ['caregiver', 'ecd_director']
 
 /** Roles ECD director may assign on create — caregiver at own center only. */
 export const ECD_DIRECTOR_CREATABLE_ROLES: UserRole[] = ['caregiver']
@@ -96,22 +96,24 @@ export async function createUser(dto: CreateUserDto): Promise<CreateUserResponse
   return usersControllerCreate(dto)
 }
 
-/** District Focal Person — create caregiver accounts in district scope. */
+/** District Focal Person — create caregiver or ECD director accounts in district scope. */
 export async function createDistrictCaregiver(
   dto: CreateUserDto,
 ): Promise<CreateUserResponseDto> {
-  if (dto.role !== 'caregiver') {
-    throw new Error('District Focal Person can only create caregiver accounts')
+  if (!DISTRICT_CREATABLE_ROLES.includes(dto.role)) {
+    throw new Error('District Focal Person can only create caregiver or ECD director accounts')
   }
   if (!dto.centerId?.trim()) {
-    throw new Error('centerId is required for caregiver accounts')
+    throw new Error('centerId is required for caregiver and ECD director accounts')
   }
   return usersControllerCreate({
     username: dto.username,
     fullName: dto.fullName,
     phone: dto.phone,
-    role: 'caregiver',
+    role: dto.role,
     centerId: dto.centerId.trim(),
+    ...(dto.gender ? { gender: dto.gender } : {}),
+    ...(dto.educationLevel ? { educationLevel: dto.educationLevel } : {}),
   })
 }
 

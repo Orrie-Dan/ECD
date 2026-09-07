@@ -1,12 +1,12 @@
-import { Building2, CheckCircle2, AlertTriangle, Users, User, type LucideIcon } from 'lucide-react'
+import { Building2, CheckCircle2, Ban, Users, User, type LucideIcon } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { district } from '@/locales/rw/district'
 
 interface SchoolsSummaryCardsProps {
   summary: {
     totalSchools: number
-    goodSchools: number
-    schoolsToFollowup: number
+    activeSchools: number
+    inactiveSchools: number
     totalChildren: number
     totalCaretakers: number
   }
@@ -28,15 +28,15 @@ const cards: CardConfig[] = [
     variant: 'default',
   },
   {
-    key: 'goodSchools',
-    label: district.schools.goodSchools,
+    key: 'activeSchools',
+    label: district.schools.activeSchools,
     icon: CheckCircle2,
     variant: 'success',
   },
   {
-    key: 'schoolsToFollowup',
-    label: district.schools.schoolsToFollowup,
-    icon: AlertTriangle,
+    key: 'inactiveSchools',
+    label: district.schools.inactiveSchools,
+    icon: Ban,
     variant: 'warning',
   },
   {

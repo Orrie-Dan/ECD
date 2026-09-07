@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Plus, Search, GraduationCap, Phone, UserRound } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -14,6 +14,7 @@ import {
   RegisterListPanel,
   RegisterReadOnlyBanner,
   RegisterRecordCard,
+  RegisterViewEditActions,
 } from '@/components/caretaker/register'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { TempPasswordBanner } from '@/components/district/TempPasswordBanner'
@@ -25,12 +26,14 @@ import { canDirectorMutate } from '@/api/roles'
 import { normalizeApiError } from '@/api/errors'
 import {
   useCenterCreateCaregiver,
+  useCenterUpdateUser,
   useCenterUsersList,
 } from '@/features/caretaker/users/queries'
+import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { caretaker } from '@/locales/rw/caretaker'
 import { CARETAKER_PATHS } from '@/layouts/caretaker/navigation'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
-import type { ApiUserStatus } from '@/api/generated/models'
+import type { ApiUserStatus, UpdateUserDto } from '@/api/generated/models'
 import type { CenterUserResponse } from '@/api/resources/users'
 import {
   EDUCATION_LEVEL_OPTIONS,
@@ -75,6 +78,7 @@ export function EducatorsPage() {
 
 function EducatorsLive() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { showError, showSuccess } = useToast()
   const centerId = user?.centerId?.trim() ?? ''
   const canMutate = canDirectorMutate(user)
@@ -84,6 +88,7 @@ function EducatorsLive() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [showCreate, setShowCreate] = useState(false)
+  const [editing, setEditing] = useState<CenterUserResponse | null>(null)
   const [tempSecret, setTempSecret] = useState<string | null>(null)
   const [createForm, setCreateForm] = useState({
     username: '',
@@ -108,6 +113,7 @@ function EducatorsLive() {
 
   const list = useCenterUsersList(listFilters, Boolean(centerId))
   const createMutation = useCenterCreateCaregiver()
+  const updateMutation = useCenterUpdateUser(editing?.id ?? '')
 
   const total = list.data?.total ?? 0
   const totalPages = list.data?.totalPages ?? 1
@@ -146,6 +152,29 @@ function EducatorsLive() {
     }
   }
 
+  function openCreate() {
+    if (editing) {
+      setEditing(null)
+      return
+    }
+    setShowCreate((v) => !v)
+  }
+
+  function openEdit(row: CenterUserResponse) {
+    setShowCreate(false)
+    setEditing(row)
+  }
+
+  async function onUpdate(dto: UpdateUserDto) {
+    try {
+      await updateMutation.mutateAsync(dto)
+      setEditing(null)
+      showSuccess(copy.updateSuccess)
+    } catch (err) {
+      showError(normalizeApiError(err).message || copy.updateError)
+    }
+  }
+
   if (!centerId) {
     return (
       <PageContainer>
@@ -166,12 +195,12 @@ function EducatorsLive() {
         action={
           canMutate ? (
             <Button
-              variant={showCreate ? 'secondary' : 'primary'}
+              variant={showCreate || editing ? 'secondary' : 'primary'}
               size="sm"
               icon={<Plus size={18} />}
-              onClick={() => setShowCreate((v) => !v)}
+              onClick={openCreate}
             >
-              {showCreate ? copy.cancelCreate : copy.add}
+              {showCreate || editing ? copy.cancelCreate : copy.add}
             </Button>
           ) : undefined
         }
@@ -229,8 +258,9 @@ function EducatorsLive() {
                   }
                 />
               </FormField>
-              <FormField label={copy.gender}>
+              <FormField label={copy.gender} required>
                 <SelectInput
+                  required
                   value={createForm.gender}
                   onChange={(e) =>
                     setCreateForm((f) => ({
@@ -279,6 +309,35 @@ function EducatorsLive() {
                 </Button>
               </div>
             </form>
+          </Card>
+        ) : null}
+
+        {editing && canMutate ? (
+          <Card padding="md" elevated className="border-border space-y-3">
+            <h3 className="text-subheading font-semibold text-text">{copy.edit}</h3>
+            <p className="text-caption text-text-muted">@{editing.username}</p>
+            <UserProfileEditForm
+              key={editing.id}
+              initial={editing}
+              labels={{
+                fullName: copy.fullName,
+                phone: copy.phone,
+                gender: copy.gender,
+                selectGender: copy.optionalBlank,
+                genderMale: copy.genderLabels.male,
+                genderFemale: copy.genderLabels.female,
+                educationLevel: copy.educationLevel,
+                optionalBlank: copy.optionalBlank,
+                status: copy.statusFilter,
+                statusActive: copy.statusActive,
+                statusSuspended: copy.statusSuspended,
+                save: copy.submitEdit,
+                cancel: copy.cancelCreate,
+              }}
+              pending={updateMutation.isPending}
+              onSubmit={onUpdate}
+              onCancel={() => setEditing(null)}
+            />
           </Card>
         ) : null}
 
@@ -336,12 +395,13 @@ function EducatorsLive() {
                 <RegisterRecordCard
                   key={row.id}
                   actions={
-                    <Link
-                      to={`${USERS_PATH}/${row.id}`}
-                      className="text-primary font-semibold text-caption hover:underline shrink-0"
-                    >
-                      {copy.manageAccount}
-                    </Link>
+                    <RegisterViewEditActions
+                      viewLabel={copy.manageAccount}
+                      onView={() => navigate(`${USERS_PATH}/${row.id}`)}
+                      canMutate={canMutate}
+                      onEdit={() => openEdit(row)}
+                      editLabel={copy.edit}
+                    />
                   }
                 >
                   <div className="flex flex-wrap items-center gap-2">

@@ -99,15 +99,15 @@ describe('Sprint 5.5C — NCDA national dashboard contract', () => {
       expect(definitions).toContain('UNSAFE AT NATIONAL SCALE')
     })
 
-    it('renders unsupported section and section retry affordances', () => {
+    it('keeps retry affordances and does not invent zeros for missing metrics', () => {
       const overview = fs.readFileSync(
         root('../../components/ncda/overview/NcdaOverviewCommand.tsx'),
         'utf8',
       )
-      expect(overview).toContain('NCDA_UNSUPPORTED_METRICS')
       expect(overview).toContain('useNcdaDashboard')
       expect(overview).toContain('ncda.dashboard.retry')
-      expect(overview).toContain('trendsUnavailable')
+      expect(overview).toContain('ncda.dashboard.noRate')
+      expect(overview).not.toContain('NCDA_UNSUPPORTED_METRICS')
       expect(dashboardPage).toContain('LiveUnavailableState')
       expect(dashboardPage).toContain('NcdaOverviewCommand')
     })

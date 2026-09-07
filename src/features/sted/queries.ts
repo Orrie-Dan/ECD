@@ -14,6 +14,7 @@ import {
 import { mapStedRosterToLocalSeed } from '@/features/sted/seed-from-rest'
 import { getLocalStore } from '@/storage'
 import { networkState } from '@/network/network-state'
+import { filterSyncedChildIds, shouldSkipRemoteChildHistory } from '@/sync/child-sync-state'
 import type { StedHistoryFilters, StedAssessmentViewModel } from '@/models/sted'
 
 async function loadRosterFromLocalOrRemote(
@@ -33,8 +34,13 @@ async function loadRosterFromLocalOrRemote(
     return []
   }
 
+  const syncedChildIds = await filterSyncedChildIds(store, childIds)
+  if (syncedChildIds.length === 0) {
+    return []
+  }
+
   try {
-    const remote = await fetchStedRoster(childIds)
+    const remote = await fetchStedRoster(syncedChildIds)
     await mapStedRosterToLocalSeed(store, remote)
     return remote
   } catch {
@@ -103,6 +109,16 @@ export function useChildStedHistory(
           totalPages: 1,
         }
       }
+      if (await shouldSkipRemoteChildHistory(store, childId)) {
+        return {
+          childId,
+          items: [],
+          total: 0,
+          page: 1,
+          pageSize: filters.pageSize ?? 200,
+          totalPages: 1,
+        }
+      }
       try {
         const remote = await fetchChildStedHistory(childId, filters)
         await mapStedRosterToLocalSeed(store, remote.items)
@@ -136,6 +152,7 @@ export function useChildStedHistoryWindow(childId: string | undefined, enabled =
         return localRows.map((row) => localStedToViewModel(row))
       }
       if (!networkState.getSnapshot().isOnline) return []
+      if (await shouldSkipRemoteChildHistory(store, childId)) return []
       try {
         const remote = await fetchAllChildStedHistory(childId)
         await mapStedRosterToLocalSeed(store, remote)
@@ -161,6 +178,7 @@ export function useChildStedLatest(childId: string | undefined, enabled = true) 
         return localStedToViewModel(localRows[0])
       }
       if (!networkState.getSnapshot().isOnline) return undefined
+      if (await shouldSkipRemoteChildHistory(store, childId)) return undefined
       try {
         const items = await fetchAllChildStedHistory(childId)
         await mapStedRosterToLocalSeed(store, items)

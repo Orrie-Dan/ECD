@@ -94,7 +94,7 @@ export function resolveEffectiveDateRange(filter: {
     granularity = 'day'
   } else {
     timeLabel = PERIOD_TIME_LABELS.month
-    granularity = 'week'
+    granularity = 'day'
   }
 
   return {

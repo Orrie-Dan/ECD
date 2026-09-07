@@ -14,6 +14,7 @@ import {
 import { mapScreeningRosterToLocalSeed } from '@/features/nutrition/seed-from-rest'
 import { getLocalStore } from '@/storage'
 import { networkState } from '@/network/network-state'
+import { filterSyncedChildIds, shouldSkipRemoteChildHistory } from '@/sync/child-sync-state'
 import type { NutritionAlertFilters } from '@/models/nutrition'
 import type { GrowthRosterResult } from '@/models/growth'
 
@@ -37,8 +38,13 @@ async function loadRosterFromLocalOrRemote(
     return { measurements: [], assessments: [] }
   }
 
+  const syncedChildIds = await filterSyncedChildIds(store, childIds)
+  if (syncedChildIds.length === 0) {
+    return { measurements: [], assessments: [] }
+  }
+
   try {
-    const remote = await fetchScreeningRoster(childIds)
+    const remote = await fetchScreeningRoster(syncedChildIds)
     await mapScreeningRosterToLocalSeed(store, remote.measurements, remote.assessments)
     return remote
   } catch {
@@ -63,6 +69,9 @@ export function useNutritionHistory(childId: string | undefined, enabled = true)
         }
       }
       if (!networkState.getSnapshot().isOnline) {
+        return { childId, assessments: [], total: 0 }
+      }
+      if (await shouldSkipRemoteChildHistory(store, childId)) {
         return { childId, assessments: [], total: 0 }
       }
       try {
@@ -107,6 +116,7 @@ export function useNutritionLatest(childId: string | undefined, enabled = true) 
         return localScreeningToAssessment(localRows[0])
       }
       if (!networkState.getSnapshot().isOnline) return undefined
+      if (await shouldSkipRemoteChildHistory(store, childId)) return undefined
       try {
         const history = await fetchNutritionHistory(childId)
         return history.assessments[0]

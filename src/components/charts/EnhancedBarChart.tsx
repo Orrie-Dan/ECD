@@ -4,6 +4,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -35,6 +36,10 @@ export interface EnhancedBarChartProps {
   ariaLabel?: string
   color?: string
   tone?: 'muted' | 'white'
+  /** Print numeric labels on each bar (useful for demographic KPI charts). */
+  showValueLabels?: boolean
+  /** Category axis width when layout is vertical (long labels). */
+  categoryAxisWidth?: number
 }
 
 function EnhancedBarChartComponent({
@@ -55,6 +60,8 @@ function EnhancedBarChartComponent({
   ariaLabel,
   color = CHART_METRIC_COLORS.schools,
   tone = 'muted',
+  showValueLabels = false,
+  categoryAxisWidth,
 }: EnhancedBarChartProps) {
   const wellClass = tone === 'white' ? 'bg-white' : 'bg-background-subtle/30'
   const isVertical = layout === 'vertical'
@@ -124,7 +131,7 @@ function EnhancedBarChartComponent({
         ? {
             type: 'category' as const,
             dataKey: nameKey,
-            width: yAxisLabel ? 96 : 88,
+            width: categoryAxisWidth ?? (yAxisLabel ? 112 : 100),
             tickFormatter: xTickFormatter,
           }
         : { type: 'number' as const, tickFormatter: yTickFormatter, width: yAxisLabel ? 58 : 40 })}
@@ -156,9 +163,9 @@ function EnhancedBarChartComponent({
           data={data}
           layout={isVertical ? 'vertical' : 'horizontal'}
           margin={{
-            top: 8,
-            right: 12,
-            left: isVertical ? 4 : yAxisLabel ? 8 : 0,
+            top: showValueLabels ? 22 : 8,
+            right: showValueLabels && isVertical ? 36 : 12,
+            left: isVertical ? 8 : yAxisLabel ? 8 : 0,
             bottom: xAxisLabel ? 18 : 4,
           }}
         >
@@ -185,7 +192,18 @@ function EnhancedBarChartComponent({
                 fill={s.color}
                 radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                 maxBarSize={36}
-              />
+              >
+                {showValueLabels ? (
+                  <LabelList
+                    dataKey={s.dataKey}
+                    position={isVertical ? 'right' : 'top'}
+                    className="fill-text-secondary text-[10px] font-semibold"
+                    formatter={(value: number) =>
+                      Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                    }
+                  />
+                ) : null}
+              </Bar>
             ))
           ) : (
             <Bar
@@ -201,6 +219,16 @@ function EnhancedBarChartComponent({
                   fill={typeof row.color === 'string' ? row.color : CHART_PALETTE[index % CHART_PALETTE.length]}
                 />
               ))}
+              {showValueLabels ? (
+                <LabelList
+                  dataKey={dataKey}
+                  position={isVertical ? 'right' : 'top'}
+                  className="fill-text-secondary text-[10px] font-semibold"
+                  formatter={(value: number) =>
+                    Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })
+                  }
+                />
+              ) : null}
             </Bar>
           )}
         </BarChart>

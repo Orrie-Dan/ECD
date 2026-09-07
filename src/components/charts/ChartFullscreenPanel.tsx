@@ -15,6 +15,7 @@ export function ChartFullscreenPanel({
   className = '',
   chartHeight = DEFAULT_HEIGHT,
   fullscreenChartHeight = FULLSCREEN_HEIGHT,
+  padding = 'md',
 }: {
   title: string
   hint?: string
@@ -23,6 +24,7 @@ export function ChartFullscreenPanel({
   className?: string
   chartHeight?: number
   fullscreenChartHeight?: number
+  padding?: 'sm' | 'md' | 'lg'
 }) {
   const [open, setOpen] = useState(false)
   const close = useCallback(() => setOpen(false), [])
@@ -42,11 +44,14 @@ export function ChartFullscreenPanel({
 
   return (
     <>
-      <Card padding="md" className={`flex h-full min-w-0 flex-col border-border ${className}`.trim()}>
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-body font-semibold text-text leading-snug">{title}</h3>
-            {hint ? <p className="mt-0.5 text-caption text-text-muted">{hint}</p> : null}
+      <Card
+        padding={padding}
+        className={`flex h-full min-w-0 flex-col border-border ${className}`.trim()}
+      >
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className="text-subheading font-semibold text-text leading-snug">{title}</h3>
+            {hint ? <p className="text-caption text-text-muted leading-relaxed">{hint}</p> : null}
           </div>
           <Button
             type="button"
@@ -61,7 +66,7 @@ export function ChartFullscreenPanel({
           </Button>
         </div>
         <div className="min-w-0 w-full flex-1">{renderChart(chartHeight)}</div>
-        {footer ? <div className="mt-3 min-w-0">{footer}</div> : null}
+        {footer ? <div className="mt-4 min-w-0">{footer}</div> : null}
       </Card>
 
       {open ? (

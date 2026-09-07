@@ -4,7 +4,7 @@ import { Map, Maximize2, X } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { SelectInput } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
-import { GisPendingPlaceholder } from '@/components/gis/GisPendingPlaceholder'
+import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
 import { district } from '@/locales/rw/district'
 
 interface GisEmbedProps {
@@ -18,11 +18,12 @@ interface GisEmbedProps {
   headerAction?: React.ReactNode
 }
 
-function MapPlaceholder({ height, compact }: { height: string; compact?: boolean }) {
+function MapFrame({ height, compact, title }: { height: string; compact?: boolean; title: string }) {
   return (
-    <GisPendingPlaceholder
-      compact={compact}
-      className="w-full min-h-[12rem]"
+    <ArcGisMapEmbed
+      title={title}
+      className="w-full"
+      minHeight={compact ? '12rem' : height}
       style={{ minHeight: height }}
     />
   )
@@ -91,7 +92,7 @@ export function GisEmbed({
   const content = (
     <>
       {filters}
-      <MapPlaceholder height={mapHeight} compact={compact} />
+      <MapFrame height={mapHeight} compact={compact} title={title} />
     </>
   )
 
@@ -159,7 +160,7 @@ export function GisEmbed({
           <div className="flex-1 p-3 sm:p-4 overflow-auto min-h-0">
             <div className="max-w-7xl mx-auto h-full min-h-[50vh] sm:min-h-[60vh]">
               {filters}
-              <MapPlaceholder height="min(75vh, 640px)" />
+              <MapFrame height="min(75vh, 640px)" title={title} />
             </div>
           </div>
         </div>

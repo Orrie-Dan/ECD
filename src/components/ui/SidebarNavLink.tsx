@@ -18,6 +18,8 @@ interface SidebarNavLinkProps {
   activeStyle?: 'filled' | 'tinted'
   /** Visual highlight for a parent whose child route is current. */
   inSection?: boolean
+  /** Pill-shaped active state, matching the NCDA overview shell. */
+  pill?: boolean
 }
 
 export function isSidebarNavActive(pathname: string, item: SidebarNavItem): boolean {
@@ -43,6 +45,7 @@ export function SidebarNavLink({
   onNavigate,
   activeStyle = 'filled',
   inSection = false,
+  pill = false,
 }: SidebarNavLinkProps) {
   const Icon = item.icon
 
@@ -58,7 +61,9 @@ export function SidebarNavLink({
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       className={`
-        flex items-center gap-2.5 rounded-lg text-body font-medium transition-colors
+        flex items-center gap-2.5 text-body transition-colors
+        ${pill ? 'rounded-full' : 'rounded-lg'}
+        ${active || inSection ? 'font-semibold' : 'font-medium'}
         ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
         ${visualClasses}
       `}

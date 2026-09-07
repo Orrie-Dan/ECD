@@ -1250,6 +1250,10 @@ export const caretaker = {
       optionalBlank: '— Hitamo (ntibisabwa)',
       roleFixed: 'Uruhare: umurezi gusa — ntabwo ruhinduka.',
       manageAccount: 'Gucunga konti',
+      edit: 'Hindura',
+      submitEdit: 'Bika',
+      updateSuccess: 'Umwirondoro wahinduwe.',
+      updateError: 'Ntibyashoboye guhindura.',
       tempPasswordTitle: 'Ijambo ry\'ibanga ry\'agateganyo',
       tempPasswordBody:
         'Sangiza umurezi iyi jambo ry\'ibanga rimwe. Ntabwo rizagaruka kuri sisitemu.',
@@ -1461,6 +1465,7 @@ export const caretaker = {
     colCreated: 'Byakozwe',
     colAction: 'Igikorwa',
     viewDetail: 'Reba',
+    editUser: 'Hindura',
     empty: 'Nta barezi babonetse kuri iki kigo.',
     emptyFiltered: 'Nta barezi bahuye n\'ubushakashatsi.',
     listError: 'Ntibyashoboye kubona urutonde rw\'abarezi.',

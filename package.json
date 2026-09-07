@@ -14,6 +14,7 @@
     "api:sync-openapi": "node scripts/sync-openapi.mjs && node scripts/patch-openapi-nullable-scalars.mjs"
   },
   "dependencies": {
+    "@arcgis/core": "4.32",
     "@tanstack/react-query": "^5.101.4",
     "axios": "^1.19.0",
     "dexie": "^4.4.4",

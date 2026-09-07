@@ -12,7 +12,10 @@ import {
 } from '@/api/resources/users'
 import type { CreateUserDto, UpdateUserDto } from '@/api/generated/models'
 
-export type DistrictCaregiversListFilters = Omit<UsersListFilters, 'role'>
+export type DistrictCaregiversListFilters = Omit<UsersListFilters, 'role'> & {
+  /** Omit or pass a role. Use `null` to list all roles in district scope. */
+  role?: UsersListFilters['role'] | null
+}
 
 export function useDistrictCaregiversList(
   filters: DistrictCaregiversListFilters = {},
@@ -24,7 +27,8 @@ export function useDistrictCaregiversList(
     centerId: filters.centerId,
     page: filters.page ?? 1,
     pageSize: filters.pageSize ?? 20,
-    role: 'caregiver',
+    // Default to caregivers for existing call sites (center detail, registers).
+    role: filters.role === null ? undefined : (filters.role ?? 'caregiver'),
   }
   return useQuery({
     queryKey: district.keys.users.list(listFilters as Record<string, unknown>),

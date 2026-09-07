@@ -38,7 +38,8 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
       expect(app).toContain('path="/ncda"')
       expect(app).toContain('path="/ncda/dashboard"')
       expect(app).toContain('path="/ncda/overview"')
-      expect(app).toContain('path="/ncda/monitoring"')
+      expect(app).toContain("path={NCDA_PATHS.monitoring}")
+      expect(app).toContain("path={NCDA_PATHS.followUp}")
       expect(app).toContain('path="/ncda/inspections"')
       expect(app).toContain('path="/ncda/reports"')
       expect(app).toContain('RedirectWithSearch to="/ncda/dashboard"')
@@ -54,6 +55,11 @@ describe('Sprint 5.5B — NCDA Admin shell', () => {
       expect(app).toContain('Navigate to="/ncda/dashboard"')
       expect(app).toContain('RedirectWithSearch to="/ncda/inspections"')
       expect(app).toContain('RedirectWithSearch to="/ncda/settings"')
+      expect(NCDA_PATHS.monitoring).toBe('/ncda/gukurikirana')
+      expect(NCDA_PATHS.followUp).toBe('/ncda/gukurikirana/impugukirwa')
+      expect(findNcdaNavItem('/ncda/gukurikirana')?.id).toBe('monitoring')
+      expect(findNcdaNavItem('/ncda/gukurikirana/ubwitabire')?.id).toBe('monitoring')
+      expect(findNcdaNavItem('/ncda/gukurikirana/impugukirwa')?.id).toBe('follow-up')
     })
 
     it('does not import District pages into NCDA routes', () => {

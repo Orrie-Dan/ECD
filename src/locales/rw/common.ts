@@ -118,6 +118,10 @@ export const common = {
     waitingTitle: 'Ikarita irategerejwe',
     waitingBody:
       'Ikarita n’ibikorwa bya GIS bizazana nyuma y’ubufatanye na sisitemu ya GIS.',
+    mapTitle: 'Ikarita ya Sisitemu ya ECD Mapping',
+    loadingMap: 'Turimo gukurura ikarita…',
+    fullscreen: 'Reba muri ecran yose',
+    exitFullscreen: 'Funga',
   },
   charts: {
     fullscreen: 'Reba muri ecran yose',
@@ -229,6 +233,8 @@ export const common = {
 export const messages = {
   childRegistered: 'Umwana yanditswe neza.',
   childRegisteredLocal: 'Umwana yabitswe kuri iki gikoresho. Azahuza iyo murongo ugaruye.',
+  childRegisteredVillageBlocked:
+    'Umwana yabitswe kuri iki gikoresho ariko ntiyashobora koherezwa kuri seriveri — amakuru y’umudugudu ntiboneka. Reba aho uandika cyangwa huza ubu.',
   attendanceRecorded: 'Ubwitabire bwabitswe neza.',
   attendanceRecordedLocal:
     'Ubwitabire bwabitswe kuri iki gikoresho. Buzahuza iyo murongo ugaruye.',

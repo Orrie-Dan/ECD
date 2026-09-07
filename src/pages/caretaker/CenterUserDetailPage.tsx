@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
@@ -6,7 +6,6 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { TextInput, SelectInput } from '@/components/ui/FormField'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { TempPasswordBanner } from '@/components/district/TempPasswordBanner'
@@ -20,16 +19,11 @@ import {
   useCenterUpdateUser,
   useCenterUserDetail,
 } from '@/features/caretaker/users/queries'
+import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { caretaker } from '@/locales/rw/caretaker'
 import { normalizeApiError } from '@/api/errors'
-import type { ApiUserStatus } from '@/api/generated/models'
+import type { UpdateUserDto } from '@/api/generated/models'
 import type { CenterUserResponse } from '@/api/resources/users'
-import {
-  EDUCATION_LEVEL_OPTIONS,
-  PERSON_SEX_OPTIONS,
-  type EducationLevel,
-  type PersonSex,
-} from '@/models/center-educators'
 import {
   formatEducationLevel,
   formatPersonSex,
@@ -259,24 +253,10 @@ function CaregiverEditForm({
 }) {
   const updateMutation = useCenterUpdateUser(userId)
   const resetMutation = useCenterResetUserPassword(userId)
-  const [fullName, setFullName] = useState(initial.fullName)
-  const [phone, setPhone] = useState(initial.phone ?? '')
-  const [status, setStatus] = useState<ApiUserStatus>(initial.status)
-  const [gender, setGender] = useState<PersonSex | ''>(initial.gender ?? '')
-  const [educationLevel, setEducationLevel] = useState<EducationLevel | ''>(
-    initial.educationLevel ?? '',
-  )
 
-  async function onSave(e: FormEvent) {
-    e.preventDefault()
+  async function onSave(dto: UpdateUserDto) {
     try {
-      await updateMutation.mutateAsync({
-        fullName: fullName.trim(),
-        phone: phone.trim() || null,
-        status,
-        gender: gender || null,
-        educationLevel: educationLevel || null,
-      })
+      await updateMutation.mutateAsync(dto)
       showSuccess(caretaker.users.updateSuccess)
       onSaved()
     } catch (err) {
@@ -299,72 +279,25 @@ function CaregiverEditForm({
   return (
     <Card padding="md" className="border-border space-y-4">
       <h2 className="text-subheading font-semibold text-text">{caretaker.users.editTitle}</h2>
-      <form className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={onSave}>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {caretaker.users.colFullName}
-          </label>
-          <TextInput required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {caretaker.users.colPhone}
-          </label>
-          <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} />
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {caretaker.users.colStatus}
-          </label>
-          <SelectInput
-            value={status}
-            onChange={(e) => setStatus(e.target.value as ApiUserStatus)}
-          >
-            <option value="ACTIVE">{caretaker.users.statusActive}</option>
-            <option value="SUSPENDED">{caretaker.users.statusSuspended}</option>
-          </SelectInput>
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {caretaker.director.educators.gender}
-          </label>
-          <SelectInput
-            value={gender}
-            onChange={(e) => setGender(e.target.value as PersonSex | '')}
-          >
-            <option value="">{caretaker.director.educators.optionalBlank}</option>
-            {PERSON_SEX_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                {caretaker.director.educators.genderLabels[value]}
-              </option>
-            ))}
-          </SelectInput>
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {caretaker.director.educators.educationLevel}
-          </label>
-          <SelectInput
-            value={educationLevel}
-            onChange={(e) => setEducationLevel(e.target.value as EducationLevel | '')}
-          >
-            <option value="">{caretaker.director.educators.optionalBlank}</option>
-            {EDUCATION_LEVEL_OPTIONS.map((value) => (
-              <option key={value} value={value}>
-                {caretaker.director.educators.educationLabels[value]}
-              </option>
-            ))}
-          </SelectInput>
-        </div>
-        <div className="sm:col-span-2 flex flex-wrap gap-2">
-          <Button
-            type="submit"
-            variant="primary"
-            loading={updateMutation.isPending}
-            disabled={updateMutation.isPending}
-          >
-            {caretaker.users.saveChanges}
-          </Button>
+      <UserProfileEditForm
+        initial={initial}
+        labels={{
+          fullName: caretaker.users.colFullName,
+          phone: caretaker.users.colPhone,
+          gender: caretaker.director.educators.gender,
+          selectGender: caretaker.director.educators.optionalBlank,
+          genderMale: caretaker.director.educators.genderLabels.male,
+          genderFemale: caretaker.director.educators.genderLabels.female,
+          educationLevel: caretaker.director.educators.educationLevel,
+          optionalBlank: caretaker.director.educators.optionalBlank,
+          status: caretaker.users.colStatus,
+          statusActive: caretaker.users.statusActive,
+          statusSuspended: caretaker.users.statusSuspended,
+          save: caretaker.users.saveChanges,
+        }}
+        pending={updateMutation.isPending}
+        onSubmit={onSave}
+        extraActions={
           <Button
             type="button"
             variant="secondary"
@@ -374,8 +307,8 @@ function CaregiverEditForm({
           >
             {caretaker.users.resetPassword}
           </Button>
-        </div>
-      </form>
+        }
+      />
     </Card>
   )
 }

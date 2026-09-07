@@ -22,18 +22,19 @@ function replaceTokens(
 }
 
 function metaString(
-  metadata: Record<string, unknown> | null | undefined,
+  metadata: unknown,
   ...keys: string[]
 ): string | null {
   if (!metadata || typeof metadata !== 'object') return null
+  const record = metadata as Record<string, unknown>
   for (const key of keys) {
-    const value = metadata[key]
+    const value = record[key]
     if (typeof value === 'string' && value.trim()) return value.trim()
     if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   }
   // Nested objects commonly used by APIs: { child: { id, fullName } }
   for (const nestedKey of ['child', 'payload', 'data', 'entity']) {
-    const nested = metadata[nestedKey]
+    const nested = record[nestedKey]
     if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
       const found = metaString(nested as Record<string, unknown>, ...keys)
       if (found) return found
@@ -70,12 +71,14 @@ function extractPersonNameFromText(text: string): string | null {
 }
 
 function resolveChildId(n: NotificationViewModel): string | null {
+  if (n.context?.child?.id?.trim()) return n.context.child.id.trim()
+
   const fromMeta = metaString(n.metadata, 'childId', 'child_id', 'id')
   // Avoid treating transfer UUID as child id when nested under transfer entity
   if (fromMeta && n.entityType === 'child_transfer') {
     const explicit = metaString(n.metadata, 'childId', 'child_id')
     if (explicit) return explicit
-    const nestedChild = n.metadata?.child
+    const nestedChild = (n.metadata as Record<string, unknown> | null)?.child
     if (nestedChild && typeof nestedChild === 'object' && !Array.isArray(nestedChild)) {
       const id = (nestedChild as Record<string, unknown>).id
       if (typeof id === 'string' && id.trim()) return id.trim()
@@ -101,6 +104,10 @@ function resolveChildName(
   n: NotificationViewModel,
   children?: readonly ChildRef[],
 ): string | null {
+  if (n.context?.child?.name?.trim() && !isSyntheticChildLabel(n.context.child.name)) {
+    return n.context.child.name.trim()
+  }
+
   const childId = resolveChildId(n)
   const local = childId ? children?.find((c) => c.id === childId) : undefined
   if (local?.fullName?.trim() && !isSyntheticChildLabel(local.fullName)) {
@@ -137,6 +144,8 @@ function resolveChildName(
 }
 
 function resolveCenterName(n: NotificationViewModel): string {
+  if (n.context?.center?.name?.trim()) return n.context.center.name.trim()
+
   const fromMeta = metaString(
     n.metadata,
     'centerName',
@@ -178,7 +187,7 @@ export function formatNotification(
   n: NotificationViewModel,
   children?: readonly ChildRef[],
 ): FormattedNotification {
-  const type = (t.types[n.type] ? n.type : 'general') as NotificationType
+  const type = (n.type in t.types ? n.type : 'general') as NotificationType
   const name = resolveChildName(n, children)
   const center = resolveCenterName(n)
   const template = messageTemplate(type, Boolean(name))
@@ -188,7 +197,10 @@ export function formatNotification(
           resolveAbsentDaysInWindow({
             description: n.message,
             title: n.title,
-            metadata: n.metadata,
+            metadata:
+              n.metadata && typeof n.metadata === 'object'
+                ? (n.metadata as Record<string, unknown>)
+                : null,
           }),
         )
       : metaString(n.metadata, 'days') ?? '3'

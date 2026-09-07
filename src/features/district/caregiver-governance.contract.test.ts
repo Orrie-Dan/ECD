@@ -39,34 +39,38 @@ describe('Sprint 5.5J — District caregiver governance contract', () => {
   })
 
   describe('resource + role guards', () => {
-    it('defines district creatable roles as caregiver only', () => {
-      expect(DISTRICT_CREATABLE_ROLES).toEqual(['caregiver'])
+    it('defines district creatable roles as caregiver and ECD director', () => {
+      expect(DISTRICT_CREATABLE_ROLES).toEqual(['caregiver', 'ecd_director'])
       expect(usersResource).toContain('createDistrictCaregiver')
       expect(usersResource).toContain('NCDA_CREATABLE_ROLES')
+      expect(usersResource).toContain('DISTRICT_CREATABLE_ROLES.includes(dto.role)')
     })
 
     it('uses district.keys.users namespace', () => {
       expect(queryKeys.district.users.list({ page: 1 })[2]).toBe('list')
       expect(queryKeys.district.users.detail('u1')[2]).toBe('detail')
       expect(queryStaleTimes.districtUsers).toBe(30_000)
-      expect(districtQueries).toContain('role: \'caregiver\'')
+      expect(districtQueries).toContain("filters.role ?? 'caregiver'")
       expect(districtQueries).toContain('createDistrictCaregiver')
       expect(districtQueries).not.toContain('ncda.keys')
     })
   })
 
   describe('caregiver list + create', () => {
-    it('uses server pagination and fixed caregiver role', () => {
+    it('uses server pagination and supports caregiver + ECD director create', () => {
       expect(caregiversPage).toContain('useDistrictCaregiversList')
-      expect(caregiversPage).toContain('role: \'caregiver\'')
+      expect(caregiversPage).toContain('ecd_director')
+      expect(caregiversPage).toContain('useDistrictUpdateCaregiver')
+      expect(caregiversPage).toContain('UserProfileEditForm')
       expect(caregiversPage).toContain('Pagination')
       expect(caregiversPage).toContain('TempPasswordBanner')
       expect(caregiversPage).not.toMatch(/LocalStore|useData\(|MOCK_DATA/)
       expect(caregiversPage).toContain('LiveUnavailableState')
     })
 
-    it('does not expose role dropdown for district create', () => {
-      expect(caregiversPage).toContain('district.caregivers.roleFixed')
+    it('exposes center-staff role dropdown but not DFP/NCDA roles', () => {
+      expect(caregiversPage).toContain('district.caregivers.roleDirector')
+      expect(caregiversPage).toContain('district.caregivers.roleCaregiver')
       expect(caregiversPage).not.toContain('district_focal_person')
       expect(caregiversPage).not.toContain('ncda_admin')
     })

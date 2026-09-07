@@ -1,11 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { TextInput, SelectInput } from '@/components/ui/FormField'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { TempPasswordBanner } from '@/components/district/TempPasswordBanner'
@@ -16,9 +15,10 @@ import {
   useDistrictResetCaregiverPassword,
   useDistrictUpdateCaregiver,
 } from '@/features/district/users/queries'
+import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { district } from '@/locales/rw/district'
 import { normalizeApiError } from '@/api/errors'
-import type { ApiUserStatus, UserResponseDto } from '@/api/generated/models'
+import type { UpdateUserDto, UserResponseDto } from '@/api/generated/models'
 
 const CAREGIVERS_PATH = '/district/abakoresha'
 
@@ -136,6 +136,16 @@ function DistrictCaregiverDetailLive() {
                   <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-body">
                     <Field label={district.caregivers.colUsername} value={detail.data.username} />
                     <Field label={district.caregivers.colFullName} value={detail.data.fullName} />
+                    <Field
+                      label={district.caregivers.colGender}
+                      value={
+                        detail.data.gender === 'male'
+                          ? district.caregivers.genderMale
+                          : detail.data.gender === 'female'
+                            ? district.caregivers.genderFemale
+                            : '—'
+                      }
+                    />
                     <Field label={district.caregivers.colPhone} value={detail.data.phone ?? '—'} />
                     <Field
                       label={district.caregivers.colStatus}
@@ -151,6 +161,16 @@ function DistrictCaregiverDetailLive() {
                         detail.data.center
                           ? `${detail.data.center.name} (${detail.data.center.code})`
                           : '—'
+                      }
+                    />
+                    <Field
+                      label={district.caregivers.colRole}
+                      value={
+                        detail.data.role === 'ecd_director'
+                          ? district.caregivers.roleDirector
+                          : detail.data.role === 'caregiver'
+                            ? district.caregivers.roleCaregiver
+                            : detail.data.role
                       }
                     />
                     <Field
@@ -205,18 +225,10 @@ function CaregiverEditForm({
 }) {
   const updateMutation = useDistrictUpdateCaregiver(userId)
   const resetMutation = useDistrictResetCaregiverPassword(userId)
-  const [fullName, setFullName] = useState(initial.fullName)
-  const [phone, setPhone] = useState(initial.phone ?? '')
-  const [status, setStatus] = useState<ApiUserStatus>(initial.status)
 
-  async function onSave(e: FormEvent) {
-    e.preventDefault()
+  async function onSave(dto: UpdateUserDto) {
     try {
-      await updateMutation.mutateAsync({
-        fullName: fullName.trim(),
-        phone: phone.trim() || null,
-        status,
-      })
+      await updateMutation.mutateAsync(dto)
       showSuccess(district.caregivers.updateSuccess)
       onSaved()
     } catch (err) {
@@ -239,40 +251,23 @@ function CaregiverEditForm({
   return (
     <Card padding="md" className="border-border space-y-4">
       <h2 className="text-subheading font-semibold text-text">{district.caregivers.editTitle}</h2>
-      <form className="grid grid-cols-1 sm:grid-cols-2 gap-3" onSubmit={onSave}>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {district.caregivers.colFullName}
-          </label>
-          <TextInput required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {district.caregivers.colPhone}
-          </label>
-          <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} />
-        </div>
-        <div>
-          <label className="mb-1 block text-caption font-semibold text-text-secondary">
-            {district.caregivers.colStatus}
-          </label>
-          <SelectInput
-            value={status}
-            onChange={(e) => setStatus(e.target.value as ApiUserStatus)}
-          >
-            <option value="ACTIVE">{district.caregivers.statusActive}</option>
-            <option value="SUSPENDED">{district.caregivers.statusSuspended}</option>
-          </SelectInput>
-        </div>
-        <div className="sm:col-span-2 flex flex-wrap gap-2">
-          <Button
-            type="submit"
-            variant="primary"
-            loading={updateMutation.isPending}
-            disabled={updateMutation.isPending}
-          >
-            {district.caregivers.saveChanges}
-          </Button>
+      <UserProfileEditForm
+        initial={initial}
+        labels={{
+          fullName: district.caregivers.colFullName,
+          phone: district.caregivers.colPhone,
+          gender: district.caregivers.colGender,
+          selectGender: district.caregivers.selectGender,
+          genderMale: district.caregivers.genderMale,
+          genderFemale: district.caregivers.genderFemale,
+          status: district.caregivers.colStatus,
+          statusActive: district.caregivers.statusActive,
+          statusSuspended: district.caregivers.statusSuspended,
+          save: district.caregivers.saveChanges,
+        }}
+        pending={updateMutation.isPending}
+        onSubmit={onSave}
+        extraActions={
           <Button
             type="button"
             variant="secondary"
@@ -282,8 +277,8 @@ function CaregiverEditForm({
           >
             {district.caregivers.resetPassword}
           </Button>
-        </div>
-      </form>
+        }
+      />
     </Card>
   )
 }
