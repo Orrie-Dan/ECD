@@ -137,6 +137,8 @@ function NcdaUserDetailLive() {
                 <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-body">
                   <Field label={ncda.users.colUsername} value={detail.data.username} />
                   <Field label={ncda.users.colFullName} value={detail.data.fullName} />
+                  <Field label={ncda.users.colPhone} value={detail.data.phone ?? '—'} />
+                  <Field label={ncda.users.colEmail} value={detail.data.email ?? '—'} />
                   <Field
                     label={ncda.users.colGender}
                     value={genderLabel(detail.data.gender)}
@@ -240,6 +242,7 @@ function UserEditForm({
         labels={{
           fullName: ncda.users.colFullName,
           phone: ncda.users.colPhone,
+          email: ncda.users.colEmail,
           gender: ncda.users.colGender,
           selectGender: ncda.users.selectGender,
           genderMale: ncda.users.genderMale,

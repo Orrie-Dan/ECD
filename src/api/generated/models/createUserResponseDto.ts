@@ -20,6 +20,8 @@ export interface CreateUserResponseDto {
   /** @nullable */
   phone: string | null;
   /** @nullable */
+  email: string | null;
+  /** @nullable */
   gender: PersonSex;
   /** @nullable */
   educationLevel: EducationLevel;

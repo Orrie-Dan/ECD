@@ -120,6 +120,7 @@ function DistrictCaregiversLive() {
     username: '',
     fullName: '',
     phone: '',
+    email: '',
     gender: '' as PersonSex | '',
     role: initialCreateRole as CreatableCenterRole,
     centerId: presetCenterId,
@@ -156,6 +157,7 @@ function DistrictCaregiversLive() {
         username: createForm.username.trim(),
         fullName: createForm.fullName.trim(),
         phone: createForm.phone.trim() || undefined,
+        email: createForm.email.trim() || undefined,
         gender: createForm.gender || undefined,
         role: createForm.role,
         centerId: createForm.centerId,
@@ -166,6 +168,7 @@ function DistrictCaregiversLive() {
         username: '',
         fullName: '',
         phone: '',
+        email: '',
         gender: '',
         role: 'caregiver',
         centerId: presetCenterId || '',
@@ -288,6 +291,19 @@ function DistrictCaregiversLive() {
                   </div>
                   <div>
                     <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                      {district.caregivers.colEmail}
+                    </label>
+                    <TextInput
+                      type="email"
+                      autoComplete="email"
+                      value={createForm.email}
+                      onChange={(e) =>
+                        setCreateForm((f) => ({ ...f, email: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-caption font-semibold text-text-secondary">
                       {district.caregivers.colGender}
                     </label>
                     <SelectInput
@@ -372,6 +388,7 @@ function DistrictCaregiversLive() {
                   labels={{
                     fullName: district.caregivers.colFullName,
                     phone: district.caregivers.colPhone,
+                    email: district.caregivers.colEmail,
                     gender: district.caregivers.colGender,
                     selectGender: district.caregivers.selectGender,
                     genderMale: district.caregivers.genderMale,

@@ -4,40 +4,28 @@ import {
   Baby,
   Building2,
   ChevronRight,
-  Layers,
   Ruler,
-  SlidersHorizontal,
   Users,
   X,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { SearchInput } from '@/components/ui/SearchInput'
-import { FormField, SelectInput } from '@/components/ui/FormField'
-import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
-import { useDebounce } from '@/hooks/useDebounce'
 import { useDashboardMonitoring, roundPct } from '@/features/monitoring'
 import { useCenterDirectoryItem } from '@/features/centers'
 import { useDistrictScope } from '@/features/district/overview/useDistrictScope'
-import {
-  useDistrictOverviewAdminUnits,
-  useDistrictOverviewCenters,
-} from '@/features/district/overview/queries'
-import { buildDistrictMapLayers } from '@/features/district/overview/layers'
-import { findSectorForVillage } from '@/lib/rwanda-admin'
+import { useDistrictOverviewAdminUnits } from '@/features/district/overview/queries'
 import { buildCenterDetailPath, displayEntityLabel } from '@/lib/entity-routes'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { demographicsCopy } from '@/locales/rw/demographics'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { env } from '@/config/env'
-import { EcdCenterStatus, type EcdCenterStatus as CenterStatus } from '@/api/generated/models'
 import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
-import { getSchoolsTableData, getUniqueSectors } from '@/lib/mock-data'
+import { getSchoolsTableData } from '@/lib/mock-data'
 import type { CenterDirectoryItem } from '@/api/resources/centers'
 import type { Child, GrowthMeasurement, NutritionAssessment } from '@/types'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
@@ -76,17 +64,10 @@ export function DistrictOverviewCommand({
 }) {
   const [params, setParams] = useSearchParams()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<'all' | CenterStatus>('all')
-  const [layers, setLayers] = useState(buildDistrictMapLayers)
-  const [layersOpen, setLayersOpen] = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
 
   const scope = useDistrictScope()
   const sectorId = params.get('sector')?.trim() || ''
   const centreId = params.get('centre')?.trim() || ''
-  const debouncedSearch = useDebounce(search, 300)
   const range = useMemo(() => resolveEffectiveDateRange(periodFilter), [periodFilter])
 
   const patchParams = (next: { sector?: string | null; centre?: string | null }) => {
@@ -117,85 +98,19 @@ export function DistrictOverviewCommand({
     { districtId: scope.districtId ?? undefined, level: 'sector' },
     Boolean(scope.districtId),
   )
-  const centersQuery = useDistrictOverviewCenters(
-    {
-      districtId: scope.districtId ?? undefined,
-      status: status === 'all' ? undefined : status,
-      search: debouncedSearch.trim().length >= 2 ? debouncedSearch : undefined,
-      page: 1,
-      pageSize: 100,
-    },
-    env.isLive,
-  )
   const centerDetail = useCenterDirectoryItem(centreId || undefined, Boolean(centreId) && env.isLive)
 
-  const liveCenters = centersQuery.data?.items ?? []
   const sectors = sectorsQuery.data ?? []
   const selectedSector = sectors.find((s) => s.id === sectorId) ?? null
   const districtName = scope.districtName
 
-  const filteredLiveCenters = useMemo(() => {
-    if (!selectedSector || !districtName) return liveCenters
-    return liveCenters.filter((center) => {
-      const sectorName = findSectorForVillage(districtName, center.villageName ?? '')
-      return sectorName?.toLowerCase() === selectedSector.name.toLowerCase()
-    })
-  }, [liveCenters, selectedSector, districtName])
-
   const mockCenters = useMemo(() => (env.isLive ? [] : getSchoolsTableData()), [])
-  const mockSectors = useMemo(() => (env.isLive ? [] : getUniqueSectors()), [])
-
-  const filteredMockCenters = useMemo(() => {
-    if (env.isLive) return []
-    const q = search.trim().toLowerCase()
-    return mockCenters.filter((center) => {
-      if (status === 'active' && !center.isActive) return false
-      if (status === 'inactive' && center.isActive) return false
-      if (sectorId && center.sector !== sectorId) return false
-      if (q.length >= 2 && !`${center.name} ${center.sector}`.toLowerCase().includes(q)) {
-        return false
-      }
-      return true
-    })
-  }, [mockCenters, search, sectorId, status])
-
-  const searchHits = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (q.length < 2) return { sectors: [] as Array<{ id: string; name: string }>, centers: [] as Array<{ id: string; name: string; meta: string }> }
-    if (env.isLive) {
-      return {
-        sectors: sectors
-          .filter((s) => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))
-          .slice(0, 6)
-          .map((s) => ({ id: s.id, name: s.name })),
-        centers: filteredLiveCenters
-          .filter((c) => `${c.name} ${c.code} ${c.villageName ?? ''}`.toLowerCase().includes(q))
-          .slice(0, 6)
-          .map((c) => ({
-            id: c.id,
-            name: c.name,
-            meta: [c.villageName, c.code].filter(Boolean).join(' · '),
-          })),
-      }
-    }
-    return {
-      sectors: mockSectors
-        .filter((name) => name.toLowerCase().includes(q))
-        .slice(0, 6)
-        .map((name) => ({ id: name, name })),
-      centers: filteredMockCenters
-        .filter((c) => `${c.name} ${c.sector}`.toLowerCase().includes(q))
-        .slice(0, 6)
-        .map((c) => ({ id: c.id, name: c.name, meta: c.sector })),
-    }
-  }, [search, env.isLive, sectors, filteredLiveCenters, mockSectors, filteredMockCenters])
 
   const attendanceRate = roundPct(dashboard?.attendance.rate)
   const totalChildren = dashboard?.children.active ?? dashboard?.children.total ?? 0
   const centersInScope = dashboard?.centersInScope ?? 0
-  const selectedLiveCenter =
-    filteredLiveCenters.find((c) => c.id === centreId) ?? centerDetail.data ?? null
-  const selectedMockCenter = filteredMockCenters.find((c) => c.id === centreId) ?? null
+  const selectedLiveCenter = centerDetail.data ?? null
+  const selectedMockCenter = mockCenters.find((c) => c.id === centreId) ?? null
 
   const districtKpis: Array<{
     key: DistrictKpiKey
@@ -228,18 +143,6 @@ export function DistrictOverviewCommand({
       href: DISTRICT_PATHS.monitoringGrowth,
     },
   ]
-
-  const selectSector = (id: string) => {
-    setSearch('')
-    setSearchOpen(false)
-    patchParams({ sector: id, centre: null })
-  }
-
-  const selectCenter = (id: string) => {
-    setSearch('')
-    setSearchOpen(false)
-    patchParams({ centre: id })
-  }
 
   return (
     <div className="space-y-4">
@@ -300,184 +203,6 @@ export function DistrictOverviewCommand({
           </Card>
         </section>
       )}
-
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-        <div className="relative min-w-0 flex-1">
-          <SearchInput
-            value={search}
-            onChange={(value) => {
-              setSearch(value)
-              setSearchOpen(value.trim().length >= 2)
-            }}
-            placeholder={district.overview.searchPlaceholder}
-            onFocus={() => {
-              if (search.trim().length >= 2) setSearchOpen(true)
-            }}
-          />
-          {searchOpen && search.trim().length >= 2 ? (
-            <div
-              className="absolute z-30 mt-1 w-full rounded-lg border border-border bg-surface shadow-lg max-h-80 overflow-y-auto"
-              role="listbox"
-            >
-              {searchHits.sectors.length === 0 && searchHits.centers.length === 0 ? (
-                <p className="px-3 py-3 text-caption text-text-secondary">
-                  {district.overview.searchNoResults}
-                </p>
-              ) : (
-                <>
-                  {searchHits.sectors.length > 0 ? (
-                    <SearchGroup label={district.overview.searchSectors}>
-                      {searchHits.sectors.map((s) => (
-                        <SearchRow
-                          key={s.id}
-                          label={s.name}
-                          onSelect={() => selectSector(s.id)}
-                        />
-                      ))}
-                    </SearchGroup>
-                  ) : null}
-                  {searchHits.centers.length > 0 ? (
-                    <SearchGroup label={district.overview.searchCenters}>
-                      {searchHits.centers.map((c) => (
-                        <SearchRow
-                          key={c.id}
-                          label={c.name}
-                          meta={c.meta}
-                          onSelect={() => selectCenter(c.id)}
-                        />
-                      ))}
-                    </SearchGroup>
-                  ) : null}
-                </>
-              )}
-            </div>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setLayersOpen((open) => !open)
-              setFiltersOpen(false)
-            }}
-          >
-            <Layers size={16} aria-hidden />
-            {district.overview.layers}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setFiltersOpen((open) => !open)
-              setLayersOpen(false)
-            }}
-          >
-            <SlidersHorizontal size={16} aria-hidden />
-            {district.overview.filters}
-          </Button>
-        </div>
-      </div>
-
-      {layersOpen ? (
-        <Card padding="md">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-subheading font-semibold">{district.overview.layers}</h2>
-            <button type="button" onClick={() => setLayersOpen(false)} aria-label={common.close}>
-              <X size={16} />
-            </button>
-          </div>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {layers.map((layer) => (
-              <li key={layer.id}>
-                <label
-                  className={`flex items-start gap-2 rounded-lg border px-3 py-2 ${
-                    layer.availability === 'unavailable'
-                      ? 'border-border bg-background-subtle/50 text-text-muted'
-                      : 'border-border bg-surface'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="mt-1"
-                    checked={layer.enabled}
-                    disabled={layer.availability === 'unavailable'}
-                    onChange={() =>
-                      setLayers((prev) =>
-                        prev.map((item) =>
-                          item.id === layer.id ? { ...item, enabled: !item.enabled } : item,
-                        ),
-                      )
-                    }
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-body font-medium text-text">{layer.label}</span>
-                    <span className="block text-caption text-text-secondary">{layer.description}</span>
-                    {layer.availability === 'unavailable' ? (
-                      <Badge variant="neutral" className="mt-1">
-                        {district.overview.layerUnavailable}
-                      </Badge>
-                    ) : null}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      ) : null}
-
-      {filtersOpen ? (
-        <Card padding="md">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-subheading font-semibold">{district.overview.filters}</h2>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setStatus('all')
-                patchParams({ sector: null, centre: null })
-              }}
-            >
-              {district.overview.clearFilters}
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <FormField label={district.centers.sector}>
-              <SelectInput
-                value={sectorId}
-                onChange={(e) => patchParams({ sector: e.target.value || null, centre: null })}
-                disabled={env.isLive && !scope.districtId}
-              >
-                <option value="">{district.overview.sectorAll}</option>
-                {env.isLive
-                  ? sectors.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))
-                  : mockSectors.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-              </SelectInput>
-            </FormField>
-            <FormField label={district.schools.filterStatus}>
-              <SelectInput
-                value={status}
-                onChange={(e) => setStatus((e.target.value || 'all') as 'all' | CenterStatus)}
-              >
-                <option value="all">{district.overview.statusAll}</option>
-                <option value={EcdCenterStatus.active}>{district.schools.statusActive}</option>
-                <option value={EcdCenterStatus.inactive}>{district.schools.statusInactive}</option>
-              </SelectInput>
-            </FormField>
-          </div>
-          {env.isLive && !scope.districtId ? (
-            <p className="text-caption text-text-muted mt-2">{common.live.sectorFilterUnavailable}</p>
-          ) : null}
-        </Card>
-      ) : null}
 
       {isError ? (
         <LiveUnavailableState
@@ -729,37 +454,5 @@ function SummaryRow({
       <dt className="text-caption text-text-secondary">{label}</dt>
       <dd>{valueNode}</dd>
     </div>
-  )
-}
-
-function SearchGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="py-1">
-      <p className="px-3 py-1 text-caption font-semibold uppercase tracking-wide text-text-muted">
-        {label}
-      </p>
-      {children}
-    </div>
-  )
-}
-
-function SearchRow({
-  label,
-  meta,
-  onSelect,
-}: {
-  label: string
-  meta?: string
-  onSelect: () => void
-}) {
-  return (
-    <button
-      type="button"
-      className="w-full text-left px-3 py-2 hover:bg-background-subtle"
-      onClick={onSelect}
-    >
-      <span className="block text-body text-text">{label}</span>
-      {meta ? <span className="block text-caption text-text-muted">{meta}</span> : null}
-    </button>
   )
 }

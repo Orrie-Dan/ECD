@@ -53,6 +53,7 @@ export type UsersListFilters = {
 
 /** Roles NCDA may assign on create — mirrors backend canCreateRole. */
 export const NCDA_CREATABLE_ROLES: UserRole[] = [
+  'ncda_admin',
   'district_focal_person',
   'ecd_director',
   'caregiver',
@@ -110,6 +111,7 @@ export async function createDistrictCaregiver(
     username: dto.username,
     fullName: dto.fullName,
     phone: dto.phone,
+    email: dto.email,
     role: dto.role,
     centerId: dto.centerId.trim(),
     ...(dto.gender ? { gender: dto.gender } : {}),
@@ -131,6 +133,7 @@ export async function createCenterCaregiver(
     username: dto.username,
     fullName: dto.fullName,
     phone: dto.phone,
+    email: dto.email,
     role: 'caregiver',
     centerId: dto.centerId.trim(),
     ...(dto.gender ? { gender: dto.gender } : {}),

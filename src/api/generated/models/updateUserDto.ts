@@ -20,6 +20,12 @@ export interface UpdateUserDto {
    * @nullable
    */
   phone?: string | null;
+  /**
+   * Optional account email; set null to clear
+   * @maxLength 254
+   * @nullable
+   */
+  email?: string | null;
   /** @nullable */
   gender?: PersonSex;
   /** @nullable */

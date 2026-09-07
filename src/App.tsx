@@ -8,6 +8,8 @@ import { AppErrorBoundary } from '@/components/AppErrorBoundary'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/LoginPage'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RoleSelectionPage } from '@/pages/RoleSelectionPage'
 import { CaretakerDashboardPage } from '@/pages/caretaker/DashboardPage'
@@ -148,6 +150,8 @@ export default function App() {
                 <Route path="/" element={<HomeRoute />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
                 <Route path="/login/:role" element={<LoginPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
 
                 <Route element={<ProtectedRoute allowedRole={ECD_CENTER_ROLES} />}>
                   <Route path="/caretaker" element={<CaretakerDashboardPage />} />

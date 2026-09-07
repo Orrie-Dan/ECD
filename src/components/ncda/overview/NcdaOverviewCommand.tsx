@@ -6,21 +6,18 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  SlidersHorizontal,
   Users,
   X,
 } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { SearchInput } from '@/components/ui/SearchInput'
-import { FormField, SelectInput } from '@/components/ui/FormField'
+import { SelectInput } from '@/components/ui/FormField'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { ChartPeriodFilter, type ChartPeriodFilterValue } from '@/components/charts'
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
 import { roundPct } from '@/features/monitoring'
-import { useDebounce } from '@/hooks/useDebounce'
 import {
   useNcdaCenterDetail,
   useNcdaCenterSummary,
@@ -38,7 +35,6 @@ import { buildCenterDetailPath, buildDistrictDetailPath } from '@/lib/entity-rou
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { common } from '@/locales/rw/common'
-import { EcdCenterStatus, type EcdCenterStatus as CenterStatus } from '@/api/generated/models'
 import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
@@ -74,15 +70,10 @@ function formatTrend(value: number): string {
 export function NcdaOverviewCommand() {
   const [params, setParams] = useSearchParams()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<'all' | CenterStatus>('all')
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
 
   const districtId = params.get('district')?.trim() || ''
   const sectorId = params.get('sector')?.trim() || ''
   const centreId = params.get('centre')?.trim() || ''
-  const debouncedSearch = useDebounce(search, 300)
   const range = useMemo(() => resolveEffectiveDateRange(periodFilter), [periodFilter])
 
   const patchParams = (next: {
@@ -108,14 +99,9 @@ export function NcdaOverviewCommand() {
     { districtId, level: 'sector' },
     Boolean(districtId),
   )
-  const nationalSearch = useNcdaOverviewCenters(
-    { search: debouncedSearch, page: 1, pageSize: 8 },
-    debouncedSearch.trim().length >= 2 && !districtId,
-  )
   const districtCenters = useNcdaOverviewCenters(
     {
       districtId: districtId || undefined,
-      status: status === 'all' ? undefined : status,
       page: 1,
       pageSize: 100,
     },
@@ -154,26 +140,6 @@ export function NcdaOverviewCommand() {
     })
   }, [rawCenters, selectedSector, selectedDistrict])
 
-  const searchHits = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (q.length < 2) return { districts: [], sectors: [], centers: [] }
-    return {
-      districts: districts
-        .filter((d) => d.name.toLowerCase().includes(q) || d.code.toLowerCase().includes(q))
-        .slice(0, 6),
-      sectors: sectors
-        .filter((s) => s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q))
-        .slice(0, 6),
-      centers: districtId
-        ? rawCenters
-            .filter((c) =>
-              `${c.name} ${c.code} ${c.villageName ?? ''}`.toLowerCase().includes(q),
-            )
-            .slice(0, 6)
-        : (nationalSearch.data?.items ?? []),
-    }
-  }, [search, districts, sectors, rawCenters, districtId, nationalSearch.data?.items])
-
   const isNationalView = !districtId && !centreId
   const overview = dashboard.overview.data
   const network = dashboard.network.data
@@ -181,23 +147,11 @@ export function NcdaOverviewCommand() {
   const networkError = dashboard.network.isError && !dashboard.network.data
 
   const selectDistrict = (id: string) => {
-    setSearch('')
-    setSearchOpen(false)
     patchParams({ district: id, sector: null, centre: null })
   }
 
-  const selectSector = (id: string) => {
-    setSearch('')
-    setSearchOpen(false)
-    patchParams({ sector: id || null, centre: null })
-  }
-
   const selectCenter = (id: string) => {
-    const center =
-      filteredCenters.find((c) => c.id === id) ??
-      nationalSearch.data?.items.find((c) => c.id === id)
-    setSearch('')
-    setSearchOpen(false)
+    const center = filteredCenters.find((c) => c.id === id)
     patchParams({
       centre: id,
       district: center?.districtId || districtId || null,
@@ -347,151 +301,6 @@ export function NcdaOverviewCommand() {
             </div>
           )}
         </section>
-      ) : null}
-
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-        <div className="relative min-w-0 flex-1">
-          <SearchInput
-            value={search}
-            onChange={(value) => {
-              setSearch(value)
-              setSearchOpen(value.trim().length >= 2)
-            }}
-            placeholder={ncda.overview.searchPlaceholder}
-            onFocus={() => {
-              if (search.trim().length >= 2) setSearchOpen(true)
-            }}
-          />
-          {searchOpen && search.trim().length >= 2 ? (
-            <div
-              className="absolute z-30 mt-1 max-h-80 w-full overflow-y-auto rounded-lg border border-border bg-surface shadow-lg"
-              role="listbox"
-            >
-              {searchHits.districts.length === 0 &&
-              searchHits.sectors.length === 0 &&
-              searchHits.centers.length === 0 &&
-              !nationalSearch.isFetching ? (
-                <p className="px-3 py-3 text-caption text-text-secondary">
-                  {ncda.overview.searchNoResults}
-                </p>
-              ) : (
-                <>
-                  {searchHits.districts.length > 0 ? (
-                    <SearchGroup label={ncda.overview.searchDistricts}>
-                      {searchHits.districts.map((d) => (
-                        <SearchRow
-                          key={d.id}
-                          label={d.name}
-                          meta={d.code}
-                          onSelect={() => selectDistrict(d.id)}
-                        />
-                      ))}
-                    </SearchGroup>
-                  ) : null}
-                  {searchHits.sectors.length > 0 ? (
-                    <SearchGroup label={ncda.overview.searchSectors}>
-                      {searchHits.sectors.map((s) => (
-                        <SearchRow
-                          key={s.id}
-                          label={s.name}
-                          meta={s.code}
-                          onSelect={() => selectSector(s.id)}
-                        />
-                      ))}
-                    </SearchGroup>
-                  ) : null}
-                  {searchHits.centers.length > 0 ? (
-                    <SearchGroup label={ncda.overview.searchCenters}>
-                      {searchHits.centers.map((c) => (
-                        <SearchRow
-                          key={c.id}
-                          label={c.name}
-                          meta={[c.districtName, c.villageName].filter(Boolean).join(' · ')}
-                          onSelect={() => selectCenter(c.id)}
-                        />
-                      ))}
-                    </SearchGroup>
-                  ) : null}
-                </>
-              )}
-            </div>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => setFiltersOpen((open) => !open)}
-          >
-            <SlidersHorizontal size={16} aria-hidden />
-            {ncda.overview.filters}
-          </Button>
-        </div>
-      </div>
-
-      {filtersOpen ? (
-        <Card padding="md">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-subheading font-semibold">{ncda.overview.filters}</h2>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setStatus('all')
-                if (districtId) patchParams({ sector: null, centre: null })
-                else patchParams({ district: null, sector: null, centre: null })
-              }}
-            >
-              {ncda.overview.clearFilters}
-            </Button>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <FormField label={ncda.overview.filterDistrict}>
-              <SelectInput
-                value={districtId}
-                onChange={(e) => {
-                  const value = e.target.value
-                  if (!value) patchParams({ district: null, sector: null, centre: null })
-                  else selectDistrict(value)
-                }}
-              >
-                <option value="">{ncda.overview.filterAll}</option>
-                {districts.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </SelectInput>
-            </FormField>
-            <FormField label={ncda.overview.filterSector}>
-              <SelectInput
-                value={sectorId}
-                onChange={(e) => selectSector(e.target.value)}
-                disabled={!districtId}
-              >
-                <option value="">
-                  {districtId ? ncda.overview.filterAll : ncda.overview.filterNeedsDistrict}
-                </option>
-                {sectors.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </SelectInput>
-            </FormField>
-            <FormField label={ncda.overview.filterStatus}>
-              <SelectInput
-                value={status}
-                onChange={(e) => setStatus(e.target.value as 'all' | CenterStatus)}
-                disabled={!districtId}
-              >
-                <option value="all">{ncda.overview.filterAll}</option>
-                <option value={EcdCenterStatus.active}>{ncda.centers.statusActive}</option>
-                <option value={EcdCenterStatus.inactive}>{ncda.centers.statusInactive}</option>
-              </SelectInput>
-            </FormField>
-          </div>
-        </Card>
       ) : null}
 
       <div className="grid grid-cols-1 items-stretch gap-3 xl:grid-cols-[minmax(0,1.6fr)_minmax(20rem,0.9fr)]">
@@ -734,39 +543,6 @@ function NationalSummaryPanel({
         </>
       )}
     </Card>
-  )
-}
-
-function SearchGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="py-1">
-      <p className="px-3 py-1 text-caption font-bold uppercase tracking-wide text-text-muted">
-        {label}
-      </p>
-      {children}
-    </div>
-  )
-}
-
-function SearchRow({
-  label,
-  meta,
-  onSelect,
-}: {
-  label: string
-  meta?: string
-  onSelect: () => void
-}) {
-  return (
-    <button
-      type="button"
-      role="option"
-      className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-background-subtle"
-      onClick={onSelect}
-    >
-      <span className="text-body font-medium text-text">{label}</span>
-      {meta ? <span className="text-caption text-text-secondary">{meta}</span> : null}
-    </button>
   )
 }
 

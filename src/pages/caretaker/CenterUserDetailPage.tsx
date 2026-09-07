@@ -158,6 +158,7 @@ function CenterUserDetailLive() {
                   <Field label={caretaker.users.colUsername} value={detail.data.username} />
                   <Field label={caretaker.users.colFullName} value={detail.data.fullName} />
                   <Field label={caretaker.users.colPhone} value={detail.data.phone ?? '—'} />
+                  <Field label={caretaker.users.colEmail} value={detail.data.email ?? '—'} />
                   <Field
                     label={caretaker.director.educators.gender}
                     value={formatPersonSex((detail.data as CenterUserResponse).gender)}
@@ -284,6 +285,7 @@ function CaregiverEditForm({
         labels={{
           fullName: caretaker.users.colFullName,
           phone: caretaker.users.colPhone,
+          email: caretaker.users.colEmail,
           gender: caretaker.director.educators.gender,
           selectGender: caretaker.director.educators.optionalBlank,
           genderMale: caretaker.director.educators.genderLabels.male,

@@ -502,7 +502,7 @@ export const district = {
     exitFullscreen: 'Funga',
   },
   settings: {
-    subtitle: 'Amakuru y\'akarere n\'ukoresha sisitemu',
+    subtitle: 'Amakuru y\'akarere n\'umwirondoro wawe',
     districtInfo: 'Amakuru y\'Akarere',
     districtName: 'Izina ry\'akarere',
     userInfo: 'Amakuru y\'Ukoresha',
@@ -829,6 +829,7 @@ export const district = {
     colUsername: 'Izina ry\'umukoresha',
     colFullName: 'Amazina',
     colPhone: 'Telefone',
+    colEmail: 'Imeli',
     colGender: 'Igitsina',
     genderMale: 'Gabo',
     genderFemale: 'Gore',

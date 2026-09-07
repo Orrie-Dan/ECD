@@ -94,6 +94,7 @@ function EducatorsLive() {
     username: '',
     fullName: '',
     phone: '',
+    email: '',
     gender: '' as PersonSex | '',
     educationLevel: '' as EducationLevel | '',
   })
@@ -132,6 +133,7 @@ function EducatorsLive() {
         username: createForm.username.trim(),
         fullName: createForm.fullName.trim(),
         phone: createForm.phone.trim() || undefined,
+        email: createForm.email.trim() || undefined,
         role: 'caregiver',
         centerId,
         gender: createForm.gender || undefined,
@@ -143,6 +145,7 @@ function EducatorsLive() {
         username: '',
         fullName: '',
         phone: '',
+        email: '',
         gender: '',
         educationLevel: '',
       })
@@ -258,6 +261,16 @@ function EducatorsLive() {
                   }
                 />
               </FormField>
+              <FormField label={copy.email}>
+                <TextInput
+                  type="email"
+                  autoComplete="email"
+                  value={createForm.email}
+                  onChange={(e) =>
+                    setCreateForm((f) => ({ ...f, email: e.target.value }))
+                  }
+                />
+              </FormField>
               <FormField label={copy.gender} required>
                 <SelectInput
                   required
@@ -322,6 +335,7 @@ function EducatorsLive() {
               labels={{
                 fullName: copy.fullName,
                 phone: copy.phone,
+                email: copy.email,
                 gender: copy.gender,
                 selectGender: copy.optionalBlank,
                 genderMale: copy.genderLabels.male,

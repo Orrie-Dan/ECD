@@ -33,7 +33,7 @@ type RoleFilter = 'all' | UserRole
 type StatusFilter = 'all' | ApiUserStatus
 
 /**
- * NCDA Users management — national admin directory + create (DFP / ECD director / caregiver).
+ * NCDA Users management — national admin directory + create (NCDA / DFP / ECD director / caregiver).
  * Temporary passwords are shown once and never cached in query state.
  */
 export function NcdaUsersPage() {
@@ -102,6 +102,7 @@ function NcdaUsersLive() {
     username: '',
     fullName: '',
     phone: '',
+    email: '',
     gender: '' as PersonSex | '',
     role: 'district_focal_person' as UserRole,
     districtId: '',
@@ -139,6 +140,7 @@ function NcdaUsersLive() {
         username: createForm.username.trim(),
         fullName: createForm.fullName.trim(),
         phone: createForm.phone.trim() || undefined,
+        email: createForm.email.trim() || undefined,
         role: createForm.role,
         ...(createForm.role === 'district_focal_person'
           ? { districtId: createForm.districtId }
@@ -156,6 +158,7 @@ function NcdaUsersLive() {
         username: '',
         fullName: '',
         phone: '',
+        email: '',
         gender: '',
         role: 'district_focal_person',
         districtId: '',
@@ -287,19 +290,33 @@ function NcdaUsersLive() {
                   </div>
                   <div>
                     <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                      {ncda.users.colEmail}
+                    </label>
+                    <TextInput
+                      type="email"
+                      autoComplete="email"
+                      value={createForm.email}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-caption font-semibold text-text-secondary">
                       {ncda.users.colRole}
                     </label>
                     <SelectInput
                       value={createForm.role}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const nextRole = e.target.value as UserRole
                         setCreateForm((f) => ({
                           ...f,
-                          role: e.target.value as UserRole,
+                          role: nextRole,
+                          districtId: nextRole === 'ncda_admin' ? '' : f.districtId,
                           centerId: '',
                           gender: '',
                         }))
-                      }
+                      }}
                     >
+                      <option value="ncda_admin">{ncda.users.roleNcda}</option>
                       <option value="district_focal_person">
                         {ncda.users.roleDistrict}
                       </option>
@@ -404,6 +421,7 @@ function NcdaUsersLive() {
                   labels={{
                     fullName: ncda.users.colFullName,
                     phone: ncda.users.colPhone,
+                    email: ncda.users.colEmail,
                     gender: ncda.users.colGender,
                     selectGender: ncda.users.selectGender,
                     genderMale: ncda.users.genderMale,

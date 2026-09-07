@@ -15,6 +15,7 @@ const educationCopy = caretaker.director.educators
 export type UserProfileEditInitial = {
   fullName: string
   phone?: string | null
+  email?: string | null
   gender?: PersonSex | null
   educationLevel?: EducationLevel | null
   status: ApiUserStatus
@@ -24,6 +25,7 @@ export type UserProfileEditInitial = {
 export type UserProfileEditLabels = {
   fullName: string
   phone: string
+  email: string
   gender: string
   selectGender: string
   genderMale: string
@@ -66,6 +68,7 @@ export function UserProfileEditForm({
 
   const [fullName, setFullName] = useState(initial.fullName)
   const [phone, setPhone] = useState(initial.phone ?? '')
+  const [email, setEmail] = useState(initial.email ?? '')
   const [gender, setGender] = useState<PersonSex | ''>(initial.gender ?? '')
   const [educationLevel, setEducationLevel] = useState<EducationLevel | ''>(
     initial.educationLevel ?? '',
@@ -77,6 +80,7 @@ export function UserProfileEditForm({
     await onSubmit({
       fullName: fullName.trim(),
       phone: phone.trim() || null,
+      email: email.trim() || null,
       gender: gender || null,
       ...(includeEducation ? { educationLevel: educationLevel || null } : {}),
       status,
@@ -96,6 +100,17 @@ export function UserProfileEditForm({
           {labels.phone}
         </label>
         <TextInput value={phone} onChange={(e) => setPhone(e.target.value)} />
+      </div>
+      <div>
+        <label className="mb-1 block text-caption font-semibold text-text-secondary">
+          {labels.email}
+        </label>
+        <TextInput
+          type="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </div>
       <div>
         <label className="mb-1 block text-caption font-semibold text-text-secondary">

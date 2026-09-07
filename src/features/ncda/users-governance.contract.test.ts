@@ -41,7 +41,7 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
   })
 
   describe('role matrix (no invented roles)', () => {
-    it('only known UserRole enum values exist and NCDA cannot create peer ncda_admin', () => {
+    it('only known UserRole enum values exist and NCDA can create peer ncda_admin', () => {
       expect(Object.values(UserRole)).toEqual([
         'caregiver',
         'district_focal_person',
@@ -49,11 +49,13 @@ describe('Sprint 5.5G — NCDA users & governance contract', () => {
         'ecd_director',
       ])
       expect(NCDA_CREATABLE_ROLES).toEqual([
+        'ncda_admin',
         'district_focal_person',
         'ecd_director',
         'caregiver',
       ])
-      expect(NCDA_CREATABLE_ROLES).not.toContain('ncda_admin')
+      expect(NCDA_CREATABLE_ROLES).toContain('ncda_admin')
+      expect(usersPage).toContain('value="ncda_admin"')
       expect(usersPage).not.toMatch(/super_admin|District_Inspector|\bDHI\b|\bCAU\b/)
       expect(usersPage).toContain('createRoleForbidden')
     })

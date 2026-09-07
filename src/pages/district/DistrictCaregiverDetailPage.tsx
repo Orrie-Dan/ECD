@@ -147,6 +147,7 @@ function DistrictCaregiverDetailLive() {
                       }
                     />
                     <Field label={district.caregivers.colPhone} value={detail.data.phone ?? '—'} />
+                    <Field label={district.caregivers.colEmail} value={detail.data.email ?? '—'} />
                     <Field
                       label={district.caregivers.colStatus}
                       value={
@@ -256,6 +257,7 @@ function CaregiverEditForm({
         labels={{
           fullName: district.caregivers.colFullName,
           phone: district.caregivers.colPhone,
+          email: district.caregivers.colEmail,
           gender: district.caregivers.colGender,
           selectGender: district.caregivers.selectGender,
           genderMale: district.caregivers.genderMale,

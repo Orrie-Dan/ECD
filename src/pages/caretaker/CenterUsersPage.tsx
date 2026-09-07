@@ -78,6 +78,7 @@ function CenterUsersLive() {
     username: '',
     fullName: '',
     phone: '',
+    email: '',
     gender: '' as PersonSex | '',
     educationLevel: '' as EducationLevel | '',
   })
@@ -116,6 +117,7 @@ function CenterUsersLive() {
         username: createForm.username.trim(),
         fullName: createForm.fullName.trim(),
         phone: createForm.phone.trim() || undefined,
+        email: createForm.email.trim() || undefined,
         role: 'caregiver',
         centerId,
         gender: createForm.gender || undefined,
@@ -127,6 +129,7 @@ function CenterUsersLive() {
         username: '',
         fullName: '',
         phone: '',
+        email: '',
         gender: '',
         educationLevel: '',
       })
@@ -235,6 +238,19 @@ function CenterUsersLive() {
                   </div>
                   <div>
                     <label className="mb-1 block text-caption font-semibold text-text-secondary">
+                      {caretaker.users.colEmail}
+                    </label>
+                    <TextInput
+                      type="email"
+                      autoComplete="email"
+                      value={createForm.email}
+                      onChange={(e) =>
+                        setCreateForm((f) => ({ ...f, email: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-caption font-semibold text-text-secondary">
                       {caretaker.director.educators.gender}
                     </label>
                     <SelectInput
@@ -305,6 +321,7 @@ function CenterUsersLive() {
                   labels={{
                     fullName: caretaker.users.colFullName,
                     phone: caretaker.users.colPhone,
+                    email: caretaker.users.colEmail,
                     gender: caretaker.director.educators.gender,
                     selectGender: caretaker.director.educators.optionalBlank,
                     genderMale: caretaker.director.educators.genderLabels.male,

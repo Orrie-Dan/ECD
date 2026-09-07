@@ -133,7 +133,16 @@ export function LoginForm({ role }: LoginFormProps) {
         </div>
       </form>
 
-      <p className="text-center mt-6">
+      <p className="text-center mt-4">
+        <Link
+          to="/forgot-password"
+          className="text-body text-primary font-semibold underline-offset-2 hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
+        >
+          {auth.login.forgotPasswordLink}
+        </Link>
+      </p>
+
+      <p className="text-center mt-4">
         <button
           type="button"
           className="text-body text-primary font-semibold underline-offset-2 hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"

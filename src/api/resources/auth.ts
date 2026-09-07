@@ -3,13 +3,17 @@
  * Feature hooks import from here; UI never imports generated auth modules.
  */
 import {
+  authControllerConfirmPasswordReset,
   authControllerLogin,
   authControllerMe,
   authControllerRefresh,
+  authControllerRequestPasswordReset,
 } from '@/api/generated/endpoints/auth/auth'
 import type {
   AuthUserResponseDto,
   LoginDto,
+  PasswordResetConfirmDto,
+  PasswordResetRequestDto,
   RefreshTokenDto,
 } from '@/api/generated/models'
 import { mapAuthUserToViewModel } from '@/api/mappers/auth.mapper'
@@ -39,4 +43,17 @@ export async function refreshTokensRequest(body: RefreshTokenDto): Promise<AuthT
 export async function fetchCurrentUser(): Promise<AuthUserViewModel> {
   const me = await authControllerMe()
   return mapAuthUserToViewModel(me)
+}
+
+/** Always accepted; does not reveal whether the account exists. */
+export async function requestPasswordReset(
+  body: PasswordResetRequestDto,
+): Promise<{ accepted: true }> {
+  return authControllerRequestPasswordReset(body)
+}
+
+export async function confirmPasswordReset(
+  body: PasswordResetConfirmDto,
+): Promise<{ success: true }> {
+  return authControllerConfirmPasswordReset(body)
 }

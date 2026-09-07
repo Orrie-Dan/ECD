@@ -27,6 +27,11 @@ export interface CreateUserDto {
   centerId?: string;
   /** @maxLength 50 */
   phone?: string;
+  /**
+   * Optional account email for password reset and transactional mail
+   * @maxLength 254
+   */
+  email?: string;
   gender?: PersonSex;
   educationLevel?: EducationLevel;
 }
