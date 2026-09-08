@@ -72,7 +72,8 @@ function writeCrumbs(params: URLSearchParams, crumbs: AlertHierarchyCrumb[]) {
   }
 }
 
-export function GukurikiranaPage() {
+/** District Impugukirwa — hierarchical actionable alerts (NCDA vocabulary baseline). */
+export function ImpugukirwaPage() {
   if (!env.isLive) {
     return (
       <PageContainer>
@@ -87,10 +88,10 @@ export function GukurikiranaPage() {
     )
   }
 
-  return <GukurikiranaPageLive />
+  return <ImpugukirwaPageLive />
 }
 
-function GukurikiranaPageLive() {
+function ImpugukirwaPageLive() {
   const { user } = useAuth()
   const identity = useDistrictIdentity(user?.districtId)
   const [searchParams, setSearchParams] = useSearchParams()

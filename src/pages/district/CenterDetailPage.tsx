@@ -46,10 +46,13 @@ import { env } from '@/config/env'
 import { useCenterDirectoryItem } from '@/features/centers'
 import { useDistrictCaregiversList } from '@/features/district/users/queries'
 import { useResolvedCenterRoute } from '@/hooks/useResolvedEntityRoute'
+import { ECD_CENTER_MAP_ZOOM, hasUsableCenterCoordinates } from '@/lib/center-coordinates'
+import { buildDistrictMapCenterHref } from '@/lib/district-map-links'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import { useAuth } from '@/contexts/AppContext'
+import type { ArcGisMapFocus } from '@/config/gis'
 
 type MonitoringStatus = 'good' | 'followup' | 'critical'
 
@@ -283,6 +286,15 @@ export function CenterDetailPage() {
       )
     }
 
+    const canMap = hasUsableCenterCoordinates(live.latitude, live.longitude)
+    const mapFocus: ArcGisMapFocus | null = canMap
+      ? {
+          latitude: live.latitude,
+          longitude: live.longitude,
+          zoom: ECD_CENTER_MAP_ZOOM,
+        }
+      : null
+
     return (
       <>
         <PageContainer>
@@ -352,6 +364,21 @@ export function CenterDetailPage() {
               </div>
             )}
             <CenterCaregiversSection centerId={live.id} caregiversCount={live.caregiversCount} />
+            <GisEmbed
+              title={district.centerDetail.location}
+              description={live.name}
+              height="220px"
+              focus={mapFocus}
+              headerAction={
+                canMap ? (
+                  <Link to={buildDistrictMapCenterHref(live)}>
+                    <Button variant="tertiary" size="sm" icon={<Map size={16} />}>
+                      {district.centerDetail.viewLargeMap}
+                    </Button>
+                  </Link>
+                ) : undefined
+              }
+            />
             <LiveUnavailableState
               title={district.dashboard.recentActivity}
               description={common.live.unavailableDesc}
@@ -708,7 +735,7 @@ export function CenterDetailPage() {
           description={center.name}
           height="220px"
           headerAction={
-            <Link to="/district">
+            <Link to={buildDistrictMapCenterHref(center)}>
               <Button variant="tertiary" size="sm" icon={<Map size={16} />}>
                 {district.centerDetail.viewLargeMap}
               </Button>

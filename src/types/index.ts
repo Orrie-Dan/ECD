@@ -287,7 +287,7 @@ export type CenterAlertType =
   | 'attendance_drop'
   | 'enrollment_decrease'
 
-/** @deprecated Use ActionAlert for the Gukurikirana action center */
+/** @deprecated Use ActionAlert for the Impugukirwa action center */
 export interface CenterAlert {
   id: string
   centerId: string

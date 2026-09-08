@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card'
 import { SelectInput } from '@/components/ui/FormField'
 import { Button } from '@/components/ui/Button'
 import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
+import type { ArcGisMapFocus } from '@/config/gis'
 import { district } from '@/locales/rw/district'
 
 interface GisEmbedProps {
@@ -16,15 +17,28 @@ interface GisEmbedProps {
   compact?: boolean
   allowFullscreen?: boolean
   headerAction?: React.ReactNode
+  /** Optional camera focus — lat/lng/zoom for the embed dashboard. */
+  focus?: ArcGisMapFocus | null
 }
 
-function MapFrame({ height, compact, title }: { height: string; compact?: boolean; title: string }) {
+function MapFrame({
+  height,
+  compact,
+  title,
+  focus,
+}: {
+  height: string
+  compact?: boolean
+  title: string
+  focus?: ArcGisMapFocus | null
+}) {
   return (
     <ArcGisMapEmbed
       title={title}
       className="w-full"
       minHeight={compact ? '12rem' : height}
       style={{ minHeight: height }}
+      focus={focus}
     />
   )
 }
@@ -38,6 +52,7 @@ export function GisEmbed({
   compact = false,
   allowFullscreen = false,
   headerAction,
+  focus = null,
 }: GisEmbedProps) {
   const [fullscreen, setFullscreen] = useState(false)
   const mapHeight = compact ? 'clamp(140px, 28vw, 200px)' : height
@@ -92,7 +107,7 @@ export function GisEmbed({
   const content = (
     <>
       {filters}
-      <MapFrame height={mapHeight} compact={compact} title={title} />
+      <MapFrame height={mapHeight} compact={compact} title={title} focus={focus} />
     </>
   )
 
@@ -160,7 +175,7 @@ export function GisEmbed({
           <div className="flex-1 p-3 sm:p-4 overflow-auto min-h-0">
             <div className="max-w-7xl mx-auto h-full min-h-[50vh] sm:min-h-[60vh]">
               {filters}
-              <MapFrame height="min(75vh, 640px)" title={title} />
+              <MapFrame height="min(75vh, 640px)" title={title} focus={focus} />
             </div>
           </div>
         </div>

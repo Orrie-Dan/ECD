@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/AppContext'
 import { resolveEffectiveDateRange } from '@/lib/chart-period'
 import { formatRecordedByLabel } from '@/lib/user-display'
 import { env } from '@/config/env'
+import { hasUsableCenterCoordinates } from '@/lib/center-coordinates'
 import { effectiveRangeToMonitoringDates, roundPct } from '@/features/monitoring'
 import {
   useNcdaCenterAttendance,
@@ -55,11 +56,6 @@ function formatRate(rate: number | null | undefined): string {
 function formatIsoRange(from?: string, to?: string): string {
   if (!from || !to) return '—'
   return `${from.slice(0, 10)} → ${to.slice(0, 10)} (UTC)`
-}
-
-function formatCoords(lat: number | null, lng: number | null): string {
-  if (lat == null || lng == null) return '—'
-  return `${lat.toFixed(5)}, ${lng.toFixed(5)}`
 }
 
 /**
@@ -152,7 +148,7 @@ function NcdaCenterDetailLive() {
         {ncda.centers.backToList}
       </Link>
       <Link
-        to={`${NCDA_PATHS.dashboard}?centre=${encodeURIComponent(resolved.code || centerId)}`}
+        to={`${NCDA_PATHS.dashboard}?centre=${encodeURIComponent(centerId)}`}
         className="text-caption font-semibold text-primary hover:underline"
       >
         {ncda.overview.openOnMap}
@@ -297,8 +293,20 @@ function NcdaCenterDetailLive() {
                   </div>
                   <div>
                     <dt className="text-caption text-text-secondary">{ncda.centers.location}</dt>
-                    <dd className="font-mono text-caption text-text-secondary">
-                      {formatCoords(detail.data.latitude, detail.data.longitude)}
+                    <dd className="text-body">
+                      {hasUsableCenterCoordinates(
+                        detail.data.latitude,
+                        detail.data.longitude,
+                      ) ? (
+                        <Link
+                          to={`${NCDA_PATHS.dashboard}?centre=${encodeURIComponent(detail.data.id)}`}
+                          className="inline-flex min-h-11 items-center text-primary font-semibold hover:underline focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-sm"
+                        >
+                          {ncda.centers.viewOnMap}
+                        </Link>
+                      ) : (
+                        <span className="text-text-muted">{ncda.centers.locationUnavailable}</span>
+                      )}
                     </dd>
                   </div>
                 </dl>

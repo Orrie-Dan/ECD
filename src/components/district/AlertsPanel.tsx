@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { env } from '@/config/env'
 import { useFollowUpAlerts } from '@/features/alerts'
 import { formatFollowUpAlert, resolveFollowUpAlertPath } from '@/lib/follow-up-alerts'
+import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
 import type { ActionAlertPriority } from '@/types'
@@ -73,7 +74,7 @@ export function AlertsPanel({ compact = false, limit = 4 }: AlertsPanelProps) {
         <div className="flex items-center justify-between gap-2 mb-2">
           <p className="text-body font-semibold text-success">{district.followup.empty}</p>
           <Link
-            to="/district/gukurikirana"
+            to={DISTRICT_PATHS.followup}
             className="text-caption font-semibold text-primary hover:underline shrink-0"
           >
             {district.dashboard.viewFollowup}
@@ -99,7 +100,7 @@ export function AlertsPanel({ compact = false, limit = 4 }: AlertsPanelProps) {
           <span className="truncate">{district.dashboard.priorityAlerts}</span>
         </h3>
         <Link
-          to="/district/gukurikirana"
+          to={DISTRICT_PATHS.followup}
           className="text-caption font-semibold text-primary hover:underline shrink-0"
         >
           {district.dashboard.viewFollowup}

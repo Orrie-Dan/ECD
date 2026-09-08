@@ -104,9 +104,10 @@ describe('Sprint 5.5C — NCDA national dashboard contract', () => {
         root('../../components/ncda/overview/NcdaOverviewCommand.tsx'),
         'utf8',
       )
-      expect(overview).toContain('useNcdaDashboard')
+      expect(overview).toContain('useNcdaOverviewData')
       expect(overview).toContain('ncda.dashboard.retry')
       expect(overview).toContain('ncda.dashboard.noRate')
+      expect(overview).toContain('focus={mapFocus}')
       expect(overview).not.toContain('NCDA_UNSUPPORTED_METRICS')
       expect(dashboardPage).toContain('LiveUnavailableState')
       expect(dashboardPage).toContain('NcdaOverviewCommand')

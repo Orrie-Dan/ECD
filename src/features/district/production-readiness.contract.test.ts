@@ -10,6 +10,7 @@ describe('Sprint 5.4 District production readiness', () => {
     expect(content).not.toContain('ReferralMonitoringPage')
     expect(content).toContain('path="/district/referrals"')
     expect(content).toContain('DistrictReferralsPage')
+    expect(content).toContain('path="/district/impugukirwa"')
     expect(content).toContain('path="/district/gukurikirana/ivuriro"')
     expect(content).toContain('to="/district/referrals"')
   })
@@ -24,6 +25,7 @@ describe('Sprint 5.4 District production readiness', () => {
     expect(content).toContain("monitoringGrowth: '/district/imikorere/imikurire'")
     expect(content).toContain("monitoringFeeding: '/district/imikorere/imirire'")
     expect(content).toContain("monitoringSted: '/district/imikorere/sted'")
+    expect(content).toContain("followup: '/district/impugukirwa'")
     expect(content).not.toContain('followupReferrals')
   })
 

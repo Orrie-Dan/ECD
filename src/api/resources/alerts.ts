@@ -1,6 +1,6 @@
 /**
  * Follow-up alerts resource — wraps generated OpenAPI client.
- * District Gukurikirana LIVE reads only (GET). No dismiss/ack mutations in contract.
+ * Impugukirwa LIVE reads only (GET). No dismiss/ack mutations in contract.
  */
 import { alertsControllerGetFollowUp } from '@/api/generated/endpoints/alerts/alerts'
 import type {

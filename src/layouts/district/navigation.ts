@@ -50,7 +50,8 @@ export const DISTRICT_PATHS = {
   monitoringGrowth: '/district/imikorere/imikurire',
   monitoringFeeding: '/district/imikorere/imirire',
   monitoringSted: '/district/imikorere/sted',
-  followup: '/district/gukurikirana',
+  /** Actionable alerts — same concept as NCDA Impugukirwa. */
+  followup: '/district/impugukirwa',
   reports: '/district/raporo',
   book: '/district/igitabo',
   caregivers: '/district/abakoresha',
@@ -67,6 +68,8 @@ export const DISTRICT_LEGACY_REDIRECTS = {
   referrals: '/district/referrals',
   gis: '/district/ikarita',
   followupLegacy: '/district/ibikurikiranywa',
+  /** Former District name for Impugukirwa (conflated with NCDA monitoring). */
+  followupGukurikirana: '/district/gukurikirana',
   monitoringEn: '/district/monitoring',
   followupEn: '/district/follow-up',
 } as const

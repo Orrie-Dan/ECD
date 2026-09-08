@@ -60,10 +60,9 @@ import { DistrictAttendancePage } from '@/pages/district/AttendanceMonitoringPag
 import { GrowthMonitoringPage } from '@/pages/district/GrowthMonitoringPage'
 import { FeedingMonitoringPage } from '@/pages/district/FeedingMonitoringPage'
 import { StedMonitoringPage } from '@/pages/district/StedMonitoringPage'
-import { GukurikiranaPage } from '@/pages/district/GukurikiranaPage'
+import { ImpugukirwaPage } from '@/pages/district/ImpugukirwaPage'
 import { DistrictReferralsPage } from '@/pages/district/ReferralsPage'
 import { DistrictNotificationsPage } from '@/pages/district/NotificationsPage'
-import { DistrictAlertsPage } from '@/pages/district/AlertsPage'
 import { DistrictMonitoringPage } from '@/pages/district/DistrictMonitoringPage'
 import { DistrictSettingsPage } from '@/pages/district/SettingsPage'
 import { GisAnalyticsPage } from '@/pages/district/GisAnalyticsPage'
@@ -219,9 +218,8 @@ export default function App() {
                     <Route path="/district/imikorere/imikurire" element={<GrowthMonitoringPage />} />
                     <Route path="/district/imikorere/imirire" element={<FeedingMonitoringPage />} />
                     <Route path="/district/imikorere/sted" element={<StedMonitoringPage />} />
-                    <Route path="/district/gukurikirana" element={<GukurikiranaPage />} />
+                    <Route path="/district/impugukirwa" element={<ImpugukirwaPage />} />
                     <Route path="/district/amatangazo" element={<DistrictNotificationsPage />} />
-                    <Route path="/district/impugukirwa" element={<DistrictAlertsPage />} />
                     <Route path="/district/raporo" element={<DistrictReportsPage />} />
                     <Route path="/district/igitabo" element={<DistrictRegisterHubPage />} />
                     <Route
@@ -251,6 +249,10 @@ export default function App() {
                       element={<Navigate to="/district/referrals" replace />}
                     />
                     <Route path="/district/ikarita" element={<GisAnalyticsPage />} />
+                    <Route
+                      path="/district/gukurikirana"
+                      element={<RedirectWithSearch to={DISTRICT_PATHS.followup} />}
+                    />
                     <Route
                       path="/district/ibikurikiranywa"
                       element={<Navigate to={DISTRICT_PATHS.followup} replace />}

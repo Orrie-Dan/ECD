@@ -70,7 +70,7 @@ export const notificationsLocale = {
     general: '{message}',
   },
   alerts: {
-    title: 'Gukurikirana',
+    title: 'Impugukirwa',
     unnamedChild: 'Umwana',
     unnamedCenter: 'Ikigo',
     categories: {

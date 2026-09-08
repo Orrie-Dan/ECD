@@ -107,12 +107,35 @@
       async function applyFocus(view, Graphic, GraphicsLayer) {
         if (!hasFocus) return
         const zoom = Number.isFinite(focusZoom) && focusZoom > 0 ? focusZoom : 16
-        try {
-          await view.goTo({ center: [focusLng, focusLat], zoom }, { animate: true })
-        } catch (goToError) {
-          console.warn('Map focus goTo failed', goToError)
-          return
+        const target = { center: [focusLng, focusLat], zoom }
+
+        // WebMap initial viewpoint can overwrite an early goTo — retry once after settle.
+        const goToFocus = async (animate) => {
+          try {
+            await view.goTo(target, { animate })
+          } catch (goToError) {
+            console.warn('Map focus goTo failed', goToError)
+          }
         }
+
+        await goToFocus(false)
+        await new Promise((resolve) => {
+          if (view.stationary) {
+            resolve()
+            return
+          }
+          const handle = view.watch('stationary', (stationary) => {
+            if (stationary) {
+              handle.remove()
+              resolve()
+            }
+          })
+          setTimeout(() => {
+            handle.remove()
+            resolve()
+          }, 1500)
+        })
+        await goToFocus(true)
 
         try {
           const highlightLayer = new GraphicsLayer({ listMode: 'hide' })
@@ -167,10 +190,17 @@
           portalItem: { id: webmapId },
         })
 
-        const view = new MapView({
+        const viewOptions = {
           container: viewDiv,
           map: webmap,
-        })
+        }
+        if (hasFocus) {
+          const zoom = Number.isFinite(focusZoom) && focusZoom > 0 ? focusZoom : 16
+          viewOptions.center = [focusLng, focusLat]
+          viewOptions.zoom = zoom
+        }
+
+        const view = new MapView(viewOptions)
 
         await webmap.load()
         await view.when()

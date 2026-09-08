@@ -23,7 +23,7 @@ export interface EnhancedPieChartProps {
   ariaLabel?: string
   centerLabel?: string
   centerValue?: string
-  /** Chart well background. `white` is used on Gukurikirana. */
+  /** Chart well background. `white` is used on Impugukirwa. */
   tone?: 'muted' | 'white'
 }
 

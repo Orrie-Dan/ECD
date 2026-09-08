@@ -36,6 +36,8 @@ import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { common } from '@/locales/rw/common'
 import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
+import { ECD_CENTER_MAP_ZOOM, hasUsableCenterCoordinates } from '@/lib/center-coordinates'
+import type { ArcGisMapFocus } from '@/config/gis'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
 
@@ -145,6 +147,25 @@ export function NcdaOverviewCommand() {
   const network = dashboard.network.data
   const overviewError = dashboard.overview.isError && !dashboard.overview.data
   const networkError = dashboard.network.isError && !dashboard.network.data
+
+  const mapFocus = useMemo((): ArcGisMapFocus | null => {
+    const center = centerDetail.data
+    if (!center) return null
+    if (!hasUsableCenterCoordinates(center.latitude, center.longitude)) return null
+    return {
+      latitude: center.latitude,
+      longitude: center.longitude,
+      zoom: ECD_CENTER_MAP_ZOOM,
+    }
+  }, [centerDetail.data])
+
+  const focusUnavailable =
+    Boolean(centreId) &&
+    Boolean(centerDetail.data) &&
+    !hasUsableCenterCoordinates(
+      centerDetail.data?.latitude,
+      centerDetail.data?.longitude,
+    )
 
   const selectDistrict = (id: string) => {
     patchParams({ district: id, sector: null, centre: null })
@@ -309,6 +330,15 @@ export function NcdaOverviewCommand() {
               <div>
                 <h2 className="text-body font-semibold text-text">{ncda.overview.mapTitle}</h2>
                 <p className="text-caption text-text-muted">{ncda.overview.mapHint}</p>
+                {focusUnavailable ? (
+                  <p className="text-caption text-warning mt-1" role="status">
+                    {ncda.overview.mapFocusUnavailable}
+                  </p>
+                ) : mapFocus ? (
+                  <p className="text-caption text-text-muted mt-1" role="status">
+                    {ncda.overview.mapFocusHint}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="min-h-0 flex-1">
@@ -317,6 +347,7 @@ export function NcdaOverviewCommand() {
                 fill
                 minHeight="24rem"
                 className="h-full rounded-none border-0"
+                focus={mapFocus}
               />
             </div>
           </Card>

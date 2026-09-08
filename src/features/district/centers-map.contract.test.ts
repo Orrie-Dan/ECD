@@ -53,4 +53,25 @@ describe('district Ibigo → map focus', () => {
     expect(mapView).toContain('ECD_CENTER_MAP_ZOOM')
     expect(mapView).toContain('focus={mapFocus}')
   })
+
+  it('NcdaOverviewCommand focuses the map when a centre is selected', () => {
+    const overview = fs.readFileSync(
+      path.resolve(__dirname, '../../components/ncda/overview/NcdaOverviewCommand.tsx'),
+      'utf8',
+    )
+    expect(overview).toContain('focus={mapFocus}')
+    expect(overview).toContain('ECD_CENTER_MAP_ZOOM')
+    expect(overview).toContain('hasUsableCenterCoordinates')
+  })
+
+  it('NcdaCenterDetailPage links Ahantu to the map instead of raw coords', () => {
+    const page = fs.readFileSync(
+      path.resolve(__dirname, '../../pages/ncda/NcdaCenterDetailPage.tsx'),
+      'utf8',
+    )
+    expect(page).toContain('viewOnMap')
+    expect(page).toContain('locationUnavailable')
+    expect(page).not.toContain('formatCoords')
+    expect(page).not.toContain('toFixed(5)')
+  })
 })
