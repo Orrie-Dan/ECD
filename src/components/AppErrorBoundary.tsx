@@ -27,7 +27,7 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
 
   private handleReload = () => {
     this.setState({ hasError: false })
-    window.location.assign('/')
+    window.location.assign(import.meta.env.BASE_URL)
   }
 
   render() {

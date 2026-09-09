@@ -10,8 +10,8 @@
 const DEFAULT_PORTAL_URL = 'https://infrastructure.space.gov.rw/portal'
 const DEFAULT_WEBMAP_ID = '2b7f6d9cd1ac43bf993f811e7844014d'
 
-/** Same-origin embed page served from `public/dashboards/ecd-mapping/`. */
-export const ECD_MAPPING_EMBED_PATH = '/dashboards/ecd-mapping/index.html'
+/** Same-origin embed page served from `public/dashboards/ecd-mapping/` (under Vite `base`). */
+export const ECD_MAPPING_EMBED_PATH = `${import.meta.env.BASE_URL}dashboards/ecd-mapping/index.html`
 
 /** BFF GIS routes — relative so Vite dev proxy / reverse proxy can forward to Nest. */
 export const GIS_API_BASE = '/api/v1/gis'

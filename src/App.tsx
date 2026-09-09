@@ -138,7 +138,7 @@ export default function App() {
   return (
     <AppErrorBoundary>
       <ApiProviders>
-        <BrowserRouter>
+        <BrowserRouter basename="/ecd">
           <AuthProvider>
             <DataProvider>
               <AttendanceAutoAbsentRuntime />

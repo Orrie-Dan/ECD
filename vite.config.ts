@@ -10,6 +10,7 @@ import path from 'path'
  * Does NOT cache authenticated API responses — LocalStore + SyncEngine remain authoritative.
  */
 export default defineConfig({
+  base: '/ecd/',
   plugins: [
     react(),
     tailwindcss(),
@@ -25,17 +26,18 @@ export default defineConfig({
         theme_color: '#0B6E4F',
         background_color: '#F7F9F8',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/ecd/',
+        scope: '/ecd/',
         lang: 'rw',
         icons: [
           {
-            src: '/ncda-logo.png',
+            src: '/ecd/ncda-logo.png',
             sizes: '542x197',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/ncda-logo.png',
+            src: '/ecd/ncda-logo.png',
             sizes: '542x197',
             type: 'image/png',
             purpose: 'maskable',
@@ -47,8 +49,8 @@ export default defineConfig({
         // Main bundle is ~2.2 MB; default 2 MiB would skip it and break offline boot.
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api\//, /^\/dashboards\//],
+        navigateFallback: '/ecd/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /\/dashboards\//],
         runtimeCaching: [
           {
             // Google fonts (optional offline typography) — cache-first, not API.
