@@ -32,6 +32,11 @@ export const CHART_METRIC_COLORS = {
   childrenActive: '#1a6b52',
   childrenArchived: '#6b7280',
   childrenTransferred: '#2563a8',
+  /** ECD Standards self-evaluation ranks (Green / Blue / Yellow / Red). */
+  complianceGreen: '#15803d',
+  complianceBlue: '#2563a8',
+  complianceYellow: '#b45309',
+  complianceRed: '#b42318',
 } as const
 
 /**

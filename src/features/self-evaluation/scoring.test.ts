@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { loadChecklistCatalog, scoreSelfEvaluation } from './scoring'
+import {
+  buildComplianceRankChartData,
+  loadChecklistCatalog,
+  RANK_CHART_COLORS,
+  RANK_COLORS,
+  scoreSelfEvaluation,
+} from './scoring'
 
 describe('self-evaluation scoring', () => {
   const catalog = loadChecklistCatalog()
@@ -54,5 +60,22 @@ describe('self-evaluation scoring', () => {
     expect(result.percent).toBeGreaterThanOrEqual(70)
     expect(result.percent).toBeLessThanOrEqual(89)
     expect(result.rank.id).toBe('blue')
+  })
+
+  it('uses secondary blue for the blue rank token', () => {
+    expect(RANK_COLORS.blue.text).toBe('text-secondary')
+    expect(RANK_CHART_COLORS.blue).toBe('#2563a8')
+    const slices = buildComplianceRankChartData(
+      { green: 2, blue: 3, yellow: 1, red: 4 },
+      undefined,
+      {
+        green: 'G',
+        blue: 'B',
+        yellow: 'Y',
+        red: 'R',
+      },
+    )
+    expect(slices.find((s) => s.rankId === 'blue')?.color).toBe('#2563a8')
+    expect(slices.find((s) => s.rankId === 'blue')?.value).toBe(3)
   })
 })

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CalendarCheck, Ruler, Utensils, Accessibility } from 'lucide-react'
 import { Card, StatCard } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -9,10 +9,11 @@ import {
   ChartFullscreenPanel,
   EnhancedBarChart,
   EnhancedLineChart,
-  EnhancedPieChart,
   formatCountTick,
+  formatPercentTick,
+  PERCENT_DOMAIN,
 } from '@/components/charts'
-import { CHART_METRIC_COLORS, CHART_PALETTE } from '@/lib/chart-theme'
+import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { NcdaDashboardSection } from '@/components/ncda/NcdaDashboardSection'
 import { env } from '@/config/env'
 import {
@@ -29,6 +30,7 @@ import {
   NcdaMonitoringScopeFilters,
   useNcdaMonitoringScope,
 } from '@/features/ncda/monitoring/useNcdaMonitoringScope'
+import { buildSelfEvalCenterBarData } from '@/features/self-evaluation/center-bar-chart'
 import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { NcdaMonitoringShell } from '@/pages/ncda/monitoring/NcdaMonitoringShell'
 import { ncda } from '@/locales/rw/ncda'
@@ -41,22 +43,6 @@ function truncateCenterLabel(value: string | number): string {
 
 function centerRankChartHeight(rowCount: number, base = 260): number {
   return Math.max(base, Math.min(rowCount, 8) * 36 + 72)
-}
-
-function labelFromMap(key: string, map: Record<string, string>): string {
-  return map[key] ?? map[key.toLowerCase()] ?? key.replaceAll('_', '–')
-}
-
-function recordToBars(
-  record: Record<string, number> | undefined,
-  labels: Record<string, string>,
-): Array<{ name: string; value: number; color: string }> {
-  if (!record) return []
-  return Object.entries(record).map(([key, value], index) => ({
-    name: labelFromMap(key, labels),
-    value: Number(value) || 0,
-    color: CHART_PALETTE[index % CHART_PALETTE.length],
-  }))
 }
 
 /**
@@ -78,6 +64,7 @@ export function NcdaMonitoringPage() {
 }
 
 function NcdaMonitoringHubLive() {
+  const navigate = useNavigate()
   const scope = useNcdaMonitoringScope()
   const overview = useNcdaMonitoringOverview(scope.dateFilters)
   const kpis = useNcdaMonitoringKpis(scope.dateFilters)
@@ -117,19 +104,9 @@ function NcdaMonitoringHubLive() {
     [attendanceItems],
   )
 
-  const compliancePie = useMemo(
-    () =>
-      recordToBars(compliance.data?.summary.byStatus, {
-        draft: ncda.monitoring.statusDraft,
-        submitted: ncda.monitoring.statusSubmitted,
-        verified: ncda.monitoring.statusVerified,
-        rejected: ncda.monitoring.statusRejected,
-        DRAFT: ncda.monitoring.statusDraft,
-        SUBMITTED: ncda.monitoring.statusSubmitted,
-        VERIFIED: ncda.monitoring.statusVerified,
-        REJECTED: ncda.monitoring.statusRejected,
-      }),
-    [compliance.data?.summary.byStatus],
+  const complianceBars = useMemo(
+    () => buildSelfEvalCenterBarData(compliance.data?.items),
+    [compliance.data?.items],
   )
 
   const washSnapshot = wash.data?.summary.latestSnapshot
@@ -328,12 +305,32 @@ function NcdaMonitoringHubLive() {
               <ChartFullscreenPanel
                 title={ncda.monitoring.chartCompliance}
                 renderChart={(height) => (
-                  <EnhancedPieChart
-                    data={compliancePie}
+                  <EnhancedBarChart
+                    data={complianceBars}
+                    dataKey="percent"
+                    nameKey="name"
                     height={height}
+                    valueDomain={PERCENT_DOMAIN}
+                    showValueLabels
+                    valueLabelFormatter={formatPercentTick}
+                    xAxisLabel={ncda.monitoring.axisCenter}
+                    yAxisLabel={ncda.monitoring.complianceAssessments}
+                    yTickFormatter={formatPercentTick}
+                    tooltipLabelKey="centerName"
+                    series={[
+                      {
+                        dataKey: 'percent',
+                        label: ncda.monitoring.complianceAssessments,
+                        color: CHART_METRIC_COLORS.schools,
+                        valueFormatter: formatPercentTick,
+                      },
+                    ]}
                     ariaLabel={ncda.monitoring.chartCompliance}
-                    centerValue={String(compliance.data?.summary.totalAssessments ?? 0)}
-                    centerLabel={ncda.monitoring.complianceAssessments}
+                    onBarClick={(row) => {
+                      const assessmentId = String(row.assessmentId ?? '')
+                      if (!assessmentId) return
+                      navigate(`${NCDA_PATHS.inspections}?assessment=${assessmentId}`)
+                    }}
                     {...emptyChart}
                   />
                 )}

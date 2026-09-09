@@ -218,6 +218,18 @@ export function mapStedMonitoringToViewModel(
 export function mapComplianceMonitoringToViewModel(
   dto: MonitoringComplianceResponseDto,
 ): MonitoringComplianceViewModel {
+  const rawItems =
+    (dto as MonitoringComplianceResponseDto & {
+      items?: Array<{
+        assessmentId: string
+        centerId: string
+        centerName: string
+        percent: number | null
+        rank: string | null
+        assessmentDate: string
+      }>
+    }).items ?? []
+
   return {
     from: dto.from,
     to: dto.to,
@@ -231,8 +243,26 @@ export function mapComplianceMonitoringToViewModel(
       byType: { ...(dto.summary.byType ?? {}) },
       classificationPopulated: dto.summary.classificationPopulated,
       byClassification: { ...(dto.summary.byClassification ?? {}) },
+      byRank: {
+        green: 0,
+        blue: 0,
+        yellow: 0,
+        red: 0,
+        ...(dto.summary.byRank ?? {}),
+      },
       classificationNullRate: dto.summary.classificationNullRate,
     },
+    items: rawItems.map((item) => ({
+      assessmentId: item.assessmentId,
+      centerId: item.centerId,
+      centerName: item.centerName,
+      percent: item.percent,
+      rank: item.rank,
+      assessmentDate:
+        typeof item.assessmentDate === 'string'
+          ? item.assessmentDate
+          : String(item.assessmentDate),
+    })),
   }
 }
 

@@ -218,7 +218,18 @@ export interface MonitoringComplianceSummaryViewModel {
   byType: Record<string, number>
   classificationPopulated: number
   byClassification: Record<string, number>
+  /** ECD Standards ranks: green | blue | yellow | red */
+  byRank: Record<string, number>
   classificationNullRate: number | null
+}
+
+export interface MonitoringComplianceCenterItemViewModel {
+  assessmentId: string
+  centerId: string
+  centerName: string
+  percent: number | null
+  rank: string | null
+  assessmentDate: string
 }
 
 export interface MonitoringComplianceViewModel {
@@ -227,6 +238,7 @@ export interface MonitoringComplianceViewModel {
   districtId: string | null
   centerId: string | null
   summary: MonitoringComplianceSummaryViewModel
+  items: MonitoringComplianceCenterItemViewModel[]
 }
 
 // ─── WASH aggregates ─────────────────────────────────────────────────────────

@@ -941,12 +941,20 @@ export const caretaker = {
     rankLabel: 'Urwego',
     sectionTotals: 'Incamake y’ibice',
     reviewHint: 'Reba amanota n’urwego rw’ikigo cyawe. Ushobora kongera kugenda usubira inyuma uhindure ibisubizo.',
-    apiHint: 'Ibi birimo kubikwa ku gikoresho cyawe. Kohereza kuri NCDA bizongerwa mu gihe gikurikira.',
+    apiHint:
+      'Bika ibiteganywa ku gikoresho, cyangwa ohereza ku seriveri kugira ngo akarere na NCDA babone amarenga.',
     saveDraft: 'Bika ibiteganywa',
     savedDraft: 'Ibiteganywa byabitswe',
     draftTitle: 'Hari ibiteganywa',
+    draftPendingSubmit:
+      'Ibi birimo ku gikoresho gusa. Ohereza ku seriveri kugira ngo bigaragarire mu makarita y’akarere na NCDA.',
     continueDraft: 'Komeza ibiteganywa',
     clearDraft: 'Siba ibiteganywa',
+    submitToServer: 'Ohereza isuzuma',
+    submitting: 'Birimo koherezwa…',
+    submittedSuccess: 'Isuzuma ryoherejwe neza',
+    submitError: 'Byanze kohereza isuzuma. Gerageza nanone.',
+    submitRequiresLive: 'Kohereza bisaba VITE_API_MODE=live.',
     rankLegendTitle: 'Amarenga y’ubuziranenge',
   },
   director: {

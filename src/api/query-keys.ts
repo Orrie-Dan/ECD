@@ -163,6 +163,8 @@ function createMonitoringKeys() {
     sted: (filters: MonitoringScopeFilters = {}) => [...all, 'sted', filters] as const,
     referrals: (filters: MonitoringScopeFilters = {}) =>
       [...all, 'referrals', filters] as const,
+    compliance: (filters: MonitoringScopeFilters = {}) =>
+      [...all, 'compliance', filters] as const,
   }
 }
 

@@ -10,9 +10,9 @@ import { FormField, SelectInput } from '@/components/ui/FormField'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
-import { useStedMonitoringView } from '@/features/monitoring'
+import { roundPct, useStedMonitoringView } from '@/features/monitoring'
 import { useMonitoringCentre } from '@/features/district/monitoring/useMonitoringCentre'
-import { EnhancedBarChart, formatCountTick } from '@/components/charts'
+import { EnhancedBarChart, formatPercentTick, PERCENT_DOMAIN } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
@@ -125,6 +125,24 @@ function StedMonitoringPageShared({
       }))
   }, [data?.items, mockComparisons, scopedCentreId, source])
 
+  const coverageChartRows = useMemo(
+    () =>
+      comparisons
+        .map((row) => {
+          const rate =
+            row.eligible > 0
+              ? row.coverageRate
+              : row.averageScore != null
+                ? roundPct(row.averageScore)
+                : null
+          return rate == null ? null : { name: row.centerName, rate }
+        })
+        .filter((row): row is { name: string; rate: number } => row != null)
+        .sort((a, b) => a.rate - b.rate)
+        .slice(0, 12),
+    [comparisons],
+  )
+
   const centerOptions = useMemo(() => {
     if (env.isLive) {
       const opts = (data?.items ?? []).map((row) => ({
@@ -208,19 +226,28 @@ function StedMonitoringPageShared({
 
           <Card padding="lg">
             <h2 className="text-subheading text-text mb-4">{district.sted.chartTitle}</h2>
-            {comparisons.length === 0 ? (
+            {coverageChartRows.length === 0 ? (
               <EmptyState title={district.sted.noData} />
             ) : (
               <EnhancedBarChart
-                data={comparisons.slice(0, 12).map((row) => ({
-                  name: row.centerName,
-                  value: row.screened,
-                }))}
+                data={coverageChartRows}
+                layout="vertical"
+                height={Math.max(260, Math.min(coverageChartRows.length, 12) * 32 + 56)}
+                series={[
+                  {
+                    dataKey: 'rate',
+                    label: district.sted.coverage,
+                    color: CHART_METRIC_COLORS.schools,
+                    valueFormatter: formatPercentTick,
+                  },
+                ]}
+                valueDomain={PERCENT_DOMAIN}
+                showValueLabels
+                valueLabelFormatter={formatPercentTick}
                 ariaLabel={district.sted.chartTitle}
-                color={CHART_METRIC_COLORS.schools}
-                xAxisLabel={district.charts.axisCenter}
-                yAxisLabel={district.charts.axisCount}
-                yTickFormatter={formatCountTick}
+                xAxisLabel={district.charts.axisPercent}
+                yAxisLabel={district.charts.axisCenter}
+                yTickFormatter={formatPercentTick}
               />
             )}
           </Card>

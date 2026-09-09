@@ -3,6 +3,7 @@ import { env } from '@/config/env'
 import { monitoring, queryStaleTimes } from '@/api/query-keys'
 import {
   fetchMonitoringAttendance,
+  fetchMonitoringCompliance,
   fetchMonitoringDashboard,
   fetchMonitoringFeeding,
   fetchMonitoringNutrition,
@@ -63,6 +64,15 @@ export function useMonitoringReferrals(filters: MonitoringScopeFilters = {}, ena
   return useQuery({
     queryKey: monitoring.keys.referrals(filters),
     queryFn: () => fetchMonitoringReferrals(filters),
+    enabled: env.isLive && enabled,
+    staleTime: queryStaleTimes.monitoringDomain,
+  })
+}
+
+export function useMonitoringCompliance(filters: MonitoringScopeFilters = {}, enabled = true) {
+  return useQuery({
+    queryKey: monitoring.keys.compliance(filters),
+    queryFn: () => fetchMonitoringCompliance(filters),
     enabled: env.isLive && enabled,
     staleTime: queryStaleTimes.monitoringDomain,
   })

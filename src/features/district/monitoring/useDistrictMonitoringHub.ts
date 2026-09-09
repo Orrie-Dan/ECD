@@ -3,6 +3,7 @@ import { env } from '@/config/env'
 import type { EffectiveDateRange } from '@/lib/chart-period'
 import {
   useMonitoringAttendance,
+  useMonitoringCompliance,
   useMonitoringFeeding,
   useMonitoringNutrition,
   useMonitoringReferrals,
@@ -22,6 +23,7 @@ export function useDistrictMonitoringHub(range: EffectiveDateRange) {
   const feedingQ = useMonitoringFeeding(paged, env.isLive)
   const stedQ = useMonitoringSted(paged, env.isLive)
   const referralsQ = useMonitoringReferrals(paged, env.isLive)
+  const complianceQ = useMonitoringCompliance(dateFilters, env.isLive)
 
   return {
     attendance: attendanceQ.data,
@@ -29,6 +31,7 @@ export function useDistrictMonitoringHub(range: EffectiveDateRange) {
     feeding: feedingQ.data,
     sted: stedQ.data,
     referrals: referralsQ.data,
+    compliance: complianceQ.data,
     isLive: env.isLive,
     isLoading:
       env.isLive &&
@@ -36,20 +39,23 @@ export function useDistrictMonitoringHub(range: EffectiveDateRange) {
         nutritionQ.isLoading ||
         feedingQ.isLoading ||
         stedQ.isLoading ||
-        referralsQ.isLoading),
+        referralsQ.isLoading ||
+        complianceQ.isLoading),
     isError:
       env.isLive &&
       (attendanceQ.isError ||
         nutritionQ.isError ||
         feedingQ.isError ||
         stedQ.isError ||
-        referralsQ.isError),
+        referralsQ.isError ||
+        complianceQ.isError),
     refetch: () => {
       void attendanceQ.refetch()
       void nutritionQ.refetch()
       void feedingQ.refetch()
       void stedQ.refetch()
       void referralsQ.refetch()
+      void complianceQ.refetch()
     },
   }
 }

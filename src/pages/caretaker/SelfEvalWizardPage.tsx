@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AppContext'
 import { useToast } from '@/components/ui/Toast'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
+import { env } from '@/config/env'
 import { bilingualPrimary, splitBilingualText } from '@/lib/self-eval-text'
 import { resolveCenterId } from '@/lib/resolve-center-id'
 import { getTodayDate } from '@/lib/nutrition-utils'
@@ -26,12 +27,13 @@ import {
   loadChecklistCatalog,
   scoreSelfEvaluation,
 } from '@/features/self-evaluation/scoring'
+import { submitLocalSelfEvalDraft } from '@/features/self-evaluation/submit-draft'
 import type { SelfEvalItemAnswers } from '@/features/self-evaluation/types'
 
 export function SelfEvalWizardPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const { showSuccess } = useToast()
+  const { showSuccess, showError } = useToast()
   const centerId = resolveCenterId(user?.centerId) ?? ''
   const catalog = useMemo(() => loadChecklistCatalog(), [])
 
@@ -52,6 +54,7 @@ export function SelfEvalWizardPage() {
   const [sectionIndex, setSectionIndex] = useState(() =>
     existingDraft?.facilityTypeId ? 0 : -1,
   )
+  const [submitting, setSubmitting] = useState(false)
 
   const checklist = useMemo(
     () => catalog.facilityTypes.find((f) => f.id === facilityTypeId) ?? null,
@@ -88,10 +91,12 @@ export function SelfEvalWizardPage() {
     label: facilityTypeLabel(f.id),
   }))
 
+  const draftId = existingDraft?.id ?? createDraftId()
+
   const persistDraft = () => {
     if (!centerId || !facilityTypeId) return
     saveSelfEvalDraft({
-      id: existingDraft?.id ?? createDraftId(),
+      id: draftId,
       centerId,
       facilityTypeId,
       assessmentDate,
@@ -119,10 +124,42 @@ export function SelfEvalWizardPage() {
     setSectionIndex(0)
   }
 
-  const handleFinish = () => {
+  const handleSaveDraft = () => {
     persistDraft()
     showSuccess(caretaker.selfEval.savedDraft)
     navigate('/caretaker/isuzuma')
+  }
+
+  const handleSubmit = async () => {
+    if (!checklist || !liveScore || !centerId) return
+    persistDraft()
+
+    if (!env.isLive) {
+      showError(caretaker.selfEval.submitRequiresLive)
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await submitLocalSelfEvalDraft({
+        draft: {
+          id: draftId,
+          centerId,
+          facilityTypeId,
+          assessmentDate,
+          answers,
+          updatedAt: new Date().toISOString(),
+        },
+        score: liveScore,
+        standardsVersion: checklist.version,
+      })
+      showSuccess(caretaker.selfEval.submittedSuccess)
+      navigate('/caretaker/isuzuma')
+    } catch {
+      showError(caretaker.selfEval.submitError)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -211,10 +248,17 @@ export function SelfEvalWizardPage() {
                 <p className="text-caption text-text-muted">{caretaker.selfEval.apiHint}</p>
               </Card>
               <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={handleBack}>
+                <Button variant="secondary" onClick={handleBack} disabled={submitting}>
                   {common.back}
                 </Button>
-                <Button onClick={handleFinish}>{caretaker.selfEval.saveDraft}</Button>
+                <Button variant="secondary" onClick={handleSaveDraft} disabled={submitting}>
+                  {caretaker.selfEval.saveDraft}
+                </Button>
+                <Button onClick={() => void handleSubmit()} disabled={submitting}>
+                  {submitting
+                    ? caretaker.selfEval.submitting
+                    : caretaker.selfEval.submitToServer}
+                </Button>
               </div>
             </div>
           )}

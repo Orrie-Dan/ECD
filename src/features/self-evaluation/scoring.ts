@@ -83,9 +83,9 @@ export const RANK_COLORS: Record<
     label: 'Icyatsi',
   },
   blue: {
-    bg: 'bg-primary-light',
-    text: 'text-primary',
-    border: 'border-primary/30',
+    bg: 'bg-secondary-light',
+    text: 'text-secondary',
+    border: 'border-secondary/30',
     label: 'Ubururu',
   },
   yellow: {
@@ -100,6 +100,75 @@ export const RANK_COLORS: Record<
     border: 'border-error/30',
     label: 'Utukura',
   },
+}
+
+/** Hex colors for charts — must match RANK_COLORS / ECD Standard bands. */
+export const RANK_CHART_COLORS: Record<ComplianceRankBand['id'], string> = {
+  green: '#15803d',
+  blue: '#2563a8',
+  yellow: '#b45309',
+  red: '#b42318',
+}
+
+export const COMPLIANCE_RANK_IDS: ComplianceRankBand['id'][] = [
+  'green',
+  'blue',
+  'yellow',
+  'red',
+]
+
+/**
+ * Map legacy API ComplianceClassification → nearest ECD Standard rank color.
+ * Prefer score-derived `byRank` (green/blue/yellow/red) when the API provides it.
+ */
+export function classificationToRankId(
+  classification: string | null | undefined,
+): ComplianceRankBand['id'] | null {
+  switch (classification) {
+    case 'compliant':
+      return 'green'
+    case 'partially_compliant':
+      return 'yellow'
+    case 'non_compliant':
+      return 'red'
+    default:
+      return null
+  }
+}
+
+export function buildComplianceRankChartData(
+  byRank: Record<string, number> | undefined,
+  byClassification: Record<string, number> | undefined,
+  labels: Record<ComplianceRankBand['id'], string>,
+): Array<{ name: string; value: number; color: string; rankId: ComplianceRankBand['id'] }> {
+  const counts: Record<ComplianceRankBand['id'], number> = {
+    green: 0,
+    blue: 0,
+    yellow: 0,
+    red: 0,
+  }
+
+  const rankEntries = Object.entries(byRank ?? {})
+  const hasRankData = rankEntries.some(([, value]) => Number(value) > 0)
+
+  if (hasRankData) {
+    for (const [key, value] of rankEntries) {
+      const id = key.toLowerCase() as ComplianceRankBand['id']
+      if (id in counts) counts[id] += Number(value) || 0
+    }
+  } else {
+    for (const [key, value] of Object.entries(byClassification ?? {})) {
+      const rankId = classificationToRankId(key)
+      if (rankId) counts[rankId] += Number(value) || 0
+    }
+  }
+
+  return COMPLIANCE_RANK_IDS.map((rankId) => ({
+    rankId,
+    name: labels[rankId],
+    value: counts[rankId],
+    color: RANK_CHART_COLORS[rankId],
+  }))
 }
 
 export function loadChecklistCatalog(): SelfEvalChecklistCatalog {

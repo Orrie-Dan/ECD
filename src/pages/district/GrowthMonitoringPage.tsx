@@ -266,17 +266,21 @@ function GrowthMonitoringPageShared({
   const centerRows = useMemo(() => {
     if (nutritionMonitoring.source === 'api' && nutritionMonitoring.data) {
       return nutritionMonitoring.data.items
-        .map((item) => ({
-          centerId: item.centerId,
-          centerName: item.centerName,
-          sector: '—',
-          totalChildren: item.screenings,
-          assessed: item.screenings,
-          overdue: 0,
-          atRisk: item.atRisk,
-          coverageRate: 0,
-        }))
-        .sort((a, b) => b.atRisk - a.atRisk)
+        .map((item) => {
+          const assessed = item.normal + item.atRisk + item.moderate + item.severe
+          return {
+            centerId: item.centerId,
+            centerName: item.centerName,
+            sector: '—',
+            totalChildren: assessed || item.screenings,
+            assessed: assessed || item.screenings,
+            overdue: 0,
+            atRisk: item.atRisk,
+            coverageRate:
+              assessed > 0 ? roundPct((item.normal / assessed) * 100) : 0,
+          }
+        })
+        .sort((a, b) => a.coverageRate - b.coverageRate)
     }
     const centers = ECD_CENTERS.map((c) => ({
       id: c.id,

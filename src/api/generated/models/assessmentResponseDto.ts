@@ -29,6 +29,16 @@ export interface AssessmentResponseDto {
   verifiedAt: string | null;
   /** @nullable */
   overallClassification: ComplianceClassification;
+  /**
+   * ECD Standards compliance percent (0–100), when scored
+   * @nullable
+   */
+  overallPercent?: number | null;
+  /**
+   * ECD Standards color rank: green | blue | yellow | red
+   * @nullable
+   */
+  overallRank?: string | null;
   /** Optimistic-lock version; required on updates */
   version: number;
   createdAt: string;

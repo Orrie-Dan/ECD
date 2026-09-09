@@ -8,6 +8,7 @@
 import type { MonitoringComplianceSummaryDtoByStatus } from './monitoringComplianceSummaryDtoByStatus';
 import type { MonitoringComplianceSummaryDtoByType } from './monitoringComplianceSummaryDtoByType';
 import type { MonitoringComplianceSummaryDtoByClassification } from './monitoringComplianceSummaryDtoByClassification';
+import type { MonitoringComplianceSummaryDtoByRank } from './monitoringComplianceSummaryDtoByRank';
 
 export interface MonitoringComplianceSummaryDto {
   totalAssessments: number;
@@ -17,6 +18,10 @@ export interface MonitoringComplianceSummaryDto {
   byType: MonitoringComplianceSummaryDtoByType;
   classificationPopulated: number;
   byClassification: MonitoringComplianceSummaryDtoByClassification;
+  /**
+   * ECD Standards rank bands from scored items (Green 90–100, Blue 70–89, Yellow 50–69, Red <50).
+   */
+  byRank: MonitoringComplianceSummaryDtoByRank;
   /**
    * Share of assessments with null overallClassification (sparse when REST-only)
    * @nullable

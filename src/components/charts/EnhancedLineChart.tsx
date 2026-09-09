@@ -41,13 +41,6 @@ export interface EnhancedLineChartProps {
   ariaLabel?: string
 }
 
-/** Hide fractional ticks so count charts stay whole numbers. */
-export function formatCountTick(value: number): string {
-  if (!Number.isFinite(value)) return ''
-  if (Math.abs(value - Math.round(value)) > 0.05) return ''
-  return String(Math.round(value))
-}
-
 function EnhancedLineChartComponent({
   data,
   series,

@@ -65,7 +65,9 @@ function NcdaComplianceLive() {
   const [to, setTo] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => params.get('assessment')?.trim() || null,
+  )
   const [showStandards, setShowStandards] = useState(false)
   const debouncedCenterSearch = useDebounce(centerSearch, 300)
 

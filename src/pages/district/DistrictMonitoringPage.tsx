@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CalendarCheck, Ruler, Utensils, Accessibility } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
@@ -11,7 +11,8 @@ import {
   ChartPeriodFilter,
   EnhancedBarChart,
   EnhancedLineChart,
-  formatCountTick,
+  formatPercentTick,
+  PERCENT_DOMAIN,
   type ChartPeriodFilterValue,
 } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
@@ -19,11 +20,18 @@ import { resolveEffectiveDateRange } from '@/lib/chart-period'
 import { DistrictWorkspaceNav } from '@/layouts/district/DistrictWorkspaceNav'
 import { DISTRICT_MONITORING_TABS, DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { useDistrictMonitoringHub } from '@/features/district/monitoring/useDistrictMonitoringHub'
+import { buildSelfEvalCenterBarData } from '@/features/self-evaluation/center-bar-chart'
 import { env } from '@/config/env'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
+import { roundPct } from '@/features/monitoring'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
+
+function formatRate(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return '—'
+  return `${roundPct(value)}%`
+}
 
 function formatChartDate(iso: string): string {
   if (!iso || iso.length < 10) return iso
@@ -50,28 +58,28 @@ export function DistrictMonitoringPage() {
 }
 
 function DistrictMonitoringOverview() {
+  const navigate = useNavigate()
   const [periodFilter, setPeriodFilter] = useState<ChartPeriodFilterValue>(DEFAULT_PERIOD)
   const range = useMemo(() => resolveEffectiveDateRange(periodFilter), [periodFilter])
   const hub = useDistrictMonitoringHub(range)
 
-  const attendanceItems = hub.attendance?.items ?? []
-  const ranked = useMemo(() => {
-    return [...attendanceItems].sort((a, b) => b.present - a.present)
-  }, [attendanceItems])
-  const best = ranked.slice(0, 5)
-  const attention = [...ranked].reverse().slice(0, 5)
+  const selfEvalBars = useMemo(
+    () => buildSelfEvalCenterBarData(hub.compliance?.items),
+    [hub.compliance?.items],
+  )
 
-  const trend = (hub.attendance?.trend ?? []).map((point) => ({
-    date: formatChartDate(point.date),
-    present: point.present,
-    absent: point.absent,
-  }))
+  const trend = (hub.attendance?.trend ?? [])
+    .filter((point) => point.rate != null)
+    .map((point) => ({
+      date: formatChartDate(point.date),
+      rate: roundPct(point.rate),
+    }))
 
   const domainCards = [
     {
       to: DISTRICT_PATHS.monitoringAttendance,
       label: district.nav.attendance,
-      value: hub.attendance?.summary.present ?? '—',
+      value: formatRate(hub.attendance?.summary.attendanceRate),
       icon: <CalendarCheck size={20} className="text-accent" />,
     },
     {
@@ -154,116 +162,64 @@ function DistrictMonitoringOverview() {
               xDataKey="date"
               series={[
                 {
-                  dataKey: 'present',
-                  label: district.monitoringHub.present,
-                  color: CHART_METRIC_COLORS.present,
-                },
-                {
-                  dataKey: 'absent',
-                  label: district.monitoringHub.absent,
-                  color: CHART_METRIC_COLORS.absent,
+                  dataKey: 'rate',
+                  label: district.charts.attendanceRate,
+                  color: CHART_METRIC_COLORS.attendance,
+                  valueFormatter: formatPercentTick,
                 },
               ]}
               xAxisLabel={district.charts.axisDate}
-              yAxisLabel={district.charts.axisCount}
-              yTickFormatter={formatCountTick}
+              yAxisLabel={district.charts.axisPercent}
+              yTickFormatter={formatPercentTick}
+              yDomain={PERCENT_DOMAIN}
               ariaLabel={district.monitoringHub.attendanceTrend}
             />
           )}
         </Card>
       </section>
 
-      <section aria-labelledby="monitoring-compare">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <h2 id="monitoring-compare" className="text-subheading text-text">
-            {district.monitoringHub.compareTitle}
-          </h2>
-          <Link
-            to={DISTRICT_PATHS.monitoringAttendance}
-            className="text-caption font-semibold text-primary hover:underline"
-          >
-            {district.monitoringHub.openDomain}
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <CenterRankCard
-            title={district.monitoringHub.bestCenters}
-            rows={best}
-            empty={district.monitoringHub.noCenters}
+      <section aria-labelledby="monitoring-self-eval">
+        <h2 id="monitoring-self-eval" className="text-subheading text-text mb-2">
+          {district.monitoringHub.selfEvalTitle}
+        </h2>
+        <Card padding="md">
+          <EnhancedBarChart
+            data={selfEvalBars}
+            dataKey="percent"
+            nameKey="name"
+            height={280}
+            valueDomain={PERCENT_DOMAIN}
+            showValueLabels
+            valueLabelFormatter={formatPercentTick}
+            xAxisLabel={district.charts.axisCenter}
+            yAxisLabel={district.charts.axisPercent}
+            yTickFormatter={formatPercentTick}
+            tooltipLabelKey="centerName"
+            series={[
+              {
+                dataKey: 'percent',
+                label: district.monitoringHub.selfEvalAssessments,
+                color: CHART_METRIC_COLORS.schools,
+                valueFormatter: formatPercentTick,
+              },
+            ]}
+            ariaLabel={district.monitoringHub.selfEvalTitle}
+            emptyMessage={district.monitoringHub.selfEvalEmpty}
+            emptyDescription={district.monitoringHub.selfEvalEmptyDesc}
+            tone="white"
+            onBarClick={(row) => {
+              const centerId = String(row.centerId ?? '')
+              if (!centerId) return
+              const assessmentId = String(row.assessmentId ?? '')
+              navigate(
+                `${DISTRICT_PATHS.centers}/${centerId}${
+                  assessmentId ? `?assessment=${assessmentId}` : ''
+                }`,
+              )
+            }}
           />
-          <CenterRankCard
-            title={district.monitoringHub.attentionCenters}
-            rows={attention}
-            empty={district.monitoringHub.noCenters}
-          />
-        </div>
+        </Card>
       </section>
     </div>
-  )
-}
-
-function CenterRankCard({
-  title,
-  rows,
-  empty,
-}: {
-  title: string
-  rows: Array<{
-    centerId: string
-    centerName: string
-    present: number
-    absent: number
-    enrolledChildren: number
-  }>
-  empty: string
-}) {
-  return (
-    <Card padding="md">
-      <h3 className="text-body font-semibold text-text mb-3">{title}</h3>
-      {rows.length === 0 ? (
-        <p className="text-body text-text-secondary">{empty}</p>
-      ) : (
-        <EnhancedBarChart
-          data={rows.map((row) => ({
-            name: row.centerName,
-            present: row.present,
-            absent: row.absent,
-          }))}
-          series={[
-            {
-              dataKey: 'present',
-              label: district.monitoringHub.present,
-              color: CHART_METRIC_COLORS.present,
-            },
-            {
-              dataKey: 'absent',
-              label: district.monitoringHub.absent,
-              color: CHART_METRIC_COLORS.absent,
-            },
-          ]}
-          xAxisLabel={district.charts.axisCenter}
-          yAxisLabel={district.charts.axisCount}
-          yTickFormatter={formatCountTick}
-          ariaLabel={title}
-        />
-      )}
-      {rows.length > 0 ? (
-        <ul className="mt-3 space-y-1">
-          {rows.map((row) => (
-            <li key={row.centerId} className="flex items-center justify-between gap-2 text-caption">
-              <Link
-                to={`${DISTRICT_PATHS.centers}/${row.centerId}`}
-                className="text-primary hover:underline truncate"
-              >
-                {row.centerName}
-              </Link>
-              <span className="tabular-nums text-text font-semibold">
-                {row.present} / {row.enrolledChildren}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </Card>
   )
 }

@@ -163,6 +163,7 @@ export * from './monitoringAttendanceTrendPointDto';
 export * from './monitoringComplianceResponseDto';
 export * from './monitoringComplianceSummaryDto';
 export * from './monitoringComplianceSummaryDtoByClassification';
+export * from './monitoringComplianceSummaryDtoByRank';
 export * from './monitoringComplianceSummaryDtoByStatus';
 export * from './monitoringComplianceSummaryDtoByType';
 export * from './monitoringControllerAttendanceParams';

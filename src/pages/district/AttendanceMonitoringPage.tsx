@@ -11,6 +11,8 @@ import { SkeletonPage } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { FormField, SelectInput, TextInput } from '@/components/ui/FormField'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { EnhancedBarChart, formatPercentTick, PERCENT_DOMAIN } from '@/components/charts'
+import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { AttendanceSummaryCards } from '@/components/attendance/AttendanceSummaryCards'
 import { AttendanceStatusBadge } from '@/components/attendance/AttendanceStatusBadge'
 import { useData, useAuth } from '@/contexts/AppContext'
@@ -199,6 +201,19 @@ function DistrictAttendancePageShared({
       return true
     })
   }, [allRows, centerId, statusFilter, search])
+
+  const comparisonChartRows = useMemo(
+    () =>
+      [...filteredRows]
+        .filter((row) => row.status !== 'missing')
+        .sort((a, b) => a.rate - b.rate)
+        .slice(0, 12)
+        .map((row) => ({
+          name: row.center.name,
+          rate: row.rate,
+        })),
+    [filteredRows],
+  )
 
   const statusSummary = useMemo(() => summarizeSubmissionStatuses(filteredRows), [filteredRows])
 
@@ -677,6 +692,33 @@ function DistrictAttendancePageShared({
               icon={<XCircle size={22} className="text-error" />}
             />
           </div>
+
+          {comparisonChartRows.length > 0 ? (
+            <Card padding="lg" className="mb-8">
+              <h3 className="text-subheading text-text mb-1">{district.attendanceMonitoring.chartTitle}</h3>
+              <p className="text-body text-text-secondary mb-5">{formatDate(selectedDate)}</p>
+              <EnhancedBarChart
+                data={comparisonChartRows}
+                layout="vertical"
+                height={Math.max(260, Math.min(comparisonChartRows.length, 12) * 32 + 56)}
+                series={[
+                  {
+                    dataKey: 'rate',
+                    label: district.attendanceMonitoring.attendanceRate,
+                    color: CHART_METRIC_COLORS.attendance,
+                    valueFormatter: formatPercentTick,
+                  },
+                ]}
+                valueDomain={PERCENT_DOMAIN}
+                showValueLabels
+                valueLabelFormatter={formatPercentTick}
+                xAxisLabel={district.charts.axisPercent}
+                yAxisLabel={district.charts.axisCenter}
+                yTickFormatter={formatPercentTick}
+                ariaLabel={district.attendanceMonitoring.chartTitle}
+              />
+            </Card>
+          ) : null}
 
           <Card padding="lg">
             <h3 className="text-subheading text-text mb-1">{district.attendanceMonitoring.overviewTitle}</h3>

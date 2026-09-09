@@ -17,6 +17,7 @@ export {
   useMonitoringFeeding,
   useMonitoringSted,
   useMonitoringReferrals,
+  useMonitoringCompliance,
 } from './queries'
 export {
   useMonitoringRepository,

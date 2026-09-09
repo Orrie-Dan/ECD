@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { EnhancedBarChart, formatCountTick } from '@/components/charts'
+import { EnhancedBarChart, formatCountTick, formatPercentTick, PERCENT_DOMAIN } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { BarChart3 } from 'lucide-react'
 import { district } from '@/locales/rw/district'
@@ -57,8 +57,7 @@ export function DistrictGrowthTrendSection({
   }))
   const centerBars = coverageSeries.map((row) => ({
     name: row.centerName,
-    assessed: row.totalChildren,
-    atRisk: row.atRisk,
+    rate: row.coverageRate,
   }))
 
   return (
@@ -104,24 +103,23 @@ export function DistrictGrowthTrendSection({
             ) : (
               <EnhancedBarChart
                 data={centerBars}
-                series={[
-                  {
-                    dataKey: 'assessed',
-                    label: district.growth.assessed,
-                    color: CHART_METRIC_COLORS.schools,
-                  },
-                  {
-                    dataKey: 'atRisk',
-                    label: district.growth.atRisk,
-                    color: CHART_METRIC_COLORS.nutritionAtRisk,
-                  },
-                ]}
                 layout="vertical"
                 height={Math.max(240, Math.min(centerBars.length, 8) * 32 + 48)}
+                series={[
+                  {
+                    dataKey: 'rate',
+                    label: district.growth.coverageChart,
+                    color: CHART_METRIC_COLORS.schools,
+                    valueFormatter: formatPercentTick,
+                  },
+                ]}
+                valueDomain={PERCENT_DOMAIN}
+                showValueLabels
+                valueLabelFormatter={formatPercentTick}
                 ariaLabel={district.growth.coverageChart}
-                xAxisLabel={district.charts.axisCount}
+                xAxisLabel={district.charts.axisPercent}
                 yAxisLabel={district.charts.axisCenter}
-                yTickFormatter={formatCountTick}
+                yTickFormatter={formatPercentTick}
               />
             )}
           </div>

@@ -2,6 +2,7 @@
  * Compliance resource — paginated assessments + detail + standards catalogue.
  * NCDA must not walk all pages to compute national aggregates.
  */
+import { customInstance } from '@/api/client'
 import {
   complianceControllerGetAssessment,
   complianceControllerListAssessments,
@@ -9,6 +10,7 @@ import {
 } from '@/api/generated/endpoints/compliance/compliance'
 import type {
   AssessmentDetailResponseDto,
+  AssessmentResponseDto,
   AssessmentStatus,
   PaginatedAssessmentsResponseDto,
   StandardResponseDto,
@@ -33,6 +35,18 @@ export type ComplianceAssessmentsListFilters = {
   pageSize?: number
 }
 
+export type SubmitSelfEvaluationInput = {
+  centerId: string
+  facilityTypeId: string
+  standardsVersion: string
+  assessmentDate: string
+  earnedScore: number
+  maxScore: number
+  percent: number
+  rank: 'green' | 'blue' | 'yellow' | 'red'
+  clientDraftId?: string
+}
+
 export async function listComplianceAssessmentsPage(
   filters: ComplianceAssessmentsListFilters = {},
 ): Promise<PaginatedAssessmentsResponseDto> {
@@ -55,4 +69,15 @@ export async function getComplianceAssessment(
 
 export async function listComplianceStandards(): Promise<StandardResponseDto[]> {
   return complianceControllerListStandards()
+}
+
+/** Center staff: persist scored ECD Standards self-evaluation. */
+export async function submitSelfEvaluation(
+  input: SubmitSelfEvaluationInput,
+): Promise<AssessmentResponseDto> {
+  return customInstance<AssessmentResponseDto>({
+    url: '/api/v1/compliance/self-evaluations',
+    method: 'POST',
+    data: input,
+  })
 }

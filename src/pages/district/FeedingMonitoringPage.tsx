@@ -12,16 +12,23 @@ import { SearchInput } from '@/components/ui/SearchInput'
 import { SkeletonPage } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { useData } from '@/contexts/AppContext'
-import { useFeedingMonitoringView } from '@/features/monitoring'
+import { roundPct, useFeedingMonitoringView } from '@/features/monitoring'
 import { useMonitoringCentre } from '@/features/district/monitoring/useMonitoringCentre'
-import { EnhancedBarChart, formatCountTick } from '@/components/charts'
+import { EnhancedBarChart, formatPercentTick, PERCENT_DOMAIN } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { district } from '@/locales/rw/district'
 import { common } from '@/locales/rw/common'
-import { getCurrentYearMonth } from '@/lib/feeding-utils'
+import { getCurrentYearMonth, daysInYearMonth, type CenterFeedingComparison } from '@/lib/feeding-utils'
 import { ECD_CENTERS } from '@/lib/mock-data'
 import { env } from '@/config/env'
 import type { CenterFeedingDay, CenterFeedingMonthSummary } from '@/types'
+
+function mockFeedingCoverage(row: CenterFeedingComparison, yearMonth: string): number {
+  const days = daysInYearMonth(yearMonth)
+  if (days <= 0) return 0
+  const recorded = Math.max(row.milkDays, row.porridgeDays, row.balancedDays)
+  return Math.round((recorded / days) * 100)
+}
 
 export function FeedingMonitoringPage() {
   if (env.isLive) {
@@ -109,6 +116,19 @@ function FeedingMonitoringPageShared({
       : scoped
     return filtered.map((r) => ({ kind: 'api' as const, row: r }))
   }, [data?.items, mockComparisons, scopedCentreId, search, source])
+
+  const coverageChartRows = useMemo(
+    () =>
+      tableRows
+        .map((entry) => {
+          const rate =
+            entry.kind === 'mock' ? mockFeedingCoverage(entry.row, yearMonth) : roundPct(entry.row.coverage)
+          return { name: entry.row.centerName, rate }
+        })
+        .sort((a, b) => a.rate - b.rate)
+        .slice(0, 12),
+    [tableRows, yearMonth],
+  )
 
   const centerOptions = useMemo(() => {
     if (env.isLive) {
@@ -222,18 +242,24 @@ function FeedingMonitoringPageShared({
               <EmptyState title={district.imirire.noData} />
             ) : (
               <EnhancedBarChart
-                data={tableRows.slice(0, 12).map((entry) => ({
-                  name: entry.row.centerName,
-                  value:
-                    entry.kind === 'mock'
-                      ? entry.row.milkDays + entry.row.porridgeDays + entry.row.balancedDays
-                      : entry.row.daysRecorded,
-                }))}
+                data={coverageChartRows}
+                layout="vertical"
+                height={Math.max(260, Math.min(coverageChartRows.length, 12) * 32 + 56)}
+                series={[
+                  {
+                    dataKey: 'rate',
+                    label: district.monitoringHub.coverage,
+                    color: CHART_METRIC_COLORS.feedingBalanced,
+                    valueFormatter: formatPercentTick,
+                  },
+                ]}
+                valueDomain={PERCENT_DOMAIN}
+                showValueLabels
+                valueLabelFormatter={formatPercentTick}
                 ariaLabel={district.imirire.chartTitle}
-                color={CHART_METRIC_COLORS.feedingBalanced}
-                xAxisLabel={district.charts.axisCenter}
-                yAxisLabel={district.charts.axisCount}
-                yTickFormatter={formatCountTick}
+                xAxisLabel={district.charts.axisPercent}
+                yAxisLabel={district.charts.axisCenter}
+                yTickFormatter={formatPercentTick}
               />
             )}
           </Card>

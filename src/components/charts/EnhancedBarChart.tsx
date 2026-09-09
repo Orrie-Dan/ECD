@@ -38,8 +38,16 @@ export interface EnhancedBarChartProps {
   tone?: 'muted' | 'white'
   /** Print numeric labels on each bar (useful for demographic KPI charts). */
   showValueLabels?: boolean
+  /** Formatter for printed bar labels. Defaults to a whole-number locale string. */
+  valueLabelFormatter?: (value: number) => string
+  /** Numeric axis domain (e.g. `[0, 100]` for rates). */
+  valueDomain?: [number | 'auto', number | 'auto']
   /** Category axis width when layout is vertical (long labels). */
   categoryAxisWidth?: number
+  /** Prefer this payload field as the tooltip header (e.g. full school name). */
+  tooltipLabelKey?: string
+  /** Fired when a bar is clicked (payload is the row). */
+  onBarClick?: (row: Record<string, string | number>) => void
 }
 
 function EnhancedBarChartComponent({
@@ -61,15 +69,24 @@ function EnhancedBarChartComponent({
   color = CHART_METRIC_COLORS.schools,
   tone = 'muted',
   showValueLabels = false,
+  valueLabelFormatter,
+  valueDomain,
   categoryAxisWidth,
+  tooltipLabelKey,
+  onBarClick,
 }: EnhancedBarChartProps) {
   const wellClass = tone === 'white' ? 'bg-white' : 'bg-background-subtle/30'
   const isVertical = layout === 'vertical'
   const keys = series?.map((s) => s.dataKey) ?? [dataKey]
+  const numericDomain = valueDomain ?? ['auto', 'auto']
+  const formatBarLabel = (value: number) =>
+    valueLabelFormatter
+      ? valueLabelFormatter(Number(value))
+      : Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })
   const hasData =
     data.length > 0 &&
     keys.length > 0 &&
-    data.some((row) => keys.some((key) => Number(row[key] ?? 0) > 0))
+    data.some((row) => keys.some((key) => Number.isFinite(Number(row[key]))))
 
   const categoryTicks = useMemo(() => {
     if (data.length <= 8) return 0
@@ -101,7 +118,7 @@ function EnhancedBarChartComponent({
   const categoryAxis = (
     <XAxis
       {...(isVertical
-        ? { type: 'number' as const, tickFormatter: yTickFormatter }
+        ? { type: 'number' as const, tickFormatter: yTickFormatter, domain: numericDomain }
         : {
             type: 'category' as const,
             dataKey: nameKey,
@@ -134,7 +151,12 @@ function EnhancedBarChartComponent({
             width: categoryAxisWidth ?? (yAxisLabel ? 112 : 100),
             tickFormatter: xTickFormatter,
           }
-        : { type: 'number' as const, tickFormatter: yTickFormatter, width: yAxisLabel ? 58 : 40 })}
+        : {
+            type: 'number' as const,
+            tickFormatter: yTickFormatter,
+            width: yAxisLabel ? 58 : 40,
+            domain: numericDomain,
+          })}
       tick={{ fontSize: 11, fill: 'rgb(100 116 139)' }}
       tickLine={false}
       axisLine={false}
@@ -180,7 +202,7 @@ function EnhancedBarChartComponent({
           {isVertical ? valueAxis : categoryAxis}
           {isVertical ? categoryAxis : valueAxis}
           <Tooltip
-            content={<ChartTooltip series={series} />}
+            content={<ChartTooltip series={series} tooltipLabelKey={tooltipLabelKey} />}
             cursor={{ fill: 'rgb(148 163 184 / 0.12)' }}
           />
           {series ? (
@@ -192,15 +214,30 @@ function EnhancedBarChartComponent({
                 fill={s.color}
                 radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                 maxBarSize={36}
+                cursor={onBarClick ? 'pointer' : undefined}
+                onClick={(state) => {
+                  const row = (state as { payload?: Record<string, string | number> })?.payload
+                  if (row && onBarClick) onBarClick(row)
+                }}
               >
+                {data.some((row) => typeof row.color === 'string')
+                  ? data.map((row, index) => (
+                      <Cell
+                        key={`${row[nameKey]}-${index}`}
+                        fill={
+                          typeof row.color === 'string'
+                            ? row.color
+                            : s.color
+                        }
+                      />
+                    ))
+                  : null}
                 {showValueLabels ? (
                   <LabelList
                     dataKey={s.dataKey}
                     position={isVertical ? 'right' : 'top'}
                     className="fill-text-secondary text-[10px] font-semibold"
-                    formatter={(value: number) =>
-                      Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })
-                    }
+                    formatter={formatBarLabel}
                   />
                 ) : null}
               </Bar>
@@ -212,6 +249,11 @@ function EnhancedBarChartComponent({
               fill={color}
               radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
               maxBarSize={28}
+              cursor={onBarClick ? 'pointer' : undefined}
+              onClick={(state) => {
+                const row = (state as { payload?: Record<string, string | number> })?.payload
+                if (row && onBarClick) onBarClick(row)
+              }}
             >
               {data.map((row, index) => (
                 <Cell
@@ -224,9 +266,7 @@ function EnhancedBarChartComponent({
                   dataKey={dataKey}
                   position={isVertical ? 'right' : 'top'}
                   className="fill-text-secondary text-[10px] font-semibold"
-                  formatter={(value: number) =>
-                    Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })
-                  }
+                  formatter={formatBarLabel}
                 />
               ) : null}
             </Bar>
