@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Clock } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
@@ -29,8 +29,9 @@ import {
   sortMeasurementsDesc,
 } from '@/lib/nutrition-utils'
 import type { ChildViewModel } from '@/models/child'
+import type { GrowthMeasurementViewModel } from '@/models/growth'
 import type { NutritionScreeningListItemViewModel } from '@/models/nutrition-screenings'
-import type { GrowthMeasurement, NutritionAssessment } from '@/types'
+import type { NutritionAssessment } from '@/types'
 
 type DetailTab = 'overview' | 'profile' | 'attendance' | 'growth'
 
@@ -43,7 +44,7 @@ const TABS: { id: DetailTab; label: string }[] = [
 
 const HISTORY_PAGE_SIZE = 100
 
-function screeningToMeasurement(item: NutritionScreeningListItemViewModel): GrowthMeasurement {
+function screeningToMeasurement(item: NutritionScreeningListItemViewModel): GrowthMeasurementViewModel {
   return {
     id: item.id,
     childId: item.childId,
@@ -53,6 +54,7 @@ function screeningToMeasurement(item: NutritionScreeningListItemViewModel): Grow
     muacCm: item.muacCm,
     headCircumferenceCm: item.headCircumferenceCm ?? undefined,
     recordedBy: item.recordedById,
+    version: item.version,
     nutritionStatus: item.nutritionStatus,
     requiresReferral: item.requiresReferral,
   }

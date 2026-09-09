@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { useAuth } from '@/contexts/AppContext'
 import { useCenterDirectoryItem } from '@/features/centers'
 import { resolveCenterRouteKey } from '@/api/resources/centers'
-import { ECD_CENTER_MAP_ZOOM, hasUsableCenterCoordinates } from '@/lib/center-coordinates'
+import { ECD_CENTER_MAP_ZOOM, hasUsableCenterCoordinates, toUsableCenterCoordinates } from '@/lib/center-coordinates'
 import { buildCenterDetailPath } from '@/lib/entity-routes'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { district } from '@/locales/rw/district'
@@ -51,14 +51,9 @@ export function DistrictMapView() {
 
   const mapFocus = useMemo((): ArcGisMapFocus | null => {
     if (!selectedCenter) return null
-    if (!hasUsableCenterCoordinates(selectedCenter.latitude, selectedCenter.longitude)) {
-      return null
-    }
-    return {
-      latitude: selectedCenter.latitude,
-      longitude: selectedCenter.longitude,
-      zoom: ECD_CENTER_MAP_ZOOM,
-    }
+    const coords = toUsableCenterCoordinates(selectedCenter.latitude, selectedCenter.longitude)
+    if (!coords) return null
+    return { ...coords, zoom: ECD_CENTER_MAP_ZOOM }
   }, [selectedCenter])
 
   const clearSelection = () => {

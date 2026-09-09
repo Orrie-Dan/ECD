@@ -36,7 +36,7 @@ import { NCDA_PATHS } from '@/layouts/ncda/navigation'
 import { ncda } from '@/locales/rw/ncda'
 import { common } from '@/locales/rw/common'
 import { ArcGisMapEmbed } from '@/components/gis/ArcGisMapEmbed'
-import { ECD_CENTER_MAP_ZOOM, hasUsableCenterCoordinates } from '@/lib/center-coordinates'
+import { ECD_CENTER_MAP_ZOOM, hasUsableCenterCoordinates, toUsableCenterCoordinates } from '@/lib/center-coordinates'
 import type { ArcGisMapFocus } from '@/config/gis'
 
 const DEFAULT_PERIOD: ChartPeriodFilterValue = { period: 'month', month: '' }
@@ -151,12 +151,9 @@ export function NcdaOverviewCommand() {
   const mapFocus = useMemo((): ArcGisMapFocus | null => {
     const center = centerDetail.data
     if (!center) return null
-    if (!hasUsableCenterCoordinates(center.latitude, center.longitude)) return null
-    return {
-      latitude: center.latitude,
-      longitude: center.longitude,
-      zoom: ECD_CENTER_MAP_ZOOM,
-    }
+    const coords = toUsableCenterCoordinates(center.latitude, center.longitude)
+    if (!coords) return null
+    return { ...coords, zoom: ECD_CENTER_MAP_ZOOM }
   }, [centerDetail.data])
 
   const focusUnavailable =

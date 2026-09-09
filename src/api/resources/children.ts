@@ -23,6 +23,7 @@ import {
   mapPaginatedChildrenToViewModel,
   mapReactivateToDto,
   mapChildPatchToUpdateDto,
+  mapTransferInputToDto,
 } from '@/api/mappers/child.mapper'
 import type { ChildrenListFilters, ChildrenListResult, ChildViewModel } from '@/models/child'
 import type {
@@ -99,14 +100,7 @@ export async function transferChildRequest(
   child: ChildViewModel,
   input: TransferChildInput,
 ): Promise<ChildViewModel> {
-  await transfersControllerCreate({
-    childId: child.id,
-    toCenterId: input.destinationCenterId,
-    transferDate: input.transferDate,
-    reason: input.reason,
-    notes: input.notes,
-    childVersion: child.version,
-  })
+  await transfersControllerCreate(mapTransferInputToDto(child, input))
   return fetchChildDetail(child.id)
 }
 

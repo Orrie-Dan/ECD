@@ -49,11 +49,13 @@ export async function fetchCurrentUser(): Promise<AuthUserViewModel> {
 export async function requestPasswordReset(
   body: PasswordResetRequestDto,
 ): Promise<{ accepted: true }> {
-  return authControllerRequestPasswordReset(body)
+  await authControllerRequestPasswordReset(body)
+  return { accepted: true }
 }
 
 export async function confirmPasswordReset(
   body: PasswordResetConfirmDto,
 ): Promise<{ success: true }> {
-  return authControllerConfirmPasswordReset(body)
+  await authControllerConfirmPasswordReset(body)
+  return { success: true }
 }

@@ -3,8 +3,8 @@ import type {
   ChildDetailResponseDto,
   ChildResponseDto,
   CreateChildDto,
+  CreateTransferDto,
   ReactivateChildDto,
-  TransferChildDto,
   UpdateChildDto,
 } from '@/api/generated/models'
 import type { ChildViewModel, ChildrenListResult } from '@/models/child'
@@ -185,12 +185,17 @@ export function mapReactivateToDto(child: ChildViewModel): ReactivateChildDto {
   return { version: child.version }
 }
 
-export function mapTransferInputToDto(input: TransferChildInput): TransferChildDto {
+export function mapTransferInputToDto(
+  child: ChildViewModel,
+  input: TransferChildInput,
+): CreateTransferDto {
   return {
+    childId: child.id,
     toCenterId: input.destinationCenterId,
     transferDate: input.transferDate,
     reason: input.reason,
     notes: input.notes,
+    childVersion: child.version,
   }
 }
 

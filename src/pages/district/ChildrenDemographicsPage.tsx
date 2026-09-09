@@ -48,7 +48,7 @@ function DistrictChildrenDemographicsLive() {
   )
 
   const centers = useDistrictOverviewCenters(
-    { districtId: scope.districtId, page: 1, pageSize: 200 },
+    { districtId: scope.districtId ?? undefined, page: 1, pageSize: 200 },
     Boolean(scope.districtId),
   )
   const query = useChildrenDemographics(filters, Boolean(scope.districtId))

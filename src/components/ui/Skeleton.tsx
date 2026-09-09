@@ -7,13 +7,14 @@ interface SkeletonProps extends HTMLAttributes<HTMLDivElement> {
   width?: string | number
   /** Optional fixed height (CSS length). Default 1rem. */
   height?: string | number
-  rounded?: 'sm' | 'md' | 'lg' | 'full'
+  rounded?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
 }
 
 const roundedClasses = {
   sm: 'rounded-md',
   md: 'rounded-lg',
   lg: 'rounded-xl',
+  xl: 'rounded-xl',
   full: 'rounded-full',
 }
 

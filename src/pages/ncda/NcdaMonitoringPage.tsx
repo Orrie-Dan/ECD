@@ -152,7 +152,7 @@ function NcdaMonitoringHubLive() {
     {
       to: NCDA_PATHS.monitoringFeeding,
       label: ncda.monitoringHub.feeding,
-      value: feeding.data?.summary.daysRecorded ?? kpis.data?.kpis.feedingDays ?? '—',
+      value: feeding.data?.summary.daysRecorded ?? kpis.data?.kpis.feedingDaysRecorded ?? '—',
       icon: <Utensils size={20} className="text-primary" />,
     },
     {

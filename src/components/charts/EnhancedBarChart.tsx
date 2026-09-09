@@ -9,6 +9,7 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  type RenderableText,
 } from 'recharts'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { BarChart3 } from 'lucide-react'
@@ -79,10 +80,13 @@ function EnhancedBarChartComponent({
   const isVertical = layout === 'vertical'
   const keys = series?.map((s) => s.dataKey) ?? [dataKey]
   const numericDomain = valueDomain ?? ['auto', 'auto']
-  const formatBarLabel = (value: number) =>
-    valueLabelFormatter
-      ? valueLabelFormatter(Number(value))
-      : Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })
+  const formatBarLabel = (value: RenderableText) => {
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return ''
+    return valueLabelFormatter
+      ? valueLabelFormatter(numeric)
+      : numeric.toLocaleString(undefined, { maximumFractionDigits: 0 })
+  }
   const hasData =
     data.length > 0 &&
     keys.length > 0 &&

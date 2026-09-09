@@ -47,7 +47,7 @@ function staffGenderBars(
   staff: { male: number; female: number; unknownGender: number; total: number },
   labels: typeof demographicsCopy.bars,
 ) {
-  const rows = [
+  const rows: { name: string; value: number; color: string }[] = [
     { name: labels.male, value: staff.male, color: DEMOGRAPHIC_CHART_COLORS.male },
     { name: labels.female, value: staff.female, color: DEMOGRAPHIC_CHART_COLORS.female },
   ]

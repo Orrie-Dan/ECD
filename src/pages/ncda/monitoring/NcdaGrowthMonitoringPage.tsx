@@ -7,7 +7,6 @@ import { SkeletonPage } from '@/components/ui/Skeleton'
 import {
   ChartFullscreenPanel,
   EnhancedPieChart,
-  formatCountTick,
 } from '@/components/charts'
 import { CHART_METRIC_COLORS } from '@/lib/chart-theme'
 import { env } from '@/config/env'

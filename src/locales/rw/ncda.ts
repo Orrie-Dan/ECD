@@ -241,6 +241,7 @@ export const ncda = {
     unavailableMetric: 'Ntibiboneka',
     noRate: 'Nta makuru',
     periodHint: 'Igihe cy\'igenzura (UTC)',
+    province: 'Intara',
     provinceId: 'Province ID',
     nationalNote:
       'Imibare ya centers / children ku rutonde ntabwo yerekanywe hano — irasaba aggregate ku detail kugira ngo hataboneka N+1 ku rwego rw\'igihugu.',

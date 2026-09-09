@@ -46,7 +46,7 @@ import { env } from '@/config/env'
 import { useCenterDirectoryItem } from '@/features/centers'
 import { useDistrictCaregiversList } from '@/features/district/users/queries'
 import { useResolvedCenterRoute } from '@/hooks/useResolvedEntityRoute'
-import { ECD_CENTER_MAP_ZOOM, hasUsableCenterCoordinates } from '@/lib/center-coordinates'
+import { ECD_CENTER_MAP_ZOOM, toUsableCenterCoordinates } from '@/lib/center-coordinates'
 import { buildDistrictMapCenterHref } from '@/lib/district-map-links'
 import { DISTRICT_PATHS } from '@/layouts/district/navigation'
 import { district } from '@/locales/rw/district'
@@ -286,14 +286,11 @@ export function CenterDetailPage() {
       )
     }
 
-    const canMap = hasUsableCenterCoordinates(live.latitude, live.longitude)
-    const mapFocus: ArcGisMapFocus | null = canMap
-      ? {
-          latitude: live.latitude,
-          longitude: live.longitude,
-          zoom: ECD_CENTER_MAP_ZOOM,
-        }
+    const coords = toUsableCenterCoordinates(live.latitude, live.longitude)
+    const mapFocus: ArcGisMapFocus | null = coords
+      ? { ...coords, zoom: ECD_CENTER_MAP_ZOOM }
       : null
+    const canMap = Boolean(coords)
 
     return (
       <>
