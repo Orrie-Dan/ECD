@@ -40,7 +40,7 @@ async function probeOnce() {
   const tokens = await login.json()
   const h = { Authorization: `Bearer ${tokens.accessToken}` }
 
-  const docs = await fetch(`${base}/docs-json`)
+  const docs = await fetch(`${base}/api/docs-json`)
   const openapi = docs.ok ? await docs.json() : null
   const hasIsActive = Boolean(
     openapi?.paths?.['/api/v1/districts']?.get?.parameters?.some((p) => p.name === 'isActive'),

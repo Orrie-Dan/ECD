@@ -138,7 +138,7 @@ async function main() {
   }
 
   // Deploy version marker
-  const docs = await req('docs_json', 'GET', '/docs-json', { timeoutMs: 60000 });
+  const docs = await req('docs_json', 'GET', '/api/docs-json', { timeoutMs: 60000 });
   const docsText = JSON.stringify(docs.parsed || {});
   console.log(
     JSON.stringify({

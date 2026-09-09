@@ -25,7 +25,7 @@ if (!login.ok) process.exit(1)
 const tokens = await login.json()
 const h = { Authorization: `Bearer ${tokens.accessToken}` }
 
-const docs = await (await fetch(`${base}/docs-json`)).json()
+const docs = await (await fetch(`${base}/api/docs-json`)).json()
 const districtsPath = docs.paths['/api/v1/districts']
 const detailPath = docs.paths['/api/v1/districts/{id}']
 const isActive = districtsPath?.get?.parameters?.find((p) => p.name === 'isActive')
