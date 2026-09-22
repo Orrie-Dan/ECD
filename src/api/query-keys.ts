@@ -511,6 +511,15 @@ function createStaffTrainingsKeys() {
   }
 }
 
+/** SF-13 — caregiver CV work experiences. */
+function createCaregiverWorkExperiencesKeys() {
+  const all = ['caregiverWorkExperiences'] as const
+  return {
+    all,
+    byUser: (userId: string) => [...all, 'user', userId] as const,
+  }
+}
+
 export const queryKeys = {
   auth: createAuthKeys(),
   children: createChildrenKeys(),
@@ -532,6 +541,7 @@ export const queryKeys = {
   centerSupport: createCenterSupportKeys(),
   centerVisits: createCenterVisitsKeys(),
   staffTrainings: createStaffTrainingsKeys(),
+  caregiverWorkExperiences: createCaregiverWorkExperiencesKeys(),
   classrooms: createClassroomKeys(),
   notifications: createNotificationKeys(),
   transfers: createTransfersKeys(),
@@ -556,6 +566,7 @@ export const committeeMembers = { keys: queryKeys.committeeMembers }
 export const centerSupport = { keys: queryKeys.centerSupport }
 export const centerVisits = { keys: queryKeys.centerVisits }
 export const staffTrainings = { keys: queryKeys.staffTrainings }
+export const caregiverWorkExperiences = { keys: queryKeys.caregiverWorkExperiences }
 export const classrooms = { keys: queryKeys.classrooms }
 
 export const notifications = { keys: queryKeys.notifications }
@@ -645,6 +656,8 @@ export const queryStaleTimes = {
   centerVisits: 30_000,
   /** Staff trainings list — short stale; mutations invalidate. */
   staffTrainings: 30_000,
+  /** Caregiver work experiences — short stale; mutations invalidate. */
+  caregiverWorkExperiences: 30_000,
   /** Classrooms per center — rarely changes; 2m stale window. */
   classrooms: 120_000,
   /** Notifications list — short stale; mutations invalidate. */

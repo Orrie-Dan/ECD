@@ -23,6 +23,8 @@ import type {
   EducationLevel,
   PersonSex,
 } from '@/models/center-educators'
+import type { CreateCaregiverTrainingInput } from '@/models/staff-trainings'
+import type { CreateCaregiverWorkExperienceInput } from '@/models/caregiver-work-experiences'
 
 /** Backend already returns these; Orval client types are stale. */
 export type CenterUserResponse = UserResponseDto & {
@@ -30,7 +32,12 @@ export type CenterUserResponse = UserResponseDto & {
   educationLevel?: EducationLevel | null
 }
 
-export type CreateCenterCaregiverDto = CreateUserDto & CenterCaregiverProfileFields
+/** Nested StaffTraining + work-experience drafts on caregiver create (SF-12 / SF-13). */
+export type CreateCenterCaregiverDto = CreateUserDto &
+  CenterCaregiverProfileFields & {
+    trainings?: CreateCaregiverTrainingInput[]
+    workExperiences?: CreateCaregiverWorkExperienceInput[]
+  }
 
 export type UpdateCenterUserDto = UpdateUserDto & CenterCaregiverProfileFields
 
@@ -99,7 +106,7 @@ export async function createUser(dto: CreateUserDto): Promise<CreateUserResponse
 
 /** District Focal Person — create caregiver or ECD director accounts in district scope. */
 export async function createDistrictCaregiver(
-  dto: CreateUserDto,
+  dto: CreateCenterCaregiverDto,
 ): Promise<CreateUserResponseDto> {
   if (!DISTRICT_CREATABLE_ROLES.includes(dto.role)) {
     throw new Error('District Focal Person can only create caregiver or ECD director accounts')
@@ -116,6 +123,12 @@ export async function createDistrictCaregiver(
     centerId: dto.centerId.trim(),
     ...(dto.gender ? { gender: dto.gender } : {}),
     ...(dto.educationLevel ? { educationLevel: dto.educationLevel } : {}),
+    ...(dto.role === 'caregiver' && dto.trainings?.length
+      ? { trainings: dto.trainings }
+      : {}),
+    ...(dto.role === 'caregiver' && dto.workExperiences?.length
+      ? { workExperiences: dto.workExperiences }
+      : {}),
   })
 }
 
@@ -138,7 +151,9 @@ export async function createCenterCaregiver(
     centerId: dto.centerId.trim(),
     ...(dto.gender ? { gender: dto.gender } : {}),
     ...(dto.educationLevel ? { educationLevel: dto.educationLevel } : {}),
-  } as CreateUserDto)
+    ...(dto.trainings?.length ? { trainings: dto.trainings } : {}),
+    ...(dto.workExperiences?.length ? { workExperiences: dto.workExperiences } : {}),
+  })
 }
 
 export async function updateUser(

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PageContainer, PageContent } from '@/components/ui/PageShell'
 import { Card } from '@/components/ui/Card'
@@ -8,6 +8,10 @@ import { Button } from '@/components/ui/Button'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { TempPasswordBanner } from '@/components/district/TempPasswordBanner'
+import { StaffTrainingHistoryList } from '@/components/staff-trainings/StaffTrainingHistoryList'
+import { StaffTrainingViewSheet } from '@/components/staff-trainings/StaffTrainingViewSheet'
+import { CaregiverWorkExperienceHistoryList } from '@/components/caregiver-work-experiences/CaregiverWorkExperienceHistoryList'
+import { CaregiverWorkExperienceFormDialog } from '@/components/caregiver-work-experiences/CaregiverWorkExperienceFormDialog'
 import { useToast } from '@/components/ui/Toast'
 import { env } from '@/config/env'
 import {
@@ -15,12 +19,26 @@ import {
   useDistrictResetCaregiverPassword,
   useDistrictUpdateCaregiver,
 } from '@/features/district/users/queries'
+import {
+  useCreateCaregiverWorkExperience,
+  useUpdateCaregiverWorkExperience,
+} from '@/features/caregiver-work-experiences/queries'
 import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { district } from '@/locales/rw/district'
+import { caretaker } from '@/locales/rw/caretaker'
 import { normalizeApiError } from '@/api/errors'
 import type { UpdateUserDto, UserResponseDto } from '@/api/generated/models'
+import { DEFAULT_PAGE_SIZE } from '@/types'
+import type { StaffTrainingViewModel } from '@/models/staff-trainings'
+import type {
+  CaregiverWorkExperienceViewModel,
+  CreateCaregiverWorkExperienceInput,
+  UpdateCaregiverWorkExperienceInput,
+} from '@/models/caregiver-work-experiences'
 
 const CAREGIVERS_PATH = '/district/abakoresha'
+const trainingsCopy = caretaker.director.trainings
+const workCopy = caretaker.users.workExperience
 
 function formatDate(iso: string | undefined): string {
   if (!iso) return '—'
@@ -32,7 +50,7 @@ function formatDate(iso: string | undefined): string {
 }
 
 /**
- * District caregiver detail — profile/status update + password reset.
+ * District caregiver detail — profile/status update + password reset + training history.
  */
 export function DistrictCaregiverDetailPage() {
   if (!env.isLive) {
@@ -63,6 +81,27 @@ function DistrictCaregiverDetailLive() {
   const { showError, showSuccess } = useToast()
   const detail = useDistrictCaregiverDetail(userId)
   const [tempSecret, setTempSecret] = useState<string | null>(null)
+  const [trainingPage, setTrainingPage] = useState(1)
+  const [trainingPageSize, setTrainingPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [viewingTraining, setViewingTraining] = useState<StaffTrainingViewModel | null>(null)
+  const [workFormOpen, setWorkFormOpen] = useState(false)
+  const [workFormMode, setWorkFormMode] = useState<'create' | 'edit'>('create')
+  const [editingWork, setEditingWork] = useState<CaregiverWorkExperienceViewModel | null>(null)
+
+  const createWork = useCreateCaregiverWorkExperience(userId)
+  const updateWork = useUpdateCaregiverWorkExperience(userId, editingWork?.id ?? '')
+
+  const centerId = detail.data?.center?.id ?? ''
+  const isCaregiver = detail.data?.role === 'caregiver'
+  const trainingFilters = useMemo(
+    () => ({
+      centerId,
+      traineeUserId: userId,
+      page: trainingPage,
+      pageSize: trainingPageSize,
+    }),
+    [centerId, userId, trainingPage, trainingPageSize],
+  )
 
   const backLink = (
     <Link
@@ -103,6 +142,27 @@ function DistrictCaregiverDetailLive() {
   }
 
   const title = detail.data?.fullName ?? district.caregivers.title
+
+  async function onCreateWork(input: CreateCaregiverWorkExperienceInput) {
+    try {
+      await createWork.mutateAsync(input)
+      setWorkFormOpen(false)
+      showSuccess(workCopy.createSuccess)
+    } catch (err) {
+      showError(normalizeApiError(err).message || workCopy.saveError)
+    }
+  }
+
+  async function onUpdateWork(input: UpdateCaregiverWorkExperienceInput) {
+    try {
+      await updateWork.mutateAsync(input)
+      setWorkFormOpen(false)
+      setEditingWork(null)
+      showSuccess(workCopy.updateSuccess)
+    } catch (err) {
+      showError(normalizeApiError(err).message || workCopy.saveError)
+    }
+  }
 
   return (
     <>
@@ -181,6 +241,77 @@ function DistrictCaregiverDetailLive() {
                   </dl>
                   <p className="mt-3 text-caption text-text-muted">{district.caregivers.roleFixed}</p>
                 </Card>
+
+                {isCaregiver ? (
+                  <>
+                    <Card padding="md" className="border-border space-y-3">
+                      <h2 className="text-subheading font-semibold text-text">
+                        {trainingsCopy.receivedTitle}
+                      </h2>
+                      <StaffTrainingHistoryList
+                        filters={trainingFilters}
+                        enabled={Boolean(centerId && userId)}
+                        emptyTitle={trainingsCopy.receivedEmpty}
+                        page={trainingPage}
+                        pageSize={trainingPageSize}
+                        onPageChange={setTrainingPage}
+                        onPageSizeChange={(size) => {
+                          setTrainingPageSize(size)
+                          setTrainingPage(1)
+                        }}
+                        onSelect={setViewingTraining}
+                      />
+                    </Card>
+
+                    <Card padding="md" className="border-border space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-subheading font-semibold text-text">{workCopy.title}</h2>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          icon={<Plus size={16} />}
+                          onClick={() => {
+                            setWorkFormMode('create')
+                            setEditingWork(null)
+                            setWorkFormOpen(true)
+                          }}
+                        >
+                          {workCopy.add}
+                        </Button>
+                      </div>
+                      <CaregiverWorkExperienceHistoryList
+                        userId={userId}
+                        enabled={Boolean(userId)}
+                        onSelect={(record) => {
+                          setEditingWork(record)
+                          setWorkFormMode('edit')
+                          setWorkFormOpen(true)
+                        }}
+                      />
+                    </Card>
+
+                    <CaregiverWorkExperienceFormDialog
+                      open={workFormOpen}
+                      mode={workFormMode}
+                      record={editingWork}
+                      busy={createWork.isPending || updateWork.isPending}
+                      onClose={() => {
+                        setWorkFormOpen(false)
+                        setEditingWork(null)
+                      }}
+                      onCreate={onCreateWork}
+                      onUpdate={onUpdateWork}
+                    />
+                  </>
+                ) : null}
+
+                <StaffTrainingViewSheet
+                  open={Boolean(viewingTraining)}
+                  record={viewingTraining}
+                  canMutate={false}
+                  onClose={() => setViewingTraining(null)}
+                />
 
                 <CaregiverEditForm
                   key={`${detail.data.id}:${detail.data.updatedAt}`}

@@ -1,7 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { FormField, TextInput, TextArea, SelectInput } from '@/components/ui/FormField'
+import { FormField, TextInput, SelectInput } from '@/components/ui/FormField'
+import { StaffTrainingFields } from '@/components/staff-trainings/StaffTrainingFields'
+import {
+  emptyStaffTrainingFields,
+  validateStaffTrainingFields,
+  type StaffTrainingFieldValues,
+} from '@/lib/staff-training-fields'
 import { caretaker } from '@/locales/rw/caretaker'
 import { common } from '@/locales/rw/common'
 import type {
@@ -9,7 +15,7 @@ import type {
   StaffTrainingViewModel,
   UpdateStaffTrainingInput,
 } from '@/models/staff-trainings'
-import { parseDurationDays, validateDurationDays } from '@/lib/staff-training-format'
+import { parseDurationDays } from '@/lib/staff-training-format'
 
 const copy = caretaker.director.trainings
 
@@ -18,29 +24,18 @@ export type TraineeOption = {
   fullName: string
 }
 
-type FormState = {
+type FormState = StaffTrainingFieldValues & {
   traineeUserId: string
   traineeName: string
   traineeRole: string
-  trainingDate: string
-  trainingProvider: string
-  topic: string
-  durationDays: string
-  certificateReceived: 'yes' | 'no'
-  notes: string
 }
 
 function emptyForm(defaultDate: string): FormState {
   return {
+    ...emptyStaffTrainingFields(defaultDate),
     traineeUserId: '',
     traineeName: '',
     traineeRole: copy.traineeRoleDefault,
-    trainingDate: defaultDate,
-    trainingProvider: '',
-    topic: '',
-    durationDays: '1',
-    certificateReceived: 'no',
-    notes: '',
   }
 }
 
@@ -58,6 +53,24 @@ function fromRecord(record: StaffTrainingViewModel): FormState {
   }
 }
 
+function initialForm(args: {
+  mode: 'create' | 'edit'
+  record?: StaffTrainingViewModel | null
+  lockedTrainee?: TraineeOption | null
+}): FormState {
+  const defaultDate = new Date().toISOString().slice(0, 10)
+  if (args.mode === 'edit' && args.record) return fromRecord(args.record)
+  if (args.lockedTrainee) {
+    return {
+      ...emptyForm(defaultDate),
+      traineeUserId: args.lockedTrainee.id,
+      traineeName: args.lockedTrainee.fullName,
+      traineeRole: copy.traineeRoleDefault,
+    }
+  }
+  return emptyForm(defaultDate)
+}
+
 export interface StaffTrainingFormDialogProps {
   open: boolean
   mode: 'create' | 'edit'
@@ -65,31 +78,39 @@ export interface StaffTrainingFormDialogProps {
   record?: StaffTrainingViewModel | null
   traineeOptions: TraineeOption[]
   busy?: boolean
+  /** When set, pre-select trainee and hide name/role overrides for linked create. */
+  lockedTrainee?: TraineeOption | null
   onClose: () => void
   onCreate: (input: CreateStaffTrainingInput) => Promise<void>
   onUpdate: (input: UpdateStaffTrainingInput) => Promise<void>
 }
 
-export function StaffTrainingFormDialog({
-  open,
+export function StaffTrainingFormDialog(props: StaffTrainingFormDialogProps) {
+  if (!props.open) return null
+  const remountKey = [
+    props.mode,
+    props.record?.id ?? 'new',
+    props.record?.version ?? 0,
+    props.lockedTrainee?.id ?? 'none',
+  ].join(':')
+  return <StaffTrainingFormDialogInner key={remountKey} {...props} />
+}
+
+function StaffTrainingFormDialogInner({
   mode,
   centerId,
   record,
   traineeOptions,
   busy = false,
+  lockedTrainee = null,
   onClose,
   onCreate,
   onUpdate,
 }: StaffTrainingFormDialogProps) {
-  const defaultDate = new Date().toISOString().slice(0, 10)
-  const [form, setForm] = useState<FormState>(() => emptyForm(defaultDate))
+  const [form, setForm] = useState<FormState>(() =>
+    initialForm({ mode, record, lockedTrainee }),
+  )
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
-
-  useEffect(() => {
-    if (!open) return
-    setForm(mode === 'edit' && record ? fromRecord(record) : emptyForm(defaultDate))
-    setErrors({})
-  }, [open, mode, record, defaultDate])
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -109,19 +130,13 @@ export function StaffTrainingFormDialog({
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const nextErrors: Partial<Record<keyof FormState, string>> = {}
+    const fieldErrors = validateStaffTrainingFields(form, {
+      requireDate: mode === 'create',
+    })
+    const nextErrors: Partial<Record<keyof FormState, string>> = { ...fieldErrors }
 
-    if (mode === 'create' && !form.trainingDate) {
-      nextErrors.trainingDate = copy.trainingDateRequired
-    }
     if (!form.traineeName.trim()) nextErrors.traineeName = copy.traineeNameRequired
     if (!form.traineeRole.trim()) nextErrors.traineeRole = copy.traineeRoleRequired
-    if (!form.trainingProvider.trim()) {
-      nextErrors.trainingProvider = copy.trainingProviderRequired
-    }
-    if (!form.topic.trim()) nextErrors.topic = copy.topicRequired
-    const durationError = validateDurationDays(form.durationDays)
-    if (durationError) nextErrors.durationDays = durationError
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -161,9 +176,11 @@ export function StaffTrainingFormDialog({
     })
   }
 
+  const showTraineePicker = !lockedTrainee && traineeOptions.length > 0
+
   return (
     <Modal
-      open={open}
+      open
       onClose={onClose}
       title={mode === 'create' ? copy.add : copy.edit}
       size="lg"
@@ -185,21 +202,7 @@ export function StaffTrainingFormDialog({
       }
     >
       <form className="space-y-4" onSubmit={(e) => void handleSubmit(e)}>
-        {mode === 'create' ? (
-          <FormField label={copy.trainingDate} required error={errors.trainingDate}>
-            <TextInput
-              type="date"
-              value={form.trainingDate}
-              onChange={(e) => setField('trainingDate', e.target.value)}
-            />
-          </FormField>
-        ) : (
-          <FormField label={copy.trainingDate}>
-            <TextInput type="date" value={form.trainingDate} disabled />
-          </FormField>
-        )}
-
-        {traineeOptions.length > 0 && (
+        {showTraineePicker && (
           <FormField label={copy.traineeUser}>
             <SelectInput
               value={form.traineeUserId}
@@ -215,70 +218,34 @@ export function StaffTrainingFormDialog({
           </FormField>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label={copy.traineeName} required error={errors.traineeName}>
-            <TextInput
-              value={form.traineeName}
-              onChange={(e) => setField('traineeName', e.target.value)}
-              maxLength={200}
-              autoComplete="name"
-            />
-          </FormField>
-          <FormField label={copy.traineeRole} required error={errors.traineeRole}>
-            <TextInput
-              value={form.traineeRole}
-              onChange={(e) => setField('traineeRole', e.target.value)}
-              maxLength={200}
-            />
-          </FormField>
-        </div>
+        {!lockedTrainee ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label={copy.traineeName} required error={errors.traineeName}>
+              <TextInput
+                value={form.traineeName}
+                onChange={(e) => setField('traineeName', e.target.value)}
+                maxLength={200}
+                autoComplete="name"
+              />
+            </FormField>
+            <FormField label={copy.traineeRole} required error={errors.traineeRole}>
+              <TextInput
+                value={form.traineeRole}
+                onChange={(e) => setField('traineeRole', e.target.value)}
+                maxLength={200}
+              />
+            </FormField>
+          </div>
+        ) : null}
 
-        <FormField label={copy.trainingProvider} required error={errors.trainingProvider}>
-          <TextInput
-            value={form.trainingProvider}
-            onChange={(e) => setField('trainingProvider', e.target.value)}
-            maxLength={300}
-          />
-        </FormField>
-
-        <FormField label={copy.topic} required error={errors.topic}>
-          <TextInput
-            value={form.topic}
-            onChange={(e) => setField('topic', e.target.value)}
-            maxLength={300}
-          />
-        </FormField>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <FormField label={copy.durationDays} required error={errors.durationDays}>
-            <TextInput
-              type="number"
-              min={1}
-              max={365}
-              step={1}
-              value={form.durationDays}
-              onChange={(e) => setField('durationDays', e.target.value)}
-            />
-          </FormField>
-          <FormField label={copy.certificateReceived}>
-            <SelectInput
-              value={form.certificateReceived}
-              onChange={(e) => setField('certificateReceived', e.target.value as 'yes' | 'no')}
-            >
-              <option value="no">{copy.certificateNo}</option>
-              <option value="yes">{copy.certificateYes}</option>
-            </SelectInput>
-          </FormField>
-        </div>
-
-        <FormField label={copy.notes}>
-          <TextArea
-            value={form.notes}
-            onChange={(e) => setField('notes', e.target.value)}
-            placeholder={copy.notesPlaceholder}
-            rows={2}
-          />
-        </FormField>
+        <StaffTrainingFields
+          values={form}
+          errors={errors}
+          dateDisabled={mode === 'edit'}
+          onChange={(key, value) => {
+            setField(key, value as FormState[typeof key])
+          }}
+        />
       </form>
     </Modal>
   )

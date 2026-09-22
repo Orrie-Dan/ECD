@@ -10,7 +10,8 @@ import {
   updateUser,
   type UsersListFilters,
 } from '@/api/resources/users'
-import type { CreateUserDto, UpdateUserDto } from '@/api/generated/models'
+import type { UpdateUserDto } from '@/api/generated/models'
+import type { CreateCenterCaregiverDto } from '@/api/resources/users'
 
 export type DistrictCaregiversListFilters = Omit<UsersListFilters, 'role'> & {
   /** Omit or pass a role. Use `null` to list all roles in district scope. */
@@ -85,7 +86,7 @@ function invalidateCaregiverQueries(
 export function useDistrictCreateCaregiver() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (dto: CreateUserDto) => createDistrictCaregiver(dto),
+    mutationFn: (dto: CreateCenterCaregiverDto) => createDistrictCaregiver(dto),
     onSuccess: (_data, variables) => {
       invalidateCaregiverQueries(queryClient, undefined, variables.centerId)
     },

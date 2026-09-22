@@ -56,6 +56,16 @@ export interface CreateStaffTrainingInput {
   notes?: string
 }
 
+/** Nested training payload on caregiver create (SF-12) — maps to StaffTraining. */
+export interface CreateCaregiverTrainingInput {
+  trainingDate: string
+  trainingProvider: string
+  topic: string
+  durationDays: number
+  certificateReceived: boolean
+  notes?: string
+}
+
 export interface UpdateStaffTrainingInput {
   version: number
   traineeUserId?: string | null

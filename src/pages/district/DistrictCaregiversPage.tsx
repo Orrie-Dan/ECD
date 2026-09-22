@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -10,6 +10,10 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { TempPasswordBanner } from '@/components/district/TempPasswordBanner'
+import { CaregiverReceivedTrainingsEditor } from '@/components/staff-trainings/CaregiverReceivedTrainingsEditor'
+import { CaregiverWorkExperiencesEditor } from '@/components/caregiver-work-experiences/CaregiverWorkExperiencesEditor'
+import type { WorkExperienceFieldValues } from '@/lib/caregiver-work-experience-fields'
+import type { StaffTrainingFieldValues } from '@/lib/staff-training-fields'
 import { useToast } from '@/components/ui/Toast'
 import { env } from '@/config/env'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -22,9 +26,12 @@ import {
 import { UserProfileEditForm } from '@/components/users/UserProfileEditForm'
 import { DISTRICT_CREATABLE_ROLES } from '@/api/resources/users'
 import { district } from '@/locales/rw/district'
+import { caretaker } from '@/locales/rw/caretaker'
 import { DEFAULT_PAGE_SIZE, type PageSizeOption } from '@/types'
 import type { ApiUserStatus, PersonSex, UpdateUserDto, UserResponseDto, UserRole } from '@/api/generated/models'
 import { normalizeApiError } from '@/api/errors'
+import type { CreateCaregiverTrainingInput } from '@/models/staff-trainings'
+import type { CreateCaregiverWorkExperienceInput } from '@/models/caregiver-work-experiences'
 
 type StatusFilter = 'all' | ApiUserStatus
 type RoleFilter = 'all' | 'caregiver' | 'ecd_director'
@@ -125,6 +132,14 @@ function DistrictCaregiversLive() {
     role: initialCreateRole as CreatableCenterRole,
     centerId: presetCenterId,
   })
+  const [trainingDrafts, setTrainingDrafts] = useState<StaffTrainingFieldValues[]>([])
+  const [workDrafts, setWorkDrafts] = useState<WorkExperienceFieldValues[]>([])
+  const validateTrainingsRef = useRef<(() => CreateCaregiverTrainingInput[] | null) | null>(
+    null,
+  )
+  const validateWorkRef = useRef<(() => CreateCaregiverWorkExperienceInput[] | null) | null>(
+    null,
+  )
 
   useEffect(() => {
     if (presetCenterId) {
@@ -152,6 +167,22 @@ function DistrictCaregiversLive() {
       return
     }
     const createdRole = createForm.role
+    let trainings: CreateCaregiverTrainingInput[] = []
+    let workExperiences: CreateCaregiverWorkExperienceInput[] = []
+    if (createdRole === 'caregiver') {
+      const validated = validateTrainingsRef.current?.() ?? null
+      if (validated === null && trainingDrafts.length > 0) {
+        showError(caretaker.director.trainings.saveError)
+        return
+      }
+      trainings = validated ?? []
+      const validatedWork = validateWorkRef.current?.() ?? null
+      if (validatedWork === null && workDrafts.length > 0) {
+        showError(caretaker.users.workExperience.saveError)
+        return
+      }
+      workExperiences = validatedWork ?? []
+    }
     try {
       const result = await createMutation.mutateAsync({
         username: createForm.username.trim(),
@@ -161,6 +192,7 @@ function DistrictCaregiversLive() {
         gender: createForm.gender || undefined,
         role: createForm.role,
         centerId: createForm.centerId,
+        ...(createdRole === 'caregiver' ? { trainings, workExperiences } : {}),
       })
       setTempSecret(result.temporaryPassword)
       setShowCreate(false)
@@ -173,6 +205,8 @@ function DistrictCaregiversLive() {
         role: 'caregiver',
         centerId: presetCenterId || '',
       })
+      setTrainingDrafts([])
+      setWorkDrafts([])
       if (shouldOpenCreate || presetCenterId || presetRole) {
         const next = new URLSearchParams(searchParams)
         next.delete('create')
@@ -362,6 +396,24 @@ function DistrictCaregiversLive() {
                       ))}
                     </SelectInput>
                   </div>
+                  {createForm.role === 'caregiver' ? (
+                    <>
+                      <div className="sm:col-span-2 border-t border-border pt-4">
+                        <CaregiverReceivedTrainingsEditor
+                          drafts={trainingDrafts}
+                          onChange={setTrainingDrafts}
+                          validateRef={validateTrainingsRef}
+                        />
+                      </div>
+                      <div className="sm:col-span-2 border-t border-border pt-4">
+                        <CaregiverWorkExperiencesEditor
+                          drafts={workDrafts}
+                          onChange={setWorkDrafts}
+                          validateRef={validateWorkRef}
+                        />
+                      </div>
+                    </>
+                  ) : null}
                   <div className="sm:col-span-2">
                     <Button
                       type="submit"

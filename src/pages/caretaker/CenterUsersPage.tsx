@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Users } from 'lucide-react'
 import { CaretakerLayout } from '@/layouts/CaretakerLayout'
@@ -11,6 +11,10 @@ import { Pagination } from '@/components/ui/Pagination'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { LiveUnavailableState } from '@/components/ui/LiveUnavailableState'
 import { TempPasswordBanner } from '@/components/district/TempPasswordBanner'
+import { CaregiverReceivedTrainingsEditor } from '@/components/staff-trainings/CaregiverReceivedTrainingsEditor'
+import { CaregiverWorkExperiencesEditor } from '@/components/caregiver-work-experiences/CaregiverWorkExperiencesEditor'
+import type { WorkExperienceFieldValues } from '@/lib/caregiver-work-experience-fields'
+import type { StaffTrainingFieldValues } from '@/lib/staff-training-fields'
 import { useToast } from '@/components/ui/Toast'
 import { env } from '@/config/env'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -31,6 +35,8 @@ import {
   type EducationLevel,
   type PersonSex,
 } from '@/models/center-educators'
+import type { CreateCaregiverTrainingInput } from '@/models/staff-trainings'
+import type { CreateCaregiverWorkExperienceInput } from '@/models/caregiver-work-experiences'
 
 const USERS_PATH = '/caretaker/abakoresha'
 
@@ -82,6 +88,14 @@ function CenterUsersLive() {
     gender: '' as PersonSex | '',
     educationLevel: '' as EducationLevel | '',
   })
+  const [trainingDrafts, setTrainingDrafts] = useState<StaffTrainingFieldValues[]>([])
+  const [workDrafts, setWorkDrafts] = useState<WorkExperienceFieldValues[]>([])
+  const validateTrainingsRef = useRef<(() => CreateCaregiverTrainingInput[] | null) | null>(
+    null,
+  )
+  const validateWorkRef = useRef<(() => CreateCaregiverWorkExperienceInput[] | null) | null>(
+    null,
+  )
 
   const debouncedSearch = useDebounce(search, 300)
 
@@ -112,6 +126,16 @@ function CenterUsersLive() {
       showError(caretaker.users.missingCenter)
       return
     }
+    const trainings = validateTrainingsRef.current?.() ?? null
+    if (trainings === null && trainingDrafts.length > 0) {
+      showError(caretaker.director.trainings.saveError)
+      return
+    }
+    const workExperiences = validateWorkRef.current?.() ?? null
+    if (workExperiences === null && workDrafts.length > 0) {
+      showError(caretaker.users.workExperience.saveError)
+      return
+    }
     try {
       const result = await createMutation.mutateAsync({
         username: createForm.username.trim(),
@@ -122,6 +146,8 @@ function CenterUsersLive() {
         centerId,
         gender: createForm.gender || undefined,
         educationLevel: createForm.educationLevel || undefined,
+        trainings: trainings ?? [],
+        workExperiences: workExperiences ?? [],
       })
       setTempSecret(result.temporaryPassword)
       setShowCreate(false)
@@ -133,6 +159,8 @@ function CenterUsersLive() {
         gender: '',
         educationLevel: '',
       })
+      setTrainingDrafts([])
+      setWorkDrafts([])
       showSuccess(caretaker.users.createSuccess)
     } catch (err) {
       showError(normalizeApiError(err).message || caretaker.users.createError)
@@ -295,6 +323,20 @@ function CenterUsersLive() {
                   <p className="sm:col-span-2 text-caption text-text-muted">
                     {caretaker.users.roleFixed}
                   </p>
+                  <div className="sm:col-span-2 border-t border-border pt-4">
+                    <CaregiverReceivedTrainingsEditor
+                      drafts={trainingDrafts}
+                      onChange={setTrainingDrafts}
+                      validateRef={validateTrainingsRef}
+                    />
+                  </div>
+                  <div className="sm:col-span-2 border-t border-border pt-4">
+                    <CaregiverWorkExperiencesEditor
+                      drafts={workDrafts}
+                      onChange={setWorkDrafts}
+                      validateRef={validateWorkRef}
+                    />
+                  </div>
                   <div className="sm:col-span-2">
                     <Button
                       type="submit"

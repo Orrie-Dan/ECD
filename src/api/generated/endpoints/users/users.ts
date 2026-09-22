@@ -44,7 +44,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Provisions a new user account within the caller management scope. NCDA can create district officers, ECD directors, and caregivers; district officers can create ECD directors and caregivers in their district; ECD directors can create caregivers at their center. Returns a one-time `temporaryPassword` that must be shared out-of-band; it is never included on subsequent GET/list/update responses.
+ * Provisions a new user account within the caller management scope. NCDA can create district officers, ECD directors, and caregivers; district officers can create ECD directors and caregivers in their district; ECD directors can create caregivers at their center. When role is caregiver, optional `trainings` creates linked StaffTraining records (Amahugurwa yabonye) and optional `workExperiences` creates CaregiverWorkExperience rows (Ubunararibonye) in the same transaction. Returns a one-time `temporaryPassword` (also emailed when the account has an email); it is never included on subsequent GET/list/update responses.
  * @summary Create a user
  */
 export const usersControllerCreate = (
@@ -359,7 +359,7 @@ export const useUsersControllerUpdate = <TError = ErrorResponseDto | ErrorRespon
       return useMutation(mutationOptions, queryClient);
     }
     /**
- * Resets the target user password. When `newPassword` is omitted, a temporary password is generated and returned once as `temporaryPassword`. When an explicit password is provided, it is not echoed in the response.
+ * Resets the target user password. When `newPassword` is omitted, a temporary password is generated, returned once as `temporaryPassword`, and emailed when the account has an email. When an explicit password is provided, it is not echoed.
  * @summary Reset user password
  */
 export const usersControllerResetPassword = (

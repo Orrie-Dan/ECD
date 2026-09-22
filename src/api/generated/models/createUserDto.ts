@@ -8,6 +8,8 @@
 import type { UserRole } from './userRole';
 import type { PersonSex } from './personSex';
 import type { EducationLevel } from './educationLevel';
+import type { CreateCaregiverTrainingDto } from './createCaregiverTrainingDto';
+import type { CreateCaregiverWorkExperienceDto } from './createCaregiverWorkExperienceDto';
 
 export interface CreateUserDto {
   /**
@@ -34,4 +36,8 @@ export interface CreateUserDto {
   email?: string;
   gender?: PersonSex;
   educationLevel?: EducationLevel;
+  /** Optional trainings already received (Amahugurwa yabonye). Only allowed when role is caregiver. Created as StaffTraining rows linked to the new user — zero trainings is valid. */
+  trainings?: CreateCaregiverTrainingDto[];
+  /** Optional CV work experiences (Ubunararibonye). Only allowed when role is caregiver. Created as CaregiverWorkExperience rows linked to the new user — zero entries is valid. */
+  workExperiences?: CreateCaregiverWorkExperienceDto[];
 }
